@@ -1,0 +1,41 @@
+---
+alwaysApply: true
+---
+
+# Code Standards
+
+Estas regras existem para guiar implementação e revisão de código com consistência.
+
+## Prioridade de interpretação
+
+- `MUST`: obrigatório.
+- `SHOULD`: recomendação forte; só quebrar com justificativa clara.
+- Em caso de conflito, siga a ordem: corretude > legibilidade > convenção.
+
+## Regras obrigatórias (`MUST`)
+
+1. Escreva código em inglês (nomes de variáveis, funções, classes, métodos e mensagens técnicas).
+2. Use `camelCase` para variáveis, funções e métodos.
+3. Use `PascalCase` para classes e interfaces.
+4. Use `kebab-case` para arquivos e diretórios.
+5. Não use abreviações obscuras; mantenha nomes claros e com no máximo 30 caracteres quando possível.
+6. Não use `flag params` para chavear comportamento (ex.: `doThing(true)`). Extraia funções/métodos específicos.
+7. Não misture consulta com mutação na mesma função. Consultas devem ser livres de efeitos colaterais.
+8. Evite mais de 2 níveis de aninhamento de `if/else`; prefira `early return`.
+9. Nunca declare mais de uma variável na mesma linha.
+
+## Regras recomendadas (`SHOULD`)
+
+1. Evite passar mais de 3 parâmetros; prefira objeto de parâmetros quando necessário.
+2. Substitua `magic numbers` por constantes nomeadas.
+3. Mantenha funções com até 50 linhas e classes com até 300 linhas; extraia responsabilidades quando ultrapassar.
+4. Declare variáveis o mais próximo possível do ponto de uso.
+5. Evite comentários óbvios; use comentários apenas para explicar intenção, contexto ou trade-off.
+
+## Exemplos rápidos
+
+- Ruim: `processData(true, 10, 20, 30)`
+- Bom: `processInvoice({ retry: true, timeoutMs: DEFAULT_TIMEOUT })`
+
+- Ruim: função de leitura que também escreve no banco
+- Bom: separar em `getUserById()` (consulta) e `updateUserStatus()` (mutação)

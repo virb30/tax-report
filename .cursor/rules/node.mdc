@@ -1,0 +1,34 @@
+---
+description: Regras de backend Node no main process com padroes comuns de TypeScript e testes
+globs: src/main/**/*.{ts,js}
+alwaysApply: false
+---
+
+# Node Rules
+
+Estas regras definem padroes para o backend em Node no contexto do main process.
+
+## Backend (Main Process)
+
+- Classes, funcoes e logicas de negocio em `src/main/` devem ter cobertura de testes de 100%.
+- Organize o backend em classes coesas; prefira orientacao a objetos quando fizer sentido.
+- Evite concentrar logica no arquivo principal; distribua responsabilidades em modulos claros.
+- Evite metodos e classes muito grandes.
+- Declare propriedades de classe como `private` ou `readonly`; evite `public` explicito.
+- Prefira `find`, `filter`, `map` e `reduce` em vez de `for` e `while` quando melhorar legibilidade.
+- Use sempre named exports.
+- Evite dependencia circular.
+- Use tipos utilitarios do TypeScript quando apropriado.
+- Garanta tipagem correta em todos os arquivos do backend.
+
+## Regras Comuns (TypeScript e JavaScript)
+
+- Nao use `any`; prefira tipos especificos. Quando necessario, use `unknown` com validacao de tipo.
+- Use `import` e `export` (ESM); nao use `require`.
+- Prefira `async/await` em vez de callbacks ou cadeias de Promise desnecessarias.
+- Use `const` por padrao. Use `let` apenas quando houver reatribuicao. `var` e proibido.
+
+## Regras Comuns de Testes
+
+- Mantenha arquivos de teste na mesma pasta do arquivo testado.
+- Use sufixos `*.test.ts` ou `*.spec.ts`.
