@@ -1,3 +1,54 @@
+# Tarefa 9.0: Relatório Anual, Observabilidade e Validação E2E
+
+<critical>Ler os arquivos de prd.md e techspec.md desta pasta, se você não ler esses arquivos sua tarefa será invalidada</critical>
+
+## Visão Geral
+
+Finalizar o produto com geração do relatório de Bens e Direitos, instrumentação de observabilidade (logs e métricas) e validação fim a fim do fluxo completo do MVP. Esta tarefa depende da 8.0 e fecha os objetivos de negócio do PRD.
+
+<requirements>
+- Implementar geração de relatório anual de posição em 31/12
+- Implementar textos de discriminação prontos para cópia
+- Garantir classificação de ativos por grupo/código conforme PRD
+- Instrumentar logs estruturados e métricas técnicas definidas na techspec
+- Validar fluxo completo `import -> portfolio -> tax -> report`
+- Consolidar critérios de aceite funcionais e técnicos com testes automatizados
+</requirements>
+
+## Subtarefas
+
+- [ ] 9.1 Implementar geração do relatório anual de ativos (31/12)
+- [ ] 9.2 Implementar montagem de discriminação por ativo com botão de cópia
+- [ ] 9.3 Implementar classificação automática por grupo/código da Receita
+- [ ] 9.4 Instrumentar logs estruturados com correlação por request/lote
+- [ ] 9.5 Instrumentar métricas de importação, domínio, apuração e repositório
+- [ ] 9.6 Criar testes de integração do relatório anual
+- [ ] 9.7 Criar suíte E2E de regressão do fluxo completo do MVP
+
+## Detalhes de Implementação
+
+Consulte na `techspec.md` as seções **"Monitoramento e Observabilidade"**, **"Abordagem de Testes"** (E2E) e **"Sequenciamento de Desenvolvimento"** (ordem de construção item 7). Consulte no `prd.md` os requisitos RF-29 a RF-32 e os critérios de sucesso do produto.
+
+## Critérios de Sucesso
+
+- Relatório anual completo e coerente com posição e preço médio persistidos
+- Conteúdo de discriminação pronto para uso no programa da declaração
+- Métricas e logs permitem rastrear performance e falhas do fluxo
+- Fluxo completo do MVP validado por integração e E2E
+
+## Testes da Tarefa
+
+- [ ] Testes de unidade (formatação e classificação de relatório)
+- [ ] Testes de integração (relatório + dados persistidos + observabilidade básica)
+
+<critical>SEMPRE CRIE E EXECUTE OS TESTES DA TAREFA ANTES DE CONSIDERÁ-LA FINALIZADA</critical>
+
+## Arquivos relevantes
+- `src/main/application/use-cases/`
+- `src/main/domain/tax-compliance/`
+- `src/main/ipc/handlers/`
+- `src/renderer/`
+- `src/shared/contracts/`
 # Tarefa 9.0: Tela de Apuração Mensal e Configurações
 
 <critical>Ler os arquivos de prd.md e techspec.md desta pasta, se você não ler esses arquivos sua tarefa será invalidada</critical>

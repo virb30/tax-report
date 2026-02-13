@@ -19,18 +19,18 @@ Implementar a camada de persistência usando better-sqlite3 com migrações gere
 
 ## Subtarefas
 
-- [ ] 2.1 Instalar e configurar better-sqlite3 + @electron/rebuild
-- [ ] 2.2 Instalar e configurar Knex
-- [ ] 2.3 Criar migration para tabela `assets`
-- [ ] 2.4 Criar migration para tabela `operations`
-- [ ] 2.5 Criar migration para tabela `accumulated_losses`
-- [ ] 2.6 Criar migration para tabela `tax_config`
-- [ ] 2.7 Criar seed para `tax_config` com dados iniciais
-- [ ] 2.8 Implementar `database.ts` (inicialização + execução de migrations)
-- [ ] 2.9 Implementar `AssetRepository` com testes
-- [ ] 2.10 Implementar `OperationRepository` com testes
-- [ ] 2.11 Implementar `AccumulatedLossRepository` com testes
-- [ ] 2.12 Implementar `TaxConfigRepository` com testes
+- [x] 2.1 Instalar e configurar better-sqlite3 + @electron/rebuild
+- [x] 2.2 Instalar e configurar Knex
+- [x] 2.3 Criar migration para tabela `assets`
+- [x] 2.4 Criar migration para tabela `operations`
+- [x] 2.5 Criar migration para tabela `accumulated_losses`
+- [x] 2.6 Criar migration para tabela `tax_config`
+- [x] 2.7 Criar seed para `tax_config` com dados iniciais
+- [x] 2.8 Implementar `database.ts` (inicialização + execução de migrations)
+- [x] 2.9 Implementar `AssetRepository` com testes
+- [x] 2.10 Implementar `OperationRepository` com testes
+- [x] 2.11 Implementar `AccumulatedLossRepository` com testes
+- [x] 2.12 Implementar `TaxConfigRepository` com testes
 
 ## Detalhes de Implementação
 
@@ -87,37 +87,37 @@ src/main/database/
 
 ## Testes da Tarefa
 
-- [ ] **Testes de unidade - AssetRepository**:
-  - [ ] Criar asset novo
-  - [ ] Buscar por ticker e broker
-  - [ ] Atualizar preço médio e quantidade
-  - [ ] Listar todos assets
-  - [ ] Deletar asset
-  - [ ] Testar constraint UNIQUE (ticker, broker)
+- [x] **Testes de unidade - AssetRepository**:
+  - [x] Criar asset novo
+  - [x] Buscar por ticker e broker
+  - [x] Atualizar preço médio e quantidade
+  - [x] Listar todos assets
+  - [x] Deletar asset
+  - [x] Testar constraint UNIQUE (ticker, broker)
 
-- [ ] **Testes de unidade - OperationRepository**:
-  - [ ] Criar operação de compra
-  - [ ] Criar operação de venda
-  - [ ] Buscar por range de datas
-  - [ ] Buscar por ticker
-  - [ ] Listar todas operações
+- [x] **Testes de unidade - OperationRepository**:
+  - [x] Criar operação de compra
+  - [x] Criar operação de venda
+  - [x] Buscar por range de datas
+  - [x] Buscar por ticker
+  - [x] Listar todas operações
 
-- [ ] **Testes de unidade - AccumulatedLossRepository**:
-  - [ ] Criar registro de prejuízo
-  - [ ] Buscar por asset_type
-  - [ ] Atualizar amount
-  - [ ] Testar constraint UNIQUE asset_type
+- [x] **Testes de unidade - AccumulatedLossRepository**:
+  - [x] Criar registro de prejuízo
+  - [x] Buscar por asset_type
+  - [x] Atualizar amount
+  - [x] Testar constraint UNIQUE asset_type
 
-- [ ] **Testes de unidade - TaxConfigRepository**:
-  - [ ] Buscar configuração por asset_type
-  - [ ] Atualizar tax_rate
-  - [ ] Atualizar monthly_exemption_limit
-  - [ ] Listar todas configs
+- [x] **Testes de unidade - TaxConfigRepository**:
+  - [x] Buscar configuração por asset_type
+  - [x] Atualizar tax_rate
+  - [x] Atualizar monthly_exemption_limit
+  - [x] Listar todas configs
 
-- [ ] **Testes de integração**:
-  - [ ] Inicialização do database executa migrations
-  - [ ] Seed popula tax_config corretamente
-  - [ ] Múltiplos repositórios podem trabalhar simultaneamente
+- [x] **Testes de integração**:
+  - [x] Inicialização do database executa migrations
+  - [x] Seed popula tax_config corretamente
+  - [x] Múltiplos repositórios podem trabalhar simultaneamente
 
 <critical>SEMPRE CRIE E EXECUTE OS TESTES DA TAREFA ANTES DE CONSIDERÁ-LA FINALIZADA</critical>
 

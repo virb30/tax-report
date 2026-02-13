@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-model: claude-4.5-sonnet-thinking
+model: gpt-5.3-codex
 description: Especialista em code review para validar código contra rules, TechSpec e Tasks. Use proativamente após implementação de tasks ou quando houver mudanças de código para revisar.
 ---
 

@@ -1,15 +1,16 @@
-import { app, BrowserWindow } from 'electron';
-import { AppLifecycle } from './app-lifecycle';
+import { app, BrowserWindow, ipcMain } from 'electron';
+import { createMainLifecycle } from './infrastructure/composition/create-main-lifecycle';
 import { WindowManager } from './window-manager';
 
-const lifecycle = new AppLifecycle({
+const lifecycle = createMainLifecycle({
   app,
   browserWindow: BrowserWindow,
+  ipcMain,
+  platform: process.platform,
   createMainWindow: () => {
     const windowManager = new WindowManager();
     windowManager.createMainWindow();
   },
-  platform: process.platform,
 });
 
 lifecycle.register();

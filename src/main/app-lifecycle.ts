@@ -1,5 +1,7 @@
+type AppLifecycleEvent = 'activate' | 'window-all-closed';
+
 type AppLike = {
-  on: (event: string, listener: () => void) => void;
+  on: (event: AppLifecycleEvent, listener: () => void) => void;
   whenReady: () => Promise<void>;
   quit: () => void;
 };
