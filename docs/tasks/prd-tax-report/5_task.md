@@ -18,13 +18,13 @@ Corrigir a lógica de custo operacional para suportar notas de negociação com 
 
 ## Subtarefas
 
-- [ ] 5.1 Definir contrato de entrada da nota contendo custo total e operações por ativo
-- [ ] 5.2 Implementar serviço de rateio proporcional com regra de arredondamento e ajuste de centavos
-- [ ] 5.3 Integrar serviço de rateio ao adapter de ingestão (parser -> normalização -> persistência)
-- [ ] 5.4 Garantir persistência de `operationalCosts` rateado por operação
-- [ ] 5.5 Validar cenários de nota com múltiplos ativos, ativo único e custo zero
-- [ ] 5.6 Criar testes de unidade do algoritmo de rateio e invariantes de soma total
-- [ ] 5.7 Criar testes de integração do fluxo `import -> operations -> recalculate portfolio`
+- [x] 5.1 Definir contrato de entrada da nota contendo custo total e operações por ativo
+- [x] 5.2 Implementar serviço de rateio proporcional com regra de arredondamento e ajuste de centavos
+- [x] 5.3 Integrar serviço de rateio ao adapter de ingestão (parser -> normalização -> persistência)
+- [x] 5.4 Garantir persistência de `operationalCosts` rateado por operação
+- [x] 5.5 Validar cenários de nota com múltiplos ativos, ativo único e custo zero
+- [x] 5.6 Criar testes de unidade do algoritmo de rateio e invariantes de soma total
+- [x] 5.7 Criar testes de integração do fluxo `import -> operations -> recalculate portfolio`
 
 ## Detalhes de Implementação
 
@@ -39,8 +39,8 @@ Consulte na `techspec.md` as seções **"Modelos de Dados"** (`TradeOperation.op
 
 ## Testes da Tarefa
 
-- [ ] Testes de unidade (algoritmo de rateio, arredondamento e conservação de total)
-- [ ] Testes de integração (parser/adapters + persistência + recálculo de posição)
+- [x] Testes de unidade (algoritmo de rateio, arredondamento e conservação de total)
+- [x] Testes de integração (parser/adapters + persistência + recálculo de posição)
 
 <critical>SEMPRE CRIE E EXECUTE OS TESTES DA TAREFA ANTES DE CONSIDERÁ-LA FINALIZADA</critical>
 

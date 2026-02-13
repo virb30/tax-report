@@ -98,5 +98,6 @@ describe('LegacyPortfolioAcl', () => {
 
     expect(trades).toHaveLength(1);
     expect(trades[0]?.operationType).toBe(OperationType.Buy);
+    expect(trades[0]?.operationalCosts).toBe(1);
   });
 });
