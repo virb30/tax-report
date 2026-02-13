@@ -1,10 +1,8 @@
 import type { AssetType} from '../../../shared/types/domain';
 import { OperationType } from '../../../shared/types/domain';
 import { AssetPosition } from '../../domain/portfolio/asset-position';
-import type {
-  PortfolioPositionRepositoryPort,
-  TradeOperationQueryPort,
-} from '../repositories/portfolio-ports';
+import type { TradeOperationQueryPort } from '../queries/trade-operation.query.interface';
+import type { PortfolioPositionRepositoryPort } from '../repositories/portfolio-position.repository.interface';
 
 export type RecalculateAssetPositionInput = {
   ticker: string;

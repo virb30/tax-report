@@ -1,4 +1,5 @@
 import type { AssetType } from '../../../shared/types/domain';
+import { AveragePriceService } from './average-price-service';
 
 export type AssetPositionSnapshot = {
   ticker: string;
@@ -10,10 +11,12 @@ export type AssetPositionSnapshot = {
 };
 
 export class AssetPosition {
+  private readonly averagePriceService: AveragePriceService;
   private quantity: number;
   private averagePrice: number;
 
   private constructor(private readonly snapshot: AssetPositionSnapshot) {
+    this.averagePriceService = new AveragePriceService();
     this.quantity = snapshot.quantity;
     this.averagePrice = snapshot.averagePrice;
     this.validate();
@@ -24,22 +27,26 @@ export class AssetPosition {
   }
 
   applyBuy(input: { quantity: number; unitPrice: number; operationalCosts: number }): void {
-    if (input.quantity <= 0) {
-      throw new Error('Buy quantity must be greater than zero.');
-    }
-
-    const nextTotalCost =
-      this.quantity * this.averagePrice + input.quantity * input.unitPrice + input.operationalCosts;
     const nextQuantity = this.quantity + input.quantity;
+    const nextAveragePrice = this.averagePriceService.calculateAfterBuy({
+      currentQuantity: this.quantity,
+      currentAveragePrice: this.averagePrice,
+      buyQuantity: input.quantity,
+      buyUnitPrice: input.unitPrice,
+      operationalCosts: input.operationalCosts,
+    });
 
     this.quantity = nextQuantity;
-    this.averagePrice = nextTotalCost / nextQuantity;
+    this.averagePrice = nextAveragePrice;
     this.validate();
   }
 
   applySell(input: { quantity: number }): void {
     if (input.quantity <= 0) {
       throw new Error('Sell quantity must be greater than zero.');
+    }
+    if (this.quantity === 0) {
+      throw new Error('Cannot sell asset without an open position.');
     }
 
     const nextQuantity = this.quantity - input.quantity;
@@ -69,6 +76,10 @@ export class AssetPosition {
 
     if (this.averagePrice < 0) {
       throw new Error('Average price cannot be negative.');
+    }
+
+    if (this.quantity > 0 && this.averagePrice === 0) {
+      throw new Error('Average price must be greater than zero when quantity exists.');
     }
   }
 }

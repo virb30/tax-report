@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { AssetType, OperationType } from '../../../shared/types/domain';
-import type {
-  PortfolioPositionRepositoryPort,
-  TradeOperationQueryPort,
-} from '../repositories/portfolio-ports';
+import type { TradeOperationQueryPort } from '../queries/trade-operation.query.interface';
+import type { PortfolioPositionRepositoryPort } from '../repositories/portfolio-position.repository.interface';
 import { RecalculateAssetPositionUseCase } from './recalculate-asset-position-use-case';
 
 describe('RecalculateAssetPositionUseCase', () => {

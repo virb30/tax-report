@@ -56,6 +56,21 @@ describe('AssetPosition', () => {
     );
   });
 
+  it('throws when selling without an open position', () => {
+    const position = AssetPosition.create({
+      ticker: 'ITSA4',
+      broker: 'XP',
+      assetType: AssetType.Stock,
+      quantity: 0,
+      averagePrice: 0,
+      isManualBase: false,
+    });
+
+    expect(() => position.applySell({ quantity: 1 })).toThrow(
+      'Cannot sell asset without an open position.',
+    );
+  });
+
   it('throws on invalid buy or sell quantity', () => {
     const position = AssetPosition.create({
       ticker: 'B3SA3',
@@ -96,5 +111,16 @@ describe('AssetPosition', () => {
         isManualBase: false,
       }),
     ).toThrow('Average price cannot be negative.');
+
+    expect(() =>
+      AssetPosition.create({
+        ticker: 'ABEV3',
+        broker: 'XP',
+        assetType: AssetType.Stock,
+        quantity: 1,
+        averagePrice: 0,
+        isManualBase: false,
+      }),
+    ).toThrow('Average price must be greater than zero when quantity exists.');
   });
 });
