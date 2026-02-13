@@ -12,6 +12,8 @@ type OperationWritePayload = {
   broker: string;
   sourceType: SourceType;
   importedAt?: string;
+  externalRef?: string;
+  importBatchId?: string;
 };
 
 type PeriodOperationRecord = {
@@ -25,6 +27,8 @@ type PeriodOperationRecord = {
   broker: string;
   sourceType: SourceType;
   importedAt: string;
+  externalRef: string | null;
+  importBatchId: string | null;
 };
 
 type OperationRow = {
@@ -39,6 +43,8 @@ type OperationRow = {
   broker: string;
   source_type: SourceType;
   imported_at: string;
+  external_ref: string | null;
+  import_batch_id: string | null;
 };
 
 export type OperationCreateInput = {
@@ -51,6 +57,8 @@ export type OperationCreateInput = {
   irrfWithheld: number;
   broker: string;
   sourceType: SourceType;
+  externalRef?: string;
+  importBatchId?: string;
 };
 
 export type OperationUpdateInput = Partial<Omit<OperationCreateInput, 'ticker'>>;
@@ -68,7 +76,20 @@ function mapOperationRow(row: OperationRow): Operation {
     broker: row.broker,
     sourceType: row.source_type,
     importedAt: row.imported_at,
+    externalRef: row.external_ref,
+    importBatchId: row.import_batch_id,
   };
+}
+
+function isExternalRefUniqueConstraintError(error: unknown): boolean {
+  if (!error || typeof error !== 'object' || !('message' in error)) {
+    return false;
+  }
+
+  const message = String(error.message);
+  return (
+    message.includes('uq_operations_external_ref') || message.includes('operations.external_ref')
+  );
 }
 
 export class OperationRepository {
@@ -90,6 +111,8 @@ export class OperationRepository {
       broker: operation.broker,
       source_type: operation.sourceType,
       imported_at: operation.importedAt ?? this.database.fn.now(),
+      external_ref: operation.externalRef ?? null,
+      import_batch_id: operation.importBatchId ?? null,
     }));
 
     await this.database('operations').insert(payload);
@@ -106,6 +129,8 @@ export class OperationRepository {
       irrf_withheld: input.irrfWithheld,
       broker: input.broker,
       source_type: input.sourceType,
+      external_ref: input.externalRef ?? null,
+      import_batch_id: input.importBatchId ?? null,
     });
 
     const operation = await this.findById(Number(id));
@@ -134,6 +159,27 @@ export class OperationRepository {
       .orderBy('id', 'asc');
 
     return rows.map(mapOperationRow);
+  }
+
+  async findByExternalRef(externalRef: string): Promise<Operation | null> {
+    const row = await this.database<OperationRow>('operations')
+      .where({ external_ref: externalRef })
+      .first();
+
+    return row ? mapOperationRow(row) : null;
+  }
+
+  async createIfNotExists(input: OperationCreateInput & { externalRef: string }): Promise<boolean> {
+    try {
+      await this.create(input);
+      return true;
+    } catch (error: unknown) {
+      if (isExternalRefUniqueConstraintError(error)) {
+        return false;
+      }
+
+      throw error;
+    }
   }
 
   async findByPeriod(input: { startDate: string; endDate: string }): Promise<PeriodOperationRecord[]> {

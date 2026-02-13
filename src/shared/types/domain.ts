@@ -42,6 +42,8 @@ export type Operation = {
   broker: string;
   sourceType: SourceType;
   importedAt: string;
+  externalRef: string | null;
+  importBatchId: string | null;
 };
 
 export type AccumulatedLoss = {

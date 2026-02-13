@@ -36,6 +36,8 @@ describe('OperationRepository', () => {
     expect(found).not.toBeNull();
     expect(found?.operationType).toBe(OperationType.Buy);
     expect(found?.sourceType).toBe(SourceType.Pdf);
+    expect(found?.externalRef).toBeNull();
+    expect(found?.importBatchId).toBeNull();
   });
 
   it('returns null when operation does not exist by id', async () => {
@@ -309,6 +311,152 @@ describe('OperationRepository', () => {
     expect(operations).toHaveLength(2);
     expect(operations[0]?.operationType).toBe(OperationType.Buy);
     expect(operations[1]?.operationType).toBe(OperationType.Sell);
+  });
+
+  it('creates operation with idempotency metadata', async () => {
+    const operation = await repository.create({
+      tradeDate: '2025-11-11',
+      operationType: OperationType.Buy,
+      ticker: 'ABEV3',
+      quantity: 9,
+      unitPrice: 14,
+      operationalCosts: 0.5,
+      irrfWithheld: 0,
+      broker: 'XP',
+      sourceType: SourceType.Csv,
+      externalRef: 'ext-001',
+      importBatchId: 'batch-001',
+    });
+
+    expect(operation.externalRef).toBe('ext-001');
+    expect(operation.importBatchId).toBe('batch-001');
+  });
+
+  it('finds operation by external reference', async () => {
+    await repository.create({
+      tradeDate: '2025-11-12',
+      operationType: OperationType.Buy,
+      ticker: 'ABEV3',
+      quantity: 1,
+      unitPrice: 13,
+      operationalCosts: 0,
+      irrfWithheld: 0,
+      broker: 'XP',
+      sourceType: SourceType.Csv,
+      externalRef: 'ext-find',
+      importBatchId: 'batch-find',
+    });
+
+    const operation = await repository.findByExternalRef('ext-find');
+
+    expect(operation?.ticker).toBe('ABEV3');
+  });
+
+  it('returns null when external reference does not exist', async () => {
+    const operation = await repository.findByExternalRef('ext-missing');
+
+    expect(operation).toBeNull();
+  });
+
+  it('returns false when createIfNotExists receives duplicated external ref', async () => {
+    const first = await repository.createIfNotExists({
+      tradeDate: '2025-11-13',
+      operationType: OperationType.Buy,
+      ticker: 'ITUB4',
+      quantity: 1,
+      unitPrice: 20,
+      operationalCosts: 0,
+      irrfWithheld: 0,
+      broker: 'XP',
+      sourceType: SourceType.Csv,
+      externalRef: 'ext-dup',
+      importBatchId: 'batch-a',
+    });
+    const second = await repository.createIfNotExists({
+      tradeDate: '2025-11-13',
+      operationType: OperationType.Buy,
+      ticker: 'ITUB4',
+      quantity: 1,
+      unitPrice: 20,
+      operationalCosts: 0,
+      irrfWithheld: 0,
+      broker: 'XP',
+      sourceType: SourceType.Csv,
+      externalRef: 'ext-dup',
+      importBatchId: 'batch-b',
+    });
+
+    const operations = await repository.findByTicker('ITUB4');
+    expect(first).toBe(true);
+    expect(second).toBe(false);
+    expect(operations).toHaveLength(1);
+  });
+
+  it('handles concurrent createIfNotExists calls with same external ref', async () => {
+    const payload = {
+      tradeDate: '2025-11-14',
+      operationType: OperationType.Buy,
+      ticker: 'ABEV3',
+      quantity: 1,
+      unitPrice: 12,
+      operationalCosts: 0,
+      irrfWithheld: 0,
+      broker: 'XP',
+      sourceType: SourceType.Csv,
+      externalRef: 'ext-concurrent',
+      importBatchId: 'batch-concurrent',
+    };
+
+    const [first, second] = await Promise.all([
+      repository.createIfNotExists(payload),
+      repository.createIfNotExists(payload),
+    ]);
+
+    const operations = await repository.findByTicker('ABEV3');
+    expect([first, second].filter(Boolean)).toHaveLength(1);
+    expect(operations).toHaveLength(1);
+  });
+
+  it('rethrows non-unique errors from createIfNotExists', async () => {
+    const createSpy = jest.spyOn(repository, 'create').mockRejectedValueOnce(new Error('db-down'));
+
+    await expect(
+      repository.createIfNotExists({
+        tradeDate: '2025-11-15',
+        operationType: OperationType.Buy,
+        ticker: 'WEGE3',
+        quantity: 1,
+        unitPrice: 10,
+        operationalCosts: 0,
+        irrfWithheld: 0,
+        broker: 'XP',
+        sourceType: SourceType.Csv,
+        externalRef: 'ext-error',
+      }),
+    ).rejects.toThrow('db-down');
+
+    createSpy.mockRestore();
+  });
+
+  it('rethrows non-object errors from createIfNotExists', async () => {
+    const createSpy = jest.spyOn(repository, 'create').mockRejectedValueOnce('db-down');
+
+    await expect(
+      repository.createIfNotExists({
+        tradeDate: '2025-11-16',
+        operationType: OperationType.Buy,
+        ticker: 'WEGE3',
+        quantity: 1,
+        unitPrice: 10,
+        operationalCosts: 0,
+        irrfWithheld: 0,
+        broker: 'XP',
+        sourceType: SourceType.Csv,
+        externalRef: 'ext-error-string',
+      }),
+    ).rejects.toBe('db-down');
+
+    createSpy.mockRestore();
   });
 
   it('ignores empty saveMany payload', async () => {

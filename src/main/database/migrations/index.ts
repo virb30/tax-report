@@ -3,6 +3,7 @@ import { createAssetsMigration } from './001-create-assets';
 import { createOperationsMigration } from './002-create-operations';
 import { createAccumulatedLossesMigration } from './003-create-accumulated-losses';
 import { createTaxConfigMigration } from './004-create-tax-config';
+import { addImportIdempotencyToOperationsMigration } from './005-add-import-idempotency-to-operations';
 
 export type DatabaseMigration = {
   name: string;
@@ -15,4 +16,5 @@ export const databaseMigrations: DatabaseMigration[] = [
   createOperationsMigration,
   createAccumulatedLossesMigration,
   createTaxConfigMigration,
+  addImportIdempotencyToOperationsMigration,
 ];

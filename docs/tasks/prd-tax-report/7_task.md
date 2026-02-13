@@ -16,14 +16,14 @@ Implementar adapters de infraestrutura necessários para o fluxo do relatório a
 
 ## Subtarefas
 
-- [ ] 7.1 Implementar adapters de persistência para `assets` e `operations` do fluxo MVP
-- [ ] 7.2 Implementar mapeadores row <-> domínio nos adapters
-- [ ] 7.3 Implementar parser CSV/XLSX com validação de template
-- [ ] 7.4 Implementar estratégia de seleção de parser por corretora e tipo de arquivo
-- [ ] 7.5 Implementar idempotência de importação e rastreabilidade por lote
-- [ ] 7.6 Definir contratos de consulta para posição em 31/12 e discriminação do relatório
-- [ ] 7.7 Criar testes de unidade para mapeadores e validações de parser
-- [ ] 7.8 Criar testes de integração de ingestão completa com persistência
+- [x] 7.1 Implementar adapters de persistência para `assets` e `operations` do fluxo MVP
+- [x] 7.2 Implementar mapeadores row <-> domínio nos adapters
+- [x] 7.3 Implementar parser CSV/XLSX com validação de template
+- [x] 7.4 Implementar estratégia de seleção de parser por corretora e tipo de arquivo
+- [x] 7.5 Implementar idempotência de importação e rastreabilidade por lote
+- [x] 7.6 Definir contratos de consulta para posição em 31/12 e discriminação do relatório
+- [x] 7.7 Criar testes de unidade para mapeadores e validações de parser
+- [x] 7.8 Criar testes de integração de ingestão completa com persistência
 
 ## Detalhes de Implementação
 
@@ -38,8 +38,8 @@ Consulte na `techspec.md` as seções **"Infrastructure Layer"**, **"Pontos de I
 
 ## Testes da Tarefa
 
-- [ ] Testes de unidade (mapeadores, validação e seleção de parser)
-- [ ] Testes de integração (parser + use case + repositório)
+- [x] Testes de unidade (mapeadores, validação e seleção de parser)
+- [x] Testes de integração (parser + use case + repositório)
 
 <critical>SEMPRE CRIE E EXECUTE OS TESTES DA TAREFA ANTES DE CONSIDERÁ-LA FINALIZADA</critical>
 

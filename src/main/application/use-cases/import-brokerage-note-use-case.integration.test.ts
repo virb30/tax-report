@@ -110,4 +110,76 @@ describe('ImportBrokerageNoteUseCase integration', () => {
     expect(position?.quantity).toBe(8);
     expect(position?.averagePrice).toBe(30);
   });
+
+  it('does not duplicate persisted operations on idempotent re-import', async () => {
+    const input = {
+      tradeDate: '2025-03-12',
+      broker: 'XP',
+      sourceType: SourceType.Csv,
+      totalOperationalCosts: 0,
+      importBatchId: 'batch-001',
+      operations: [
+        {
+          ticker: 'B3SA3',
+          assetType: AssetType.Stock,
+          operationType: OperationType.Buy,
+          quantity: 3,
+          unitPrice: 12,
+          irrfWithheld: 0,
+        },
+      ],
+    };
+
+    const firstRun = await importBrokerageNoteUseCase.execute(input);
+    const secondRun = await importBrokerageNoteUseCase.execute(input);
+
+    const persistedOperations = await operationRepository.findByTicker('B3SA3');
+    expect(persistedOperations).toHaveLength(1);
+    expect(firstRun).toEqual({
+      createdOperationsCount: 1,
+      recalculatedPositionsCount: 1,
+    });
+    expect(secondRun).toEqual({
+      createdOperationsCount: 0,
+      recalculatedPositionsCount: 0,
+    });
+    expect(persistedOperations[0]?.externalRef).toBeTruthy();
+    expect(persistedOperations[0]?.importBatchId).toBe('batch-001');
+  });
+
+  it('persists duplicated-looking rows from the same batch as distinct operations', async () => {
+    const result = await importBrokerageNoteUseCase.execute({
+      tradeDate: '2025-03-20',
+      broker: 'XP',
+      sourceType: SourceType.Csv,
+      importBatchId: 'batch-duplicate-lines',
+      totalOperationalCosts: 0,
+      operations: [
+        {
+          ticker: 'ITSA4',
+          assetType: AssetType.Stock,
+          operationType: OperationType.Buy,
+          quantity: 1,
+          unitPrice: 10,
+          irrfWithheld: 0,
+        },
+        {
+          ticker: 'ITSA4',
+          assetType: AssetType.Stock,
+          operationType: OperationType.Buy,
+          quantity: 1,
+          unitPrice: 10,
+          irrfWithheld: 0,
+        },
+      ],
+    });
+
+    const persistedOperations = await operationRepository.findByTicker('ITSA4');
+    expect(result).toEqual({
+      createdOperationsCount: 2,
+      recalculatedPositionsCount: 1,
+    });
+    expect(persistedOperations).toHaveLength(2);
+    expect(persistedOperations[0]?.externalRef).not.toBe(persistedOperations[1]?.externalRef);
+  });
 });

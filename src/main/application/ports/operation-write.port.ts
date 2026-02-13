@@ -10,8 +10,11 @@ export type OperationWriteInput = {
   irrfWithheld: number;
   broker: string;
   sourceType: SourceType;
+  externalRef?: string;
+  importBatchId?: string;
 };
 
 export interface OperationWritePort {
   create(input: OperationWriteInput): Promise<unknown>;
+  createIfNotExists(input: OperationWriteInput & { externalRef: string }): Promise<boolean>;
 }

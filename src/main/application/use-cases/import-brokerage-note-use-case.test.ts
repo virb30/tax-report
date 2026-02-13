@@ -5,7 +5,7 @@ import { ImportBrokerageNoteUseCase } from './import-brokerage-note-use-case';
 import type { RecalculateAssetPositionUseCase } from './recalculate-asset-position-use-case';
 
 describe('ImportBrokerageNoteUseCase', () => {
-  let operationWritePort: { create: jest.Mock };
+  let operationWritePort: { create: jest.Mock; createIfNotExists: jest.Mock };
   let recalculateAssetPositionUseCase: RecalculateAssetPositionUseCase;
   let executeRecalculateSpy: jest.Mock;
   let useCase: ImportBrokerageNoteUseCase;
@@ -13,6 +13,7 @@ describe('ImportBrokerageNoteUseCase', () => {
   beforeEach(() => {
     operationWritePort = {
       create: jest.fn().mockResolvedValue(undefined),
+      createIfNotExists: jest.fn().mockResolvedValue(true),
     };
     executeRecalculateSpy = jest.fn().mockResolvedValue(undefined);
     recalculateAssetPositionUseCase = {
@@ -52,12 +53,12 @@ describe('ImportBrokerageNoteUseCase', () => {
       ],
     });
 
-    expect(operationWritePort.create).toHaveBeenCalledTimes(2);
-    expect(operationWritePort.create).toHaveBeenNthCalledWith(
+    expect(operationWritePort.createIfNotExists).toHaveBeenCalledTimes(2);
+    expect(operationWritePort.createIfNotExists).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({ ticker: 'PETR4', operationalCosts: 0.33 }),
     );
-    expect(operationWritePort.create).toHaveBeenNthCalledWith(
+    expect(operationWritePort.createIfNotExists).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({ ticker: 'VALE3', operationalCosts: 0.67 }),
     );
@@ -94,12 +95,49 @@ describe('ImportBrokerageNoteUseCase', () => {
       ],
     });
 
-    expect(operationWritePort.create).toHaveBeenCalledTimes(2);
+    expect(operationWritePort.createIfNotExists).toHaveBeenCalledTimes(2);
     expect(executeRecalculateSpy).toHaveBeenCalledTimes(1);
     expect(executeRecalculateSpy).toHaveBeenCalledWith({
       ticker: 'PETR4',
       broker: 'XP',
       assetType: AssetType.Stock,
+    });
+  });
+
+  it('skips duplicates when operation already exists by external ref', async () => {
+    operationWritePort.createIfNotExists
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false);
+
+    const result = await useCase.execute({
+      tradeDate: '2025-02-01',
+      broker: 'XP',
+      sourceType: SourceType.Pdf,
+      totalOperationalCosts: 0,
+      operations: [
+        {
+          ticker: 'PETR4',
+          assetType: AssetType.Stock,
+          operationType: OperationType.Buy,
+          quantity: 1,
+          unitPrice: 10,
+          irrfWithheld: 0,
+        },
+        {
+          ticker: 'VALE3',
+          assetType: AssetType.Stock,
+          operationType: OperationType.Buy,
+          quantity: 1,
+          unitPrice: 10,
+          irrfWithheld: 0,
+        },
+      ],
+    });
+
+    expect(executeRecalculateSpy).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      createdOperationsCount: 1,
+      recalculatedPositionsCount: 1,
     });
   });
 

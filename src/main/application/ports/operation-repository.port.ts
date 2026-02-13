@@ -11,6 +11,8 @@ export type OperationWritePayload = {
   broker: string;
   sourceType: SourceType;
   importedAt?: string;
+  externalRef?: string;
+  importBatchId?: string;
 };
 
 export type PeriodOperationRecord = {
@@ -24,6 +26,8 @@ export type PeriodOperationRecord = {
   broker: string;
   sourceType: SourceType;
   importedAt: string;
+  externalRef: string | null;
+  importBatchId: string | null;
 };
 
 export interface OperationRepositoryPort {

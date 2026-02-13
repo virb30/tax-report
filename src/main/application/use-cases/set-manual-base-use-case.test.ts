@@ -5,13 +5,15 @@ import { SetManualBaseUseCase } from './set-manual-base-use-case';
 
 describe('SetManualBaseUseCase', () => {
   let portfolioPositionRepository: PortfolioPositionRepositoryPort;
+  let saveMock: jest.Mock;
   let useCase: SetManualBaseUseCase;
 
   beforeEach(() => {
+    saveMock = jest.fn().mockResolvedValue(undefined);
     portfolioPositionRepository = {
       findByTickerAndBroker: jest.fn(),
       findAll: jest.fn(),
-      save: jest.fn().mockResolvedValue(undefined),
+      save: saveMock,
     };
     useCase = new SetManualBaseUseCase(portfolioPositionRepository);
   });
@@ -25,7 +27,7 @@ describe('SetManualBaseUseCase', () => {
       averagePrice: 25,
     });
 
-    expect(portfolioPositionRepository.save).toHaveBeenCalledWith({
+    expect(saveMock).toHaveBeenCalledWith({
       ticker: 'ITUB4',
       broker: 'XP',
       assetType: AssetType.Stock,

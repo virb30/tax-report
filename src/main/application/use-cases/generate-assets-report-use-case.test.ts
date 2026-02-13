@@ -7,111 +7,115 @@ import { GenerateAssetsReportUseCase } from './generate-assets-report-use-case';
 describe('GenerateAssetsReportUseCase', () => {
   let portfolioPositionRepository: PortfolioPositionRepositoryPort;
   let operationRepository: OperationRepositoryPort;
+  let findAllMock: jest.Mock;
+  let findByPeriodMock: jest.Mock;
   let useCase: GenerateAssetsReportUseCase;
 
   beforeEach(() => {
+    findAllMock = jest.fn().mockResolvedValue([
+      {
+        ticker: 'PETR4',
+        broker: 'XP',
+        assetType: AssetType.Stock,
+        quantity: 10,
+        averagePrice: 20,
+        isManualBase: false,
+      },
+      {
+        ticker: 'HGLG11',
+        broker: 'XP',
+        assetType: AssetType.Fii,
+        quantity: 0,
+        averagePrice: 150,
+        isManualBase: false,
+      },
+      {
+        ticker: 'IVVB11',
+        broker: 'XP',
+        assetType: AssetType.Etf,
+        quantity: 0,
+        averagePrice: 0,
+        isManualBase: false,
+      },
+      {
+        ticker: 'AAPL34',
+        broker: 'XP',
+        assetType: AssetType.Bdr,
+        quantity: 0,
+        averagePrice: 0,
+        isManualBase: false,
+      },
+    ]);
     portfolioPositionRepository = {
       findByTickerAndBroker: jest.fn(),
-      findAll: jest.fn().mockResolvedValue([
-        {
-          ticker: 'PETR4',
-          broker: 'XP',
-          assetType: AssetType.Stock,
-          quantity: 10,
-          averagePrice: 20,
-          isManualBase: false,
-        },
-        {
-          ticker: 'HGLG11',
-          broker: 'XP',
-          assetType: AssetType.Fii,
-          quantity: 0,
-          averagePrice: 150,
-          isManualBase: false,
-        },
-        {
-          ticker: 'IVVB11',
-          broker: 'XP',
-          assetType: AssetType.Etf,
-          quantity: 0,
-          averagePrice: 0,
-          isManualBase: false,
-        },
-        {
-          ticker: 'AAPL34',
-          broker: 'XP',
-          assetType: AssetType.Bdr,
-          quantity: 0,
-          averagePrice: 0,
-          isManualBase: false,
-        },
-      ]),
+      findAll: findAllMock,
       save: jest.fn(),
     };
+    findByPeriodMock = jest.fn().mockResolvedValue([
+      {
+        tradeDate: '2025-01-01',
+        operationType: OperationType.Buy,
+        ticker: 'PETR4',
+        quantity: 10,
+        unitPrice: 20,
+        operationalCosts: 0,
+        irrfWithheld: 0,
+        broker: 'XP',
+        sourceType: SourceType.Pdf,
+        importedAt: '2025-01-01T00:00:00.000Z',
+      },
+      {
+        tradeDate: '2025-01-02',
+        operationType: OperationType.Buy,
+        ticker: 'HGLG11',
+        quantity: 1,
+        unitPrice: 150,
+        operationalCosts: 0,
+        irrfWithheld: 0,
+        broker: 'XP',
+        sourceType: SourceType.Csv,
+        importedAt: '2025-01-02T00:00:00.000Z',
+      },
+      {
+        tradeDate: '2025-01-03',
+        operationType: OperationType.Buy,
+        ticker: 'IVVB11',
+        quantity: 5,
+        unitPrice: 300,
+        operationalCosts: 0,
+        irrfWithheld: 0,
+        broker: 'XP',
+        sourceType: SourceType.Pdf,
+        importedAt: '2025-01-03T00:00:00.000Z',
+      },
+      {
+        tradeDate: '2025-01-04',
+        operationType: OperationType.Buy,
+        ticker: 'AAPL34',
+        quantity: 2,
+        unitPrice: 40,
+        operationalCosts: 0,
+        irrfWithheld: 0,
+        broker: 'XP',
+        sourceType: SourceType.Pdf,
+        importedAt: '2025-01-04T00:00:00.000Z',
+      },
+      {
+        tradeDate: '2025-01-05',
+        operationType: OperationType.Sell,
+        ticker: 'ABEV3',
+        quantity: 1,
+        unitPrice: 12,
+        operationalCosts: 0,
+        irrfWithheld: 0,
+        broker: 'XP',
+        sourceType: SourceType.Manual,
+        importedAt: '2025-01-05T00:00:00.000Z',
+      },
+    ]);
     operationRepository = {
       saveMany: jest.fn(),
-      findByPeriod: jest.fn().mockResolvedValue([
-        {
-          tradeDate: '2025-01-01',
-          operationType: OperationType.Buy,
-          ticker: 'PETR4',
-          quantity: 10,
-          unitPrice: 20,
-          operationalCosts: 0,
-          irrfWithheld: 0,
-          broker: 'XP',
-          sourceType: SourceType.Pdf,
-          importedAt: '2025-01-01T00:00:00.000Z',
-        },
-        {
-          tradeDate: '2025-01-02',
-          operationType: OperationType.Buy,
-          ticker: 'HGLG11',
-          quantity: 1,
-          unitPrice: 150,
-          operationalCosts: 0,
-          irrfWithheld: 0,
-          broker: 'XP',
-          sourceType: SourceType.Csv,
-          importedAt: '2025-01-02T00:00:00.000Z',
-        },
-        {
-          tradeDate: '2025-01-03',
-          operationType: OperationType.Buy,
-          ticker: 'IVVB11',
-          quantity: 5,
-          unitPrice: 300,
-          operationalCosts: 0,
-          irrfWithheld: 0,
-          broker: 'XP',
-          sourceType: SourceType.Pdf,
-          importedAt: '2025-01-03T00:00:00.000Z',
-        },
-        {
-          tradeDate: '2025-01-04',
-          operationType: OperationType.Buy,
-          ticker: 'AAPL34',
-          quantity: 2,
-          unitPrice: 40,
-          operationalCosts: 0,
-          irrfWithheld: 0,
-          broker: 'XP',
-          sourceType: SourceType.Pdf,
-          importedAt: '2025-01-04T00:00:00.000Z',
-        },
-        {
-          tradeDate: '2025-01-05',
-          operationType: OperationType.Sell,
-          ticker: 'ABEV3',
-          quantity: 1,
-          unitPrice: 12,
-          operationalCosts: 0,
-          irrfWithheld: 0,
-          broker: 'XP',
-          sourceType: SourceType.Manual,
-          importedAt: '2025-01-05T00:00:00.000Z',
-        },
-      ]),
+      findByPeriod: findByPeriodMock,
     };
     useCase = new GenerateAssetsReportUseCase(portfolioPositionRepository, operationRepository);
   });
@@ -119,12 +123,12 @@ describe('GenerateAssetsReportUseCase', () => {
   it('generates annual report with positive positions and classifications', async () => {
     const result = await useCase.execute({ baseYear: 2025 });
 
-    expect(portfolioPositionRepository.findAll).toHaveBeenCalledTimes(1);
-    expect(operationRepository.findByPeriod).toHaveBeenNthCalledWith(1, {
+    expect(findAllMock).toHaveBeenCalledTimes(1);
+    expect(findByPeriodMock).toHaveBeenNthCalledWith(1, {
       startDate: '0000-01-01',
       endDate: '2025-12-31',
     });
-    expect(operationRepository.findByPeriod).toHaveBeenNthCalledWith(2, {
+    expect(findByPeriodMock).toHaveBeenNthCalledWith(2, {
       startDate: '0000-01-01',
       endDate: '9999-12-31',
     });

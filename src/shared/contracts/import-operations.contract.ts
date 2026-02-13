@@ -14,6 +14,7 @@ export type ImportOperationsCommand = {
   broker: string;
   sourceType: SourceType;
   totalOperationalCosts: number;
+  importBatchId?: string;
   operations: ImportOperationInput[];
 };
 
