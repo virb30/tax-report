@@ -2,7 +2,7 @@
 
 ## Tarefas
 
-- [ ] 1.0 Scaffolding e Infraestrutura Base
+- [x] 1.0 Scaffolding e Infraestrutura Base
 - [ ] 2.0 Camada de Dados e Persistência
 - [ ] 3.0 Contratos Compartilhados e IPC Base
 - [ ] 4.0 Motor de Cálculo de Preço Médio
