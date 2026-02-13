@@ -24,6 +24,21 @@ class InMemoryPortfolioPositionRepository implements PortfolioPositionRepository
     });
   }
 
+  findAll() {
+    const snapshots = [...this.data.entries()].map(([key, value]) => {
+      const [ticker, broker] = key.split('-');
+      return {
+        ticker: ticker ?? '',
+        broker: broker ?? '',
+        assetType: AssetType.Stock,
+        quantity: value.quantity,
+        averagePrice: value.averagePrice,
+        isManualBase: value.isManualBase,
+      };
+    });
+    return Promise.resolve(snapshots);
+  }
+
   save(snapshot: {
     ticker: string;
     broker: string;

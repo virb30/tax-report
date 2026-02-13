@@ -11,7 +11,7 @@ Finalizar o MVP com foco na confiabilidade da geração do relatório anual de B
 - Garantir qualidade dos dados exibidos no relatório em 31/12 e textos de discriminação
 - Instrumentar logs estruturados e métricas essenciais para rastrear falhas e performance
 - Consolidar checklist de aceite funcional e técnico para release do MVP
-- Definir explicitamente que DARF e prejuízo acumulado pertencem à tarefa 10.0 (v2)
+- Definir explicitamente que DARF e prejuízo acumulado pertencem à tarefa 11.0 (v2)
 - Cobrir o fechamento do MVP com testes de integração e E2E
 </requirements>
 
@@ -19,15 +19,13 @@ Finalizar o MVP com foco na confiabilidade da geração do relatório anual de B
 
 - [ ] 9.1 Validar consistência do relatório anual com posição e preço médio persistidos
 - [ ] 9.2 Validar classificação por grupo/código e texto de discriminação por ativo
-- [ ] 9.3 Instrumentar logs estruturados com correlação por `requestId` e `importBatchId`
-- [ ] 9.4 Instrumentar métricas técnicas mínimas para importação, domínio e repositórios
-- [ ] 9.5 Consolidar checklist de aceite do MVP com cenários positivos e negativos
-- [ ] 9.6 Criar testes de integração do relatório anual com base persistida
-- [ ] 9.7 Criar suíte E2E de regressão do fluxo completo do MVP
+- [ ] 9.4 Consolidar checklist de aceite do MVP com cenários positivos e negativos
+- [ ] 9.5 Criar testes de integração do relatório anual com base persistida
+- [ ] 9.6 Criar suíte E2E de regressão do fluxo completo do MVP
 
 ## Detalhes de Implementação
 
-Consulte na `techspec.md` as seções **"Monitoramento e Observabilidade"**, **"Abordagem de Testes"** (integração e E2E) e **"Sequenciamento de Desenvolvimento"** (item 7). Consulte no `prd.md` os requisitos RF-29 a RF-32, critérios de sucesso do produto e requisitos de UX para feedback claro.
+Consulte na `techspec.md` as seções **"Abordagem de Testes"** (integração e E2E) e **"Sequenciamento de Desenvolvimento"** (item 7). Consulte no `prd.md` os requisitos RF-29 a RF-32, critérios de sucesso do produto e requisitos de UX para feedback claro.
 
 ## Critérios de Sucesso
 

@@ -100,4 +100,44 @@ describe('LegacyPortfolioAcl', () => {
     expect(trades[0]?.operationType).toBe(OperationType.Buy);
     expect(trades[0]?.operationalCosts).toBe(1);
   });
+
+  it('lists all stored positions', async () => {
+    await acl.save({
+      ticker: 'PETR4',
+      broker: 'XP',
+      assetType: AssetType.Stock,
+      quantity: 10,
+      averagePrice: 30,
+      isManualBase: false,
+    });
+    await acl.save({
+      ticker: 'HGLG11',
+      broker: 'XP',
+      assetType: AssetType.Fii,
+      quantity: 2,
+      averagePrice: 150,
+      isManualBase: true,
+    });
+
+    const snapshots = await acl.findAll();
+
+    expect(snapshots).toEqual([
+      {
+        ticker: 'PETR4',
+        broker: 'XP',
+        assetType: AssetType.Stock,
+        quantity: 10,
+        averagePrice: 30,
+        isManualBase: false,
+      },
+      {
+        ticker: 'HGLG11',
+        broker: 'XP',
+        assetType: AssetType.Fii,
+        quantity: 2,
+        averagePrice: 150,
+        isManualBase: true,
+      },
+    ]);
+  });
 });

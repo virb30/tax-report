@@ -1,54 +1,60 @@
-# Tarefa 10.0: v2 - Domínio TaxCompliance (Apuração Mensal, DARF e Prejuízo Acumulado)
+# Tarefa 10.0: Fluxo de Posição Inicial e Gestão de Carteira por Planilha (Bootstrap + Upsert)
 
 <critical>Ler os arquivos de prd.md e techspec.md desta pasta, se você não ler esses arquivos sua tarefa será invalidada</critical>
 
 ## Visão Geral
 
-Implementar na v2 o domínio de `TaxCompliance` para apuração mensal por categoria de ativo, compensação de prejuízos acumulados e cálculo de DARF com dedução de IRRF. Esta tarefa depende da conclusão do MVP (9.0) e amplia o produto com o fluxo fiscal mensal.
+Garantir a jornada inicial de carteira no MVP: ao abrir o app, o sistema detecta se existem ativos na base; sem ativos, orienta a importação de planilha de posição atual; com ativos, apresenta tabela com `ticker`, `quantidade`, `preço médio` e `total` calculado. A tarefa também cobre edição manual de preço médio, exclusão de ativo e reimportação com upsert por ticker.
 
 <requirements>
-- Implementar `MonthlyTaxAssessment` e `AccumulatedLossLedger`
-- Implementar `LossCompensationService` com segregação por categoria tributária
-- Implementar `DarfCalculatorService` com dedução de IRRF e piso zero
-- Aplicar isenção mensal para ações conforme limite configurado
-- Garantir separação por categorias (acoes, fii, etf, bdr) conforme PRD
-- Disponibilizar resultado de apuração para consumo por aplicação, IPC e UI da v2
-- Cobrir regras fiscais com testes de unidade e integração
+- Detectar no carregamento da tela se a base possui ativos cadastrados
+- Exibir estado vazio com CTA para importar planilha quando não houver ativos
+- Aceitar planilha de posição atual com colunas mínimas: `ticker`, `quantidade`, `preço médio` (opcional)
+- Persistir importação inicial criando posições para os tickers recebidos
+- Exibir tabela de posições quando houver dados, incluindo coluna `total = preço médio x quantidade`
+- Permitir edição manual de preço médio com impacto nos cálculos posteriores
+- Permitir exclusão de ativo da base pela tela de posições
+- Permitir nova importação com regra de upsert: atualizar tickers existentes e criar tickers ausentes
+- Cobrir toda a jornada com testes de unidade e integração
 </requirements>
 
 ## Subtarefas
 
-- [ ] 10.1 Definir entidades e value objects do contexto `TaxCompliance`
-- [ ] 10.2 Implementar consolidação mensal por categoria de ativo
-- [ ] 10.3 Implementar compensação de prejuízos acumulados por categoria
-- [ ] 10.4 Implementar cálculo de DARF com dedução de IRRF
-- [ ] 10.5 Implementar regra de isenção para ações abaixo do limite mensal
-- [ ] 10.6 Expor DTOs e contratos para consulta de apuração mensal na aplicação
-- [ ] 10.7 Criar testes de unidade para lucro, prejuízo, compensação e isenção
-- [ ] 10.8 Criar testes de integração para meses encadeados com compensação acumulada
+- [ ] 10.1 Definir contrato de consulta de estado inicial da carteira (base vazia vs base preenchida)
+- [ ] 10.2 Implementar caso de uso de importação de posição atual por planilha com validação de colunas mínimas
+- [ ] 10.3 Implementar estratégia de upsert por `ticker` para reimportações de planilha
+- [ ] 10.4 Implementar caso de uso para edição manual de preço médio com persistência imediata
+- [ ] 10.5 Implementar caso de uso para exclusão de ativo da carteira
+- [ ] 10.6 Expor handlers IPC e contratos compartilhados para listar posições, importar, editar e excluir
+- [ ] 10.7 Implementar UI de estado vazio com CTA de importação e feedback de validação
+- [ ] 10.8 Implementar UI da tabela de posições com colunas `ticker`, `quantidade`, `preço médio` e `total`
+- [ ] 10.9 Criar testes de unidade dos casos de uso (validação, upsert, edição e exclusão)
+- [ ] 10.10 Criar testes de integração da jornada completa (primeira carga e reimportação)
 
 ## Detalhes de Implementação
 
-Consulte na `techspec.md` as seções **"Modelos de Dados"** (TaxCompliance), **"Abordagem de Testes"** (domínio e integração) e **"Sequenciamento de Desenvolvimento"** (item 3). Consulte no `prd.md` os requisitos RF-20 a RF-28 e RF-37 a RF-38.
+Consulte na `techspec.md` as seções **"Fluxo principal de dados"** (IPC tipado entre renderer e main), **"Modelos de Dados"** (`AssetPosition` e DTOs de aplicação), **"Abordagem de Testes"** (unidade e integração) e **"Sequenciamento de Desenvolvimento"** (integração e E2E). Consulte no `prd.md` os requisitos RF-12 a RF-15, RF-29, RF-33 a RF-35 e os requisitos de UX do fluxo principal.
 
 ## Critérios de Sucesso
 
-- Apuração mensal por categoria implementada com regras tributárias corretas
-- Compensação de prejuízo ocorre sem cruzamento indevido entre categorias
-- DARF final considera IRRF e nunca resulta em valor negativo
-- Resultado de apuração pronto para consumo pela aplicação e UI da v2
+- Ao abrir o sistema sem ativos cadastrados, a UI exibe estado vazio com opção de importação de planilha
+- Ao abrir o sistema com ativos cadastrados, a UI exibe tabela com os campos esperados e total calculado por linha
+- Importação inicial insere posições corretamente a partir da planilha válida
+- Reimportação aplica upsert corretamente: atualiza tickers existentes e cria novos tickers
+- Edição manual de preço médio e exclusão de ativo funcionam e persistem sem inconsistência
+- Jornada completa validada por suíte de unidade e integração
 
 ## Testes da Tarefa
 
-- [ ] Testes de unidade (cenários fiscais completos por categoria)
-- [ ] Testes de integração (sequência de meses com compensação e DARF)
+- [ ] Testes de unidade (validação de planilha, cálculo de total exibido, regras de upsert, edição e exclusão)
+- [ ] Testes de integração (carregamento inicial, importação com base vazia, reimportação com base preenchida)
 
 <critical>SEMPRE CRIE E EXECUTE OS TESTES DA TAREFA ANTES DE CONSIDERÁ-LA FINALIZADA</critical>
 
 ## Arquivos relevantes
-- `src/main/domain/tax-compliance/`
 - `src/main/application/use-cases/`
 - `src/main/application/ports/`
 - `src/main/infrastructure/persistence/`
 - `src/main/ipc/handlers/`
+- `src/renderer/`
 - `src/shared/contracts/`

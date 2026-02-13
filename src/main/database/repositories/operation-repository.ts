@@ -1,6 +1,32 @@
 import type { Knex } from 'knex';
 import { type Operation, type OperationType, type SourceType } from '../../../shared/types/domain';
 
+type OperationWritePayload = {
+  tradeDate: string;
+  operationType: OperationType;
+  ticker: string;
+  quantity: number;
+  unitPrice: number;
+  operationalCosts: number;
+  irrfWithheld: number;
+  broker: string;
+  sourceType: SourceType;
+  importedAt?: string;
+};
+
+type PeriodOperationRecord = {
+  tradeDate: string;
+  operationType: OperationType;
+  ticker: string;
+  quantity: number;
+  unitPrice: number;
+  operationalCosts: number;
+  irrfWithheld: number;
+  broker: string;
+  sourceType: SourceType;
+  importedAt: string;
+};
+
 type OperationRow = {
   id: number;
   trade_date: string;
@@ -48,6 +74,27 @@ function mapOperationRow(row: OperationRow): Operation {
 export class OperationRepository {
   constructor(private readonly database: Knex) {}
 
+  async saveMany(operations: OperationWritePayload[]): Promise<void> {
+    if (operations.length === 0) {
+      return;
+    }
+
+    const payload = operations.map((operation) => ({
+      trade_date: operation.tradeDate,
+      operation_type: operation.operationType,
+      ticker: operation.ticker,
+      quantity: operation.quantity,
+      unit_price: operation.unitPrice,
+      operational_costs: operation.operationalCosts,
+      irrf_withheld: operation.irrfWithheld,
+      broker: operation.broker,
+      source_type: operation.sourceType,
+      imported_at: operation.importedAt ?? this.database.fn.now(),
+    }));
+
+    await this.database('operations').insert(payload);
+  }
+
   async create(input: OperationCreateInput): Promise<Operation> {
     const [id] = await this.database('operations').insert({
       trade_date: input.tradeDate,
@@ -87,6 +134,10 @@ export class OperationRepository {
       .orderBy('id', 'asc');
 
     return rows.map(mapOperationRow);
+  }
+
+  async findByPeriod(input: { startDate: string; endDate: string }): Promise<PeriodOperationRecord[]> {
+    return this.findByDateRange(input.startDate, input.endDate);
   }
 
   async findByTicker(ticker: string): Promise<Operation[]> {

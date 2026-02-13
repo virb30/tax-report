@@ -103,6 +103,28 @@ describe('OperationRepository', () => {
     expect(operations[1]?.tradeDate).toBe('2025-03-05');
   });
 
+  it('finds operations by period contract', async () => {
+    await repository.create({
+      tradeDate: '2025-05-01',
+      operationType: OperationType.Buy,
+      ticker: 'PETR4',
+      quantity: 2,
+      unitPrice: 20,
+      operationalCosts: 0,
+      irrfWithheld: 0,
+      broker: 'XP',
+      sourceType: SourceType.Pdf,
+    });
+
+    const operations = await repository.findByPeriod({
+      startDate: '2025-05-01',
+      endDate: '2025-05-31',
+    });
+
+    expect(operations).toHaveLength(1);
+    expect(operations[0]?.ticker).toBe('PETR4');
+  });
+
   it('finds operations by ticker', async () => {
     await repository.create({
       tradeDate: '2025-04-01',
@@ -254,6 +276,47 @@ describe('OperationRepository', () => {
     const allOperations = await repository.findAll();
 
     expect(allOperations).toHaveLength(2);
+  });
+
+  it('saves many operations at once', async () => {
+    await repository.saveMany([
+      {
+        tradeDate: '2025-11-01',
+        operationType: OperationType.Buy,
+        ticker: 'PETR4',
+        quantity: 10,
+        unitPrice: 20,
+        operationalCosts: 1,
+        irrfWithheld: 0,
+        broker: 'XP',
+        sourceType: SourceType.Pdf,
+      },
+      {
+        tradeDate: '2025-11-02',
+        operationType: OperationType.Sell,
+        ticker: 'PETR4',
+        quantity: 2,
+        unitPrice: 25,
+        operationalCosts: 0.5,
+        irrfWithheld: 0.1,
+        broker: 'XP',
+        sourceType: SourceType.Csv,
+      },
+    ]);
+
+    const operations = await repository.findByTicker('PETR4');
+
+    expect(operations).toHaveLength(2);
+    expect(operations[0]?.operationType).toBe(OperationType.Buy);
+    expect(operations[1]?.operationType).toBe(OperationType.Sell);
+  });
+
+  it('ignores empty saveMany payload', async () => {
+    await repository.saveMany([]);
+
+    const operations = await repository.findAll();
+
+    expect(operations).toHaveLength(0);
   });
 
   it('deletes operation', async () => {

@@ -171,23 +171,6 @@ Não há API HTTP no MVP. A superfície de integração é IPC tipado:
 - Definição de formato de template CSV/Excel permanece dependência funcional para ingestão.
 - Biblioteca de parsing PDF pode variar por qualidade de extração; manter adapter isolado.
 
-## Monitoramento e Observabilidade
-
-- **Métricas (formato compatível com Prometheus, export local/logado)**
-  - `tax_report_import_duration_ms`
-  - `tax_report_import_records_total`
-  - `tax_report_domain_validation_errors_total`
-  - `tax_report_monthly_assessment_duration_ms`
-  - `tax_report_repository_query_duration_ms`
-- **Logs estruturados**
-  - `INFO`: início/fim de caso de uso e contagens.
-  - `WARN`: inconsistências recuperáveis (ex.: linha inválida ignorada).
-  - `ERROR`: falhas de domínio, persistência e parsing.
-  - Correlação por `requestId`/`importBatchId`.
-- **Dashboards**
-  - Em ambiente local, painel inicial pode ser substituído por relatório de logs.
-  - Estrutura de métricas pronta para futura integração com Grafana.
-
 ## Considerações Técnicas
 
 ### Decisões Principais

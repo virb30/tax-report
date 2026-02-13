@@ -61,6 +61,18 @@ export class LegacyPortfolioAcl
     });
   }
 
+  async findAll(): Promise<AssetPositionSnapshot[]> {
+    const assets = await this.assetRepository.findAll();
+    return assets.map((asset) => ({
+      ticker: asset.ticker,
+      broker: asset.broker,
+      assetType: asset.assetType,
+      quantity: asset.quantity,
+      averagePrice: asset.averagePrice,
+      isManualBase: asset.isManualBase,
+    }));
+  }
+
   async findTradesByTickerAndBroker(input: {
     ticker: string;
     broker: string;

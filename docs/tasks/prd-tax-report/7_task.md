@@ -10,8 +10,6 @@ Implementar adapters de infraestrutura necessários para o fluxo do relatório a
 - Implementar adapters de repositório para ports de aplicação
 - Implementar parser modular por strategy para notas e movimentações
 - Validar e normalizar dados de entrada antes de persistir
-- Implementar rastreabilidade por lote de importação (`importBatchId`)
-- Garantir idempotência de importação no modelo inicial do projeto novo
 - Entregar somente integrações necessárias para o MVP de relatório (sem dependência de cálculo DARF)
 - Cobrir integração parser -> use case -> repositório com testes
 </requirements>
@@ -20,13 +18,12 @@ Implementar adapters de infraestrutura necessários para o fluxo do relatório a
 
 - [ ] 7.1 Implementar adapters de persistência para `assets` e `operations` do fluxo MVP
 - [ ] 7.2 Implementar mapeadores row <-> domínio nos adapters
-- [ ] 7.3 Implementar parser PDF (XP/SINACOR) com contrato de parser port
-- [ ] 7.4 Implementar parser CSV/XLSX com validação de template
-- [ ] 7.5 Implementar estratégia de seleção de parser por corretora e tipo de arquivo
-- [ ] 7.6 Implementar idempotência de importação e rastreabilidade por lote
-- [ ] 7.7 Definir contratos de consulta para posição em 31/12 e discriminação do relatório
-- [ ] 7.8 Criar testes de unidade para mapeadores e validações de parser
-- [ ] 7.9 Criar testes de integração de ingestão completa com persistência
+- [ ] 7.3 Implementar parser CSV/XLSX com validação de template
+- [ ] 7.4 Implementar estratégia de seleção de parser por corretora e tipo de arquivo
+- [ ] 7.5 Implementar idempotência de importação e rastreabilidade por lote
+- [ ] 7.6 Definir contratos de consulta para posição em 31/12 e discriminação do relatório
+- [ ] 7.7 Criar testes de unidade para mapeadores e validações de parser
+- [ ] 7.8 Criar testes de integração de ingestão completa com persistência
 
 ## Detalhes de Implementação
 

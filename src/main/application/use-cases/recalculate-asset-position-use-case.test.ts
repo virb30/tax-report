@@ -12,6 +12,7 @@ describe('RecalculateAssetPositionUseCase', () => {
   beforeEach(() => {
     portfolioPositionRepository = {
       findByTickerAndBroker: jest.fn(),
+      findAll: jest.fn(),
       save: jest.fn(),
     };
     tradeOperationQuery = {

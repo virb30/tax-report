@@ -1,22 +1,7 @@
 import { OperationalCostAllocationService } from '../../domain/ingestion/operational-cost-allocation.service';
 import type { BrokerageNoteInput } from '../contracts/brokerage-note.contract';
+import type { OperationWritePort } from '../ports/operation-write.port';
 import type { RecalculateAssetPositionUseCase } from './recalculate-asset-position-use-case';
-
-type PersistedOperationInput = {
-  tradeDate: string;
-  operationType: BrokerageNoteInput['operations'][number]['operationType'];
-  ticker: string;
-  quantity: number;
-  unitPrice: number;
-  operationalCosts: number;
-  irrfWithheld: number;
-  broker: string;
-  sourceType: BrokerageNoteInput['sourceType'];
-};
-
-type OperationWritePort = {
-  create(input: PersistedOperationInput): Promise<unknown>;
-};
 
 export type ImportBrokerageNoteResult = {
   createdOperationsCount: number;
