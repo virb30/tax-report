@@ -1,7 +1,46 @@
 import { describe, expect, it, jest } from '@jest/globals';
+import { AssetType } from '../../../shared/types/domain';
 import { createMainLifecycle, type CreateMainLifecycleDependencies } from './create-main-lifecycle';
 
 describe('createMainLifecycle', () => {
+  function createMainHandlersDependencies(): CreateMainLifecycleDependencies['mainHandlersDependencies'] {
+    return {
+      checkHealth: () => ({ status: 'ok' }),
+      previewImportFromFile: async () => ({ commands: [] }),
+      importOperations: async () => ({
+        createdOperationsCount: 1,
+        recalculatedPositionsCount: 1,
+      }),
+      confirmImportOperations: async () => ({
+        createdOperationsCount: 1,
+        recalculatedPositionsCount: 1,
+      }),
+      setManualBase: async () => ({
+        ticker: 'PETR4',
+        broker: 'XP',
+        quantity: 1,
+        averagePrice: 10,
+        isManualBase: true,
+      }),
+      listPositions: async () => ({ items: [] }),
+      generateAssetsReport: async () => ({
+        referenceDate: '2025-12-31',
+        items: [
+          {
+            ticker: 'PETR4',
+            broker: 'XP',
+            assetType: AssetType.Stock,
+            quantity: 1,
+            averagePrice: 10,
+            totalCost: 10,
+            revenueClassification: { group: '03', code: '01' },
+            description: 'desc',
+          },
+        ],
+      }),
+    };
+  }
+
   it('creates lifecycle and registers IPC handlers', () => {
     const app: CreateMainLifecycleDependencies['app'] = {
       on: jest.fn() as unknown as CreateMainLifecycleDependencies['app']['on'],
@@ -22,12 +61,19 @@ describe('createMainLifecycle', () => {
       app,
       browserWindow,
       ipcMain,
+      mainHandlersDependencies: createMainHandlersDependencies(),
       platform: 'linux',
       createMainWindow,
     });
 
     expect(lifecycle).toBeDefined();
     expect(ipcHandleMock).toHaveBeenCalledWith('app:health-check', expect.any(Function));
+    expect(ipcHandleMock).toHaveBeenCalledWith('import:preview-file', expect.any(Function));
+    expect(ipcHandleMock).toHaveBeenCalledWith('import:operations', expect.any(Function));
+    expect(ipcHandleMock).toHaveBeenCalledWith('import:confirm-operations', expect.any(Function));
+    expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:set-manual-base', expect.any(Function));
+    expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:list-positions', expect.any(Function));
+    expect(ipcHandleMock).toHaveBeenCalledWith('report:assets-annual', expect.any(Function));
   });
 
   it('delegates main window creation to injected dependency', async () => {
@@ -48,6 +94,7 @@ describe('createMainLifecycle', () => {
       app,
       browserWindow,
       ipcMain,
+      mainHandlersDependencies: createMainHandlersDependencies(),
       platform: 'linux',
       createMainWindow,
     });

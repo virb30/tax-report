@@ -8,13 +8,23 @@ import type {
 } from '../contracts/import-operations.contract';
 import type { ListPositionsResult } from '../contracts/list-positions.contract';
 import type { SetManualBaseCommand, SetManualBaseResult } from '../contracts/manual-base.contract';
+import type {
+  ConfirmImportOperationsCommand,
+  ConfirmImportOperationsResult,
+  PreviewImportFromFileCommand,
+  PreviewImportFromFileResult,
+} from '../contracts/preview-import.contract';
 
 export type ElectronApi = {
   appName: string;
-  importOperations?: (input: ImportOperationsCommand) => Promise<ImportOperationsResult>;
-  setManualBase?: (input: SetManualBaseCommand) => Promise<SetManualBaseResult>;
-  listPositions?: () => Promise<ListPositionsResult>;
-  generateAssetsReport?: (
+  previewImportFromFile: (input: PreviewImportFromFileCommand) => Promise<PreviewImportFromFileResult>;
+  importOperations: (input: ImportOperationsCommand) => Promise<ImportOperationsResult>;
+  confirmImportOperations: (
+    input: ConfirmImportOperationsCommand,
+  ) => Promise<ConfirmImportOperationsResult>;
+  setManualBase: (input: SetManualBaseCommand) => Promise<SetManualBaseResult>;
+  listPositions: () => Promise<ListPositionsResult>;
+  generateAssetsReport: (
     input: GenerateAssetsReportQuery,
   ) => Promise<GenerateAssetsReportResult>;
 };

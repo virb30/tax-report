@@ -1,6 +1,9 @@
 import type { App } from 'electron';
 import { AppLifecycle } from '../../app-lifecycle';
-import { registerMainHandlers } from '../../ipc/handlers/register-main-handlers';
+import {
+  registerMainHandlers,
+  type MainHandlersDependencies,
+} from '../../ipc/handlers/register-main-handlers';
 
 type BrowserWindowDependency = {
   getAllWindows: () => unknown[];
@@ -23,6 +26,7 @@ export type CreateMainLifecycleDependencies = {
   app: Pick<App, 'on' | 'whenReady' | 'quit'>;
   browserWindow: BrowserWindowDependency;
   ipcMain: IpcMainDependency;
+  mainHandlersDependencies: MainHandlersDependencies;
   platform: NodeJS.Platform;
   createMainWindow: () => void;
 };
@@ -30,7 +34,7 @@ export type CreateMainLifecycleDependencies = {
 export function createMainLifecycle(
   dependencies: CreateMainLifecycleDependencies,
 ): AppLifecycle {
-  registerMainHandlers(dependencies.ipcMain);
+  registerMainHandlers(dependencies.ipcMain, dependencies.mainHandlersDependencies);
   const lifecycleApp = dependencies.app as unknown as LifecycleAppDependency;
 
   return new AppLifecycle({
