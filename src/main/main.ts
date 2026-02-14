@@ -103,13 +103,21 @@ const lifecycle = createMainLifecycle({
       const dependencies = await handlersDependenciesPromise;
       return dependencies.generateAssetsReportUseCase.execute(input);
     },
-    listBrokers: async () => {
+    listBrokers: async (input) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.manageBrokersUseCase.list();
+      return dependencies.manageBrokersUseCase.list(input);
     },
     createBroker: async (input) => {
       const dependencies = await handlersDependenciesPromise;
       return dependencies.manageBrokersUseCase.create(input);
+    },
+    updateBroker: async (input) => {
+      const dependencies = await handlersDependenciesPromise;
+      return dependencies.manageBrokersUseCase.update(input);
+    },
+    toggleBrokerActive: async (input) => {
+      const dependencies = await handlersDependenciesPromise;
+      return dependencies.manageBrokersUseCase.toggleActive(input);
     },
     recalculatePosition: async (input) => {
       const dependencies = await handlersDependenciesPromise;

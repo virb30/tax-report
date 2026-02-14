@@ -26,9 +26,9 @@ export function ImportPage(): JSX.Element {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    void window.electronApi.listBrokers().then((result) => {
+    void window.electronApi.listBrokers({ activeOnly: true }).then((result) => {
       setBrokers(
-        result.items.map((b) => ({ id: b.id, name: b.name, codigo: b.codigo })),
+        result.items.map((b) => ({ id: b.id, name: b.name, codigo: b.code })),
       );
     });
   }, []);

@@ -17,7 +17,12 @@ import type {
 import type {
   CreateBrokerCommand,
   CreateBrokerResult,
+  ListBrokersQuery,
   ListBrokersResult,
+  UpdateBrokerCommand,
+  UpdateBrokerResult,
+  ToggleBrokerActiveCommand,
+  ToggleBrokerActiveResult,
 } from '../contracts/brokers.contract';
 import type {
   RecalculatePositionCommand,
@@ -67,8 +72,10 @@ export type ElectronApi = {
   generateAssetsReport: (
     input: GenerateAssetsReportQuery,
   ) => Promise<GenerateAssetsReportResult>;
-  listBrokers: () => Promise<ListBrokersResult>;
+  listBrokers: (input?: ListBrokersQuery) => Promise<ListBrokersResult>;
   createBroker: (input: CreateBrokerCommand) => Promise<CreateBrokerResult>;
+  updateBroker: (input: UpdateBrokerCommand) => Promise<UpdateBrokerResult>;
+  toggleBrokerActive: (input: ToggleBrokerActiveCommand) => Promise<ToggleBrokerActiveResult>;
   recalculatePosition: (input: RecalculatePositionCommand) => Promise<RecalculatePositionResult>;
   migrateYear: (input: MigrateYearCommand) => Promise<MigrateYearResult>;
   previewConsolidatedPosition: (

@@ -113,6 +113,8 @@ describe('preload', () => {
       'previewImportTransactions',
       'recalculatePosition',
       'setInitialBalance',
+      'toggleBrokerActive',
+      'updateBroker',
     ]);
     expect('invoke' in (electronApi as unknown as Record<string, unknown>)).toBe(false);
     expect('ipcRenderer' in (electronApi as unknown as Record<string, unknown>)).toBe(false);

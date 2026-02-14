@@ -5,5 +5,7 @@ export interface BrokerRepositoryPort {
   findByName(name: string): Promise<BrokerRecord | null>;
   findByCode(codigo: string): Promise<BrokerRecord | null>;
   findAll(): Promise<BrokerRecord[]>;
+  findAllActive(): Promise<BrokerRecord[]>;
   save(broker: BrokerRecord): Promise<void>;
+  update(id: string, data: Partial<Pick<BrokerRecord, 'name' | 'cnpj' | 'code' | 'active'>>): Promise<void>;
 }

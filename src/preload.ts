@@ -1,7 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { ElectronApi } from '@shared/types/electron-api';
 import type { GenerateAssetsReportQuery } from '@shared/contracts/assets-report.contract';
-import type { CreateBrokerCommand } from '@shared/contracts/brokers.contract';
+import type {
+  CreateBrokerCommand,
+  ListBrokersQuery,
+  UpdateBrokerCommand,
+  ToggleBrokerActiveCommand,
+} from '@shared/contracts/brokers.contract';
 import type { RecalculatePositionCommand } from '@shared/contracts/recalculate.contract';
 import type { MigrateYearCommand } from '@shared/contracts/migrate-year.contract';
 import type {
@@ -37,9 +42,14 @@ export const electronApi: ElectronApi = {
     ipcRenderer.invoke('portfolio:list-positions', input),
   generateAssetsReport: (input: GenerateAssetsReportQuery) =>
     ipcRenderer.invoke('report:assets-annual', input),
-  listBrokers: () => ipcRenderer.invoke('brokers:list'),
+  listBrokers: (input?: ListBrokersQuery) =>
+    ipcRenderer.invoke('brokers:list', input),
   createBroker: (input: CreateBrokerCommand) =>
     ipcRenderer.invoke('brokers:create', input),
+  updateBroker: (input: UpdateBrokerCommand) =>
+    ipcRenderer.invoke('brokers:update', input),
+  toggleBrokerActive: (input: ToggleBrokerActiveCommand) =>
+    ipcRenderer.invoke('brokers:toggle-active', input),
   recalculatePosition: (input: RecalculatePositionCommand) =>
     ipcRenderer.invoke('portfolio:recalculate', input),
   migrateYear: (input: MigrateYearCommand) =>

@@ -22,9 +22,9 @@ describe('ImportConsolidatedPositionUseCase', () => {
     brokerRepo.findByCode.mockImplementation((code) =>
       Promise.resolve(
         code === 'XP'
-          ? { id: 'broker-xp', name: 'XP', cnpj: '00.000.000/0001-00', codigo: 'XP' }
+          ? { id: 'broker-xp', name: 'XP', cnpj: '00.000.000/0001-00', code: 'XP', active: true }
           : code === 'CLEAR'
-            ? { id: 'broker-clear', name: 'Clear', cnpj: '11.111.111/0001-11', codigo: 'CLEAR' }
+            ? { id: 'broker-clear', name: 'Clear', cnpj: '11.111.111/0001-11', code: 'CLEAR', active: true }
             : null,
       ),
     );

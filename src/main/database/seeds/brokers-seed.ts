@@ -1,10 +1,10 @@
 import type { Knex } from 'knex';
 
 const KNOWN_BROKERS = [
-  { id: 'broker-xp', name: 'XP Investimentos', cnpj: '02.332.886/0001-04', code: 'XP' },
-  { id: 'broker-clear', name: 'Clear Corretora', cnpj: '02.332.886/0011-78', code: 'CLEAR' },
-  { id: 'broker-inter', name: 'Inter DTVM', cnpj: '19.180.679/0001-92', code: 'INTER' },
-  { id: 'broker-rico', name: 'Rico Investimentos', cnpj: '13.434.335/0001-60', code: 'RICO' },
+  { id: 'broker-xp', name: 'XP Investimentos', cnpj: '02.332.886/0001-04', code: 'XP', active: 1 },
+  { id: 'broker-clear', name: 'Clear Corretora', cnpj: '02.332.886/0011-78', code: 'CLEAR', active: 1 },
+  { id: 'broker-inter', name: 'Inter DTVM', cnpj: '19.180.679/0001-92', code: 'INTER', active: 1 },
+  { id: 'broker-rico', name: 'Rico Investimentos', cnpj: '13.434.335/0001-60', code: 'RICO', active: 1 },
 ];
 
 export const brokersSeed = {
@@ -17,6 +17,7 @@ export const brokersSeed = {
           name: broker.name,
           cnpj: broker.cnpj,
           code: broker.code,
+          active: broker.active,
         })
         .onConflict('id')
         .ignore();

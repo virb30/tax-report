@@ -37,12 +37,14 @@ describe('CsvXlsxTransactionParser', () => {
     brokerRepo.findByCode.mockImplementation((code) =>
       Promise.resolve(
         code === 'XP'
-          ? { id: 'broker-xp', name: 'XP Investimentos', cnpj: '00.000.000/0001-00', code: 'XP' }
+          ? { id: 'broker-xp', name: 'XP Investimentos', cnpj: '00.000.000/0001-00', code: 'XP', active: true }
           : null,
       ),
     );
     brokerRepo.findAll.mockResolvedValue([]);
+    brokerRepo.findAllActive.mockResolvedValue([]);
     brokerRepo.save.mockResolvedValue(undefined);
+    brokerRepo.update.mockResolvedValue(undefined);
     const filePath = await createTempFile(
       'ops.csv',
       [

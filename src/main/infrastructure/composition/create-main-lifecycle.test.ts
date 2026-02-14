@@ -50,7 +50,17 @@ describe('createMainLifecycle', () => {
       createBroker: () =>
         Promise.resolve({
           success: true,
-          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00' },
+          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST', active: true },
+        }),
+      updateBroker: () =>
+        Promise.resolve({
+          success: true,
+          broker: { id: 'broker-1', name: 'Updated', cnpj: '00.000.000/0001-00', code: 'TEST', active: true },
+        }),
+      toggleBrokerActive: () =>
+        Promise.resolve({
+          success: true,
+          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST', active: false },
         }),
       recalculatePosition: () => Promise.resolve(),
       migrateYear: () =>

@@ -27,7 +27,12 @@ import type {
 import type {
   CreateBrokerCommand,
   CreateBrokerResult,
+  ListBrokersQuery,
   ListBrokersResult,
+  UpdateBrokerCommand,
+  UpdateBrokerResult,
+  ToggleBrokerActiveCommand,
+  ToggleBrokerActiveResult,
 } from '@shared/contracts/brokers.contract';
 import type {
   RecalculatePositionCommand,
@@ -74,8 +79,10 @@ export type MainHandlersDependencies = {
   generateAssetsReport: (
     input: GenerateAssetsReportQuery,
   ) => Promise<GenerateAssetsReportResult>;
-  listBrokers: () => Promise<ListBrokersResult>;
+  listBrokers: (input?: ListBrokersQuery) => Promise<ListBrokersResult>;
   createBroker: (input: CreateBrokerCommand) => Promise<CreateBrokerResult>;
+  updateBroker: (input: UpdateBrokerCommand) => Promise<UpdateBrokerResult>;
+  toggleBrokerActive: (input: ToggleBrokerActiveCommand) => Promise<ToggleBrokerActiveResult>;
   recalculatePosition: (input: RecalculatePositionCommand) => Promise<RecalculatePositionResult>;
   migrateYear: (input: MigrateYearCommand) => Promise<MigrateYearResult>;
   previewConsolidatedPosition: (
@@ -109,6 +116,8 @@ export function registerMainHandlers(
     'report:assets-annual',
     'brokers:list',
     'brokers:create',
+    'brokers:update',
+    'brokers:toggle-active',
   ];
 
   ipcMain.handle('app:health-check', () => {
@@ -190,13 +199,24 @@ export function registerMainHandlers(
     return dependencies.generateAssetsReport(payload);
   });
 
-  ipcMain.handle('brokers:list', () => {
-    return dependencies.listBrokers();
+  ipcMain.handle('brokers:list', (_event, input?: ListBrokersQuery) => {
+    const payload = parseListBrokersInput(input);
+    return dependencies.listBrokers(payload);
   });
 
   ipcMain.handle('brokers:create', (_event, input: CreateBrokerCommand) => {
     const payload = parseCreateBrokerInput(input);
     return dependencies.createBroker(payload);
+  });
+
+  ipcMain.handle('brokers:update', (_event, input: UpdateBrokerCommand) => {
+    const payload = parseUpdateBrokerInput(input);
+    return dependencies.updateBroker(payload);
+  });
+
+  ipcMain.handle('brokers:toggle-active', (_event, input: ToggleBrokerActiveCommand) => {
+    const payload = parseToggleBrokerActiveInput(input);
+    return dependencies.toggleBrokerActive(payload);
   });
 
   return registeredChannels;
@@ -424,23 +444,65 @@ function parseDeletePositionInput(input: unknown): DeletePositionCommand {
   return { ticker: payload.ticker, year: payload.year };
 }
 
+function parseListBrokersInput(input: unknown): ListBrokersQuery | undefined {
+  if (input === undefined || input === null) {
+    return undefined;
+  }
+  if (typeof input !== 'object') {
+    return undefined;
+  }
+  const payload = input as { activeOnly?: unknown };
+  if (typeof payload.activeOnly === 'boolean') {
+    return { activeOnly: payload.activeOnly };
+  }
+  return undefined;
+}
+
 function parseCreateBrokerInput(input: unknown): CreateBrokerCommand {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid payload for create broker.');
   }
-  const payload = input as { name?: unknown; cnpj?: unknown; codigo?: unknown };
+  const payload = input as { name?: unknown; cnpj?: unknown; codigo?: unknown; code?: unknown };
   if (typeof payload.name !== 'string') {
     throw new Error('Invalid name for create broker.');
   }
   if (typeof payload.cnpj !== 'string') {
     throw new Error('Invalid CNPJ for create broker.');
   }
-  if (typeof payload.codigo !== 'string') {
-    throw new Error('Invalid codigo for create broker.');
+  const codeValue = payload.code ?? payload.codigo;
+  if (typeof codeValue !== 'string') {
+    throw new Error('Invalid code for create broker.');
   }
   return {
     name: payload.name,
     cnpj: payload.cnpj,
-    codigo: payload.codigo,
+    code: codeValue,
   };
+}
+
+function parseUpdateBrokerInput(input: unknown): UpdateBrokerCommand {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid payload for update broker.');
+  }
+  const payload = input as { id?: unknown; name?: unknown; cnpj?: unknown; code?: unknown };
+  if (typeof payload.id !== 'string' || payload.id.trim().length === 0) {
+    throw new Error('Invalid id for update broker.');
+  }
+  return {
+    id: payload.id,
+    ...(typeof payload.name === 'string' && { name: payload.name }),
+    ...(typeof payload.cnpj === 'string' && { cnpj: payload.cnpj }),
+    ...(typeof payload.code === 'string' && { code: payload.code }),
+  };
+}
+
+function parseToggleBrokerActiveInput(input: unknown): ToggleBrokerActiveCommand {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid payload for toggle broker active.');
+  }
+  const payload = input as { id?: unknown };
+  if (typeof payload.id !== 'string' || payload.id.trim().length === 0) {
+    throw new Error('Invalid id for toggle broker active.');
+  }
+  return { id: payload.id };
 }

@@ -45,7 +45,15 @@ describe('registerMainHandlers', () => {
       listBrokers: jest.fn().mockResolvedValue({ items: [] }),
       createBroker: jest.fn().mockResolvedValue({
         success: true,
-        broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00' },
+        broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST', active: true },
+      }),
+      updateBroker: jest.fn().mockResolvedValue({
+        success: true,
+        broker: { id: 'broker-1', name: 'Updated', cnpj: '00.000.000/0001-00', code: 'TEST', active: true },
+      }),
+      toggleBrokerActive: jest.fn().mockResolvedValue({
+        success: true,
+        broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST', active: false },
       }),
       recalculatePosition: jest.fn().mockResolvedValue(undefined),
       migrateYear: jest.fn().mockResolvedValue({
@@ -85,8 +93,10 @@ describe('registerMainHandlers', () => {
       'report:assets-annual',
       'brokers:list',
       'brokers:create',
+      'brokers:update',
+      'brokers:toggle-active',
     ]);
-    expect(handle).toHaveBeenCalledTimes(17);
+    expect(handle).toHaveBeenCalledTimes(19);
     expect(handle).toHaveBeenCalledWith('app:health-check', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('import:preview-file', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('import:operations', expect.any(Function));

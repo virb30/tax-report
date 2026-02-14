@@ -17,3 +17,4 @@
 - [x] 13.0 Relatório de Bens e Direitos (Tax Reporting Context)
 - [x] 14.0 Ajustes de Modelagem — CNPJ por Ticker, Ano nas Posições, Código da Corretora e Vínculo na Importação
 - [x] 15.0 Importação de Posição Consolidada por Planilha e Exclusão de Ativo
+- [x] 16.0 Edição e Ativação/Desativação de Corretoras

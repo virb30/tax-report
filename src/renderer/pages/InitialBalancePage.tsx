@@ -23,7 +23,9 @@ export function InitialBalancePage(): JSX.Element {
 
   async function loadBrokers(): Promise<void> {
     try {
-      const result: ListBrokersResult = await window.electronApi.listBrokers();
+      const result: ListBrokersResult = await window.electronApi.listBrokers({
+        activeOnly: true,
+      });
       setBrokers(result.items);
       if (result.items.length > 0 && !brokerId) {
         setBrokerId(result.items[0].id);

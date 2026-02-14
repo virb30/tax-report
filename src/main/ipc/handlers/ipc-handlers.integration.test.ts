@@ -27,7 +27,7 @@ import {
   registerMainHandlers,
   type MainHandlersDependencies,
 } from './register-main-handlers';
-import { BrokerListItem } from '@shared/contracts/brokers.contract';
+import { ManageBrokersUseCase } from '../../application/use-cases/manage-brokers-use-case';
 
 type IpcHandler = (_event: unknown, ...args: unknown[]) => unknown;
 
@@ -138,11 +138,21 @@ describe('IPC handlers integration', () => {
       recalculatePosition: (input) => recalculatePositionUseCase.execute(input),
       migrateYear: (input) => migrateYearUseCase.execute(input),
       generateAssetsReport: (input) => generateAssetsReportUseCase.execute(input),
-      listBrokers: () => Promise.resolve({ items: [] }),
+      listBrokers: (_input?: { activeOnly?: boolean }) => Promise.resolve({ items: [] }),
       createBroker: () =>
         Promise.resolve({
           success: true,
-          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST' } as BrokerListItem,
+          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST', active: true } as BrokerListItem,
+        }),
+      updateBroker: () =>
+        Promise.resolve({
+          success: true,
+          broker: { id: 'broker-1', name: 'Updated', cnpj: '00.000.000/0001-00', code: 'TEST', active: true } as BrokerListItem,
+        }),
+      toggleBrokerActive: () =>
+        Promise.resolve({
+          success: true,
+          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST', active: false } as BrokerListItem,
         }),
       previewConsolidatedPosition: () => Promise.resolve({ rows: [] }),
       importConsolidatedPosition: () =>
@@ -209,5 +219,94 @@ describe('IPC handlers integration', () => {
     };
     expect(reportResult.referenceDate).toBe('2025-12-31');
     expect(reportResult.items.length).toBeGreaterThan(0);
+  });
+
+  it('brokers:list, brokers:create, brokers:update, brokers:toggle-active work end-to-end', async () => {
+    const brokerRepository = new KnexBrokerRepository(database);
+    const manageBrokersUseCase = new ManageBrokersUseCase(brokerRepository);
+
+    const handlers = new Map<string, IpcHandler>();
+    const ipcMain = {
+      handle: (channel: string, listener: IpcHandler) => {
+        handlers.set(channel, listener);
+      },
+    };
+
+    const dependencies: MainHandlersDependencies = {
+      checkHealth: () => ({ status: 'ok' }),
+      importSelectFile: () => Promise.resolve({ filePath: null }),
+      previewImportFromFile: () => Promise.resolve({ commands: [] }),
+      previewImportTransactions: () =>
+        Promise.resolve({ batches: [], transactionsPreview: [] }),
+      importOperations: () =>
+        Promise.resolve({ createdOperationsCount: 0, recalculatedPositionsCount: 0 }),
+      confirmImportOperations: () =>
+        Promise.resolve({ createdOperationsCount: 0, recalculatedPositionsCount: 0 }),
+      confirmImportTransactions: () =>
+        Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
+      setInitialBalance: () => Promise.resolve({}),
+      listPositions: () => Promise.resolve({ items: [] }),
+      recalculatePosition: () => Promise.resolve(undefined),
+      migrateYear: () =>
+        Promise.resolve({ migratedPositionsCount: 0, createdTransactionsCount: 0 }),
+      generateAssetsReport: () =>
+        Promise.resolve({ referenceDate: '2025-12-31', items: [] }),
+      listBrokers: (input) => manageBrokersUseCase.list(input),
+      createBroker: (input) => manageBrokersUseCase.create(input),
+      updateBroker: (input) => manageBrokersUseCase.update(input),
+      toggleBrokerActive: (input) => manageBrokersUseCase.toggleActive(input),
+      previewConsolidatedPosition: () => Promise.resolve({ rows: [] }),
+      importConsolidatedPosition: () =>
+        Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
+      deletePosition: () => Promise.resolve({ deleted: false }),
+    };
+
+    registerMainHandlers(ipcMain, dependencies);
+
+    const listHandler = handlers.get('brokers:list');
+    const createHandler = handlers.get('brokers:create');
+    const updateHandler = handlers.get('brokers:update');
+    const toggleHandler = handlers.get('brokers:toggle-active');
+
+    if (!listHandler || !createHandler || !updateHandler || !toggleHandler) {
+      throw new Error('Broker IPC handlers not registered.');
+    }
+
+    const initialList = (await listHandler({})) as { items: Array<{ id: string }> };
+    expect(initialList.items.length).toBeGreaterThanOrEqual(0);
+
+    const createResult = (await createHandler(
+      {},
+      { name: 'Test Broker', code: 'TESTBRK', cnpj: '12.345.678/0001-90' },
+    )) as { success: boolean; broker?: { id: string; name: string } };
+    expect(createResult.success).toBe(true);
+    expect(createResult.broker?.name).toBe('Test Broker');
+
+    const brokerId = createResult.broker?.id;
+    expect(brokerId).toBeDefined();
+
+    const updateResult = (await updateHandler(
+      {},
+      { id: brokerId!, name: 'Test Broker Updated' },
+    )) as { success: boolean; broker?: { name: string } };
+    expect(updateResult.success).toBe(true);
+    expect(updateResult.broker?.name).toBe('Test Broker Updated');
+
+    const toggleResult = (await toggleHandler({}, { id: brokerId! })) as {
+      success: boolean;
+      broker?: { active: boolean };
+    };
+    expect(toggleResult.success).toBe(true);
+    expect(toggleResult.broker?.active).toBe(false);
+
+    const listAll = (await listHandler({})) as { items: Array<{ id: string; active: boolean }> };
+    const createdBroker = listAll.items.find((b) => b.id === brokerId);
+    expect(createdBroker?.active).toBe(false);
+
+    const listActiveOnly = (await listHandler({}, { activeOnly: true })) as {
+      items: Array<{ id: string }>;
+    };
+    const inActiveList = listActiveOnly.items.find((b) => b.id === brokerId);
+    expect(inActiveList).toBeUndefined();
   });
 });
