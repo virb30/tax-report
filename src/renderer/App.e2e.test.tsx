@@ -3,15 +3,21 @@
  */
 
 import '@testing-library/jest-dom';
-import { describe, expect, it, jest } from '@jest/globals';
+import { describe, it, jest } from '@jest/globals';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AssetType, OperationType, SourceType } from '../shared/types/domain';
+import type { ElectronApi } from '../shared/types/electron-api';
+import type { GenerateAssetsReportResult } from '../shared/contracts/assets-report.contract';
+import type { PreviewImportFromFileResult } from '../shared/contracts/preview-import.contract';
+import type { SetManualBaseResult } from '../shared/contracts/manual-base.contract';
+import type { ListPositionsResult } from '../shared/contracts/list-positions.contract';
+import type { ConfirmImportOperationsResult } from '../shared/contracts/preview-import.contract';
 import { App } from './App';
 
 describe('App critical UI flows (E2E)', () => {
   it('runs import, manual base and annual report flows through UI', async () => {
-    const previewImportFromFile = jest.fn().mockResolvedValue({
+    const previewImportResult: PreviewImportFromFileResult = {
       commands: [
         {
           tradeDate: '2025-03-10',
@@ -30,37 +36,50 @@ describe('App critical UI flows (E2E)', () => {
           ],
         },
       ],
-    });
-    const confirmImportOperations = jest.fn().mockResolvedValue({
+    };
+    const previewImportFromFile = jest
+      .fn<ElectronApi['previewImportFromFile']>()
+      .mockResolvedValue(previewImportResult);
+
+    const confirmImportResult: ConfirmImportOperationsResult = {
       createdOperationsCount: 1,
       recalculatedPositionsCount: 1,
-    });
-    const setManualBase = jest.fn().mockResolvedValue({
+    };
+    const confirmImportOperations = jest
+      .fn<ElectronApi['confirmImportOperations']>()
+      .mockResolvedValue(confirmImportResult);
+
+    const setManualBaseResult: SetManualBaseResult = {
       ticker: 'IVVB11',
       broker: 'XP',
       quantity: 2,
       averagePrice: 300,
       isManualBase: true,
-    });
+    };
+    const setManualBase = jest.fn<ElectronApi['setManualBase']>().mockResolvedValue(setManualBaseResult);
+
+    const emptyPositionsResult: ListPositionsResult = {
+      items: [],
+    };
+    const filledPositionsResult: ListPositionsResult = {
+      items: [
+        {
+          ticker: 'IVVB11',
+          broker: 'XP',
+          assetType: AssetType.Etf,
+          quantity: 2,
+          averagePrice: 300,
+          totalCost: 600,
+          isManualBase: true,
+        },
+      ],
+    };
     const listPositions = jest
-      .fn()
-      .mockResolvedValueOnce({
-        items: [],
-      })
-      .mockResolvedValueOnce({
-        items: [
-          {
-            ticker: 'IVVB11',
-            broker: 'XP',
-            assetType: AssetType.Etf,
-            quantity: 2,
-            averagePrice: 300,
-            totalCost: 600,
-            isManualBase: true,
-          },
-        ],
-      });
-    const generateAssetsReport = jest.fn().mockResolvedValue({
+      .fn<ElectronApi['listPositions']>()
+      .mockResolvedValueOnce(emptyPositionsResult)
+      .mockResolvedValueOnce(filledPositionsResult);
+
+    const assetsReportResult: GenerateAssetsReportResult = {
       referenceDate: '2025-12-31',
       items: [
         {
@@ -74,12 +93,15 @@ describe('App critical UI flows (E2E)', () => {
           description: '2 actions/units IVVB11 - N/A. CNPJ: N/A. Broker: XP.',
         },
       ],
-    });
+    };
+    const generateAssetsReport = jest
+      .fn<ElectronApi['generateAssetsReport']>()
+      .mockResolvedValue(assetsReportResult);
 
     window.electronApi = {
       appName: 'tax-report',
       previewImportFromFile,
-      importOperations: jest.fn(),
+      importOperations: jest.fn<ElectronApi['importOperations']>(),
       confirmImportOperations,
       setManualBase,
       listPositions,
@@ -88,7 +110,7 @@ describe('App critical UI flows (E2E)', () => {
 
     Object.defineProperty(navigator, 'clipboard', {
       value: {
-        writeText: jest.fn().mockResolvedValue(undefined),
+        writeText: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
       },
       configurable: true,
     });

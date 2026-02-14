@@ -6,24 +6,28 @@ describe('createMainLifecycle', () => {
   function createMainHandlersDependencies(): CreateMainLifecycleDependencies['mainHandlersDependencies'] {
     return {
       checkHealth: () => ({ status: 'ok' }),
-      previewImportFromFile: async () => ({ commands: [] }),
-      importOperations: async () => ({
+      previewImportFromFile: () => Promise.resolve({ commands: [] }),
+      importOperations: () =>
+        Promise.resolve({
         createdOperationsCount: 1,
         recalculatedPositionsCount: 1,
-      }),
-      confirmImportOperations: async () => ({
+        }),
+      confirmImportOperations: () =>
+        Promise.resolve({
         createdOperationsCount: 1,
         recalculatedPositionsCount: 1,
-      }),
-      setManualBase: async () => ({
+        }),
+      setManualBase: () =>
+        Promise.resolve({
         ticker: 'PETR4',
         broker: 'XP',
         quantity: 1,
         averagePrice: 10,
         isManualBase: true,
-      }),
-      listPositions: async () => ({ items: [] }),
-      generateAssetsReport: async () => ({
+        }),
+      listPositions: () => Promise.resolve({ items: [] }),
+      generateAssetsReport: () =>
+        Promise.resolve({
         referenceDate: '2025-12-31',
         items: [
           {
@@ -37,7 +41,7 @@ describe('createMainLifecycle', () => {
             description: 'desc',
           },
         ],
-      }),
+        }),
     };
   }
 
