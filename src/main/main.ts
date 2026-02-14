@@ -16,6 +16,7 @@ import type { OperationsFileParserPort } from './application/ports/operations-fi
 import { WindowManager } from './window-manager';
 
 const handlersDependenciesPromise = createMainHandlersDependencies();
+const windowManager = new WindowManager();
 
 const lifecycle = createMainLifecycle({
   app,
@@ -65,7 +66,6 @@ const lifecycle = createMainLifecycle({
   },
   platform: process.platform,
   createMainWindow: () => {
-    const windowManager = new WindowManager();
     windowManager.createMainWindow();
   },
 });

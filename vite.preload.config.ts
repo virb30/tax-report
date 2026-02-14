@@ -5,7 +5,7 @@ export default defineConfig({
     sourcemap: true,
     lib: {
       entry: 'src/preload.ts',
-      formats: ['es'],
+      formats: ['cjs'],
       fileName: () => 'preload.js',
     },
     rollupOptions: {

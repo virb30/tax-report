@@ -35,7 +35,9 @@ export class AppLifecycle {
           }
         });
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        // Keep startup failures visible instead of exiting silently.
+        console.error('[main] Failed to initialize application lifecycle:', error);
         app.quit();
       });
 
