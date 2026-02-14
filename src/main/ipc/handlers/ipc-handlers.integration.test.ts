@@ -7,6 +7,7 @@ import { AssetType, SourceType } from '../../../shared/types/domain';
 import { createDatabaseConnection, initializeDatabase } from '../../database/database';
 import { AssetRepository } from '../../database/repositories/asset-repository';
 import { OperationRepository } from '../../database/repositories/operation-repository';
+import { LegacyPortfolioAcl } from '../../infrastructure/persistence/legacy/legacy-portfolio-acl';
 import { RecalculateAssetPositionUseCase } from '../../application/use-cases/recalculate-asset-position-use-case';
 import { ImportBrokerageNoteUseCase } from '../../application/use-cases/import-brokerage-note-use-case';
 import { ImportOperationsUseCase } from '../../application/use-cases/import-operations-use-case';
@@ -18,7 +19,7 @@ import { KnexPositionRepository } from '../../infrastructure/persistence/knex-po
 import { KnexTransactionRepository } from '../../infrastructure/persistence/knex-transaction.repository';
 import { KnexBrokerRepository } from '../../infrastructure/persistence/knex-broker.repository';
 import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-assets-report-use-case';
-import { LegacyPortfolioAcl } from '../../infrastructure/persistence/legacy/legacy-portfolio-acl';
+import { ReportGenerator } from '../../domain/tax-reporting/report-generator.service';
 import { BrokerageNoteParserStrategy } from '../../infrastructure/parsers/brokerage-note-parser.strategy';
 import { CsvXlsxBrokerageNoteParser } from '../../infrastructure/parsers/csv-xlsx-brokerage-note.parser';
 import {
@@ -74,7 +75,13 @@ describe('IPC handlers integration', () => {
       knexTransactionRepository,
       (input) => recalculatePositionUseCase.execute(input),
     );
-    const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(acl, operationRepository);
+    const reportGenerator = new ReportGenerator();
+    const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
+      knexTransactionRepository,
+      knexPositionRepository,
+      brokerRepository,
+      reportGenerator,
+    );
     const parserStrategy = new BrokerageNoteParserStrategy([new CsvXlsxBrokerageNoteParser()]);
 
     const csvPath = path.join(temporaryDirectory, 'movements.csv');

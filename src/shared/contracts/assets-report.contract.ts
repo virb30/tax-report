@@ -9,17 +9,23 @@ export type RevenueClassification = {
   code: string;
 };
 
+export type AssetsReportAllocation = {
+  brokerId: string;
+  brokerName: string;
+  cnpj: string;
+  quantity: number;
+  totalCost: number;
+  description: string;
+};
+
 export type AssetsReportItem = {
   ticker: string;
-  broker: string;
   assetType: AssetType;
-  name?: string | null;
-  cnpj?: string | null;
-  quantity: number;
+  totalQuantity: number;
   averagePrice: number;
   totalCost: number;
   revenueClassification: RevenueClassification;
-  description: string;
+  allocations: AssetsReportAllocation[];
 };
 
 export type GenerateAssetsReportResult = {

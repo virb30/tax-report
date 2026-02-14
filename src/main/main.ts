@@ -22,6 +22,7 @@ import { ListPositionsUseCase } from './application/use-cases/list-positions-use
 import { KnexPositionRepository } from './infrastructure/persistence/knex-position.repository';
 import { KnexTransactionRepository } from './infrastructure/persistence/knex-transaction.repository';
 import { GenerateAssetsReportUseCase } from './application/use-cases/generate-assets-report-use-case';
+import { ReportGenerator } from './domain/tax-reporting/report-generator.service';
 import type { OperationsFileParserPort } from './application/ports/operations-file-parser.port';
 import { WindowManager } from './window-manager';
 
@@ -192,9 +193,12 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
     knexTransactionRepository,
     (input) => recalculatePositionUseCase.execute(input),
   );
+  const reportGenerator = new ReportGenerator();
   const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
-    legacyPortfolioAcl,
-    operationRepository,
+    knexTransactionRepository,
+    knexPositionRepository,
+    brokerRepository,
+    reportGenerator,
   );
 
   return {

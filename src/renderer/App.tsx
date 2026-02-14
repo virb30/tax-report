@@ -4,10 +4,9 @@ import { BrokersPage } from './pages/BrokersPage';
 import { ImportPage } from './pages/ImportPage';
 import { InitialBalancePage } from './pages/InitialBalancePage';
 import { PositionsPage } from './pages/PositionsPage';
-import { PlaceholderPage } from './pages/PlaceholderPage';
 import { ReportPage } from './pages/ReportPage';
 
-type MainTab = 'import' | 'initial-balance' | 'positions' | 'report' | 'brokers' | 'monthly-assessment';
+type MainTab = 'import' | 'initial-balance' | 'positions' | 'report' | 'brokers';
 
 const tabItems: Array<{ id: MainTab; label: string }> = [
   { id: 'import', label: 'Importacao e Conferencia' },
@@ -15,7 +14,6 @@ const tabItems: Array<{ id: MainTab; label: string }> = [
   { id: 'positions', label: 'Posicoes' },
   { id: 'report', label: 'Relatorio Bens e Direitos' },
   { id: 'brokers', label: 'Corretoras' },
-  { id: 'monthly-assessment', label: 'Apuracao Mensal / DARF (v2)' },
 ];
 
 export function App(): JSX.Element {
@@ -53,9 +51,6 @@ export function App(): JSX.Element {
         {activeTab === 'positions' ? <PositionsPage /> : null}
         {activeTab === 'report' ? <ReportPage /> : null}
         {activeTab === 'brokers' ? <BrokersPage /> : null}
-        {activeTab === 'monthly-assessment' ? (
-          <PlaceholderPage title="Apuracao Mensal / DARF (fora do MVP desta tarefa)" />
-        ) : null}
       </main>
     </div>
   );

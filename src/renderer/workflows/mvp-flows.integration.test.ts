@@ -20,6 +20,7 @@ import { KnexPositionRepository } from '../../main/infrastructure/persistence/kn
 import { KnexTransactionRepository } from '../../main/infrastructure/persistence/knex-transaction.repository';
 import { KnexBrokerRepository } from '../../main/infrastructure/persistence/knex-broker.repository';
 import { GenerateAssetsReportUseCase } from '../../main/application/use-cases/generate-assets-report-use-case';
+import { ReportGenerator } from '../../main/domain/tax-reporting/report-generator.service';
 import { BrokerageNoteParserStrategy } from '../../main/infrastructure/parsers/brokerage-note-parser.strategy';
 import { CsvXlsxBrokerageNoteParser } from '../../main/infrastructure/parsers/csv-xlsx-brokerage-note.parser';
 import {
@@ -90,7 +91,13 @@ describe('MVP workflows integration', () => {
       knexTransactionRepository,
       (input) => recalculatePositionUseCase.execute(input),
     );
-    const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(acl, operationRepository);
+    const reportGenerator = new ReportGenerator();
+    const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
+      knexTransactionRepository,
+      knexPositionRepository,
+      brokerRepository,
+      reportGenerator,
+    );
     const parserStrategy = new BrokerageNoteParserStrategy([new CsvXlsxBrokerageNoteParser()]);
 
     const handlers = new Map<string, IpcHandler>();

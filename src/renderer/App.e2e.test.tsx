@@ -77,13 +77,22 @@ describe('App critical UI flows (E2E)', () => {
       items: [
         {
           ticker: 'IVVB11',
-          broker: 'XP',
           assetType: AssetType.Etf,
-          quantity: 2,
+          totalQuantity: 2,
           averagePrice: 300,
           totalCost: 600,
           revenueClassification: { group: '07', code: '09' },
-          description: '2 actions/units IVVB11 - N/A. CNPJ: N/A. Broker: XP.',
+          allocations: [
+            {
+              brokerId: 'broker-xp',
+              brokerName: 'XP Investimentos',
+              cnpj: '02.332.886/0001-04',
+              quantity: 2,
+              totalCost: 600,
+              description:
+                '2 cotas IVVB11. CNPJ: 02.332.886/0001-04. Corretora: XP Investimentos. Custo médio: R$ 300,00. Custo total: R$ 600,00.',
+            },
+          ],
         },
       ],
     };
@@ -154,11 +163,11 @@ describe('App critical UI flows (E2E)', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'Relatorio Bens e Direitos' }));
-    await user.click(screen.getByRole('button', { name: 'Gerar relatorio' }));
+    await user.click(screen.getByRole('button', { name: 'Gerar Relatório' }));
     await waitFor(() => {
-      expect(screen.getByText('Data de referencia: 2025-12-31')).toBeInTheDocument();
+      expect(screen.getByText(/Data de referência: 2025-12-31/)).toBeInTheDocument();
     });
-    await user.click(screen.getByRole('button', { name: 'Copiar discriminacao' }));
+    await user.click(screen.getByRole('button', { name: 'Copiar' }));
     await waitFor(() => {
       expect(screen.getByText(/copiado com sucesso/)).toBeInTheDocument();
     });
