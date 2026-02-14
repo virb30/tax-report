@@ -1,7 +1,6 @@
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const rootDirectory = path.dirname(fileURLToPath(import.meta.url));
+const rootDirectory = __dirname;
 
 export const rendererAlias = {
   '@renderer': path.resolve(rootDirectory, 'src/renderer'),

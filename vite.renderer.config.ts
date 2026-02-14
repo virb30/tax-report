@@ -1,9 +1,9 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
-import { rendererAlias } from './vite.config.mjs';
+import { rendererAlias } from './vite.config';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react({})],
   resolve: {
     alias: rendererAlias,
   },
