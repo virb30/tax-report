@@ -6,48 +6,39 @@ import '@testing-library/jest-dom';
 import { describe, it, jest } from '@jest/globals';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AssetType, OperationType, SourceType } from '../shared/types/domain';
+import { AssetType } from '../shared/types/domain';
 import type { ElectronApi } from '../shared/types/electron-api';
 import type { GenerateAssetsReportResult } from '../shared/contracts/assets-report.contract';
-import type { PreviewImportFromFileResult } from '../shared/contracts/preview-import.contract';
 import type { SetInitialBalanceResult } from '../shared/contracts/initial-balance.contract';
 import type { ListPositionsResult } from '../shared/contracts/list-positions.contract';
-import type { ConfirmImportOperationsResult } from '../shared/contracts/preview-import.contract';
 import { App } from './App';
 
 describe('App critical UI flows (E2E)', () => {
   it('runs import, manual base and annual report flows through UI', async () => {
-    const previewImportResult: PreviewImportFromFileResult = {
-      commands: [
-        {
-          tradeDate: '2025-03-10',
-          broker: 'XP',
-          sourceType: SourceType.Csv,
-          totalOperationalCosts: 1,
-          operations: [
-            {
-              ticker: 'PETR4',
-              assetType: AssetType.Stock,
-              operationType: OperationType.Buy,
-              quantity: 10,
-              unitPrice: 20,
-              irrfWithheld: 0,
-            },
-          ],
-        },
-      ],
-    };
-    const previewImportFromFile = jest
-      .fn<ElectronApi['previewImportFromFile']>()
-      .mockResolvedValue(previewImportResult);
+    const importSelectFile = jest
+      .fn<ElectronApi['importSelectFile']>()
+      .mockResolvedValue({ filePath: '/tmp/ops.csv' });
 
-    const confirmImportResult: ConfirmImportOperationsResult = {
-      createdOperationsCount: 1,
-      recalculatedPositionsCount: 1,
-    };
-    const confirmImportOperations = jest
-      .fn<ElectronApi['confirmImportOperations']>()
-      .mockResolvedValue(confirmImportResult);
+    const previewImportTransactions = jest
+      .fn<ElectronApi['previewImportTransactions']>()
+      .mockResolvedValue({
+        batches: [],
+        transactionsPreview: [
+          {
+            date: '2025-03-10',
+            ticker: 'PETR4',
+            type: 'buy',
+            quantity: 10,
+            unitPrice: 20,
+            fees: 1,
+            brokerId: 'broker-xp',
+          },
+        ],
+      });
+
+    const confirmImportTransactions = jest
+      .fn<ElectronApi['confirmImportTransactions']>()
+      .mockResolvedValue({ importedCount: 1, recalculatedTickers: ['PETR4'] });
 
     const setInitialBalanceResult: SetInitialBalanceResult = {
       ticker: 'IVVB11',
@@ -107,14 +98,19 @@ describe('App critical UI flows (E2E)', () => {
 
     window.electronApi = {
       appName: 'tax-report',
-      previewImportFromFile,
+      importSelectFile,
+      previewImportFromFile: jest.fn<ElectronApi['previewImportFromFile']>(),
+      previewImportTransactions,
       importOperations: jest.fn<ElectronApi['importOperations']>(),
-      confirmImportOperations,
+      confirmImportOperations: jest.fn<ElectronApi['confirmImportOperations']>(),
+      confirmImportTransactions,
       setInitialBalance,
       listPositions,
       generateAssetsReport,
       listBrokers,
       createBroker,
+      recalculatePosition: jest.fn<ElectronApi['recalculatePosition']>(),
+      migrateYear: jest.fn<ElectronApi['migrateYear']>(),
     };
 
     Object.defineProperty(navigator, 'clipboard', {
@@ -126,15 +122,21 @@ describe('App critical UI flows (E2E)', () => {
 
     const user = userEvent.setup();
     render(<App />);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Selecionar' })).toBeInTheDocument();
+    });
 
-    await user.type(screen.getByPlaceholderText('/caminho/arquivo.csv'), '/tmp/ops.csv');
+    await user.click(screen.getByRole('button', { name: 'Selecionar' }));
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('/tmp/ops.csv')).toBeInTheDocument();
+    });
     await user.click(screen.getByRole('button', { name: 'Conferir arquivo' }));
     await waitFor(() => {
-      expect(screen.getByText('Conferencia pronta: 1 notas e 1 operacoes.')).toBeInTheDocument();
+      expect(screen.getByText(/Conferência pronta: 1 transações/)).toBeInTheDocument();
     });
-    await user.click(screen.getByRole('button', { name: 'Confirmar importacao' }));
+    await user.click(screen.getByRole('button', { name: 'Confirmar importação' }));
     await waitFor(() => {
-      expect(screen.getByText(/Importacao concluida/)).toBeInTheDocument();
+      expect(screen.getByText(/Importação concluída/)).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('button', { name: 'Saldo Inicial' }));
@@ -161,11 +163,9 @@ describe('App critical UI flows (E2E)', () => {
       expect(screen.getByText(/copiado com sucesso/)).toBeInTheDocument();
     });
 
-    expect(previewImportFromFile).toHaveBeenCalledWith({
-      broker: 'XP',
-      filePath: '/tmp/ops.csv',
-    });
-    expect(confirmImportOperations).toHaveBeenCalledTimes(1);
+    expect(importSelectFile).toHaveBeenCalledTimes(1);
+    expect(previewImportTransactions).toHaveBeenCalledWith({ filePath: '/tmp/ops.csv' });
+    expect(confirmImportTransactions).toHaveBeenCalledWith({ filePath: '/tmp/ops.csv' });
     expect(setInitialBalance).toHaveBeenCalledTimes(1);
     expect(generateAssetsReport).toHaveBeenCalledWith({ baseYear: 2025 });
   });

@@ -96,6 +96,7 @@ describe('IPC handlers integration', () => {
 
     const dependencies: MainHandlersDependencies = {
       checkHealth: () => ({ status: 'ok' }),
+      importSelectFile: () => Promise.resolve({ filePath: null }),
       previewImportFromFile: async (input) => ({
         commands: await parserStrategy.parse({
           broker: input.broker,
@@ -104,6 +105,8 @@ describe('IPC handlers integration', () => {
         }),
       }),
       importOperations: (input) => importOperationsUseCase.execute(input),
+      previewImportTransactions: () =>
+        Promise.resolve({ batches: [], transactionsPreview: [] }),
       confirmImportOperations: async (input) => {
         let createdOperationsCount = 0;
         let recalculatedPositionsCount = 0;
@@ -117,6 +120,8 @@ describe('IPC handlers integration', () => {
           recalculatedPositionsCount,
         };
       },
+      confirmImportTransactions: () =>
+        Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
       setInitialBalance: (input) => setInitialBalanceUseCase.execute(input),
       listPositions: (input) => listPositionsUseCase.execute(input),
       recalculatePosition: (input) => recalculatePositionUseCase.execute(input),

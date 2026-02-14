@@ -99,4 +99,18 @@ export class KnexTransactionRepository implements TransactionRepository {
       .select('*');
     return rows.map(mapRowToRecord);
   }
+
+  async findExistingExternalRefs(externalRefs: string[]): Promise<Set<string>> {
+    if (externalRefs.length === 0) {
+      return new Set();
+    }
+    const validRefs = externalRefs.filter((ref): ref is string => ref != null && ref !== '');
+    if (validRefs.length === 0) {
+      return new Set();
+    }
+    const rows = await this.database<{ external_ref: string | null }>('transactions')
+      .whereIn('external_ref', validRefs)
+      .select('external_ref');
+    return new Set(rows.map((r) => r.external_ref).filter((r): r is string => r != null));
+  }
 }

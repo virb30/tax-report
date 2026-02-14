@@ -162,14 +162,12 @@ describe('CsvXlsxBrokerageNoteParser', () => {
     const parser = new CsvXlsxBrokerageNoteParser();
     const filePath = await createTempFile(
       'missing-column.csv',
-      ['Data;Tipo;Ticker;Quantidade;Preço Unitário;Corretora', '2025-04-01;Compra;PETR4;1;10;XP'].join(
-        '\n',
-      ),
+      ['Data;Tipo;Ticker;Quantidade;Corretora', '2025-04-01;Compra;PETR4;1;XP'].join('\n'),
     );
     createdDirectories.push(path.dirname(filePath));
 
     await expect(parser.parse(filePath)).rejects.toThrow(
-      'Invalid template: missing column "Taxas Totais".',
+      'Invalid template: missing column "Preco Unitario".',
     );
   });
 
@@ -238,19 +236,19 @@ describe('CsvXlsxBrokerageNoteParser', () => {
     );
   });
 
-  it('throws when numeric required field is empty', async () => {
+  it('throws when numeric required field (Preco Unitario) is empty', async () => {
     const parser = new CsvXlsxBrokerageNoteParser();
     const filePath = await createTempFile(
       'empty-numeric.csv',
       [
         'Data;Tipo;Ticker;Quantidade;Preço Unitário;Taxas Totais;Corretora',
-        '2025-04-01;Compra;PETR4;1;10;;XP',
+        '2025-04-01;Compra;PETR4;1;;1;XP',
       ].join('\n'),
     );
     createdDirectories.push(path.dirname(filePath));
 
     await expect(parser.parse(filePath)).rejects.toThrow(
-      'Invalid numeric value at column "Taxas Totais".',
+      'Invalid numeric value at column "Preco Unitario".',
     );
   });
 

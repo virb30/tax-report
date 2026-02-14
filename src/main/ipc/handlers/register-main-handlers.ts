@@ -17,8 +17,12 @@ import type {
 import type {
   ConfirmImportOperationsCommand,
   ConfirmImportOperationsResult,
+  ConfirmImportTransactionsCommand,
+  ConfirmImportTransactionsResult,
   PreviewImportFromFileCommand,
   PreviewImportFromFileResult,
+  PreviewImportTransactionsCommand,
+  PreviewImportTransactionsResult,
 } from '@shared/contracts/preview-import.contract';
 import type {
   CreateBrokerCommand,
@@ -43,11 +47,18 @@ type IpcMainLike = {
 
 export type MainHandlersDependencies = {
   checkHealth: () => { status: 'ok' };
+  importSelectFile: () => Promise<{ filePath: string | null }>;
   previewImportFromFile: (input: PreviewImportFromFileCommand) => Promise<PreviewImportFromFileResult>;
+  previewImportTransactions: (
+    input: PreviewImportTransactionsCommand,
+  ) => Promise<PreviewImportTransactionsResult>;
   importOperations: (input: ImportOperationsCommand) => Promise<ImportOperationsResult>;
   confirmImportOperations: (
     input: ConfirmImportOperationsCommand,
   ) => Promise<ConfirmImportOperationsResult>;
+  confirmImportTransactions: (
+    input: ConfirmImportTransactionsCommand,
+  ) => Promise<ConfirmImportTransactionsResult>;
   setInitialBalance: (input: SetInitialBalanceCommand) => Promise<SetInitialBalanceResult>;
   listPositions: (input: ListPositionsQuery) => Promise<ListPositionsResult>;
   generateAssetsReport: (
@@ -65,9 +76,12 @@ export function registerMainHandlers(
 ): string[] {
   const registeredChannels = [
     'app:health-check',
+    'import:select-file',
     'import:preview-file',
+    'import:preview-transactions',
     'import:operations',
     'import:confirm-operations',
+    'import:confirm-transactions',
     'portfolio:set-initial-balance',
     'portfolio:list-positions',
     'portfolio:recalculate',
@@ -81,9 +95,18 @@ export function registerMainHandlers(
     return dependencies.checkHealth();
   });
 
+  ipcMain.handle('import:select-file', () => {
+    return dependencies.importSelectFile();
+  });
+
   ipcMain.handle('import:preview-file', (_event, input: PreviewImportFromFileCommand) => {
     const payload = parsePreviewImportFromFileInput(input);
     return dependencies.previewImportFromFile(payload);
+  });
+
+  ipcMain.handle('import:preview-transactions', (_event, input: PreviewImportTransactionsCommand) => {
+    const payload = parsePreviewImportTransactionsInput(input);
+    return dependencies.previewImportTransactions(payload);
   });
 
   ipcMain.handle('import:operations', (_event, input: ImportOperationsCommand) => {
@@ -94,6 +117,11 @@ export function registerMainHandlers(
   ipcMain.handle('import:confirm-operations', (_event, input: ConfirmImportOperationsCommand) => {
     const payload = parseConfirmImportOperationsInput(input);
     return dependencies.confirmImportOperations(payload);
+  });
+
+  ipcMain.handle('import:confirm-transactions', (_event, input: ConfirmImportTransactionsCommand) => {
+    const payload = parseConfirmImportTransactionsInput(input);
+    return dependencies.confirmImportTransactions(payload);
   });
 
   ipcMain.handle('portfolio:set-initial-balance', (_event, input: SetInitialBalanceCommand) => {
@@ -184,6 +212,30 @@ function parseConfirmImportOperationsInput(input: unknown): ConfirmImportOperati
     throw new Error('Invalid commands list for confirm import operations.');
   }
   return input as ConfirmImportOperationsCommand;
+}
+
+function parsePreviewImportTransactionsInput(input: unknown): PreviewImportTransactionsCommand {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid payload for preview import transactions.');
+  }
+  const payload = input as { filePath?: unknown };
+  if (typeof payload.filePath !== 'string' || payload.filePath.trim().length === 0) {
+    throw new Error('Invalid file path for preview import transactions.');
+  }
+  return { filePath: payload.filePath };
+}
+
+function parseConfirmImportTransactionsInput(
+  input: unknown,
+): ConfirmImportTransactionsCommand {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid payload for confirm import transactions.');
+  }
+  const payload = input as { filePath?: unknown };
+  if (typeof payload.filePath !== 'string' || payload.filePath.trim().length === 0) {
+    throw new Error('Invalid file path for confirm import transactions.');
+  }
+  return { filePath: payload.filePath };
 }
 
 function parseListPositionsInput(input: unknown): ListPositionsQuery {

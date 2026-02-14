@@ -1,16 +1,16 @@
-export type OperationalCostAllocationOperation = {
+export type TaxApportionerOperation = {
   ticker: string;
   quantity: number;
   unitPrice: number;
 };
 
-export type OperationalCostAllocationInput = {
+export type TaxApportionerInput = {
   totalOperationalCosts: number;
-  operations: OperationalCostAllocationOperation[];
+  operations: TaxApportionerOperation[];
 };
 
-export class OperationalCostAllocationService {
-  allocate(input: OperationalCostAllocationInput): number[] {
+export class TaxApportioner {
+  allocate(input: TaxApportionerInput): number[] {
     this.validate(input);
 
     const totalOperationalCostCents = this.toCents(input.totalOperationalCosts);
@@ -97,7 +97,7 @@ export class OperationalCostAllocationService {
     return cents / 100;
   }
 
-  private validate(input: OperationalCostAllocationInput): void {
+  private validate(input: TaxApportionerInput): void {
     if (!Number.isFinite(input.totalOperationalCosts)) {
       throw new Error('Total operational costs must be finite.');
     }

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { CsvXlsxBrokerageNoteParser } from './infrastructure/parsers/csv-xlsx-brokerage-note.parser';
 import { BrokerageNoteParserStrategy } from './infrastructure/parsers/brokerage-note-parser.strategy';
 import { createMainLifecycle } from './infrastructure/composition/create-main-lifecycle';
@@ -13,6 +13,10 @@ import { RecalculatePositionUseCase } from './application/use-cases/recalculate-
 import { MigrateYearUseCase } from './application/use-cases/migrate-year-use-case';
 import { ImportBrokerageNoteUseCase } from './application/use-cases/import-brokerage-note-use-case';
 import { ImportOperationsUseCase } from './application/use-cases/import-operations-use-case';
+import { ImportTransactionsUseCase } from './application/use-cases/import-transactions-use-case';
+import { PreviewImportUseCase } from './application/use-cases/preview-import-use-case';
+import { TaxApportioner } from './domain/ingestion/tax-apportioner.service';
+import { CsvXlsxTransactionParser } from './infrastructure/parsers/csv-xlsx-transaction.parser';
 import { SetInitialBalanceUseCase } from './application/use-cases/set-initial-balance-use-case';
 import { ListPositionsUseCase } from './application/use-cases/list-positions-use-case';
 import { KnexPositionRepository } from './infrastructure/persistence/knex-position.repository';
@@ -30,6 +34,19 @@ const lifecycle = createMainLifecycle({
   ipcMain,
   mainHandlersDependencies: {
     checkHealth: () => ({ status: 'ok' }),
+    importSelectFile: async () => {
+      const result = await dialog.showOpenDialog({
+        properties: ['openFile'],
+        filters: [
+          { name: 'Planilhas', extensions: ['csv', 'xlsx'] },
+          { name: 'Todos os arquivos', extensions: ['*'] },
+        ],
+      });
+      if (result.canceled) {
+        return { filePath: null };
+      }
+      return { filePath: result.filePaths[0] ?? null };
+    },
     previewImportFromFile: async (input) => {
       const dependencies = await handlersDependenciesPromise;
       const commands = await dependencies.operationsFileParser.parse({
@@ -38,6 +55,10 @@ const lifecycle = createMainLifecycle({
         filePath: input.filePath,
       });
       return { commands };
+    },
+    previewImportTransactions: async (input) => {
+      const dependencies = await handlersDependenciesPromise;
+      return dependencies.previewImportUseCase.execute(input);
     },
     importOperations: async (input) => {
       const dependencies = await handlersDependenciesPromise;
@@ -55,6 +76,14 @@ const lifecycle = createMainLifecycle({
       return {
         createdOperationsCount,
         recalculatedPositionsCount,
+      };
+    },
+    confirmImportTransactions: async (input) => {
+      const dependencies = await handlersDependenciesPromise;
+      const result = await dependencies.importTransactionsUseCase.execute(input);
+      return {
+        importedCount: result.importedCount,
+        recalculatedTickers: result.recalculatedTickers,
       };
     },
     setInitialBalance: async (input) => {
@@ -97,6 +126,8 @@ lifecycle.register();
 type MainHandlersRuntimeDependencies = {
   operationsFileParser: OperationsFileParserPort;
   importOperationsUseCase: ImportOperationsUseCase;
+  importTransactionsUseCase: ImportTransactionsUseCase;
+  previewImportUseCase: PreviewImportUseCase;
   setInitialBalanceUseCase: SetInitialBalanceUseCase;
   listPositionsUseCase: ListPositionsUseCase;
   generateAssetsReportUseCase: GenerateAssetsReportUseCase;
@@ -126,6 +157,26 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
   const manageBrokersUseCase = new ManageBrokersUseCase(brokerRepository);
   const knexPositionRepository = new KnexPositionRepository(database);
   const knexTransactionRepository = new KnexTransactionRepository(database);
+  const recalculatePositionUseCase = new RecalculatePositionUseCase(
+    knexPositionRepository,
+    knexTransactionRepository,
+  );
+  const taxApportioner = new TaxApportioner();
+  const csvXlsxTransactionParser = new CsvXlsxTransactionParser(
+    new CsvXlsxBrokerageNoteParser(),
+    brokerRepository,
+  );
+  const importTransactionsUseCase = new ImportTransactionsUseCase(
+    csvXlsxTransactionParser,
+    taxApportioner,
+    knexTransactionRepository,
+    recalculatePositionUseCase,
+  );
+  const previewImportUseCase = new PreviewImportUseCase(
+    csvXlsxTransactionParser,
+    taxApportioner,
+  );
+
   const setInitialBalanceUseCase = new SetInitialBalanceUseCase(
     knexPositionRepository,
     knexTransactionRepository,
@@ -135,10 +186,7 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
     knexTransactionRepository,
     brokerRepository,
   );
-  const recalculatePositionUseCase = new RecalculatePositionUseCase(
-    knexPositionRepository,
-    knexTransactionRepository,
-  );
+
   const migrateYearUseCase = new MigrateYearUseCase(
     knexPositionRepository,
     knexTransactionRepository,
@@ -152,6 +200,8 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
   return {
     operationsFileParser: parserStrategy,
     importOperationsUseCase,
+    importTransactionsUseCase,
+    previewImportUseCase,
     setInitialBalanceUseCase,
     listPositionsUseCase,
     generateAssetsReportUseCase,

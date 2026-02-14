@@ -9,8 +9,13 @@ describe('registerMainHandlers', () => {
   function createDependencies() {
     return {
       checkHealth: jest.fn().mockReturnValue({ status: 'ok' }),
+      importSelectFile: jest.fn().mockResolvedValue({ filePath: null }),
       previewImportFromFile: jest.fn().mockResolvedValue({
         commands: [],
+      }),
+      previewImportTransactions: jest.fn().mockResolvedValue({
+        batches: [],
+        transactionsPreview: [],
       }),
       importOperations: jest.fn().mockResolvedValue({
         createdOperationsCount: 1,
@@ -19,6 +24,10 @@ describe('registerMainHandlers', () => {
       confirmImportOperations: jest.fn().mockResolvedValue({
         createdOperationsCount: 2,
         recalculatedPositionsCount: 2,
+      }),
+      confirmImportTransactions: jest.fn().mockResolvedValue({
+        importedCount: 2,
+        recalculatedTickers: ['PETR4'],
       }),
       setInitialBalance: jest.fn().mockResolvedValue({
         ticker: 'PETR4',
@@ -54,9 +63,12 @@ describe('registerMainHandlers', () => {
 
     expect(channels).toEqual([
       'app:health-check',
+      'import:select-file',
       'import:preview-file',
+      'import:preview-transactions',
       'import:operations',
       'import:confirm-operations',
+      'import:confirm-transactions',
       'portfolio:set-initial-balance',
       'portfolio:list-positions',
       'portfolio:recalculate',
@@ -65,7 +77,7 @@ describe('registerMainHandlers', () => {
       'brokers:list',
       'brokers:create',
     ]);
-    expect(handle).toHaveBeenCalledTimes(11);
+    expect(handle).toHaveBeenCalledTimes(14);
     expect(handle).toHaveBeenCalledWith('app:health-check', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('import:preview-file', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('import:operations', expect.any(Function));
@@ -85,28 +97,28 @@ describe('registerMainHandlers', () => {
     registerMainHandlers({ handle }, dependencies as MainHandlersDependencies);
 
     const healthHandler = handle.mock.calls[0]?.[1] as (() => unknown) | undefined;
-    const previewHandler = handle.mock.calls[1]?.[1] as
+    const previewHandler = handle.mock.calls[2]?.[1] as
       | ((_event: unknown, input: { broker: string; filePath: string }) => Promise<unknown>)
       | undefined;
-    const importHandler = handle.mock.calls[2]?.[1] as
+    const importHandler = handle.mock.calls[4]?.[1] as
       | ((_event: unknown, input: unknown) => Promise<unknown>)
       | undefined;
-    const confirmHandler = handle.mock.calls[3]?.[1] as
+    const confirmHandler = handle.mock.calls[5]?.[1] as
       | ((_event: unknown, input: unknown) => Promise<unknown>)
       | undefined;
-    const setInitialBalanceHandler = handle.mock.calls[4]?.[1] as
+    const setInitialBalanceHandler = handle.mock.calls[7]?.[1] as
       | ((_event: unknown, input: unknown) => Promise<unknown>)
       | undefined;
-    const listPositionsHandler = handle.mock.calls[5]?.[1] as
+    const listPositionsHandler = handle.mock.calls[8]?.[1] as
       | ((_event: unknown, input: { baseYear: number }) => Promise<unknown>)
       | undefined;
-    const recalculateHandler = handle.mock.calls[6]?.[1] as
+    const recalculateHandler = handle.mock.calls[9]?.[1] as
       | ((_event: unknown, input: { ticker: string }) => Promise<unknown>)
       | undefined;
-    const migrateYearHandler = handle.mock.calls[7]?.[1] as
+    const migrateYearHandler = handle.mock.calls[10]?.[1] as
       | ((_event: unknown, input: { sourceYear: number; targetYear: number }) => Promise<unknown>)
       | undefined;
-    const reportHandler = handle.mock.calls[8]?.[1] as
+    const reportHandler = handle.mock.calls[11]?.[1] as
       | ((_event: unknown, input: { baseYear: number }) => Promise<unknown>)
       | undefined;
 
@@ -185,11 +197,11 @@ describe('registerMainHandlers', () => {
     const dependencies = createDependencies();
     registerMainHandlers({ handle }, dependencies as MainHandlersDependencies);
 
-    const previewHandler = handle.mock.calls[1]?.[1] as (_event: unknown, input: unknown) => unknown;
-    const importHandler = handle.mock.calls[2]?.[1] as (_event: unknown, input: unknown) => unknown;
-    const confirmHandler = handle.mock.calls[3]?.[1] as (_event: unknown, input: unknown) => unknown;
-    const setInitialBalanceHandler = handle.mock.calls[4]?.[1] as (_event: unknown, input: unknown) => unknown;
-    const reportHandler = handle.mock.calls[8]?.[1] as (_event: unknown, input: unknown) => unknown;
+    const previewHandler = handle.mock.calls[2]?.[1] as (_event: unknown, input: unknown) => unknown;
+    const importHandler = handle.mock.calls[4]?.[1] as (_event: unknown, input: unknown) => unknown;
+    const confirmHandler = handle.mock.calls[5]?.[1] as (_event: unknown, input: unknown) => unknown;
+    const setInitialBalanceHandler = handle.mock.calls[7]?.[1] as (_event: unknown, input: unknown) => unknown;
+    const reportHandler = handle.mock.calls[11]?.[1] as (_event: unknown, input: unknown) => unknown;
 
     expect(() => previewHandler({}, null)).toThrow('Invalid payload for import preview.');
     expect(() => previewHandler({}, { broker: '', filePath: '/tmp/ops.csv' })).toThrow(

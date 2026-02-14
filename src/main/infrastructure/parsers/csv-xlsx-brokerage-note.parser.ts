@@ -15,7 +15,6 @@ const REQUIRED_COLUMNS = [
   'Ticker',
   'Quantidade',
   'Preco Unitario',
-  'Taxas Totais',
   'Corretora',
 ] as const;
 
@@ -124,6 +123,10 @@ function requireTemplateColumns(row: SpreadsheetRow): void {
   }
 }
 
+function hasColumn(row: SpreadsheetRow, column: string): boolean {
+  return Object.keys(row).some((key) => toCanonicalHeader(key) === column);
+}
+
 async function readCsvRows(filePath: string): Promise<SpreadsheetRow[]> {
   const csvContent = await fs.readFile(filePath, 'utf-8');
   const lines = csvContent
@@ -179,10 +182,12 @@ export class CsvXlsxBrokerageNoteParser implements BrokerageNoteParserPort {
         throw new Error('Invalid template: Data and Corretora are required.');
       }
 
-      const operationalCost = parseNumber(row['Taxas Totais'], 'Taxas Totais');
+      const operationalCost = hasColumn(row, 'Taxas Totais')
+        ? parseOptionalNumber(row['Taxas Totais'], 0)
+        : 0;
       const operation = {
         ticker: String(row.Ticker).trim(),
-        assetType: parseAssetType(row['Tipo Ativo']),
+        assetType: parseAssetType(hasColumn(row, 'Tipo Ativo') ? row['Tipo Ativo'] : 'stock'),
         operationType: parseOperationType(row.Tipo),
         quantity: parseNumber(row.Quantidade, 'Quantidade'),
         unitPrice: parseNumber(row['Preco Unitario'], 'Preco Unitario'),

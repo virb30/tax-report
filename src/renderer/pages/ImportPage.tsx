@@ -1,41 +1,70 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { JSX } from 'react';
-import type { ImportOperationsCommand } from '../../shared/contracts/import-operations.contract';
+import type { PreviewTransactionItem } from '../../shared/contracts/preview-import.contract';
 import { buildErrorMessage } from './build-error-message';
 
+const SPREADSHEET_MODEL_COLUMNS = [
+  { name: 'Data', type: 'texto (YYYY-MM-DD)', required: true },
+  { name: 'Tipo', type: 'texto (Compra/Venda)', required: true },
+  { name: 'Ticker', type: 'texto', required: true },
+  { name: 'Quantidade', type: 'número', required: true },
+  { name: 'Preço Unitário', type: 'número', required: true },
+  { name: 'Taxas Totais', type: 'número', required: false },
+  { name: 'Corretora', type: 'texto', required: true },
+] as const;
+
 export function ImportPage(): JSX.Element {
-  const [broker, setBroker] = useState('XP');
   const [filePath, setFilePath] = useState('');
+  const [brokers, setBrokers] = useState<Array<{ id: string; name: string }>>([]);
+  const [isSelectingFile, setIsSelectingFile] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isConfirmLoading, setIsConfirmLoading] = useState(false);
-  const [previewCommands, setPreviewCommands] = useState<ImportOperationsCommand[]>([]);
+  const [previewTransactions, setPreviewTransactions] = useState<PreviewTransactionItem[]>([]);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const previewSummary = useMemo(() => {
-    let operationCount = 0;
-    for (const command of previewCommands) {
-      operationCount += command.operations.length;
+  useEffect(() => {
+    void window.electronApi.listBrokers().then((result) => {
+      setBrokers(result.items.map((b) => ({ id: b.id, name: b.name })));
+    });
+  }, []);
+
+  const brokerNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const b of brokers) {
+      map.set(b.id, b.name);
     }
-    return {
-      commandCount: previewCommands.length,
-      operationCount,
-    };
-  }, [previewCommands]);
+    return map;
+  }, [brokers]);
+
+  async function handleSelectFile(): Promise<void> {
+    setIsSelectingFile(true);
+    setErrorMessage('');
+    setFeedbackMessage('');
+    try {
+      const result = await window.electronApi.importSelectFile();
+      if (result.filePath) {
+        setFilePath(result.filePath);
+        setPreviewTransactions([]);
+      }
+    } catch (error: unknown) {
+      setErrorMessage(buildErrorMessage(error));
+    } finally {
+      setIsSelectingFile(false);
+    }
+  }
 
   async function handlePreviewImport(): Promise<void> {
+    if (!filePath.trim()) return;
     setIsPreviewLoading(true);
     setErrorMessage('');
     setFeedbackMessage('');
     try {
-      const previewResult = await window.electronApi.previewImportFromFile({
-        broker,
-        filePath,
-      });
-      setPreviewCommands(previewResult.commands);
-      setFeedbackMessage('Conferencia gerada. Revise os dados e confirme a importacao.');
+      const previewResult = await window.electronApi.previewImportTransactions({ filePath });
+      setPreviewTransactions(previewResult.transactionsPreview);
+      setFeedbackMessage('Conferência gerada. Revise os dados e confirme a importação.');
     } catch (error: unknown) {
-      setPreviewCommands([]);
+      setPreviewTransactions([]);
       setErrorMessage(buildErrorMessage(error));
     } finally {
       setIsPreviewLoading(false);
@@ -43,21 +72,20 @@ export function ImportPage(): JSX.Element {
   }
 
   async function handleConfirmImport(): Promise<void> {
-    if (previewCommands.length === 0) {
-      setErrorMessage('Nenhuma operacao em conferencia para confirmar.');
+    if (!filePath.trim()) {
+      setErrorMessage('Selecione um arquivo primeiro.');
       return;
     }
     setIsConfirmLoading(true);
     setErrorMessage('');
     setFeedbackMessage('');
     try {
-      const result = await window.electronApi.confirmImportOperations({
-        commands: previewCommands,
-      });
+      const result = await window.electronApi.confirmImportTransactions({ filePath });
       setFeedbackMessage(
-        `Importacao concluida: ${result.createdOperationsCount} operacoes criadas e ${result.recalculatedPositionsCount} posicoes recalculadas.`,
+        `Importação concluída: ${result.importedCount} transações importadas. Posições recalculadas: ${result.recalculatedTickers.join(', ') || 'nenhuma'}.`,
       );
-      setPreviewCommands([]);
+      setPreviewTransactions([]);
+      setFilePath('');
     } catch (error: unknown) {
       setErrorMessage(buildErrorMessage(error));
     } finally {
@@ -67,28 +95,84 @@ export function ImportPage(): JSX.Element {
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-800">Importar arquivo com conferencia</h2>
+      <h2 className="text-xl font-semibold text-slate-800">Importar transações (CSV/XLSX)</h2>
       <p className="mt-2 text-sm text-slate-600">
-        Informe a corretora e o caminho do arquivo CSV/XLSX para revisar antes de confirmar.
+        Selecione um arquivo CSV ou Excel com o modelo de planilha abaixo. A corretora deve estar
+        cadastrada.
       </p>
+
+      <div className="mt-4">
+        <h3 className="text-sm font-medium text-slate-700">Modelo de planilha (colunas)</h3>
+        <div className="mt-2 overflow-x-auto rounded-md border border-slate-200">
+          <table className="min-w-full text-left text-sm">
+            <thead className="bg-slate-100 text-slate-700">
+              <tr>
+                <th className="px-3 py-2">Coluna</th>
+                <th className="px-3 py-2">Tipo</th>
+                <th className="px-3 py-2">Obrigatória</th>
+                <th className="px-3 py-2">Descrição</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SPREADSHEET_MODEL_COLUMNS.map((col) => (
+                <tr key={col.name} className="border-t border-slate-100">
+                  <td className="px-3 py-2 font-medium">{col.name}</td>
+                  <td className="px-3 py-2">{col.type}</td>
+                  <td className="px-3 py-2">{col.required ? 'Sim' : 'Não'}</td>
+                  <td className="px-3 py-2 text-slate-600">
+                    {col.name === 'Data' && 'Data do pregão'}
+                    {col.name === 'Tipo' && 'Compra ou Venda'}
+                    {col.name === 'Ticker' && 'Código do ativo (ex: PETR4)'}
+                    {col.name === 'Quantidade' && 'Quantidade negociada'}
+                    {col.name === 'Preço Unitário' && 'Preço por unidade'}
+                    {col.name === 'Taxas Totais' && 'Custos operacionais (default 0)'}
+                    {col.name === 'Corretora' && 'Nome cadastrado no sistema'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm text-slate-700">
-          Corretora
-          <input
-            className="rounded-md border border-slate-300 px-3 py-2"
-            value={broker}
-            onChange={(event) => setBroker(event.target.value)}
-          />
+          Corretoras cadastradas
+          <select
+            className="rounded-md border border-slate-300 px-3 py-2 bg-white"
+            value=""
+            onChange={() => {}}
+            title="Lista de corretoras cadastradas"
+          >
+            <option value="">-- Referência --</option>
+            {brokers.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs text-slate-500">
+            A coluna Corretora do arquivo deve conter um nome desta lista
+          </span>
         </label>
         <label className="flex flex-col gap-1 text-sm text-slate-700">
-          Caminho do arquivo
-          <input
-            className="rounded-md border border-slate-300 px-3 py-2"
-            value={filePath}
-            onChange={(event) => setFilePath(event.target.value)}
-            placeholder="/caminho/arquivo.csv"
-          />
+          Arquivo selecionado
+          <div className="flex gap-2">
+            <input
+              className="flex-1 rounded-md border border-slate-300 px-3 py-2"
+              value={filePath}
+              readOnly
+              placeholder="Nenhum arquivo selecionado"
+            />
+            <button
+              type="button"
+              className="rounded-md bg-slate-700 px-3 py-2 text-sm font-medium text-white hover:bg-slate-600 disabled:opacity-60"
+              onClick={() => void handleSelectFile()}
+              disabled={isSelectingFile}
+            >
+              {isSelectingFile ? 'Abrindo...' : 'Selecionar'}
+            </button>
+          </div>
         </label>
       </div>
 
@@ -96,22 +180,18 @@ export function ImportPage(): JSX.Element {
         <button
           type="button"
           className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-60"
-          onClick={() => {
-            void handlePreviewImport();
-          }}
-          disabled={isPreviewLoading || filePath.trim().length === 0}
+          onClick={() => void handlePreviewImport()}
+          disabled={isPreviewLoading || !filePath.trim()}
         >
-          {isPreviewLoading ? 'Gerando conferencia...' : 'Conferir arquivo'}
+          {isPreviewLoading ? 'Gerando conferência...' : 'Conferir arquivo'}
         </button>
         <button
           type="button"
           className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
-          onClick={() => {
-            void handleConfirmImport();
-          }}
-          disabled={isConfirmLoading || previewCommands.length === 0}
+          onClick={() => void handleConfirmImport()}
+          disabled={isConfirmLoading || previewTransactions.length === 0}
         >
-          {isConfirmLoading ? 'Confirmando...' : 'Confirmar importacao'}
+          {isConfirmLoading ? 'Confirmando...' : 'Confirmar importação'}
         </button>
       </div>
 
@@ -126,35 +206,38 @@ export function ImportPage(): JSX.Element {
         </p>
       ) : null}
 
-      {previewCommands.length > 0 ? (
+      {previewTransactions.length > 0 ? (
         <div className="mt-6 space-y-3">
           <p className="text-sm text-slate-700">
-            Conferencia pronta: {previewSummary.commandCount} notas e {previewSummary.operationCount}{' '}
-            operacoes.
+            Conferência pronta: {previewTransactions.length} transações.
           </p>
           <div className="overflow-x-auto rounded-md border border-slate-200">
             <table className="min-w-full text-left text-sm">
               <thead className="bg-slate-100 text-slate-700">
                 <tr>
                   <th className="px-3 py-2">Data</th>
-                  <th className="px-3 py-2">Ticker</th>
                   <th className="px-3 py-2">Tipo</th>
+                  <th className="px-3 py-2">Ticker</th>
                   <th className="px-3 py-2">Qtd</th>
-                  <th className="px-3 py-2">Preco</th>
+                  <th className="px-3 py-2">Preço</th>
+                  <th className="px-3 py-2">Taxas</th>
+                  <th className="px-3 py-2">Corretora</th>
                 </tr>
               </thead>
               <tbody>
-                {previewCommands.flatMap((command) =>
-                  command.operations.map((operation, index) => (
-                    <tr key={`${command.tradeDate}-${operation.ticker}-${index}`} className="border-t">
-                      <td className="px-3 py-2">{command.tradeDate}</td>
-                      <td className="px-3 py-2">{operation.ticker}</td>
-                      <td className="px-3 py-2">{operation.operationType}</td>
-                      <td className="px-3 py-2">{operation.quantity}</td>
-                      <td className="px-3 py-2">{operation.unitPrice}</td>
-                    </tr>
-                  )),
-                )}
+                {previewTransactions.map((tx, index) => (
+                  <tr key={`${tx.date}-${tx.ticker}-${index}`} className="border-t">
+                    <td className="px-3 py-2">{tx.date}</td>
+                    <td className="px-3 py-2">{tx.type}</td>
+                    <td className="px-3 py-2">{tx.ticker}</td>
+                    <td className="px-3 py-2">{tx.quantity}</td>
+                    <td className="px-3 py-2">{tx.unitPrice}</td>
+                    <td className="px-3 py-2">{tx.fees.toFixed(2)}</td>
+                    <td className="px-3 py-2">
+                      {brokerNameMap.get(tx.brokerId) ?? tx.brokerId}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

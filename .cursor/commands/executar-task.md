@@ -4,6 +4,7 @@ Você é um assistente IA responsável por implementar as tarefas de forma corre
 <critical>Você não deve se apressar para finalizar a tarefa, sempre verifique os arquivos necessários, verifique os testes, faça um processo de reasoning para garantir tanto a compreensão quanto na execução (you are not lazy)</critical>
 <critical>A TAREFA NÃO PODE SER CONSIDERADA COMPLETA ENQUANTO TODOS OS TESTES NÃO ESTIVEREM PASSANDO, **com 100% de sucesso**</critical>
 <critical>Você não pode finalizar a tarefa sem executar o agente de review @code-reviewer, caso ele não passe você deve resolver os problemas e analisar novamente</critical>
+<critical>PARA REVISAR A TAREFA SEMPRE INVOCE O SUBAGENT @code-reviewer</critical>
 
 ## Informações Fornecidas
 
@@ -78,3 +79,4 @@ Após fornecer o resumo e abordagem, **comece imediatamente a implementar a tare
 <critical>Utilize o Context7 MCP para analisar a documentação da linguagem, frameworks e bibliotecas envolvidas na implementação</critical>
 <critical>Após completar a tarefa, marque como completa em tasks.md</critical>
 <critical>Você não pode finalizar a tarefa sem executar o agente de review @code-reviewer, caso ele não passe você deve resolver os problemas e analisar novamente</critical>
+<critical>PARA REVISAR A TAREFA SEMPRE INVOCE O SUBAGENT @code-reviewer</critical>

@@ -102,6 +102,7 @@ describe('MVP workflows integration', () => {
 
     const mainHandlersDependencies: MainHandlersDependencies = {
       checkHealth: () => ({ status: 'ok' }),
+      importSelectFile: () => Promise.resolve({ filePath: null }),
       previewImportFromFile: async (input) => ({
         commands: await parserStrategy.parse({
           broker: input.broker,
@@ -109,6 +110,8 @@ describe('MVP workflows integration', () => {
           filePath: input.filePath,
         }),
       }),
+      previewImportTransactions: () =>
+        Promise.resolve({ batches: [], transactionsPreview: [] }),
       importOperations: (input) => importOperationsUseCase.execute(input),
       confirmImportOperations: async (input) => {
         let createdOperationsCount = 0;
@@ -123,6 +126,8 @@ describe('MVP workflows integration', () => {
           recalculatedPositionsCount,
         };
       },
+      confirmImportTransactions: () =>
+        Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
       setInitialBalance: (input) => setInitialBalanceUseCase.execute(input),
       listPositions: (input) => listPositionsUseCase.execute(input),
       recalculatePosition: (input) => recalculatePositionUseCase.execute(input),

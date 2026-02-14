@@ -6,7 +6,10 @@ describe('createMainLifecycle', () => {
   function createMainHandlersDependencies(): CreateMainLifecycleDependencies['mainHandlersDependencies'] {
     return {
       checkHealth: () => ({ status: 'ok' }),
+      importSelectFile: () => Promise.resolve({ filePath: null }),
       previewImportFromFile: () => Promise.resolve({ commands: [] }),
+      previewImportTransactions: () =>
+        Promise.resolve({ batches: [], transactionsPreview: [] }),
       importOperations: () =>
         Promise.resolve({
         createdOperationsCount: 1,
@@ -14,9 +17,11 @@ describe('createMainLifecycle', () => {
         }),
       confirmImportOperations: () =>
         Promise.resolve({
-        createdOperationsCount: 1,
-        recalculatedPositionsCount: 1,
+          createdOperationsCount: 1,
+          recalculatedPositionsCount: 1,
         }),
+      confirmImportTransactions: () =>
+        Promise.resolve({ importedCount: 1, recalculatedTickers: ['PETR4'] }),
       setInitialBalance: () =>
         Promise.resolve({
           ticker: 'PETR4',

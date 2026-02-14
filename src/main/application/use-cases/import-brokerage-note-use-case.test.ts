@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { AssetType, OperationType, SourceType } from '../../../shared/types/domain';
-import { OperationalCostAllocationService } from '../../domain/ingestion/operational-cost-allocation.service';
+import { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
 import { ImportBrokerageNoteUseCase } from './import-brokerage-note-use-case';
 import type { RecalculateAssetPositionUseCase } from './recalculate-asset-position-use-case';
 
@@ -23,7 +23,7 @@ describe('ImportBrokerageNoteUseCase', () => {
     useCase = new ImportBrokerageNoteUseCase(
       operationWritePort,
       recalculateAssetPositionUseCase,
-      new OperationalCostAllocationService(),
+      new TaxApportioner(),
     );
   });
 
@@ -144,7 +144,7 @@ describe('ImportBrokerageNoteUseCase', () => {
   it('throws when allocated costs and operations are inconsistent', async () => {
     const invalidAllocationService = {
       allocate: jest.fn().mockReturnValue([]),
-    } as unknown as OperationalCostAllocationService;
+    } as unknown as TaxApportioner;
     const invalidUseCase = new ImportBrokerageNoteUseCase(
       operationWritePort,
       recalculateAssetPositionUseCase,

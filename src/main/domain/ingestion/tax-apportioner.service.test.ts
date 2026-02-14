@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
-import { OperationalCostAllocationService } from './operational-cost-allocation.service';
+import { TaxApportioner } from './tax-apportioner.service';
 
-describe('OperationalCostAllocationService', () => {
-  const service = new OperationalCostAllocationService();
+describe('TaxApportioner', () => {
+  const service = new TaxApportioner();
 
   it('allocates costs proportionally and preserves note total', () => {
     const allocations = service.allocate({

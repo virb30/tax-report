@@ -30,17 +30,28 @@ import type {
 import type {
   ConfirmImportOperationsCommand,
   ConfirmImportOperationsResult,
+  ConfirmImportTransactionsCommand,
+  ConfirmImportTransactionsResult,
   PreviewImportFromFileCommand,
   PreviewImportFromFileResult,
+  PreviewImportTransactionsCommand,
+  PreviewImportTransactionsResult,
 } from '../contracts/preview-import.contract';
 
 export type ElectronApi = {
   appName: string;
+  importSelectFile: () => Promise<{ filePath: string | null }>;
   previewImportFromFile: (input: PreviewImportFromFileCommand) => Promise<PreviewImportFromFileResult>;
+  previewImportTransactions: (
+    input: PreviewImportTransactionsCommand,
+  ) => Promise<PreviewImportTransactionsResult>;
   importOperations: (input: ImportOperationsCommand) => Promise<ImportOperationsResult>;
   confirmImportOperations: (
     input: ConfirmImportOperationsCommand,
   ) => Promise<ConfirmImportOperationsResult>;
+  confirmImportTransactions: (
+    input: ConfirmImportTransactionsCommand,
+  ) => Promise<ConfirmImportTransactionsResult>;
   setInitialBalance: (input: SetInitialBalanceCommand) => Promise<SetInitialBalanceResult>;
   listPositions: (input: ListPositionsQuery) => Promise<ListPositionsResult>;
   generateAssetsReport: (

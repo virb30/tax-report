@@ -1,4 +1,4 @@
-import { OperationalCostAllocationService } from '../../domain/ingestion/operational-cost-allocation.service';
+import { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
 import type { BrokerageNoteInput } from '../contracts/brokerage-note.contract';
 import type { OperationWritePort } from '../ports/operation-write.port';
 import type { RecalculateAssetPositionUseCase } from './recalculate-asset-position-use-case';
@@ -18,12 +18,12 @@ export class ImportBrokerageNoteUseCase {
   constructor(
     private readonly operationWritePort: OperationWritePort,
     private readonly recalculateAssetPositionUseCase: RecalculateAssetPositionUseCase,
-    private readonly operationalCostAllocationService: OperationalCostAllocationService = new OperationalCostAllocationService(),
+    private readonly taxApportioner: TaxApportioner = new TaxApportioner(),
   ) {}
 
   async execute(input: BrokerageNoteInput): Promise<ImportBrokerageNoteResult> {
     const importBatchId = input.importBatchId ?? createImportBatchId();
-    const allocatedOperationalCosts = this.operationalCostAllocationService.allocate({
+    const allocatedOperationalCosts = this.taxApportioner.allocate({
       totalOperationalCosts: input.totalOperationalCosts,
       operations: input.operations.map((operation) => ({
         ticker: operation.ticker,
