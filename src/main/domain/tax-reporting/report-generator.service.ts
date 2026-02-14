@@ -9,6 +9,8 @@ const ETF_CLASSIFICATION = { group: '07', code: '09' } as const;
 export type ReportItemInput = {
   position: AssetPositionSnapshot;
   brokersMap: Map<string, BrokerRecord>;
+  /** CNPJ do emissor (empresa do ativo), de ticker_data. Usar "N/A" quando não cadastrado. */
+  issuerCnpj: string;
 };
 
 export type ReportItemOutput = {
@@ -66,13 +68,14 @@ export function getRevenueClassification(assetType: AssetType): { group: string;
 
 /**
  * Gera o texto de discriminação no formato RFB para uma alocação por corretora.
- * Formato: "[QTD] ações/cotas [TICKER]. CNPJ: [CNPJ]. Corretora: [NOME]. Custo médio: R$ [PM]. Custo total: R$ [TOTAL]."
+ * Formato: "[QTD] ações/cotas [TICKER]. CNPJ: [CNPJ emissor]. Corretora: [NOME]. Custo médio: R$ [PM]. Custo total: R$ [TOTAL]."
+ * O CNPJ é do emissor do ativo (empresa), vindo de ticker_data. Use "N/A" quando não cadastrado.
  */
 export function buildDiscriminationText(input: {
   quantity: number;
   ticker: string;
   assetType: AssetType;
-  cnpj: string;
+  issuerCnpj: string;
   brokerName: string;
   averagePrice: number;
   totalCost: number;
@@ -81,7 +84,7 @@ export function buildDiscriminationText(input: {
   const avgFormatted = formatBrl(input.averagePrice);
   const totalFormatted = formatBrl(input.totalCost);
 
-  return `${input.quantity} ${unitLabel} ${input.ticker}. CNPJ: ${input.cnpj}. Corretora: ${input.brokerName}. Custo médio: R$ ${avgFormatted}. Custo total: R$ ${totalFormatted}.`;
+  return `${input.quantity} ${unitLabel} ${input.ticker}. CNPJ: ${input.issuerCnpj}. Corretora: ${input.brokerName}. Custo médio: R$ ${avgFormatted}. Custo total: R$ ${totalFormatted}.`;
 }
 
 /**
@@ -91,7 +94,7 @@ export class ReportGenerator {
   generate(items: ReportItemInput[]): ReportItemOutput[] {
     const result: ReportItemOutput[] = [];
 
-    for (const { position, brokersMap } of items) {
+    for (const { position, brokersMap, issuerCnpj } of items) {
       if (position.totalQuantity <= 0) {
         continue;
       }
@@ -104,7 +107,7 @@ export class ReportGenerator {
         .map((allocation) => {
           const broker = brokersMap.get(allocation.brokerId);
           const brokerName = broker?.name ?? 'Corretora não cadastrada';
-          const cnpj = broker?.cnpj ?? 'N/A';
+          const brokerCnpj = broker?.cnpj ?? 'N/A';
           const allocTotalCost =
             Math.round(allocation.quantity * position.averagePrice * 100) / 100;
 
@@ -112,7 +115,7 @@ export class ReportGenerator {
             quantity: allocation.quantity,
             ticker: position.ticker,
             assetType: position.assetType,
-            cnpj,
+            issuerCnpj,
             brokerName,
             averagePrice: position.averagePrice,
             totalCost: allocTotalCost,
@@ -121,7 +124,7 @@ export class ReportGenerator {
           return {
             brokerId: allocation.brokerId,
             brokerName,
-            cnpj,
+            cnpj: brokerCnpj,
             quantity: allocation.quantity,
             totalCost: allocTotalCost,
             description,

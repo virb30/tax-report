@@ -27,6 +27,7 @@ describe('KnexBrokerRepository', () => {
       id: 'broker-test-1',
       name: 'Test Broker',
       cnpj: '11.222.333/0001-44',
+      codigo: 'TEST',
     });
 
     const found = await repo.findById('broker-test-1');
@@ -47,7 +48,7 @@ describe('KnexBrokerRepository', () => {
     await setupDatabase();
     const repo = new KnexBrokerRepository(database);
 
-    await repo.save({ id: 'b1', name: 'Unique Name', cnpj: '11.111.111/0001-11' });
+    await repo.save({ id: 'b1', name: 'Unique Name', cnpj: '11.111.111/0001-11', codigo: 'UNIQ' });
 
     const found = await repo.findByName('Unique Name');
     expect(found).not.toBeNull();
@@ -58,9 +59,9 @@ describe('KnexBrokerRepository', () => {
     await setupDatabase();
     const repo = new KnexBrokerRepository(database);
 
-    await repo.save({ id: 'b-z', name: 'Zebra', cnpj: '99.999.999/0001-99' });
-    await repo.save({ id: 'b-a', name: 'Alpha', cnpj: '11.111.111/0001-11' });
-    await repo.save({ id: 'b-m', name: 'Middle', cnpj: '55.555.555/0001-55' });
+    await repo.save({ id: 'b-z', name: 'Zebra', cnpj: '99.999.999/0001-99', codigo: 'ZEBRA' });
+    await repo.save({ id: 'b-a', name: 'Alpha', cnpj: '11.111.111/0001-11', codigo: 'ALPHA' });
+    await repo.save({ id: 'b-m', name: 'Middle', cnpj: '55.555.555/0001-55', codigo: 'MID' });
 
     const all = await repo.findAll();
     expect(all).toHaveLength(3);

@@ -7,6 +7,9 @@ import { createAccumulatedLossesMigration } from './005-create-accumulated-losse
 import { createTaxConfigMigration } from './006-create-tax-config';
 import { createAssetsMigration } from './007-create-assets';
 import { createOperationsMigration } from './008-create-operations';
+import { createTickerDataMigration } from './009-create-ticker-data';
+import { addYearToPositionsMigration } from './010-add-year-to-positions';
+import { addCodeToBrokersMigration } from './011-add-code-to-brokers';
 
 export type DatabaseMigration = {
   name: string;
@@ -23,4 +26,7 @@ export const databaseMigrations: DatabaseMigration[] = [
   createTaxConfigMigration,
   createAssetsMigration,
   createOperationsMigration,
+  createTickerDataMigration,
+  addYearToPositionsMigration,
+  addCodeToBrokersMigration,
 ];

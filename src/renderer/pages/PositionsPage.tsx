@@ -1,8 +1,9 @@
 import { Fragment, useEffect, useState } from 'react';
 import type { JSX } from 'react';
 import type { ListPositionsResult, PositionListItem } from '../../shared/contracts/list-positions.contract';
-import { buildErrorMessage } from './build-error-message';
-import { MigrateYearModal } from './MigrateYearModal';
+import { buildErrorMessage } from '../errors/build-error-message';
+import { MigrateYearModal } from '../components/MigrateYearModal';
+import { ImportConsolidatedPositionModal } from './ImportConsolidatedPositionModal';
 
 const defaultBaseYear = new Date().getFullYear() - 1;
 
@@ -15,6 +16,8 @@ export function PositionsPage(): JSX.Element {
   const [recalculatingTicker, setRecalculatingTicker] = useState<string | null>(null);
   const [recalculatingAll, setRecalculatingAll] = useState(false);
   const [migrateModalOpen, setMigrateModalOpen] = useState(false);
+  const [importConsolidatedModalOpen, setImportConsolidatedModalOpen] = useState(false);
+  const [deletingTicker, setDeletingTicker] = useState<string | null>(null);
 
   async function loadPositions(): Promise<void> {
     setIsLoading(true);
@@ -37,7 +40,7 @@ export function PositionsPage(): JSX.Element {
     setRecalculatingTicker(ticker);
     setErrorMessage('');
     try {
-      await window.electronApi.recalculatePosition({ ticker });
+      await window.electronApi.recalculatePosition({ ticker, year: baseYear });
       await loadPositions();
     } catch (error: unknown) {
       setErrorMessage(buildErrorMessage(error));
@@ -51,13 +54,31 @@ export function PositionsPage(): JSX.Element {
     setErrorMessage('');
     try {
       for (const p of positions) {
-        await window.electronApi.recalculatePosition({ ticker: p.ticker });
+        await window.electronApi.recalculatePosition({ ticker: p.ticker, year: baseYear });
       }
       await loadPositions();
     } catch (error: unknown) {
       setErrorMessage(buildErrorMessage(error));
     } finally {
       setRecalculatingAll(false);
+    }
+  }
+
+  async function handleDeletePosition(ticker: string): Promise<void> {
+    if (!window.confirm(`Excluir o ativo ${ticker} da posição de ${baseYear}?`)) {
+      return;
+    }
+    setDeletingTicker(ticker);
+    setErrorMessage('');
+    try {
+      const result = await window.electronApi.deletePosition({ ticker, year: baseYear });
+      if (result.deleted) {
+        await loadPositions();
+      }
+    } catch (error: unknown) {
+      setErrorMessage(buildErrorMessage(error));
+    } finally {
+      setDeletingTicker(null);
     }
   }
 
@@ -100,6 +121,13 @@ export function PositionsPage(): JSX.Element {
           <button
             type="button"
             className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+            onClick={() => setImportConsolidatedModalOpen(true)}
+          >
+            Importar posição consolidada
+          </button>
+          <button
+            type="button"
+            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
             onClick={() => setMigrateModalOpen(true)}
           >
             Migrar posições entre anos
@@ -114,6 +142,12 @@ export function PositionsPage(): JSX.Element {
           </button>
         </div>
       </div>
+
+      <ImportConsolidatedPositionModal
+        isOpen={importConsolidatedModalOpen}
+        onClose={() => setImportConsolidatedModalOpen(false)}
+        onSuccess={() => void loadPositions()}
+      />
 
       <MigrateYearModal
         isOpen={migrateModalOpen}
@@ -146,7 +180,7 @@ export function PositionsPage(): JSX.Element {
                 <th className="px-3 py-2">Qtd total</th>
                 <th className="px-3 py-2">PM global</th>
                 <th className="px-3 py-2">Custo total</th>
-                <th className="w-24 px-3 py-2"></th>
+                <th className="w-32 px-3 py-2"></th>
               </tr>
             </thead>
             <tbody>
@@ -172,17 +206,30 @@ export function PositionsPage(): JSX.Element {
                     <td className="px-3 py-2">R$ {p.averagePrice.toFixed(2)}</td>
                     <td className="px-3 py-2">R$ {p.totalCost.toFixed(2)}</td>
                     <td className="px-3 py-2">
-                      <button
-                        type="button"
-                        className="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-60"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void handleRecalculate(p.ticker);
-                        }}
-                        disabled={recalculatingTicker === p.ticker || recalculatingAll}
-                      >
-                        {recalculatingTicker === p.ticker ? '...' : 'Recalcular'}
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          className="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleRecalculate(p.ticker);
+                          }}
+                          disabled={recalculatingTicker === p.ticker || recalculatingAll}
+                        >
+                          {recalculatingTicker === p.ticker ? '...' : 'Recalcular'}
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded border border-rose-300 bg-white px-2 py-1 text-xs text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleDeletePosition(p.ticker);
+                          }}
+                          disabled={deletingTicker === p.ticker || recalculatingAll}
+                        >
+                          {deletingTicker === p.ticker ? '...' : 'Excluir'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   {expandedTickers.has(p.ticker) && p.brokerBreakdown.length > 0 ? (

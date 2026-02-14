@@ -35,32 +35,32 @@ describe('ReportGenerator', () => {
   });
 
   describe('buildDiscriminationText', () => {
-    it('builds correct format for stock', () => {
+    it('builds correct format for stock with issuer CNPJ', () => {
       const text = buildDiscriminationText({
         quantity: 100,
         ticker: 'PETR4',
         assetType: AssetType.Stock,
-        cnpj: '02.332.886/0001-04',
+        issuerCnpj: '33.000.167/0001-01',
         brokerName: 'XP Investimentos',
         averagePrice: 35.2,
         totalCost: 3520,
       });
       expect(text).toBe(
-        '100 ações PETR4. CNPJ: 02.332.886/0001-04. Corretora: XP Investimentos. Custo médio: R$ 35,20. Custo total: R$ 3.520,00.',
+        '100 ações PETR4. CNPJ: 33.000.167/0001-01. Corretora: XP Investimentos. Custo médio: R$ 35,20. Custo total: R$ 3.520,00.',
       );
     });
-    it('builds correct format for fii with cotas', () => {
+    it('builds correct format for fii with cotas and N/A when issuer not registered', () => {
       const text = buildDiscriminationText({
         quantity: 10,
         ticker: 'HGLG11',
         assetType: AssetType.Fii,
-        cnpj: '02.332.886/0001-04',
+        issuerCnpj: 'N/A',
         brokerName: 'XP Investimentos',
         averagePrice: 150,
         totalCost: 1500,
       });
       expect(text).toBe(
-        '10 cotas HGLG11. CNPJ: 02.332.886/0001-04. Corretora: XP Investimentos. Custo médio: R$ 150,00. Custo total: R$ 1.500,00.',
+        '10 cotas HGLG11. CNPJ: N/A. Corretora: XP Investimentos. Custo médio: R$ 150,00. Custo total: R$ 1.500,00.',
       );
     });
   });
@@ -78,12 +78,13 @@ describe('ReportGenerator', () => {
             brokerBreakdown: [],
           },
           brokersMap: new Map(),
+          issuerCnpj: 'N/A',
         },
       ]);
       expect(result).toHaveLength(0);
     });
 
-    it('generates one allocation per broker with correct discrimination', () => {
+    it('generates one allocation per broker with correct discrimination using issuer CNPJ', () => {
       const generator = new ReportGenerator();
       const brokersMap = new Map([
         [
@@ -101,6 +102,7 @@ describe('ReportGenerator', () => {
             brokerBreakdown: [{ brokerId: 'broker-xp', quantity: 100 }],
           },
           brokersMap,
+          issuerCnpj: '33.000.167/0001-01',
         },
       ]);
 
@@ -120,7 +122,7 @@ describe('ReportGenerator', () => {
             quantity: 100,
             totalCost: 3520,
             description:
-              '100 ações PETR4. CNPJ: 02.332.886/0001-04. Corretora: XP Investimentos. Custo médio: R$ 35,20. Custo total: R$ 3.520,00.',
+              '100 ações PETR4. CNPJ: 33.000.167/0001-01. Corretora: XP Investimentos. Custo médio: R$ 35,20. Custo total: R$ 3.520,00.',
           },
         ],
       });
@@ -151,6 +153,7 @@ describe('ReportGenerator', () => {
             ],
           },
           brokersMap,
+          issuerCnpj: '33.000.167/0001-01',
         },
       ]);
 
@@ -168,7 +171,7 @@ describe('ReportGenerator', () => {
       });
     });
 
-    it('uses placeholder when broker not found', () => {
+    it('uses placeholder when broker not found and N/A for issuer when not registered', () => {
       const generator = new ReportGenerator();
       const result = generator.generate([
         {
@@ -180,6 +183,7 @@ describe('ReportGenerator', () => {
             brokerBreakdown: [{ brokerId: 'unknown-broker', quantity: 50 }],
           },
           brokersMap: new Map(),
+          issuerCnpj: 'N/A',
         },
       ]);
 
@@ -187,6 +191,7 @@ describe('ReportGenerator', () => {
         brokerName: 'Corretora não cadastrada',
         cnpj: 'N/A',
       });
+      expect(result[0]?.allocations[0]?.description).toContain('CNPJ: N/A.');
     });
   });
 });

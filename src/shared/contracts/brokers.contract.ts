@@ -2,6 +2,7 @@ export type BrokerListItem = {
   id: string;
   name: string;
   cnpj: string;
+  code: string;
 };
 
 export type ListBrokersResult = {
@@ -11,6 +12,7 @@ export type ListBrokersResult = {
 export type CreateBrokerCommand = {
   name: string;
   cnpj: string;
+  code: string;
 };
 
 export type CreateBrokerResult =

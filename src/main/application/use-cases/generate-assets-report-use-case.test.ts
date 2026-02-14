@@ -3,6 +3,7 @@ import { AssetType, SourceType, TransactionType } from '../../../shared/types/do
 import type { BrokerRepositoryPort } from '../repositories/broker.repository';
 import type { PositionRepository } from '../repositories/position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
+import type { TickerDataRepository } from '../repositories/ticker-data.repository';
 import { GenerateAssetsReportUseCase } from './generate-assets-report-use-case';
 import { ReportGenerator } from '../../domain/tax-reporting/report-generator.service';
 
@@ -35,6 +36,7 @@ describe('GenerateAssetsReportUseCase', () => {
   let transactionRepository: jest.Mocked<TransactionRepository>;
   let positionRepository: jest.Mocked<PositionRepository>;
   let brokerRepository: jest.Mocked<BrokerRepositoryPort>;
+  let tickerDataRepository: jest.Mocked<TickerDataRepository>;
   let reportGenerator: ReportGenerator;
   let useCase: GenerateAssetsReportUseCase;
 
@@ -53,8 +55,8 @@ describe('GenerateAssetsReportUseCase', () => {
       findExistingExternalRefs: jest.fn(),
     };
     positionRepository = {
-      findByTicker: jest.fn().mockResolvedValue(null),
-      findAll: jest.fn(),
+      findByTickerAndYear: jest.fn().mockResolvedValue(null),
+      findAllByYear: jest.fn(),
       save: jest.fn(),
     };
     brokerRepository = {
@@ -65,11 +67,17 @@ describe('GenerateAssetsReportUseCase', () => {
       ]),
       save: jest.fn(),
     };
+    tickerDataRepository = {
+      findByTicker: jest.fn().mockResolvedValue(null),
+      findAll: jest.fn(),
+      save: jest.fn(),
+    };
     reportGenerator = new ReportGenerator();
     useCase = new GenerateAssetsReportUseCase(
       transactionRepository,
       positionRepository,
       brokerRepository,
+      tickerDataRepository,
       reportGenerator,
     );
   });
@@ -123,7 +131,7 @@ describe('GenerateAssetsReportUseCase', () => {
     jest.spyOn(transactionRepository, 'findByPeriod').mockResolvedValue([
       createTransaction({ ticker: 'VALE3', quantity: 1, unitPrice: 10 }),
     ]);
-    jest.spyOn(positionRepository, 'findByTicker').mockResolvedValue({
+    jest.spyOn(positionRepository, 'findByTickerAndYear').mockResolvedValue({
       ticker: 'VALE3',
       assetType: AssetType.Stock,
       totalQuantity: 0,
@@ -164,6 +172,20 @@ describe('GenerateAssetsReportUseCase', () => {
     expect(knri?.totalQuantity).toBe(3);
     expect(knri?.averagePrice).toBe(100);
     expect(knri?.assetType).toBe(AssetType.Stock);
+  });
+
+  it('uses issuer CNPJ from ticker_data when available', async () => {
+    jest.spyOn(transactionRepository, 'findByPeriod').mockResolvedValue([
+      createTransaction({ ticker: 'PETR4', quantity: 100, unitPrice: 35.2 }),
+    ]);
+    jest.spyOn(tickerDataRepository, 'findByTicker').mockImplementation((ticker) =>
+      Promise.resolve(ticker === 'PETR4' ? { ticker: 'PETR4', cnpj: '33.000.167/0001-01', name: 'Petrobras' } : null),
+    );
+
+    const result = await useCase.execute({ baseYear: 2025 });
+
+    const petr4 = result.items.find((i) => i.ticker === 'PETR4');
+    expect(petr4?.allocations[0]?.description).toContain('CNPJ: 33.000.167/0001-01');
   });
 
   it('handles multi-broker position with correct allocations', async () => {

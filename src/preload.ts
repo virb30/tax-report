@@ -4,6 +4,11 @@ import type { GenerateAssetsReportQuery } from '@shared/contracts/assets-report.
 import type { CreateBrokerCommand } from '@shared/contracts/brokers.contract';
 import type { RecalculatePositionCommand } from '@shared/contracts/recalculate.contract';
 import type { MigrateYearCommand } from '@shared/contracts/migrate-year.contract';
+import type {
+  ImportConsolidatedPositionCommand,
+  PreviewConsolidatedPositionCommand,
+} from '@shared/contracts/import-consolidated-position.contract';
+import type { DeletePositionCommand } from '@shared/contracts/delete-position.contract';
 import type { ImportOperationsCommand } from '@shared/contracts/import-operations.contract';
 import type { SetInitialBalanceCommand } from '@shared/contracts/initial-balance.contract';
 import type { ListPositionsQuery } from '@shared/contracts/list-positions.contract';
@@ -39,6 +44,12 @@ export const electronApi: ElectronApi = {
     ipcRenderer.invoke('portfolio:recalculate', input),
   migrateYear: (input: MigrateYearCommand) =>
     ipcRenderer.invoke('portfolio:migrate-year', input),
+  previewConsolidatedPosition: (input: PreviewConsolidatedPositionCommand) =>
+    ipcRenderer.invoke('portfolio:preview-consolidated-position', input),
+  importConsolidatedPosition: (input: ImportConsolidatedPositionCommand) =>
+    ipcRenderer.invoke('portfolio:import-consolidated-position', input),
+  deletePosition: (input: DeletePositionCommand) =>
+    ipcRenderer.invoke('portfolio:delete-position', input),
 };
 
 contextBridge.exposeInMainWorld('electronApi', electronApi);

@@ -21,7 +21,10 @@ export class MigrateYearUseCase {
   constructor(
     private readonly positionRepository: PositionRepository,
     private readonly transactionRepository: TransactionRepository,
-    private readonly recalculatePosition: (input: { ticker: string }) => Promise<void>,
+    private readonly recalculatePosition: (input: {
+      ticker: string;
+      year: number;
+    }) => Promise<void>,
   ) {}
 
   async execute(input: MigrateYearInput): Promise<MigrateYearResult> {
@@ -51,6 +54,7 @@ export class MigrateYearUseCase {
     const positionsAtYearEnd = await computePositionsFromTransactions(
       transactionsUntilSourceYear,
       this.positionRepository,
+      input.sourceYear,
     );
 
     const positionsWithQuantity = positionsAtYearEnd.filter((p) => p.totalQuantity > 0);
@@ -85,7 +89,7 @@ export class MigrateYearUseCase {
 
     const affectedTickers = [...new Set(positionsWithQuantity.map((p) => p.ticker))];
     for (const ticker of affectedTickers) {
-      await this.recalculatePosition({ ticker });
+      await this.recalculatePosition({ ticker, year: input.targetYear });
     }
 
     return {

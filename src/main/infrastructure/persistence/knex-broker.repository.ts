@@ -6,6 +6,7 @@ type BrokerRow = {
   id: string;
   name: string;
   cnpj: string;
+  code?: string;
 };
 
 function mapRowToRecord(row: BrokerRow): BrokerRecord {
@@ -13,6 +14,7 @@ function mapRowToRecord(row: BrokerRow): BrokerRecord {
     id: row.id,
     name: row.name,
     cnpj: row.cnpj,
+    code: row.code ?? row.id,
   };
 }
 
@@ -29,16 +31,23 @@ export class KnexBrokerRepository implements BrokerRepositoryPort {
     return row ? mapRowToRecord(row) : null;
   }
 
+  async findByCode(code: string): Promise<BrokerRecord | null> {
+    const row = await this.database<BrokerRow>('brokers').where({ code }).first();
+    return row ? mapRowToRecord(row) : null;
+  }
+
   async findAll(): Promise<BrokerRecord[]> {
     const rows = await this.database<BrokerRow>('brokers').select('*').orderBy('name', 'asc');
     return rows.map(mapRowToRecord);
   }
 
   async save(broker: BrokerRecord): Promise<void> {
+    const code = broker.code ?? broker.id;
     await this.database('brokers').insert({
       id: broker.id,
       name: broker.name,
       cnpj: broker.cnpj,
+      code,
     });
   }
 }

@@ -15,4 +15,5 @@
 - [x] 11.0 Recálculo de Posição + Migração entre Anos
 - [x] 12.0 Importação de Transações (Ingestion Context)
 - [x] 13.0 Relatório de Bens e Direitos (Tax Reporting Context)
-- [ ] 14.0 Validação Final do MVP
+- [x] 14.0 Ajustes de Modelagem — CNPJ por Ticker, Ano nas Posições, Código da Corretora e Vínculo na Importação
+- [x] 15.0 Importação de Posição Consolidada por Planilha e Exclusão de Ativo

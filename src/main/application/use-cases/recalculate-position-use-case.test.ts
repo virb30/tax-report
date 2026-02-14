@@ -13,8 +13,8 @@ describe('RecalculatePositionUseCase', () => {
 
   beforeEach(() => {
     positionRepository = {
-      findByTicker: jest.fn().mockResolvedValue(null),
-      findAll: jest.fn(),
+      findByTickerAndYear: jest.fn().mockResolvedValue(null),
+      findAllByYear: jest.fn(),
       save: jest.fn().mockResolvedValue(undefined),
     };
     transactionRepository = {
@@ -27,7 +27,7 @@ describe('RecalculatePositionUseCase', () => {
   });
 
   it('recalculates position from mix of Buy, Sell, Bonus and InitialBalance', async () => {
-    (positionRepository.findByTicker as jest.Mock).mockResolvedValue(null);
+    (positionRepository.findByTickerAndYear as jest.Mock).mockResolvedValue(null);
     (transactionRepository.findByTicker as jest.Mock).mockResolvedValue([
       {
         id: '1',
@@ -64,9 +64,10 @@ describe('RecalculatePositionUseCase', () => {
       },
     ]);
 
-    await useCase.execute({ ticker: 'PETR4' });
+    await useCase.execute({ ticker: 'PETR4', year: 2024 });
 
     expect(positionRepository.save).toHaveBeenCalledTimes(1);
+    expect(positionRepository.save).toHaveBeenCalledWith(expect.anything(), 2024);
     const savedSnapshot = (positionRepository.save as jest.Mock).mock.calls[0]?.[0];
     expect(savedSnapshot.ticker).toBe('PETR4');
     expect(savedSnapshot.totalQuantity).toBe(120); // 100 + 50 - 30
@@ -74,7 +75,7 @@ describe('RecalculatePositionUseCase', () => {
   });
 
   it('uses existing position assetType when recalculating', async () => {
-    (positionRepository.findByTicker as jest.Mock).mockResolvedValue({
+    (positionRepository.findByTickerAndYear as jest.Mock).mockResolvedValue({
       ticker: 'HGLG11',
       assetType: AssetType.Fii,
       totalQuantity: 10,
@@ -95,7 +96,7 @@ describe('RecalculatePositionUseCase', () => {
       },
     ]);
 
-    await useCase.execute({ ticker: 'HGLG11' });
+    await useCase.execute({ ticker: 'HGLG11', year: 2024 });
 
     const savedSnapshot = (positionRepository.save as jest.Mock).mock.calls[0]?.[0];
     expect(savedSnapshot.assetType).toBe(AssetType.Fii);
@@ -103,7 +104,7 @@ describe('RecalculatePositionUseCase', () => {
 
   it('persists empty position when no transactions exist', async () => {
     (transactionRepository.findByTicker as jest.Mock).mockResolvedValue([]);
-    (positionRepository.findByTicker as jest.Mock).mockResolvedValue({
+    (positionRepository.findByTickerAndYear as jest.Mock).mockResolvedValue({
       ticker: 'VALE3',
       assetType: AssetType.Stock,
       totalQuantity: 50,
@@ -111,7 +112,7 @@ describe('RecalculatePositionUseCase', () => {
       brokerBreakdown: [{ brokerId: 'broker-xp', quantity: 50 }],
     });
 
-    await useCase.execute({ ticker: 'VALE3' });
+    await useCase.execute({ ticker: 'VALE3', year: 2024 });
 
     expect(positionRepository.save).toHaveBeenCalledTimes(1);
     const savedSnapshot = (positionRepository.save as jest.Mock).mock.calls[0]?.[0];
@@ -145,7 +146,7 @@ describe('RecalculatePositionUseCase', () => {
       },
     ]);
 
-    await useCase.execute({ ticker: 'ITSA4' });
+    await useCase.execute({ ticker: 'ITSA4', year: 2024 });
 
     const savedSnapshot = (positionRepository.save as jest.Mock).mock.calls[0]?.[0];
     expect(savedSnapshot.totalQuantity).toBe(150);

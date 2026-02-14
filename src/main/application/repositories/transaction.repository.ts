@@ -6,4 +6,5 @@ export interface TransactionRepository {
   findByTicker(ticker: string): Promise<TransactionRecord[]>;
   findByPeriod(input: { startDate: string; endDate: string }): Promise<TransactionRecord[]>;
   findExistingExternalRefs(externalRefs: string[]): Promise<Set<string>>;
+  deleteInitialBalanceByTickerAndYear(ticker: string, year: number): Promise<void>;
 }

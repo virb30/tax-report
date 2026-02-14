@@ -76,8 +76,18 @@ export class ImportTransactionsUseCase {
       await this.transactionRepository.saveMany(newTransactions);
     }
 
-    for (const ticker of affectedTickers) {
-      await this.recalculatePositionUseCase.execute({ ticker });
+    const tickerYears = new Map<string, Set<number>>();
+    for (const tx of newTransactions) {
+      const year = parseInt(tx.date.slice(0, 4), 10);
+      if (!tickerYears.has(tx.ticker)) {
+        tickerYears.set(tx.ticker, new Set());
+      }
+      tickerYears.get(tx.ticker)!.add(year);
+    }
+    for (const [ticker, years] of tickerYears) {
+      for (const year of years) {
+        await this.recalculatePositionUseCase.execute({ ticker, year });
+      }
     }
 
     return {

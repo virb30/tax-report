@@ -18,7 +18,10 @@ export class SetInitialBalanceUseCase {
   async execute(input: SetInitialBalanceCommand): Promise<SetInitialBalanceResult> {
     this.validate(input);
 
-    const existingSnapshot = await this.positionRepository.findByTicker(input.ticker);
+    const existingSnapshot = await this.positionRepository.findByTickerAndYear(
+      input.ticker,
+      input.year,
+    );
 
     const position = existingSnapshot
       ? AssetPosition.create(existingSnapshot)
@@ -50,7 +53,7 @@ export class SetInitialBalanceUseCase {
     };
 
     await this.transactionRepository.save(transaction);
-    await this.positionRepository.save(position.toSnapshot());
+    await this.positionRepository.save(position.toSnapshot(), input.year);
 
     return {
       ticker: input.ticker,

@@ -13,8 +13,8 @@ describe('MigrateYearUseCase', () => {
 
   beforeEach(() => {
     positionRepository = {
-      findByTicker: jest.fn().mockResolvedValue(null),
-      findAll: jest.fn(),
+      findByTickerAndYear: jest.fn().mockResolvedValue(null),
+      findAllByYear: jest.fn(),
       save: jest.fn().mockResolvedValue(undefined),
     };
     transactionRepository = {
@@ -32,7 +32,7 @@ describe('MigrateYearUseCase', () => {
   });
 
   it('creates InitialBalance transactions and recalculates positions', async () => {
-    (positionRepository.findByTicker as jest.Mock).mockResolvedValue({
+    (positionRepository.findByTickerAndYear as jest.Mock).mockResolvedValue({
       ticker: 'PETR4',
       assetType: 'stock',
       totalQuantity: 0,
@@ -74,7 +74,7 @@ describe('MigrateYearUseCase', () => {
     expect(savedTransactions[0]?.ticker).toBe('PETR4');
     expect(savedTransactions[0]?.quantity).toBe(100);
     expect(savedTransactions[0]?.unitPrice).toBe(20);
-    expect(recalculateFn).toHaveBeenCalledWith({ ticker: 'PETR4' });
+    expect(recalculateFn).toHaveBeenCalledWith({ ticker: 'PETR4', year: 2025 });
   });
 
   it('blocks migration when InitialBalance already exists for target year', async () => {

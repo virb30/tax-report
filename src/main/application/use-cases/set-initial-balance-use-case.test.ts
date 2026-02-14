@@ -11,8 +11,8 @@ describe('SetInitialBalanceUseCase', () => {
 
   beforeEach(() => {
     positionRepository = {
-      findByTicker: jest.fn().mockResolvedValue(null),
-      findAll: jest.fn(),
+      findByTickerAndYear: jest.fn().mockResolvedValue(null),
+      findAllByYear: jest.fn(),
       save: jest.fn().mockResolvedValue(undefined),
     };
     transactionRepository = {
@@ -41,13 +41,14 @@ describe('SetInitialBalanceUseCase', () => {
       averagePrice: 20,
     });
     expect(positionRepository.save).toHaveBeenCalledTimes(1);
+    expect(positionRepository.save).toHaveBeenCalledWith(expect.anything(), 2025);
     expect(transactionRepository.save).toHaveBeenCalledTimes(1);
     const transactionCall = (transactionRepository.save as jest.Mock).mock.calls[0]?.[0];
     expect(transactionCall.date).toBe('2025-01-01');
   });
 
   it('sums to existing position when ticker exists', async () => {
-    (positionRepository.findByTicker as jest.Mock).mockResolvedValue({
+    (positionRepository.findByTickerAndYear as jest.Mock).mockResolvedValue({
       ticker: 'PETR4',
       assetType: AssetType.Stock,
       totalQuantity: 10,
@@ -65,6 +66,7 @@ describe('SetInitialBalanceUseCase', () => {
     });
 
     const saveCall = (positionRepository.save as jest.Mock).mock.calls[0]?.[0];
+    expect(positionRepository.save).toHaveBeenCalledWith(expect.anything(), 2025);
     expect(saveCall.totalQuantity).toBe(20);
     expect(saveCall.averagePrice).toBe(25);
   });

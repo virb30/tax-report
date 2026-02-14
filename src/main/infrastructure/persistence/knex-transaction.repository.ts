@@ -113,4 +113,13 @@ export class KnexTransactionRepository implements TransactionRepository {
       .select('external_ref');
     return new Set(rows.map((r) => r.external_ref).filter((r): r is string => r != null));
   }
+
+  async deleteInitialBalanceByTickerAndYear(ticker: string, year: number): Promise<void> {
+    const yearStart = `${year}-01-01`;
+    const yearEnd = `${year}-12-31`;
+    await this.database('transactions')
+      .where({ ticker, type: 'initial_balance' })
+      .whereBetween('date', [yearStart, yearEnd])
+      .delete();
+  }
 }

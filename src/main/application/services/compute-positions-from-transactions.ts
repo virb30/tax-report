@@ -15,13 +15,17 @@ export type PositionSnapshot = {
 export async function computePositionsFromTransactions(
   transactions: TransactionRecord[],
   positionRepository: PositionRepository,
+  year: number,
 ): Promise<PositionSnapshot[]> {
   const positionsByTicker = new Map<string, AssetPosition>();
 
   for (const tx of transactions) {
     let position = positionsByTicker.get(tx.ticker);
     if (!position) {
-      const existingSnapshot = await positionRepository.findByTicker(tx.ticker);
+      const existingSnapshot = await positionRepository.findByTickerAndYear(
+        tx.ticker,
+        year,
+      );
       const assetType: AssetType = existingSnapshot?.assetType ?? AssetType.Stock;
       position = AssetPosition.create({
         ticker: tx.ticker,

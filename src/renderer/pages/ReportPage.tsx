@@ -6,7 +6,7 @@ import type {
   AssetsReportItem,
   GenerateAssetsReportResult,
 } from '../../shared/contracts/assets-report.contract';
-import { buildErrorMessage } from './build-error-message';
+import { buildErrorMessage } from '../errors/build-error-message';
 
 function formatBrl(value: number): string {
   return value.toLocaleString('pt-BR', {

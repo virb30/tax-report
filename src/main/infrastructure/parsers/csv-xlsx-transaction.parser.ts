@@ -25,9 +25,11 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParserPort {
     const batches: ParsedTransactionBatch[] = [];
 
     for (const cmd of commands) {
-      const broker = await this.brokerRepository.findByName(cmd.broker);
+      const broker = await this.brokerRepository.findByCode(cmd.broker.trim().toUpperCase());
       if (!broker) {
-        throw new Error(`Corretora "${cmd.broker}" não encontrada no cadastro.`);
+        throw new Error(
+          `Corretora com codigo '${cmd.broker}' nao encontrada. Cadastre-a em Corretoras antes de importar.`,
+        );
       }
 
       const operations: ParsedTransactionOperation[] = cmd.operations.map((op) => ({

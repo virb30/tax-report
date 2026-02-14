@@ -30,12 +30,15 @@ describe('CsvXlsxTransactionParser', () => {
     createdDirs.length = 0;
   });
 
-  it('parses csv and resolves broker to brokerId', async () => {
+  it('parses csv and resolves broker by code to brokerId', async () => {
     const brokerRepo = mock<BrokerRepositoryPort>();
     brokerRepo.findById.mockResolvedValue(null);
-    brokerRepo.findByName.mockImplementation((name) =>
+    brokerRepo.findByName.mockResolvedValue(null);
+    brokerRepo.findByCode.mockImplementation((code) =>
       Promise.resolve(
-        name === 'XP' ? { id: 'broker-xp', name: 'XP', cnpj: '00.000.000/0001-00' } : null,
+        code === 'XP'
+          ? { id: 'broker-xp', name: 'XP Investimentos', cnpj: '00.000.000/0001-00', code: 'XP' }
+          : null,
       ),
     );
     brokerRepo.findAll.mockResolvedValue([]);
@@ -63,17 +66,18 @@ describe('CsvXlsxTransactionParser', () => {
     expect(result[0]?.operations[0]?.type).toBe('buy');
   });
 
-  it('throws when broker is not found in repository', async () => {
+  it('throws when broker code is not found in repository', async () => {
     const brokerRepo = mock<BrokerRepositoryPort>();
     brokerRepo.findById.mockResolvedValue(null);
     brokerRepo.findByName.mockResolvedValue(null);
+    brokerRepo.findByCode.mockResolvedValue(null);
     brokerRepo.findAll.mockResolvedValue([]);
     brokerRepo.save.mockResolvedValue(undefined);
     const filePath = await createTempFile(
       'ops.csv',
       [
         'Data;Tipo;Ticker;Quantidade;Preco Unitario;Taxas Totais;Corretora',
-        '2025-04-01;Compra;PETR4;10;20;1;CorretoraInvalida',
+        '2025-04-01;Compra;PETR4;10;20;1;INVALIDO',
       ].join('\n'),
     );
     createdDirs.push(path.dirname(filePath));
@@ -84,7 +88,7 @@ describe('CsvXlsxTransactionParser', () => {
     );
 
     await expect(parser.parse(filePath)).rejects.toThrow(
-      'Corretora "CorretoraInvalida" não encontrada no cadastro.',
+      "Corretora com codigo 'INVALIDO' nao encontrada. Cadastre-a em Corretoras antes de importar.",
     );
   });
 });

@@ -7,6 +7,7 @@ import type { TransactionRepository } from '../repositories/transaction.reposito
 
 export type RecalculatePositionInput = {
   ticker: string;
+  year: number;
 };
 
 export class RecalculatePositionUseCase {
@@ -16,8 +17,14 @@ export class RecalculatePositionUseCase {
   ) {}
 
   async execute(input: RecalculatePositionInput): Promise<void> {
-    const transactions = await this.transactionRepository.findByTicker(input.ticker);
-    const existingSnapshot = await this.positionRepository.findByTicker(input.ticker);
+    const allTransactions = await this.transactionRepository.findByTicker(input.ticker);
+    const yearEnd = `${input.year}-12-31`;
+    const transactions = allTransactions.filter((tx) => tx.date <= yearEnd);
+
+    const existingSnapshot = await this.positionRepository.findByTickerAndYear(
+      input.ticker,
+      input.year,
+    );
     const assetType: AssetType = existingSnapshot?.assetType ?? AssetType.Stock;
 
     const position = AssetPosition.create({
@@ -32,7 +39,7 @@ export class RecalculatePositionUseCase {
       this.applyTransaction(position, tx);
     }
 
-    await this.positionRepository.save(position.toSnapshot());
+    await this.positionRepository.save(position.toSnapshot(), input.year);
   }
 
   private applyTransaction(position: AssetPosition, tx: TransactionRecord): void {

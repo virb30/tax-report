@@ -1,0 +1,134 @@
+import type {
+  ImportConsolidatedPositionCommand,
+  ImportConsolidatedPositionResult,
+  PreviewConsolidatedPositionCommand,
+  PreviewConsolidatedPositionResult,
+} from '@shared/contracts/import-consolidated-position.contract';
+import { SourceType, TransactionType } from '../../../shared/types/domain';
+import { randomUUID } from 'node:crypto';
+import type { ConsolidatedPositionParserPort } from '../ports/consolidated-position-parser.port';
+import type { BrokerRepositoryPort } from '../repositories/broker.repository';
+import type { TransactionRepository } from '../repositories/transaction.repository';
+import type { RecalculatePositionUseCase } from './recalculate-position-use-case';
+
+type ResolvedRow = {
+  ticker: string;
+  quantity: number;
+  averagePrice: number;
+  brokerId: string;
+};
+
+export class ImportConsolidatedPositionUseCase {
+  constructor(
+    private readonly parser: ConsolidatedPositionParserPort,
+    private readonly brokerRepository: BrokerRepositoryPort,
+    private readonly transactionRepository: TransactionRepository,
+    private readonly recalculatePositionUseCase: RecalculatePositionUseCase,
+  ) {}
+
+  async preview(
+    input: PreviewConsolidatedPositionCommand,
+  ): Promise<PreviewConsolidatedPositionResult> {
+    if (typeof input.filePath !== 'string' || input.filePath.trim().length === 0) {
+      throw new Error('Caminho do arquivo inválido.');
+    }
+    const rows = await this.parser.parse(input.filePath);
+    return {
+      rows: rows.map((r) => ({
+        ticker: r.ticker,
+        quantity: r.quantity,
+        averagePrice: r.averagePrice,
+        brokerCode: r.brokerCode,
+      })),
+    };
+  }
+
+  async execute(
+    input: ImportConsolidatedPositionCommand,
+  ): Promise<ImportConsolidatedPositionResult> {
+    this.validate(input);
+
+    const rows = await this.parser.parse(input.filePath);
+    const resolved = await this.resolveBrokers(rows);
+    const grouped = this.groupByTickerAndBroker(resolved);
+
+    const tickers = [...new Set(grouped.map((r) => r.ticker))];
+
+    for (const ticker of tickers) {
+      await this.transactionRepository.deleteInitialBalanceByTickerAndYear(
+        ticker,
+        input.year,
+      );
+
+      const tickerRows = grouped.filter((r) => r.ticker === ticker);
+      const transactions = tickerRows.map((row) => ({
+        id: randomUUID(),
+        date: `${input.year}-01-01`,
+        type: TransactionType.InitialBalance,
+        ticker: row.ticker,
+        quantity: row.quantity,
+        unitPrice: row.averagePrice,
+        fees: 0,
+        brokerId: row.brokerId,
+        sourceType: SourceType.Csv,
+      }));
+
+      await this.transactionRepository.saveMany(transactions);
+      await this.recalculatePositionUseCase.execute({
+        ticker,
+        year: input.year,
+      });
+    }
+
+    return {
+      importedCount: grouped.length,
+      recalculatedTickers: tickers,
+    };
+  }
+
+  private validate(input: ImportConsolidatedPositionCommand): void {
+    if (typeof input.year !== 'number' || !Number.isInteger(input.year)) {
+      throw new Error('Ano inválido.');
+    }
+    if (input.year < 2000 || input.year > 2100) {
+      throw new Error('Ano deve estar entre 2000 e 2100.');
+    }
+    if (typeof input.filePath !== 'string' || input.filePath.trim().length === 0) {
+      throw new Error('Caminho do arquivo inválido.');
+    }
+  }
+
+  private async resolveBrokers(
+    rows: Array<{ ticker: string; quantity: number; averagePrice: number; brokerCode: string }>,
+  ): Promise<ResolvedRow[]> {
+    const result: ResolvedRow[] = [];
+
+    for (const row of rows) {
+      const broker = await this.brokerRepository.findByCode(row.brokerCode);
+      if (!broker) {
+        throw new Error(
+          `Corretora com codigo '${row.brokerCode}' nao encontrada. Cadastre-a em Corretoras antes de importar.`,
+        );
+      }
+      result.push({
+        ticker: row.ticker,
+        quantity: row.quantity,
+        averagePrice: row.averagePrice,
+        brokerId: broker.id,
+      });
+    }
+
+    return result;
+  }
+
+  private groupByTickerAndBroker(rows: ResolvedRow[]): ResolvedRow[] {
+    const map = new Map<string, ResolvedRow>();
+
+    for (const row of rows) {
+      const key = `${row.ticker}::${row.brokerId}`;
+      map.set(key, row);
+    }
+
+    return [...map.values()];
+  }
+}

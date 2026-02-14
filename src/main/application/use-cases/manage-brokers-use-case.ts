@@ -9,7 +9,7 @@ export class ManageBrokersUseCase {
   async list(): Promise<ListBrokersResult> {
     const brokers = await this.brokerRepository.findAll();
     return {
-      items: brokers.map((b) => ({ id: b.id, name: b.name, cnpj: b.cnpj })),
+      items: brokers.map((b) => ({ id: b.id, name: b.name, cnpj: b.cnpj, codigo: b.codigo })),
     };
   }
 
@@ -22,6 +22,16 @@ export class ManageBrokersUseCase {
     const trimmedCnpj = input.cnpj?.trim() ?? '';
     if (trimmedCnpj.length === 0) {
       return { success: false, error: 'CNPJ e obrigatorio.' };
+    }
+
+    const trimmedCodigo = input.codigo?.trim() ?? '';
+    if (trimmedCodigo.length === 0) {
+      return { success: false, error: 'Codigo da corretora e obrigatorio.' };
+    }
+
+    const existingByCodigo = await this.brokerRepository.findByCode(trimmedCodigo.toUpperCase());
+    if (existingByCodigo) {
+      return { success: false, error: 'Codigo ja cadastrado para outra corretora.' };
     }
 
     const existingByCnpj = await this.brokerRepository.findAll();
@@ -37,12 +47,13 @@ export class ManageBrokersUseCase {
       id,
       name: trimmedName,
       cnpj: this.formatCnpj(trimmedCnpj),
+      codigo: trimmedCodigo.toUpperCase(),
     };
 
     await this.brokerRepository.save(record);
     return {
       success: true,
-      broker: { id: record.id, name: record.name, cnpj: record.cnpj },
+      broker: { id: record.id, name: record.name, cnpj: record.cnpj, codigo: record.codigo },
     };
   }
 

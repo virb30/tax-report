@@ -37,6 +37,16 @@ import type {
   MigrateYearCommand,
   MigrateYearResult,
 } from '@shared/contracts/migrate-year.contract';
+import type {
+  ImportConsolidatedPositionCommand,
+  ImportConsolidatedPositionResult,
+  PreviewConsolidatedPositionCommand,
+  PreviewConsolidatedPositionResult,
+} from '@shared/contracts/import-consolidated-position.contract';
+import type {
+  DeletePositionCommand,
+  DeletePositionResult,
+} from '@shared/contracts/delete-position.contract';
 
 type IpcMainLike = {
   handle: (
@@ -68,6 +78,13 @@ export type MainHandlersDependencies = {
   createBroker: (input: CreateBrokerCommand) => Promise<CreateBrokerResult>;
   recalculatePosition: (input: RecalculatePositionCommand) => Promise<RecalculatePositionResult>;
   migrateYear: (input: MigrateYearCommand) => Promise<MigrateYearResult>;
+  previewConsolidatedPosition: (
+    input: PreviewConsolidatedPositionCommand,
+  ) => Promise<PreviewConsolidatedPositionResult>;
+  importConsolidatedPosition: (
+    input: ImportConsolidatedPositionCommand,
+  ) => Promise<ImportConsolidatedPositionResult>;
+  deletePosition: (input: DeletePositionCommand) => Promise<DeletePositionResult>;
 };
 
 export function registerMainHandlers(
@@ -86,6 +103,9 @@ export function registerMainHandlers(
     'portfolio:list-positions',
     'portfolio:recalculate',
     'portfolio:migrate-year',
+    'portfolio:preview-consolidated-position',
+    'portfolio:import-consolidated-position',
+    'portfolio:delete-position',
     'report:assets-annual',
     'brokers:list',
     'brokers:create',
@@ -142,6 +162,27 @@ export function registerMainHandlers(
   ipcMain.handle('portfolio:migrate-year', (_event, input: MigrateYearCommand) => {
     const payload = parseMigrateYearInput(input);
     return dependencies.migrateYear(payload);
+  });
+
+  ipcMain.handle(
+    'portfolio:preview-consolidated-position',
+    (_event, input: PreviewConsolidatedPositionCommand) => {
+      const payload = parsePreviewConsolidatedPositionInput(input);
+      return dependencies.previewConsolidatedPosition(payload);
+    },
+  );
+
+  ipcMain.handle(
+    'portfolio:import-consolidated-position',
+    (_event, input: ImportConsolidatedPositionCommand) => {
+      const payload = parseImportConsolidatedPositionInput(input);
+      return dependencies.importConsolidatedPosition(payload);
+    },
+  );
+
+  ipcMain.handle('portfolio:delete-position', (_event, input: DeletePositionCommand) => {
+    const payload = parseDeletePositionInput(input);
+    return dependencies.deletePosition(payload);
   });
 
   ipcMain.handle('report:assets-annual', (_event, input: GenerateAssetsReportQuery) => {
@@ -310,12 +351,16 @@ function parseRecalculatePositionInput(input: unknown): RecalculatePositionComma
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid payload for recalculate position.');
   }
-  const payload = input as { ticker?: unknown };
+  const payload = input as { ticker?: unknown; year?: unknown };
   if (typeof payload.ticker !== 'string' || payload.ticker.trim().length === 0) {
     throw new Error('Invalid ticker for recalculate position.');
   }
+  if (typeof payload.year !== 'number' || !Number.isInteger(payload.year)) {
+    throw new Error('Invalid year for recalculate position.');
+  }
   return {
     ticker: payload.ticker,
+    year: payload.year,
   };
 }
 
@@ -336,19 +381,66 @@ function parseMigrateYearInput(input: unknown): MigrateYearCommand {
   };
 }
 
+function parsePreviewConsolidatedPositionInput(
+  input: unknown,
+): PreviewConsolidatedPositionCommand {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid payload for preview consolidated position.');
+  }
+  const payload = input as { filePath?: unknown };
+  if (typeof payload.filePath !== 'string' || payload.filePath.trim().length === 0) {
+    throw new Error('Invalid file path for preview consolidated position.');
+  }
+  return { filePath: payload.filePath };
+}
+
+function parseImportConsolidatedPositionInput(
+  input: unknown,
+): ImportConsolidatedPositionCommand {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid payload for import consolidated position.');
+  }
+  const payload = input as { filePath?: unknown; year?: unknown };
+  if (typeof payload.filePath !== 'string' || payload.filePath.trim().length === 0) {
+    throw new Error('Invalid file path for import consolidated position.');
+  }
+  if (typeof payload.year !== 'number' || !Number.isInteger(payload.year)) {
+    throw new Error('Invalid year for import consolidated position.');
+  }
+  return { filePath: payload.filePath, year: payload.year };
+}
+
+function parseDeletePositionInput(input: unknown): DeletePositionCommand {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid payload for delete position.');
+  }
+  const payload = input as { ticker?: unknown; year?: unknown };
+  if (typeof payload.ticker !== 'string' || payload.ticker.trim().length === 0) {
+    throw new Error('Invalid ticker for delete position.');
+  }
+  if (typeof payload.year !== 'number' || !Number.isInteger(payload.year)) {
+    throw new Error('Invalid year for delete position.');
+  }
+  return { ticker: payload.ticker, year: payload.year };
+}
+
 function parseCreateBrokerInput(input: unknown): CreateBrokerCommand {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid payload for create broker.');
   }
-  const payload = input as { name?: unknown; cnpj?: unknown };
+  const payload = input as { name?: unknown; cnpj?: unknown; codigo?: unknown };
   if (typeof payload.name !== 'string') {
     throw new Error('Invalid name for create broker.');
   }
   if (typeof payload.cnpj !== 'string') {
     throw new Error('Invalid CNPJ for create broker.');
   }
+  if (typeof payload.codigo !== 'string') {
+    throw new Error('Invalid codigo for create broker.');
+  }
   return {
     name: payload.name,
     cnpj: payload.cnpj,
+    codigo: payload.codigo,
   };
 }

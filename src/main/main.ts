@@ -17,10 +17,14 @@ import { ImportTransactionsUseCase } from './application/use-cases/import-transa
 import { PreviewImportUseCase } from './application/use-cases/preview-import-use-case';
 import { TaxApportioner } from './domain/ingestion/tax-apportioner.service';
 import { CsvXlsxTransactionParser } from './infrastructure/parsers/csv-xlsx-transaction.parser';
+import { CsvXlsxConsolidatedPositionParser } from './infrastructure/parsers/csv-xlsx-consolidated-position.parser';
+import { ImportConsolidatedPositionUseCase } from './application/use-cases/import-consolidated-position-use-case';
+import { DeletePositionUseCase } from './application/use-cases/delete-position-use-case';
 import { SetInitialBalanceUseCase } from './application/use-cases/set-initial-balance-use-case';
 import { ListPositionsUseCase } from './application/use-cases/list-positions-use-case';
 import { KnexPositionRepository } from './infrastructure/persistence/knex-position.repository';
 import { KnexTransactionRepository } from './infrastructure/persistence/knex-transaction.repository';
+import { KnexTickerDataRepository } from './infrastructure/persistence/knex-ticker-data.repository';
 import { GenerateAssetsReportUseCase } from './application/use-cases/generate-assets-report-use-case';
 import { ReportGenerator } from './domain/tax-reporting/report-generator.service';
 import type { OperationsFileParserPort } from './application/ports/operations-file-parser.port';
@@ -115,6 +119,18 @@ const lifecycle = createMainLifecycle({
       const dependencies = await handlersDependenciesPromise;
       return dependencies.migrateYearUseCase.execute(input);
     },
+    previewConsolidatedPosition: async (input) => {
+      const dependencies = await handlersDependenciesPromise;
+      return dependencies.importConsolidatedPositionUseCase.preview(input);
+    },
+    importConsolidatedPosition: async (input) => {
+      const dependencies = await handlersDependenciesPromise;
+      return dependencies.importConsolidatedPositionUseCase.execute(input);
+    },
+    deletePosition: async (input) => {
+      const dependencies = await handlersDependenciesPromise;
+      return dependencies.deletePositionUseCase.execute(input);
+    },
   },
   platform: process.platform,
   createMainWindow: () => {
@@ -135,6 +151,8 @@ type MainHandlersRuntimeDependencies = {
   manageBrokersUseCase: ManageBrokersUseCase;
   recalculatePositionUseCase: RecalculatePositionUseCase;
   migrateYearUseCase: MigrateYearUseCase;
+  importConsolidatedPositionUseCase: ImportConsolidatedPositionUseCase;
+  deletePositionUseCase: DeletePositionUseCase;
 };
 
 async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDependencies> {
@@ -193,11 +211,27 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
     knexTransactionRepository,
     (input) => recalculatePositionUseCase.execute(input),
   );
+
+  const consolidatedPositionParser = new CsvXlsxConsolidatedPositionParser();
+  const importConsolidatedPositionUseCase = new ImportConsolidatedPositionUseCase(
+    consolidatedPositionParser,
+    brokerRepository,
+    knexTransactionRepository,
+    recalculatePositionUseCase,
+  );
+
+  const deletePositionUseCase = new DeletePositionUseCase(
+    knexPositionRepository,
+    knexTransactionRepository,
+  );
+
   const reportGenerator = new ReportGenerator();
+  const tickerDataRepository = new KnexTickerDataRepository(database);
   const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
     knexTransactionRepository,
     knexPositionRepository,
     brokerRepository,
+    tickerDataRepository,
     reportGenerator,
   );
 
@@ -212,6 +246,8 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
     manageBrokersUseCase,
     recalculatePositionUseCase,
     migrateYearUseCase,
+    importConsolidatedPositionUseCase,
+    deletePositionUseCase,
   };
 }
 

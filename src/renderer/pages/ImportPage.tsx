@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { JSX } from 'react';
 import type { PreviewTransactionItem } from '../../shared/contracts/preview-import.contract';
-import { buildErrorMessage } from './build-error-message';
+import { buildErrorMessage } from '../errors/build-error-message';
 
 const SPREADSHEET_MODEL_COLUMNS = [
   { name: 'Data', type: 'texto (YYYY-MM-DD)', required: true },
@@ -10,12 +10,14 @@ const SPREADSHEET_MODEL_COLUMNS = [
   { name: 'Quantidade', type: 'número', required: true },
   { name: 'Preço Unitário', type: 'número', required: true },
   { name: 'Taxas Totais', type: 'número', required: false },
-  { name: 'Corretora', type: 'texto', required: true },
+  { name: 'Corretora', type: 'texto (código, ex: XP, CLEAR)', required: true },
 ] as const;
 
 export function ImportPage(): JSX.Element {
   const [filePath, setFilePath] = useState('');
-  const [brokers, setBrokers] = useState<Array<{ id: string; name: string }>>([]);
+  const [brokers, setBrokers] = useState<
+    Array<{ id: string; name: string; codigo: string }>
+  >([]);
   const [isSelectingFile, setIsSelectingFile] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isConfirmLoading, setIsConfirmLoading] = useState(false);
@@ -25,7 +27,9 @@ export function ImportPage(): JSX.Element {
 
   useEffect(() => {
     void window.electronApi.listBrokers().then((result) => {
-      setBrokers(result.items.map((b) => ({ id: b.id, name: b.name })));
+      setBrokers(
+        result.items.map((b) => ({ id: b.id, name: b.name, codigo: b.codigo })),
+      );
     });
   }, []);
 
@@ -126,7 +130,7 @@ export function ImportPage(): JSX.Element {
                     {col.name === 'Quantidade' && 'Quantidade negociada'}
                     {col.name === 'Preço Unitário' && 'Preço por unidade'}
                     {col.name === 'Taxas Totais' && 'Custos operacionais (default 0)'}
-                    {col.name === 'Corretora' && 'Nome cadastrado no sistema'}
+                    {col.name === 'Corretora' && 'Código da corretora (ex: XP, CLEAR)'}
                   </td>
                 </tr>
               ))}
@@ -137,22 +141,22 @@ export function ImportPage(): JSX.Element {
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm text-slate-700">
-          Corretoras cadastradas
+          Códigos das corretoras cadastradas
           <select
             className="rounded-md border border-slate-300 px-3 py-2 bg-white"
             value=""
             onChange={() => {}}
-            title="Lista de corretoras cadastradas"
+            title="Códigos das corretoras cadastradas"
           >
             <option value="">-- Referência --</option>
             {brokers.map((b) => (
               <option key={b.id} value={b.id}>
-                {b.name}
+                {b.codigo} ({b.name})
               </option>
             ))}
           </select>
           <span className="text-xs text-slate-500">
-            A coluna Corretora do arquivo deve conter um nome desta lista
+            A coluna Corretora deve conter o código da corretora
           </span>
         </label>
         <label className="flex flex-col gap-1 text-sm text-slate-700">

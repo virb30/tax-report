@@ -56,8 +56,8 @@ describe('ImportTransactionsUseCase', () => {
     expect(savedTransactions[0]?.fees).toBe(0.33);
     expect(savedTransactions[1]?.ticker).toBe('VALE3');
     expect(savedTransactions[1]?.fees).toBe(0.67);
-    expect(recalculateSpy).toHaveBeenCalledWith({ ticker: 'PETR4' });
-    expect(recalculateSpy).toHaveBeenCalledWith({ ticker: 'VALE3' });
+    expect(recalculateSpy).toHaveBeenCalledWith({ ticker: 'PETR4', year: 2025 });
+    expect(recalculateSpy).toHaveBeenCalledWith({ ticker: 'VALE3', year: 2025 });
     expect(result.importedCount).toBe(2);
     expect(result.recalculatedTickers).toContain('PETR4');
     expect(result.recalculatedTickers).toContain('VALE3');

@@ -28,6 +28,16 @@ import type {
   MigrateYearResult,
 } from '../contracts/migrate-year.contract';
 import type {
+  ImportConsolidatedPositionCommand,
+  ImportConsolidatedPositionResult,
+  PreviewConsolidatedPositionCommand,
+  PreviewConsolidatedPositionResult,
+} from '../contracts/import-consolidated-position.contract';
+import type {
+  DeletePositionCommand,
+  DeletePositionResult,
+} from '../contracts/delete-position.contract';
+import type {
   ConfirmImportOperationsCommand,
   ConfirmImportOperationsResult,
   ConfirmImportTransactionsCommand,
@@ -61,4 +71,11 @@ export type ElectronApi = {
   createBroker: (input: CreateBrokerCommand) => Promise<CreateBrokerResult>;
   recalculatePosition: (input: RecalculatePositionCommand) => Promise<RecalculatePositionResult>;
   migrateYear: (input: MigrateYearCommand) => Promise<MigrateYearResult>;
+  previewConsolidatedPosition: (
+    input: PreviewConsolidatedPositionCommand,
+  ) => Promise<PreviewConsolidatedPositionResult>;
+  importConsolidatedPosition: (
+    input: ImportConsolidatedPositionCommand,
+  ) => Promise<ImportConsolidatedPositionResult>;
+  deletePosition: (input: DeletePositionCommand) => Promise<DeletePositionResult>;
 };

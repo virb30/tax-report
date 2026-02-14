@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
 import type { BrokerListItem, ListBrokersResult } from '../../shared/contracts/brokers.contract';
-import { buildErrorMessage } from './build-error-message';
+import { buildErrorMessage } from '../errors/build-error-message';
 
 export function BrokersPage(): JSX.Element {
   const [brokers, setBrokers] = useState<BrokerListItem[]>([]);
   const [name, setName] = useState('');
+  const [code, setCode] = useState('');
   const [cnpj, setCnpj] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
@@ -34,10 +35,11 @@ export function BrokersPage(): JSX.Element {
     setErrorMessage('');
     setFeedbackMessage('');
     try {
-      const result = await window.electronApi.createBroker({ name, cnpj });
+      const result = await window.electronApi.createBroker({ name, code, cnpj });
       if (result.success) {
         setFeedbackMessage('Corretora cadastrada com sucesso.');
         setName('');
+        setCode('');
         setCnpj('');
         await loadBrokers();
       } else {
@@ -57,7 +59,16 @@ export function BrokersPage(): JSX.Element {
         Cadastre e consulte as corretoras de valores para uso em transacoes e relatorios fiscais.
       </p>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <label className="flex flex-col gap-1 text-sm text-slate-700">
+          Codigo
+          <input
+            className="rounded-md border border-slate-300 px-3 py-2"
+            value={code}
+            onChange={(event) => setCode(event.target.value)}
+            placeholder="Ex: XP"
+          />
+        </label>
         <label className="flex flex-col gap-1 text-sm text-slate-700">
           Nome
           <input
@@ -83,7 +94,7 @@ export function BrokersPage(): JSX.Element {
           type="button"
           className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-60"
           onClick={() => void handleCreateBroker()}
-          disabled={isSaving || name.trim().length === 0 || cnpj.trim().length === 0}
+          disabled={isSaving || name.trim().length === 0 || code.trim().length === 0 || cnpj.trim().length === 0}
         >
           {isSaving ? 'Cadastrando...' : 'Cadastrar corretora'}
         </button>
@@ -109,6 +120,7 @@ export function BrokersPage(): JSX.Element {
             <table className="min-w-full text-left text-sm">
               <thead className="bg-slate-100 text-slate-700">
                 <tr>
+                  <th className="px-3 py-2">Codigo</th>
                   <th className="px-3 py-2">Nome</th>
                   <th className="px-3 py-2">CNPJ</th>
                 </tr>
@@ -116,13 +128,14 @@ export function BrokersPage(): JSX.Element {
               <tbody>
                 {brokers.map((broker) => (
                   <tr key={broker.id} className="border-t">
+                    <td className="px-3 py-2 font-mono">{broker.code}</td>
                     <td className="px-3 py-2">{broker.name}</td>
                     <td className="px-3 py-2">{broker.cnpj}</td>
                   </tr>
                 ))}
                 {brokers.length === 0 ? (
                   <tr>
-                    <td className="px-3 py-3 text-slate-500" colSpan={2}>
+                    <td className="px-3 py-3 text-slate-500" colSpan={3}>
                       Nenhuma corretora cadastrada.
                     </td>
                   </tr>

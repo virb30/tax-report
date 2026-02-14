@@ -18,6 +18,7 @@ import { MigrateYearUseCase } from '../../application/use-cases/migrate-year-use
 import { KnexPositionRepository } from '../../infrastructure/persistence/knex-position.repository';
 import { KnexTransactionRepository } from '../../infrastructure/persistence/knex-transaction.repository';
 import { KnexBrokerRepository } from '../../infrastructure/persistence/knex-broker.repository';
+import { KnexTickerDataRepository } from '../../infrastructure/persistence/knex-ticker-data.repository';
 import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-assets-report-use-case';
 import { ReportGenerator } from '../../domain/tax-reporting/report-generator.service';
 import { BrokerageNoteParserStrategy } from '../../infrastructure/parsers/brokerage-note-parser.strategy';
@@ -26,6 +27,7 @@ import {
   registerMainHandlers,
   type MainHandlersDependencies,
 } from './register-main-handlers';
+import { BrokerListItem } from '@shared/contracts/brokers.contract';
 
 type IpcHandler = (_event: unknown, ...args: unknown[]) => unknown;
 
@@ -76,10 +78,12 @@ describe('IPC handlers integration', () => {
       (input) => recalculatePositionUseCase.execute(input),
     );
     const reportGenerator = new ReportGenerator();
+    const tickerDataRepository = new KnexTickerDataRepository(database);
     const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
       knexTransactionRepository,
       knexPositionRepository,
       brokerRepository,
+      tickerDataRepository,
       reportGenerator,
     );
     const parserStrategy = new BrokerageNoteParserStrategy([new CsvXlsxBrokerageNoteParser()]);
@@ -138,8 +142,12 @@ describe('IPC handlers integration', () => {
       createBroker: () =>
         Promise.resolve({
           success: true,
-          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00' },
+          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST' } as BrokerListItem,
         }),
+      previewConsolidatedPosition: () => Promise.resolve({ rows: [] }),
+      importConsolidatedPosition: () =>
+        Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
+      deletePosition: () => Promise.resolve({ deleted: false }),
     };
 
     registerMainHandlers(ipcMain, dependencies);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { JSX } from 'react';
-import { buildErrorMessage } from './build-error-message';
+import { buildErrorMessage } from '../errors/build-error-message';
 
 const currentYear = new Date().getFullYear();
 const defaultBaseYear = currentYear - 1;

@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import { AssetType } from '../../shared/types/domain';
 import type { BrokerListItem, ListBrokersResult } from '../../shared/contracts/brokers.contract';
 import type { ListPositionsResult } from '../../shared/contracts/list-positions.contract';
-import { buildErrorMessage } from './build-error-message';
+import { buildErrorMessage } from '../errors/build-error-message';
 
 const defaultBaseYear = new Date().getFullYear() - 1;
 

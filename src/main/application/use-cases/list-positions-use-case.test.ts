@@ -15,14 +15,14 @@ describe('ListPositionsUseCase', () => {
 
   beforeEach(() => {
     positionRepository = {
-      findByTicker: jest.fn().mockResolvedValue(null),
+      findByTickerAndYear: jest.fn().mockResolvedValue(null),
       findAll: jest.fn(),
       save: jest.fn(),
     };
     transactionRepository = {
       save: jest.fn(),
       saveMany: jest.fn(),
-      findByTicker: jest.fn(),
+      findAllByYear: jest.fn(),
       findByPeriod: jest.fn().mockResolvedValue([
         {
           id: '1',

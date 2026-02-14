@@ -24,6 +24,7 @@ export class ListPositionsUseCase {
     const snapshots = await computePositionsFromTransactions(
       transactions,
       this.positionRepository,
+      input.baseYear,
     );
 
     const items = await Promise.all(
