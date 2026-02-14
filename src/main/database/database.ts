@@ -12,7 +12,7 @@ export async function initializeDatabase(database: Knex, runSeeds: boolean = tru
     migrationSource,
   });
 
-  if (runSeeds) {
+  if (runSeeds && databaseSeeds.length > 0) {
     const seedSource = createSeedSource(databaseSeeds);
     await database.seed.run({
       seedSource,

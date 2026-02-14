@@ -1,11 +1,13 @@
-import type { BrokerRecord } from '@main/domain/portfolio/broker.entity';
+import { Broker } from '@main/domain/portfolio/broker.entity';
+import { Cnpj } from '@main/domain/shared/cnpj.vo';
 
-export interface BrokerRepositoryPort {
-  findById(id: string): Promise<BrokerRecord | null>;
-  findByName(name: string): Promise<BrokerRecord | null>;
-  findByCode(codigo: string): Promise<BrokerRecord | null>;
-  findAll(): Promise<BrokerRecord[]>;
-  findAllActive(): Promise<BrokerRecord[]>;
-  save(broker: BrokerRecord): Promise<void>;
-  update(id: string, data: Partial<Pick<BrokerRecord, 'name' | 'cnpj' | 'code' | 'active'>>): Promise<void>;
+export interface BrokerRepository {
+  findById(id: string): Promise<Broker | null>;
+  findByName(name: string): Promise<Broker | null>;
+  findByCode(codigo: string): Promise<Broker | null>;
+  findByCnpj(cnpj: Cnpj): Promise<Broker | null>;
+  findAll(): Promise<Broker[]>;
+  findAllActive(): Promise<Broker[]>;
+  save(broker: Broker): Promise<void>;
+  update(broker: Broker): Promise<void>;
 }

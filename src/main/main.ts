@@ -29,6 +29,7 @@ import { GenerateAssetsReportUseCase } from './application/use-cases/generate-as
 import { ReportGenerator } from './domain/tax-reporting/report-generator.service';
 import type { OperationsFileParserPort } from './application/ports/operations-file-parser.port';
 import { WindowManager } from './window-manager';
+import { CreateBrokerUseCase } from './application/use-cases/create-broker/create-broker.use-case';
 
 const handlersDependenciesPromise = createMainHandlersDependencies();
 const windowManager = new WindowManager();
@@ -109,7 +110,7 @@ const lifecycle = createMainLifecycle({
     },
     createBroker: async (input) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.manageBrokersUseCase.create(input);
+      return dependencies.createBrokerUseCase.execute(input);
     },
     updateBroker: async (input) => {
       const dependencies = await handlersDependenciesPromise;
@@ -157,6 +158,7 @@ type MainHandlersRuntimeDependencies = {
   listPositionsUseCase: ListPositionsUseCase;
   generateAssetsReportUseCase: GenerateAssetsReportUseCase;
   manageBrokersUseCase: ManageBrokersUseCase;
+  createBrokerUseCase: CreateBrokerUseCase;
   recalculatePositionUseCase: RecalculatePositionUseCase;
   migrateYearUseCase: MigrateYearUseCase;
   importConsolidatedPositionUseCase: ImportConsolidatedPositionUseCase;

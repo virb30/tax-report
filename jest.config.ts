@@ -8,6 +8,10 @@ const config: Config = {
     '^@shared/(.*)$': '<rootDir>/src/shared/$1',
     '^@main/(.*)$': '<rootDir>/src/main/$1',
   },
+  transform: {
+    '^.+\\.(t|j)sx?$': 'ts-jest', 
+  },
+  transformIgnorePatterns: ['/node_modules/(?!uuid/)'],
   collectCoverage: true,
   collectCoverageFrom: ['src/main/**/*.ts', '!src/main/main.ts', 'src/preload.ts'],
   coveragePathIgnorePatterns: ['/node_modules/', '\\.d\\.ts$'],

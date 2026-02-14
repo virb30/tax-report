@@ -28,6 +28,7 @@ import {
   type MainHandlersDependencies,
 } from './register-main-handlers';
 import { ManageBrokersUseCase } from '../../application/use-cases/manage-brokers-use-case';
+import { CreateBrokerUseCase } from '@main/application/use-cases/create-broker/create-broker.use-case';
 
 type IpcHandler = (_event: unknown, ...args: unknown[]) => unknown;
 
@@ -224,6 +225,7 @@ describe('IPC handlers integration', () => {
   it('brokers:list, brokers:create, brokers:update, brokers:toggle-active work end-to-end', async () => {
     const brokerRepository = new KnexBrokerRepository(database);
     const manageBrokersUseCase = new ManageBrokersUseCase(brokerRepository);
+    const createBrokerUseCase = new CreateBrokerUseCase(brokerRepository);
 
     const handlers = new Map<string, IpcHandler>();
     const ipcMain = {
@@ -244,7 +246,7 @@ describe('IPC handlers integration', () => {
         Promise.resolve({ createdOperationsCount: 0, recalculatedPositionsCount: 0 }),
       confirmImportTransactions: () =>
         Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
-      setInitialBalance: () => Promise.resolve({}),
+      setInitialBalance: () => Promise.resolve({ ticker: 'IVVB11', brokerId: 'broker-xp', assetType: AssetType.Etf, quantity: 2, averagePrice: 300, year: 2025 }),
       listPositions: () => Promise.resolve({ items: [] }),
       recalculatePosition: () => Promise.resolve(undefined),
       migrateYear: () =>
@@ -252,7 +254,7 @@ describe('IPC handlers integration', () => {
       generateAssetsReport: () =>
         Promise.resolve({ referenceDate: '2025-12-31', items: [] }),
       listBrokers: (input) => manageBrokersUseCase.list(input),
-      createBroker: (input) => manageBrokersUseCase.create(input),
+      createBroker: (input) => createBrokerUseCase.execute(input),
       updateBroker: (input) => manageBrokersUseCase.update(input),
       toggleBrokerActive: (input) => manageBrokersUseCase.toggleActive(input),
       previewConsolidatedPosition: () => Promise.resolve({ rows: [] }),

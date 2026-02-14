@@ -1,6 +1,6 @@
 import { AssetType } from '../../../shared/types/domain';
 import type { AssetPositionSnapshot } from '../portfolio/asset-position.entity';
-import type { BrokerRecord } from '../portfolio/broker.entity';
+import { Broker } from '../portfolio/broker.entity';
 
 const STOCK_CLASSIFICATION = { group: '03', code: '01' } as const;
 const FII_CLASSIFICATION = { group: '07', code: '03' } as const;
@@ -8,7 +8,7 @@ const ETF_CLASSIFICATION = { group: '07', code: '09' } as const;
 
 export type ReportItemInput = {
   position: AssetPositionSnapshot;
-  brokersMap: Map<string, BrokerRecord>;
+  brokersMap: Map<string, Broker>;
   /** CNPJ do emissor (empresa do ativo), de ticker_data. Usar "N/A" quando não cadastrado. */
   issuerCnpj: string;
 };

@@ -26,7 +26,6 @@ import type {
 } from '@shared/contracts/preview-import.contract';
 import type {
   CreateBrokerCommand,
-  CreateBrokerResult,
   ListBrokersQuery,
   ListBrokersResult,
   UpdateBrokerCommand,
@@ -52,11 +51,13 @@ import type {
   DeletePositionCommand,
   DeletePositionResult,
 } from '@shared/contracts/delete-position.contract';
+import { CreateBrokerOutput } from '@main/application/use-cases/create-broker/create-broker.output';
+import { CreateBrokerInput } from '@main/application/use-cases/create-broker/create-broker.input';
 
 type IpcMainLike = {
   handle: (
     channel: string,
-    listener: (_event: unknown, ...args: unknown[]) => unknown,
+    listener: (_event: unknown, ...args: unknown[]) => Promise<unknown>,
   ) => void;
 };
 
@@ -80,7 +81,7 @@ export type MainHandlersDependencies = {
     input: GenerateAssetsReportQuery,
   ) => Promise<GenerateAssetsReportResult>;
   listBrokers: (input?: ListBrokersQuery) => Promise<ListBrokersResult>;
-  createBroker: (input: CreateBrokerCommand) => Promise<CreateBrokerResult>;
+  createBroker: (input: CreateBrokerCommand) => Promise<CreateBrokerOutput>;
   updateBroker: (input: UpdateBrokerCommand) => Promise<UpdateBrokerResult>;
   toggleBrokerActive: (input: ToggleBrokerActiveCommand) => Promise<ToggleBrokerActiveResult>;
   recalculatePosition: (input: RecalculatePositionCommand) => Promise<RecalculatePositionResult>;
@@ -204,9 +205,18 @@ export function registerMainHandlers(
     return dependencies.listBrokers(payload);
   });
 
-  ipcMain.handle('brokers:create', (_event, input: CreateBrokerCommand) => {
-    const payload = parseCreateBrokerInput(input);
-    return dependencies.createBroker(payload);
+  ipcMain.handle('brokers:create', async (_event, input: unknown) => {
+    try {
+      const payload = parseCreateBrokerInput(input);
+      const broker = await dependencies.createBroker(payload);
+      return { success: true, broker };
+    } catch (error: unknown) {
+      console.error(error);
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      return { success: false, error: 'Erro ao criar corretora.' };
+    }
   });
 
   ipcMain.handle('brokers:update', (_event, input: UpdateBrokerCommand) => {
@@ -458,7 +468,7 @@ function parseListBrokersInput(input: unknown): ListBrokersQuery | undefined {
   return undefined;
 }
 
-function parseCreateBrokerInput(input: unknown): CreateBrokerCommand {
+function parseCreateBrokerInput(input: unknown): CreateBrokerInput {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid payload for create broker.');
   }
