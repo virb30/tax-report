@@ -1,54 +1,55 @@
-# Tarefa 11.0: v2 - Domínio TaxCompliance (Apuração Mensal, DARF e Prejuízo Acumulado)
+# Tarefa 11.0: Importação via Seleção de Arquivo + Modelo de Planilha na Tela
 
 <critical>Ler os arquivos de prd.md e techspec.md desta pasta, se você não ler esses arquivos sua tarefa será invalidada</critical>
 
 ## Visão Geral
 
-Implementar na v2 o domínio de `TaxCompliance` para apuração mensal por categoria de ativo, compensação de prejuízos acumulados e cálculo de DARF com dedução de IRRF. Esta tarefa depende da conclusão do MVP (10.0) e amplia o produto com o fluxo fiscal mensal.
+Padronizar a experiência de importação para seleção explícita de arquivo via dialog e disponibilizar, na tela de importação, um modelo claro para preenchimento da planilha. O objetivo é reduzir erros de entrada e acelerar o onboarding do usuário no fluxo de ingestão.
 
 <requirements>
-- Implementar `MonthlyTaxAssessment` e `AccumulatedLossLedger`
-- Implementar `LossCompensationService` com segregação por categoria tributária
-- Implementar `DarfCalculatorService` com dedução de IRRF e piso zero
-- Aplicar isenção mensal para ações conforme limite configurado
-- Garantir separação por categorias (acoes, fii, etf, bdr) conforme PRD
-- Disponibilizar resultado de apuração para consumo por aplicação, IPC e UI da v2
-- Cobrir regras fiscais com testes de unidade e integração
+- Importação deve ser iniciada por seleção de arquivo via dialog nativo
+- Fluxo deve validar extensão/tipo de arquivo suportado antes do processamento
+- Tela de importação deve exibir modelo com colunas obrigatórias e opcionais
+- Modelo deve incluir: `data da operação`, `ticker`, `quantidade`, `valor unitário`, `valor total`, `custo operacional total (opcional)`
+- Validação deve identificar erros de formato e orientar correção ao usuário
+- Fluxo deve manter confirmação pré-importação com preview dos dados lidos
+- Cobrir fluxo com testes de unidade e integração
 </requirements>
 
 ## Subtarefas
 
-- [ ] 11.1 Definir entidades e value objects do contexto `TaxCompliance`
-- [ ] 11.2 Implementar consolidação mensal por categoria de ativo
-- [ ] 11.3 Implementar compensação de prejuízos acumulados por categoria
-- [ ] 11.4 Implementar cálculo de DARF com dedução de IRRF
-- [ ] 11.5 Implementar regra de isenção para ações abaixo do limite mensal
-- [ ] 11.6 Expor DTOs e contratos para consulta de apuração mensal na aplicação
-- [ ] 11.7 Criar testes de unidade para lucro, prejuízo, compensação e isenção
-- [ ] 11.8 Criar testes de integração para meses encadeados com compensação acumulada
+- [ ] 11.1 Implementar/ajustar ação de selecionar arquivo via dialog no renderer/main
+- [ ] 11.2 Validar tipo/extensão e tamanho básico do arquivo antes do parse
+- [ ] 11.3 Exibir na tela o modelo de planilha com colunas obrigatórias e opcionais
+- [ ] 11.4 Ajustar parser/normalização para aceitar o layout: data, ticker, quantidade, valor unitário, valor total, custo operacional total (opcional)
+- [ ] 11.5 Exibir preview dos dados e mensagens de erro acionáveis para linhas inválidas
+- [ ] 11.6 Manter confirmação explícita antes da persistência da importação
+- [ ] 11.7 Criar testes de unidade (schema/validação/mapeamento de colunas)
+- [ ] 11.8 Criar testes de integração (dialog -> preview -> confirmação -> persistência)
 
 ## Detalhes de Implementação
 
-Consulte na `techspec.md` as seções **"Modelos de Dados"** (TaxCompliance), **"Abordagem de Testes"** (domínio e integração) e **"Sequenciamento de Desenvolvimento"** (item 3). Consulte no `prd.md` os requisitos RF-20 a RF-28 e RF-37 a RF-38.
+Consulte na `techspec.md` as seções **"Pontos de Integração"** (arquivos locais e IPC), **"Fluxo principal de dados"** e **"Abordagem de Testes"**. Consulte no `prd.md` os requisitos RF-08 a RF-11 e os requisitos de UX para feedback claro após importação.
 
 ## Critérios de Sucesso
 
-- Apuração mensal por categoria implementada com regras tributárias corretas
-- Compensação de prejuízo ocorre sem cruzamento indevido entre categorias
-- DARF final considera IRRF e nunca resulta em valor negativo
-- Resultado de apuração pronto para consumo pela aplicação e UI da v2
+- Usuário seleciona arquivo via dialog e conclui importação sem caminho manual
+- Modelo de planilha está visível na tela de importação com colunas corretas
+- Erros de formato retornam mensagens claras e específicas por campo/linha
+- Fluxo completo validado por suíte de unidade e integração
 
 ## Testes da Tarefa
 
-- [ ] Testes de unidade (cenários fiscais completos por categoria)
-- [ ] Testes de integração (sequência de meses com compensação e DARF)
+- [ ] Testes de unidade (schema, mapeamento e validação de planilha)
+- [ ] Testes de integração (seleção de arquivo, preview, confirmação e persistência)
 
 <critical>SEMPRE CRIE E EXECUTE OS TESTES DA TAREFA ANTES DE CONSIDERÁ-LA FINALIZADA</critical>
 
 ## Arquivos relevantes
-- `src/main/domain/tax-compliance/`
 - `src/main/application/use-cases/`
 - `src/main/application/ports/`
-- `src/main/infrastructure/persistence/`
+- `src/main/infrastructure/parsers/`
 - `src/main/ipc/handlers/`
+- `src/preload.ts`
+- `src/renderer/`
 - `src/shared/contracts/`

@@ -5,6 +5,7 @@
   "main": ".vite/build/main.js",
   "scripts": {
     "dev": "electron-forge start",
+    "prestart": "npm run postinstall",
     "start": "electron-forge start",
     "postinstall": "electron-rebuild -f -w better-sqlite3",
     "pretest": "npm rebuild better-sqlite3",
