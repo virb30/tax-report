@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { SourceType } from '../../../shared/types/domain';
 import type { TransactionRecord } from '../../domain/portfolio/transaction.entity';
-import { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
+import type { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
 import type { ImportTransactionsParserPort } from '../ports/import-transactions-parser.port';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import type { RecalculatePositionUseCase } from './recalculate-position-use-case';

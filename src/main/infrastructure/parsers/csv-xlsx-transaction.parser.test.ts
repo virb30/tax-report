@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
+import { mock } from 'jest-mock-extended';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -30,13 +31,15 @@ describe('CsvXlsxTransactionParser', () => {
   });
 
   it('parses csv and resolves broker to brokerId', async () => {
-    const brokerRepo: BrokerRepositoryPort = {
-      findById: async () => null,
-      findByName: async (name) =>
+    const brokerRepo = mock<BrokerRepositoryPort>();
+    brokerRepo.findById.mockResolvedValue(null);
+    brokerRepo.findByName.mockImplementation((name) =>
+      Promise.resolve(
         name === 'XP' ? { id: 'broker-xp', name: 'XP', cnpj: '00.000.000/0001-00' } : null,
-      findAll: async () => [],
-      save: async () => {},
-    };
+      ),
+    );
+    brokerRepo.findAll.mockResolvedValue([]);
+    brokerRepo.save.mockResolvedValue(undefined);
     const filePath = await createTempFile(
       'ops.csv',
       [
@@ -61,12 +64,11 @@ describe('CsvXlsxTransactionParser', () => {
   });
 
   it('throws when broker is not found in repository', async () => {
-    const brokerRepo: BrokerRepositoryPort = {
-      findById: async () => null,
-      findByName: async () => null,
-      findAll: async () => [],
-      save: async () => {},
-    };
+    const brokerRepo = mock<BrokerRepositoryPort>();
+    brokerRepo.findById.mockResolvedValue(null);
+    brokerRepo.findByName.mockResolvedValue(null);
+    brokerRepo.findAll.mockResolvedValue([]);
+    brokerRepo.save.mockResolvedValue(undefined);
     const filePath = await createTempFile(
       'ops.csv',
       [

@@ -5,7 +5,7 @@ import type {
 } from '@shared/contracts/import-transactions.contract';
 import type { ImportTransactionsParserPort } from '../../application/ports/import-transactions-parser.port';
 import type { BrokerRepositoryPort } from '../../application/repositories/broker.repository';
-import { CsvXlsxBrokerageNoteParser } from './csv-xlsx-brokerage-note.parser';
+import type { CsvXlsxBrokerageNoteParser } from './csv-xlsx-brokerage-note.parser';
 
 function mapOperationTypeToTransactionType(operationType: OperationType): TransactionType {
   if (operationType === OperationType.Buy) {
