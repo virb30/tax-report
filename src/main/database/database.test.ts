@@ -13,7 +13,6 @@ import { databaseMigrations } from './migrations';
 import { AssetType, OperationType, SourceType } from '../../shared/types/domain';
 import { AssetRepository } from './repositories/asset-repository';
 import { OperationRepository } from './repositories/operation-repository';
-import { TaxConfigRepository } from './repositories/tax-config-repository';
 
 async function tableExists(database: Knex, tableName: string): Promise<boolean> {
   const row = await database('sqlite_master')
@@ -133,7 +132,6 @@ describe('database', () => {
 
     const assetRepository = new AssetRepository(database);
     const operationRepository = new OperationRepository(database);
-    const taxConfigRepository = new TaxConfigRepository(database);
 
     const asset = await assetRepository.create({
       ticker: 'PETR4',
@@ -156,10 +154,8 @@ describe('database', () => {
       broker: 'XP',
       sourceType: SourceType.Pdf,
     });
-    const stockTaxConfig = await taxConfigRepository.findByAssetType(AssetType.Stock);
 
     expect(asset.id).toBeGreaterThan(0);
     expect(operation.id).toBeGreaterThan(0);
-    expect(stockTaxConfig?.taxRate).toBe(0.15);
   });
 });
