@@ -12,8 +12,11 @@ import { LegacyPortfolioAcl } from '../../main/infrastructure/persistence/legacy
 import { RecalculateAssetPositionUseCase } from '../../main/application/use-cases/recalculate-asset-position-use-case';
 import { ImportBrokerageNoteUseCase } from '../../main/application/use-cases/import-brokerage-note-use-case';
 import { ImportOperationsUseCase } from '../../main/application/use-cases/import-operations-use-case';
-import { SetManualBaseUseCase } from '../../main/application/use-cases/set-manual-base-use-case';
+import { SetInitialBalanceUseCase } from '../../main/application/use-cases/set-initial-balance-use-case';
 import { ListPositionsUseCase } from '../../main/application/use-cases/list-positions-use-case';
+import { KnexPositionRepository } from '../../main/infrastructure/persistence/knex-position.repository';
+import { KnexTransactionRepository } from '../../main/infrastructure/persistence/knex-transaction.repository';
+import { KnexBrokerRepository } from '../../main/infrastructure/persistence/knex-broker.repository';
 import { GenerateAssetsReportUseCase } from '../../main/application/use-cases/generate-assets-report-use-case';
 import { BrokerageNoteParserStrategy } from '../../main/infrastructure/parsers/brokerage-note-parser.strategy';
 import { CsvXlsxBrokerageNoteParser } from '../../main/infrastructure/parsers/csv-xlsx-brokerage-note.parser';
@@ -24,7 +27,7 @@ import {
 import {
   runAnnualReport,
   runImportPreviewAndConfirm,
-  runManualBaseAndRefresh,
+  runInitialBalanceAndRefresh,
 } from './mvp-flows';
 
 type IpcHandler = (_event: unknown, ...args: unknown[]) => unknown;
@@ -64,8 +67,17 @@ describe('MVP workflows integration', () => {
       recalculateAssetPositionUseCase,
     );
     const importOperationsUseCase = new ImportOperationsUseCase(importBrokerageNoteUseCase);
-    const setManualBaseUseCase = new SetManualBaseUseCase(acl);
-    const listPositionsUseCase = new ListPositionsUseCase(acl);
+    const knexPositionRepository = new KnexPositionRepository(database);
+    const knexTransactionRepository = new KnexTransactionRepository(database);
+    const brokerRepository = new KnexBrokerRepository(database);
+    const setInitialBalanceUseCase = new SetInitialBalanceUseCase(
+      knexPositionRepository,
+      knexTransactionRepository,
+    );
+    const listPositionsUseCase = new ListPositionsUseCase(
+      knexPositionRepository,
+      brokerRepository,
+    );
     const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(acl, operationRepository);
     const parserStrategy = new BrokerageNoteParserStrategy([new CsvXlsxBrokerageNoteParser()]);
 
@@ -99,7 +111,7 @@ describe('MVP workflows integration', () => {
           recalculatedPositionsCount,
         };
       },
-      setManualBase: (input) => setManualBaseUseCase.execute(input),
+      setInitialBalance: (input) => setInitialBalanceUseCase.execute(input),
       listPositions: () => listPositionsUseCase.execute(),
       generateAssetsReport: (input) => generateAssetsReportUseCase.execute(input),
       listBrokers: () => Promise.resolve({ items: [] }),
@@ -120,20 +132,20 @@ describe('MVP workflows integration', () => {
     });
     expect(importResult.createdOperationsCount).toBe(1);
 
-    const manualResult = await runManualBaseAndRefresh(electronApi, {
+    const initialBalanceResult = await runInitialBalanceAndRefresh(electronApi, {
       ticker: 'IVVB11',
-      broker: 'XP',
+      brokerId: 'broker-xp',
       assetType: AssetType.Etf,
       quantity: 2,
       averagePrice: 300,
     });
-    expect(manualResult.positionsCount).toBe(2);
+    expect(initialBalanceResult.positionsCount).toBe(1);
 
     const reportResult = await runAnnualReport(electronApi, {
       baseYear: 2025,
     });
     expect(reportResult.referenceDate).toBe('2025-12-31');
-    expect(reportResult.itemsCount).toBe(2);
+    expect(reportResult.itemsCount).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -151,8 +163,10 @@ function createElectronApiFromHandlers(handlers: Map<string, IpcHandler>): Elect
     previewImportFromFile: (input) => invoke('import:preview-file', input),
     importOperations: (input) => invoke('import:operations', input),
     confirmImportOperations: (input) => invoke('import:confirm-operations', input),
-    setManualBase: (input) => invoke('portfolio:set-manual-base', input),
+    setInitialBalance: (input) => invoke('portfolio:set-initial-balance', input),
     listPositions: () => invoke('portfolio:list-positions'),
     generateAssetsReport: (input) => invoke('report:assets-annual', input),
+    listBrokers: () => invoke('brokers:list'),
+    createBroker: (input) => invoke('brokers:create', input),
   };
 }

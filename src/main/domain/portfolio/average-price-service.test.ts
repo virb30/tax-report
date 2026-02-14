@@ -67,4 +67,30 @@ describe('AveragePriceService', () => {
       }),
     ).toThrow('Money amount cannot be negative.');
   });
+
+  describe('calculateAfterBonus', () => {
+    it('dilutes average price when bonus increases quantity', () => {
+      const service = new AveragePriceService();
+
+      const averagePrice = service.calculateAfterBonus({
+        currentQuantity: 100,
+        currentAveragePrice: 10,
+        bonusQuantity: 50,
+      });
+
+      expect(averagePrice).toBeCloseTo(1000 / 150, 10);
+    });
+
+    it('throws when bonus quantity is zero', () => {
+      const service = new AveragePriceService();
+
+      expect(() =>
+        service.calculateAfterBonus({
+          currentQuantity: 10,
+          currentAveragePrice: 10,
+          bonusQuantity: 0,
+        }),
+      ).toThrow('Bonus quantity must be greater than zero.');
+    });
+  });
 });

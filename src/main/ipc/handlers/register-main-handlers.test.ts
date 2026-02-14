@@ -20,12 +20,11 @@ describe('registerMainHandlers', () => {
         createdOperationsCount: 2,
         recalculatedPositionsCount: 2,
       }),
-      setManualBase: jest.fn().mockResolvedValue({
+      setInitialBalance: jest.fn().mockResolvedValue({
         ticker: 'PETR4',
-        broker: 'XP',
+        brokerId: 'broker-xp',
         quantity: 10,
         averagePrice: 20,
-        isManualBase: true,
       }),
       listPositions: jest.fn().mockResolvedValue({
         items: [],
@@ -53,7 +52,7 @@ describe('registerMainHandlers', () => {
       'import:preview-file',
       'import:operations',
       'import:confirm-operations',
-      'portfolio:set-manual-base',
+      'portfolio:set-initial-balance',
       'portfolio:list-positions',
       'report:assets-annual',
       'brokers:list',
@@ -64,7 +63,7 @@ describe('registerMainHandlers', () => {
     expect(handle).toHaveBeenCalledWith('import:preview-file', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('import:operations', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('import:confirm-operations', expect.any(Function));
-    expect(handle).toHaveBeenCalledWith('portfolio:set-manual-base', expect.any(Function));
+    expect(handle).toHaveBeenCalledWith('portfolio:set-initial-balance', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('portfolio:list-positions', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('report:assets-annual', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('brokers:list', expect.any(Function));
@@ -86,7 +85,7 @@ describe('registerMainHandlers', () => {
     const confirmHandler = handle.mock.calls[3]?.[1] as
       | ((_event: unknown, input: unknown) => Promise<unknown>)
       | undefined;
-    const setManualBaseHandler = handle.mock.calls[4]?.[1] as
+    const setInitialBalanceHandler = handle.mock.calls[4]?.[1] as
       | ((_event: unknown, input: unknown) => Promise<unknown>)
       | undefined;
     const listPositionsHandler = handle.mock.calls[5]?.[1] as (() => Promise<unknown>) | undefined;
@@ -99,7 +98,7 @@ describe('registerMainHandlers', () => {
       !previewHandler ||
       !importHandler ||
       !confirmHandler ||
-      !setManualBaseHandler ||
+      !setInitialBalanceHandler ||
       !listPositionsHandler ||
       !reportHandler
     ) {
@@ -129,9 +128,9 @@ describe('registerMainHandlers', () => {
     const confirmInput = {
       commands: [importInput],
     };
-    const manualBaseInput = {
+    const initialBalanceInput = {
       ticker: 'ITSA4',
-      broker: 'XP',
+      brokerId: 'broker-xp',
       assetType: AssetType.Stock,
       quantity: 20,
       averagePrice: 10,
@@ -142,7 +141,7 @@ describe('registerMainHandlers', () => {
     await previewHandler({}, previewInput);
     await importHandler({}, importInput);
     await confirmHandler({}, confirmInput);
-    await setManualBaseHandler({}, manualBaseInput);
+    await setInitialBalanceHandler({}, initialBalanceInput);
     await listPositionsHandler();
     await reportHandler({}, reportInput);
 
@@ -150,7 +149,7 @@ describe('registerMainHandlers', () => {
     expect(dependencies.previewImportFromFile).toHaveBeenCalledWith(previewInput);
     expect(dependencies.importOperations).toHaveBeenCalledWith(importInput);
     expect(dependencies.confirmImportOperations).toHaveBeenCalledWith(confirmInput);
-    expect(dependencies.setManualBase).toHaveBeenCalledWith(manualBaseInput);
+    expect(dependencies.setInitialBalance).toHaveBeenCalledWith(initialBalanceInput);
     expect(dependencies.listPositions).toHaveBeenCalledTimes(1);
     expect(dependencies.generateAssetsReport).toHaveBeenCalledWith(reportInput);
   });
@@ -163,7 +162,7 @@ describe('registerMainHandlers', () => {
     const previewHandler = handle.mock.calls[1]?.[1] as (_event: unknown, input: unknown) => unknown;
     const importHandler = handle.mock.calls[2]?.[1] as (_event: unknown, input: unknown) => unknown;
     const confirmHandler = handle.mock.calls[3]?.[1] as (_event: unknown, input: unknown) => unknown;
-    const setManualBaseHandler = handle.mock.calls[4]?.[1] as (_event: unknown, input: unknown) => unknown;
+    const setInitialBalanceHandler = handle.mock.calls[4]?.[1] as (_event: unknown, input: unknown) => unknown;
     const reportHandler = handle.mock.calls[6]?.[1] as (_event: unknown, input: unknown) => unknown;
 
     expect(() => previewHandler({}, null)).toThrow('Invalid payload for import preview.');
@@ -216,43 +215,57 @@ describe('registerMainHandlers', () => {
       'Invalid commands list for confirm import operations.',
     );
 
-    expect(() => setManualBaseHandler({}, null)).toThrow('Invalid payload for manual base.');
+    expect(() => setInitialBalanceHandler({}, null)).toThrow('Invalid payload for initial balance.');
     expect(
       () =>
-        setManualBaseHandler({}, {
+        setInitialBalanceHandler({}, {
           ticker: '',
-          broker: 'XP',
+          brokerId: 'broker-xp',
+          assetType: AssetType.Stock,
           quantity: 1,
           averagePrice: 10,
         }),
-    ).toThrow('Invalid ticker for manual base.');
+    ).toThrow('Invalid ticker for initial balance.');
     expect(
       () =>
-        setManualBaseHandler({}, {
+        setInitialBalanceHandler({}, {
           ticker: 'PETR4',
-          broker: '',
+          brokerId: '',
+          assetType: AssetType.Stock,
           quantity: 1,
           averagePrice: 10,
         }),
-    ).toThrow('Invalid broker for manual base.');
+    ).toThrow('Invalid broker for initial balance.');
     expect(
       () =>
-        setManualBaseHandler({}, {
+        setInitialBalanceHandler({}, {
           ticker: 'PETR4',
-          broker: 'XP',
+          brokerId: 'broker-xp',
+          assetType: 'invalid' as AssetType,
+          quantity: 1,
+          averagePrice: 10,
+        }),
+    ).toThrow('Invalid asset type for initial balance.');
+    expect(
+      () =>
+        setInitialBalanceHandler({}, {
+          ticker: 'PETR4',
+          brokerId: 'broker-xp',
+          assetType: AssetType.Stock,
           quantity: Number.NaN,
           averagePrice: 10,
         }),
-    ).toThrow('Invalid quantity for manual base.');
+    ).toThrow('Invalid quantity for initial balance.');
     expect(
       () =>
-        setManualBaseHandler({}, {
+        setInitialBalanceHandler({}, {
           ticker: 'PETR4',
-          broker: 'XP',
+          brokerId: 'broker-xp',
+          assetType: AssetType.Stock,
           quantity: 1,
           averagePrice: Number.NaN,
         }),
-    ).toThrow('Invalid average price for manual base.');
+    ).toThrow('Invalid average price for initial balance.');
 
     expect(() => reportHandler({}, null)).toThrow('Invalid payload for assets report.');
     expect(() => reportHandler({}, { baseYear: 2025.2 })).toThrow(
@@ -262,7 +275,7 @@ describe('registerMainHandlers', () => {
     expect(dependencies.previewImportFromFile).not.toHaveBeenCalled();
     expect(dependencies.importOperations).not.toHaveBeenCalled();
     expect(dependencies.confirmImportOperations).not.toHaveBeenCalled();
-    expect(dependencies.setManualBase).not.toHaveBeenCalled();
+    expect(dependencies.setInitialBalance).not.toHaveBeenCalled();
     expect(dependencies.generateAssetsReport).not.toHaveBeenCalled();
   });
 });

@@ -11,8 +11,10 @@ import { LegacyPortfolioAcl } from './infrastructure/persistence/legacy/legacy-p
 import { RecalculateAssetPositionUseCase } from './application/use-cases/recalculate-asset-position-use-case';
 import { ImportBrokerageNoteUseCase } from './application/use-cases/import-brokerage-note-use-case';
 import { ImportOperationsUseCase } from './application/use-cases/import-operations-use-case';
-import { SetManualBaseUseCase } from './application/use-cases/set-manual-base-use-case';
+import { SetInitialBalanceUseCase } from './application/use-cases/set-initial-balance-use-case';
 import { ListPositionsUseCase } from './application/use-cases/list-positions-use-case';
+import { KnexPositionRepository } from './infrastructure/persistence/knex-position.repository';
+import { KnexTransactionRepository } from './infrastructure/persistence/knex-transaction.repository';
 import { GenerateAssetsReportUseCase } from './application/use-cases/generate-assets-report-use-case';
 import type { OperationsFileParserPort } from './application/ports/operations-file-parser.port';
 import { WindowManager } from './window-manager';
@@ -53,9 +55,9 @@ const lifecycle = createMainLifecycle({
         recalculatedPositionsCount,
       };
     },
-    setManualBase: async (input) => {
+    setInitialBalance: async (input) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.setManualBaseUseCase.execute(input);
+      return dependencies.setInitialBalanceUseCase.execute(input);
     },
     listPositions: async () => {
       const dependencies = await handlersDependenciesPromise;
@@ -85,7 +87,7 @@ lifecycle.register();
 type MainHandlersRuntimeDependencies = {
   operationsFileParser: OperationsFileParserPort;
   importOperationsUseCase: ImportOperationsUseCase;
-  setManualBaseUseCase: SetManualBaseUseCase;
+  setInitialBalanceUseCase: SetInitialBalanceUseCase;
   listPositionsUseCase: ListPositionsUseCase;
   generateAssetsReportUseCase: GenerateAssetsReportUseCase;
   manageBrokersUseCase: ManageBrokersUseCase;
@@ -107,20 +109,28 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
     recalculateAssetPositionUseCase,
   );
   const importOperationsUseCase = new ImportOperationsUseCase(importBrokerageNoteUseCase);
-  const setManualBaseUseCase = new SetManualBaseUseCase(legacyPortfolioAcl);
-  const listPositionsUseCase = new ListPositionsUseCase(legacyPortfolioAcl);
+  const parserStrategy = new BrokerageNoteParserStrategy([new CsvXlsxBrokerageNoteParser()]);
+  const brokerRepository = new KnexBrokerRepository(database);
+  const manageBrokersUseCase = new ManageBrokersUseCase(brokerRepository);
+  const knexPositionRepository = new KnexPositionRepository(database);
+  const knexTransactionRepository = new KnexTransactionRepository(database);
+  const setInitialBalanceUseCase = new SetInitialBalanceUseCase(
+    knexPositionRepository,
+    knexTransactionRepository,
+  );
+  const listPositionsUseCase = new ListPositionsUseCase(
+    knexPositionRepository,
+    brokerRepository,
+  );
   const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
     legacyPortfolioAcl,
     operationRepository,
   );
-  const parserStrategy = new BrokerageNoteParserStrategy([new CsvXlsxBrokerageNoteParser()]);
-  const brokerRepository = new KnexBrokerRepository(database);
-  const manageBrokersUseCase = new ManageBrokersUseCase(brokerRepository);
 
   return {
     operationsFileParser: parserStrategy,
     importOperationsUseCase,
-    setManualBaseUseCase,
+    setInitialBalanceUseCase,
     listPositionsUseCase,
     generateAssetsReportUseCase,
     manageBrokersUseCase,

@@ -4,7 +4,7 @@ import type { ElectronApi } from '../../shared/types/electron-api';
 import {
   runAnnualReport,
   runImportPreviewAndConfirm,
-  runManualBaseAndRefresh,
+  runInitialBalanceAndRefresh,
 } from './mvp-flows';
 
 describe('MVP renderer workflows (E2E)', () => {
@@ -36,23 +36,23 @@ describe('MVP renderer workflows (E2E)', () => {
         createdOperationsCount: 1,
         recalculatedPositionsCount: 1,
       }),
-      setManualBase: jest.fn().mockResolvedValue({
+      setInitialBalance: jest.fn().mockResolvedValue({
         ticker: 'IVVB11',
-        broker: 'XP',
+        brokerId: 'broker-xp',
         quantity: 2,
         averagePrice: 300,
-        isManualBase: true,
       }),
       listPositions: jest.fn().mockResolvedValue({
         items: [
           {
             ticker: 'IVVB11',
-            broker: 'XP',
             assetType: AssetType.Etf,
-            quantity: 2,
+            totalQuantity: 2,
             averagePrice: 300,
             totalCost: 600,
-            isManualBase: true,
+            brokerBreakdown: [
+              { brokerId: 'broker-xp', brokerName: 'XP', brokerCnpj: '00.000.000/0001-00', quantity: 2 },
+            ],
           },
         ],
       }),
@@ -92,18 +92,18 @@ describe('MVP renderer workflows (E2E)', () => {
     expect(electronApi.confirmImportOperations).toHaveBeenCalledTimes(1);
   });
 
-  it('runs manual base + positions refresh flow', async () => {
+  it('runs initial balance + positions refresh flow', async () => {
     const electronApi = createElectronApiMock();
-    const result = await runManualBaseAndRefresh(electronApi, {
+    const result = await runInitialBalanceAndRefresh(electronApi, {
       ticker: 'IVVB11',
-      broker: 'XP',
+      brokerId: 'broker-xp',
       assetType: AssetType.Etf,
       quantity: 2,
       averagePrice: 300,
     });
 
     expect(result).toEqual({ positionsCount: 1 });
-    expect(electronApi.setManualBase).toHaveBeenCalledTimes(1);
+    expect(electronApi.setInitialBalance).toHaveBeenCalledTimes(1);
     expect(electronApi.listPositions).toHaveBeenCalledTimes(1);
   });
 

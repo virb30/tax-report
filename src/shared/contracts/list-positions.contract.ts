@@ -1,13 +1,19 @@
 import type { AssetType } from '@shared/types/domain';
 
+export type BrokerBreakdownItem = {
+  brokerId: string;
+  brokerName: string;
+  brokerCnpj: string;
+  quantity: number;
+};
+
 export type PositionListItem = {
   ticker: string;
-  broker: string;
   assetType: AssetType;
-  quantity: number;
+  totalQuantity: number;
   averagePrice: number;
   totalCost: number;
-  isManualBase: boolean;
+  brokerBreakdown: BrokerBreakdownItem[];
 };
 
 export type ListPositionsResult = {

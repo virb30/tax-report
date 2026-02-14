@@ -10,8 +10,11 @@ import { OperationRepository } from '../../database/repositories/operation-repos
 import { RecalculateAssetPositionUseCase } from '../../application/use-cases/recalculate-asset-position-use-case';
 import { ImportBrokerageNoteUseCase } from '../../application/use-cases/import-brokerage-note-use-case';
 import { ImportOperationsUseCase } from '../../application/use-cases/import-operations-use-case';
-import { SetManualBaseUseCase } from '../../application/use-cases/set-manual-base-use-case';
+import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance-use-case';
 import { ListPositionsUseCase } from '../../application/use-cases/list-positions-use-case';
+import { KnexPositionRepository } from '../../infrastructure/persistence/knex-position.repository';
+import { KnexTransactionRepository } from '../../infrastructure/persistence/knex-transaction.repository';
+import { KnexBrokerRepository } from '../../infrastructure/persistence/knex-broker.repository';
 import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-assets-report-use-case';
 import { LegacyPortfolioAcl } from '../../infrastructure/persistence/legacy/legacy-portfolio-acl';
 import { BrokerageNoteParserStrategy } from '../../infrastructure/parsers/brokerage-note-parser.strategy';
@@ -48,8 +51,17 @@ describe('IPC handlers integration', () => {
       recalculateAssetPositionUseCase,
     );
     const importOperationsUseCase = new ImportOperationsUseCase(importBrokerageNoteUseCase);
-    const setManualBaseUseCase = new SetManualBaseUseCase(acl);
-    const listPositionsUseCase = new ListPositionsUseCase(acl);
+    const knexPositionRepository = new KnexPositionRepository(database);
+    const knexTransactionRepository = new KnexTransactionRepository(database);
+    const brokerRepository = new KnexBrokerRepository(database);
+    const setInitialBalanceUseCase = new SetInitialBalanceUseCase(
+      knexPositionRepository,
+      knexTransactionRepository,
+    );
+    const listPositionsUseCase = new ListPositionsUseCase(
+      knexPositionRepository,
+      brokerRepository,
+    );
     const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(acl, operationRepository);
     const parserStrategy = new BrokerageNoteParserStrategy([new CsvXlsxBrokerageNoteParser()]);
 
@@ -93,7 +105,7 @@ describe('IPC handlers integration', () => {
           recalculatedPositionsCount,
         };
       },
-      setManualBase: (input) => setManualBaseUseCase.execute(input),
+      setInitialBalance: (input) => setInitialBalanceUseCase.execute(input),
       listPositions: () => listPositionsUseCase.execute(),
       generateAssetsReport: (input) => generateAssetsReportUseCase.execute(input),
       listBrokers: () => Promise.resolve({ items: [] }),
@@ -109,7 +121,7 @@ describe('IPC handlers integration', () => {
     const healthHandler = handlers.get('app:health-check');
     const previewHandler = handlers.get('import:preview-file');
     const confirmHandler = handlers.get('import:confirm-operations');
-    const setManualBaseHandler = handlers.get('portfolio:set-manual-base');
+    const setInitialBalanceHandler = handlers.get('portfolio:set-initial-balance');
     const listPositionsHandler = handlers.get('portfolio:list-positions');
     const reportHandler = handlers.get('report:assets-annual');
 
@@ -117,7 +129,7 @@ describe('IPC handlers integration', () => {
       !healthHandler ||
       !previewHandler ||
       !confirmHandler ||
-      !setManualBaseHandler ||
+      !setInitialBalanceHandler ||
       !listPositionsHandler ||
       !reportHandler
     ) {
@@ -141,9 +153,9 @@ describe('IPC handlers integration', () => {
       recalculatedPositionsCount: 1,
     });
 
-    await setManualBaseHandler({}, {
+    await setInitialBalanceHandler({}, {
       ticker: 'IVVB11',
-      broker: 'XP',
+      brokerId: 'broker-xp',
       assetType: AssetType.Etf,
       quantity: 2,
       averagePrice: 300,
@@ -153,7 +165,7 @@ describe('IPC handlers integration', () => {
       items: Array<{ ticker: string }>;
     };
     expect(positionsResult.items.map((item) => item.ticker)).toEqual(
-      expect.arrayContaining(['PETR4', 'IVVB11']),
+      expect.arrayContaining(['IVVB11']),
     );
 
     const reportResult = (await reportHandler({}, { baseYear: 2025 })) as {

@@ -10,7 +10,7 @@ import { AssetType, OperationType, SourceType } from '../shared/types/domain';
 import type { ElectronApi } from '../shared/types/electron-api';
 import type { GenerateAssetsReportResult } from '../shared/contracts/assets-report.contract';
 import type { PreviewImportFromFileResult } from '../shared/contracts/preview-import.contract';
-import type { SetManualBaseResult } from '../shared/contracts/manual-base.contract';
+import type { SetInitialBalanceResult } from '../shared/contracts/initial-balance.contract';
 import type { ListPositionsResult } from '../shared/contracts/list-positions.contract';
 import type { ConfirmImportOperationsResult } from '../shared/contracts/preview-import.contract';
 import { App } from './App';
@@ -49,14 +49,15 @@ describe('App critical UI flows (E2E)', () => {
       .fn<ElectronApi['confirmImportOperations']>()
       .mockResolvedValue(confirmImportResult);
 
-    const setManualBaseResult: SetManualBaseResult = {
+    const setInitialBalanceResult: SetInitialBalanceResult = {
       ticker: 'IVVB11',
-      broker: 'XP',
+      brokerId: 'broker-xp',
       quantity: 2,
       averagePrice: 300,
-      isManualBase: true,
     };
-    const setManualBase = jest.fn<ElectronApi['setManualBase']>().mockResolvedValue(setManualBaseResult);
+    const setInitialBalance = jest
+      .fn<ElectronApi['setInitialBalance']>()
+      .mockResolvedValue(setInitialBalanceResult);
 
     const emptyPositionsResult: ListPositionsResult = {
       items: [],
@@ -65,12 +66,13 @@ describe('App critical UI flows (E2E)', () => {
       items: [
         {
           ticker: 'IVVB11',
-          broker: 'XP',
           assetType: AssetType.Etf,
-          quantity: 2,
+          totalQuantity: 2,
           averagePrice: 300,
           totalCost: 600,
-          isManualBase: true,
+          brokerBreakdown: [
+            { brokerId: 'broker-xp', brokerName: 'XP', brokerCnpj: '00.000.000/0001-00', quantity: 2 },
+          ],
         },
       ],
     };
@@ -98,14 +100,21 @@ describe('App critical UI flows (E2E)', () => {
       .fn<ElectronApi['generateAssetsReport']>()
       .mockResolvedValue(assetsReportResult);
 
+    const listBrokers = jest.fn().mockResolvedValue({
+      items: [{ id: 'broker-xp', name: 'XP Investimentos', cnpj: '02.332.886/0001-04' }],
+    });
+    const createBroker = jest.fn().mockResolvedValue({ success: true });
+
     window.electronApi = {
       appName: 'tax-report',
       previewImportFromFile,
       importOperations: jest.fn<ElectronApi['importOperations']>(),
       confirmImportOperations,
-      setManualBase,
+      setInitialBalance,
       listPositions,
       generateAssetsReport,
+      listBrokers,
+      createBroker,
     };
 
     Object.defineProperty(navigator, 'clipboard', {
@@ -128,15 +137,15 @@ describe('App critical UI flows (E2E)', () => {
       expect(screen.getByText(/Importacao concluida/)).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole('button', { name: 'Gerenciar Preco Medio' }));
+    await user.click(screen.getByRole('button', { name: 'Saldo Inicial' }));
     await user.type(screen.getByLabelText('Ticker'), 'IVVB11');
     await user.clear(screen.getByLabelText('Quantidade'));
     await user.type(screen.getByLabelText('Quantidade'), '2');
-    await user.clear(screen.getByLabelText('Preco medio'));
-    await user.type(screen.getByLabelText('Preco medio'), '300');
-    await user.click(screen.getByRole('button', { name: 'Salvar base manual' }));
+    await user.clear(screen.getByLabelText('Preço médio (R$)'));
+    await user.type(screen.getByLabelText('Preço médio (R$)'), '300');
+    await user.click(screen.getByRole('button', { name: 'Salvar saldo inicial' }));
     await waitFor(() => {
-      expect(screen.getByText('Base manual salva com sucesso.')).toBeInTheDocument();
+      expect(screen.getByText('Saldo inicial cadastrado com sucesso.')).toBeInTheDocument();
     });
     await waitFor(() => {
       expect(screen.getByText('IVVB11')).toBeInTheDocument();
@@ -157,7 +166,7 @@ describe('App critical UI flows (E2E)', () => {
       filePath: '/tmp/ops.csv',
     });
     expect(confirmImportOperations).toHaveBeenCalledTimes(1);
-    expect(setManualBase).toHaveBeenCalledTimes(1);
+    expect(setInitialBalance).toHaveBeenCalledTimes(1);
     expect(generateAssetsReport).toHaveBeenCalledWith({ baseYear: 2025 });
   });
 });

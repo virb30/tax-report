@@ -11,7 +11,7 @@
 - [x] 7.0 Adapters de Infraestrutura para Relatório de IR (MVP)
 - [x] 8.0 IPC, Preload Seguro e UI para Geração do Relatório (MVP)
 - [x] 9.0 Schema SQLite (Base Limpa), Broker e Gestão de Corretoras
-- [ ] 10.0 Core Domain Portfolio + Saldo Inicial (Gestão Manual de Carteira)
+- [x] 10.0 Core Domain Portfolio + Saldo Inicial (Gestão Manual de Carteira)
 - [ ] 11.0 Recálculo de Posição + Migração entre Anos
 - [ ] 12.0 Importação de Transações (Ingestion Context)
 - [ ] 13.0 Relatório de Bens e Direitos (Tax Reporting Context)

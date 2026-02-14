@@ -9,6 +9,12 @@ export type CalculateAveragePriceInput = {
   operationalCosts: number;
 };
 
+export type CalculateAfterBonusInput = {
+  currentQuantity: number;
+  currentAveragePrice: number;
+  bonusQuantity: number;
+};
+
 export class AveragePriceService {
   calculateAfterBuy(input: CalculateAveragePriceInput): number {
     const currentQuantity = Quantity.from(input.currentQuantity);
@@ -27,5 +33,21 @@ export class AveragePriceService {
     const nextQuantity = currentQuantity.add(buyQuantity);
 
     return nextTotalCost.divideBy(nextQuantity.toNumber()).toNumber();
+  }
+
+  /** Bonificação: aumenta quantidade mantendo custo total → PM dilui */
+  calculateAfterBonus(input: CalculateAfterBonusInput): number {
+    if (input.bonusQuantity <= 0) {
+      throw new Error('Bonus quantity must be greater than zero.');
+    }
+
+    const currentTotalCost = input.currentQuantity * input.currentAveragePrice;
+    const nextQuantity = input.currentQuantity + input.bonusQuantity;
+
+    if (nextQuantity <= 0) {
+      throw new Error('Total quantity after bonus must be greater than zero.');
+    }
+
+    return currentTotalCost / nextQuantity;
   }
 }

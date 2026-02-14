@@ -2,15 +2,17 @@ import { useState } from 'react';
 import type { JSX } from 'react';
 import { BrokersPage } from './pages/BrokersPage';
 import { ImportPage } from './pages/ImportPage';
-import { ManualBasePage } from './pages/ManualBasePage';
+import { InitialBalancePage } from './pages/InitialBalancePage';
+import { PositionsPage } from './pages/PositionsPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { ReportPage } from './pages/ReportPage';
 
-type MainTab = 'import' | 'manual-base' | 'report' | 'brokers' | 'monthly-assessment';
+type MainTab = 'import' | 'initial-balance' | 'positions' | 'report' | 'brokers' | 'monthly-assessment';
 
 const tabItems: Array<{ id: MainTab; label: string }> = [
   { id: 'import', label: 'Importacao e Conferencia' },
-  { id: 'manual-base', label: 'Gerenciar Preco Medio' },
+  { id: 'initial-balance', label: 'Saldo Inicial' },
+  { id: 'positions', label: 'Posicoes' },
   { id: 'report', label: 'Relatorio Bens e Direitos' },
   { id: 'brokers', label: 'Corretoras' },
   { id: 'monthly-assessment', label: 'Apuracao Mensal / DARF (v2)' },
@@ -47,7 +49,8 @@ export function App(): JSX.Element {
         </nav>
 
         {activeTab === 'import' ? <ImportPage /> : null}
-        {activeTab === 'manual-base' ? <ManualBasePage /> : null}
+        {activeTab === 'initial-balance' ? <InitialBalancePage /> : null}
+        {activeTab === 'positions' ? <PositionsPage /> : null}
         {activeTab === 'report' ? <ReportPage /> : null}
         {activeTab === 'brokers' ? <BrokersPage /> : null}
         {activeTab === 'monthly-assessment' ? (

@@ -10,6 +10,13 @@ export enum OperationType {
   Sell = 'sell',
 }
 
+export enum TransactionType {
+  Buy = 'buy',
+  Sell = 'sell',
+  Bonus = 'bonus',
+  InitialBalance = 'initial_balance',
+}
+
 export enum SourceType {
   Pdf = 'pdf',
   Csv = 'csv',

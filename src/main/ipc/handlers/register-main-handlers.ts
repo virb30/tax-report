@@ -7,7 +7,10 @@ import type {
   ImportOperationsResult,
 } from '@shared/contracts/import-operations.contract';
 import type { ListPositionsResult } from '@shared/contracts/list-positions.contract';
-import type { SetManualBaseCommand, SetManualBaseResult } from '@shared/contracts/manual-base.contract';
+import type {
+  SetInitialBalanceCommand,
+  SetInitialBalanceResult,
+} from '@shared/contracts/initial-balance.contract';
 import type {
   ConfirmImportOperationsCommand,
   ConfirmImportOperationsResult,
@@ -34,7 +37,7 @@ export type MainHandlersDependencies = {
   confirmImportOperations: (
     input: ConfirmImportOperationsCommand,
   ) => Promise<ConfirmImportOperationsResult>;
-  setManualBase: (input: SetManualBaseCommand) => Promise<SetManualBaseResult>;
+  setInitialBalance: (input: SetInitialBalanceCommand) => Promise<SetInitialBalanceResult>;
   listPositions: () => Promise<ListPositionsResult>;
   generateAssetsReport: (
     input: GenerateAssetsReportQuery,
@@ -52,7 +55,7 @@ export function registerMainHandlers(
     'import:preview-file',
     'import:operations',
     'import:confirm-operations',
-    'portfolio:set-manual-base',
+    'portfolio:set-initial-balance',
     'portfolio:list-positions',
     'report:assets-annual',
     'brokers:list',
@@ -78,9 +81,9 @@ export function registerMainHandlers(
     return dependencies.confirmImportOperations(payload);
   });
 
-  ipcMain.handle('portfolio:set-manual-base', (_event, input: SetManualBaseCommand) => {
-    const payload = parseSetManualBaseInput(input);
-    return dependencies.setManualBase(payload);
+  ipcMain.handle('portfolio:set-initial-balance', (_event, input: SetInitialBalanceCommand) => {
+    const payload = parseSetInitialBalanceInput(input);
+    return dependencies.setInitialBalance(payload);
   });
 
   ipcMain.handle('portfolio:list-positions', () => {
@@ -157,29 +160,43 @@ function parseConfirmImportOperationsInput(input: unknown): ConfirmImportOperati
   return input as ConfirmImportOperationsCommand;
 }
 
-function parseSetManualBaseInput(input: unknown): SetManualBaseCommand {
+function parseSetInitialBalanceInput(input: unknown): SetInitialBalanceCommand {
   if (!input || typeof input !== 'object') {
-    throw new Error('Invalid payload for manual base.');
+    throw new Error('Invalid payload for initial balance.');
   }
   const payload = input as {
     ticker?: unknown;
-    broker?: unknown;
+    brokerId?: unknown;
+    assetType?: unknown;
     quantity?: unknown;
     averagePrice?: unknown;
   };
   if (typeof payload.ticker !== 'string' || payload.ticker.trim().length === 0) {
-    throw new Error('Invalid ticker for manual base.');
+    throw new Error('Invalid ticker for initial balance.');
   }
-  if (typeof payload.broker !== 'string' || payload.broker.trim().length === 0) {
-    throw new Error('Invalid broker for manual base.');
+  if (typeof payload.brokerId !== 'string' || payload.brokerId.trim().length === 0) {
+    throw new Error('Invalid broker for initial balance.');
+  }
+  const validAssetTypes = ['stock', 'fii', 'etf', 'bdr'];
+  if (
+    typeof payload.assetType !== 'string' ||
+    !validAssetTypes.includes(payload.assetType)
+  ) {
+    throw new Error('Invalid asset type for initial balance.');
   }
   if (typeof payload.quantity !== 'number' || Number.isNaN(payload.quantity)) {
-    throw new Error('Invalid quantity for manual base.');
+    throw new Error('Invalid quantity for initial balance.');
   }
   if (typeof payload.averagePrice !== 'number' || Number.isNaN(payload.averagePrice)) {
-    throw new Error('Invalid average price for manual base.');
+    throw new Error('Invalid average price for initial balance.');
   }
-  return input as SetManualBaseCommand;
+  return {
+    ticker: payload.ticker,
+    brokerId: payload.brokerId,
+    assetType: payload.assetType as SetInitialBalanceCommand['assetType'],
+    quantity: payload.quantity,
+    averagePrice: payload.averagePrice,
+  };
 }
 
 function parseGenerateAssetsReportInput(input: unknown): GenerateAssetsReportQuery {

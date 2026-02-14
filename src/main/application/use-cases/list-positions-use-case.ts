@@ -1,20 +1,42 @@
 import type { ListPositionsResult } from '@shared/contracts/list-positions.contract';
-import type { PortfolioPositionRepositoryPort } from '../repositories/portfolio-position.repository.interface';
+import type { PositionRepository } from '../repositories/position.repository';
+import type { BrokerRepositoryPort } from '../repositories/broker.repository';
 
 export class ListPositionsUseCase {
-  constructor(private readonly portfolioPositionRepository: PortfolioPositionRepositoryPort) {}
+  constructor(
+    private readonly positionRepository: PositionRepository,
+    private readonly brokerRepository: BrokerRepositoryPort,
+  ) {}
 
   async execute(): Promise<ListPositionsResult> {
-    const snapshots = await this.portfolioPositionRepository.findAll();
-    const items = snapshots.map((snapshot) => ({
-      ticker: snapshot.ticker,
-      broker: snapshot.broker,
-      assetType: snapshot.assetType,
-      quantity: snapshot.quantity,
-      averagePrice: snapshot.averagePrice,
-      totalCost: snapshot.quantity * snapshot.averagePrice,
-      isManualBase: snapshot.isManualBase,
-    }));
+    const snapshots = await this.positionRepository.findAll();
+
+    const items = await Promise.all(
+      snapshots.map(async (snapshot) => {
+        const brokerBreakdown = await Promise.all(
+          snapshot.brokerBreakdown.map(async (allocation) => {
+            const broker = await this.brokerRepository.findById(allocation.brokerId);
+            return {
+              brokerId: allocation.brokerId,
+              brokerName: broker?.name ?? allocation.brokerId,
+              brokerCnpj: broker?.cnpj ?? '',
+              quantity: allocation.quantity,
+            };
+          }),
+        );
+
+        const totalCost = snapshot.totalQuantity * snapshot.averagePrice;
+
+        return {
+          ticker: snapshot.ticker,
+          assetType: snapshot.assetType,
+          totalQuantity: snapshot.totalQuantity,
+          averagePrice: snapshot.averagePrice,
+          totalCost,
+          brokerBreakdown,
+        };
+      }),
+    );
 
     return { items };
   }

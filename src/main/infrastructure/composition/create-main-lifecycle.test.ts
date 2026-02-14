@@ -17,13 +17,12 @@ describe('createMainLifecycle', () => {
         createdOperationsCount: 1,
         recalculatedPositionsCount: 1,
         }),
-      setManualBase: () =>
+      setInitialBalance: () =>
         Promise.resolve({
-        ticker: 'PETR4',
-        broker: 'XP',
-        quantity: 1,
-        averagePrice: 10,
-        isManualBase: true,
+          ticker: 'PETR4',
+          brokerId: 'broker-xp',
+          quantity: 1,
+          averagePrice: 10,
         }),
       listPositions: () => Promise.resolve({ items: [] }),
       generateAssetsReport: () =>
@@ -81,7 +80,7 @@ describe('createMainLifecycle', () => {
     expect(ipcHandleMock).toHaveBeenCalledWith('import:preview-file', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('import:operations', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('import:confirm-operations', expect.any(Function));
-    expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:set-manual-base', expect.any(Function));
+    expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:set-initial-balance', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:list-positions', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('report:assets-annual', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('brokers:list', expect.any(Function));

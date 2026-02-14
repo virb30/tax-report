@@ -47,9 +47,9 @@ describe('preload', () => {
     await electronApi.confirmImportOperations({
       commands: [],
     });
-    await electronApi.setManualBase({
+    await electronApi.setInitialBalance({
       ticker: 'IVVB11',
-      broker: 'XP',
+      brokerId: 'broker-xp',
       assetType: AssetType.Etf,
       quantity: 2,
       averagePrice: 300,
@@ -80,9 +80,9 @@ describe('preload', () => {
     expect(invoke).toHaveBeenNthCalledWith(3, 'import:confirm-operations', {
       commands: [],
     });
-    expect(invoke).toHaveBeenNthCalledWith(4, 'portfolio:set-manual-base', {
+    expect(invoke).toHaveBeenNthCalledWith(4, 'portfolio:set-initial-balance', {
       ticker: 'IVVB11',
-      broker: 'XP',
+      brokerId: 'broker-xp',
       assetType: AssetType.Etf,
       quantity: 2,
       averagePrice: 300,
@@ -102,7 +102,7 @@ describe('preload', () => {
       'listBrokers',
       'listPositions',
       'previewImportFromFile',
-      'setManualBase',
+      'setInitialBalance',
     ]);
     expect('invoke' in (electronApi as unknown as Record<string, unknown>)).toBe(false);
     expect('ipcRenderer' in (electronApi as unknown as Record<string, unknown>)).toBe(false);

@@ -7,7 +7,10 @@ import type {
   ImportOperationsResult,
 } from '../contracts/import-operations.contract';
 import type { ListPositionsResult } from '../contracts/list-positions.contract';
-import type { SetManualBaseCommand, SetManualBaseResult } from '../contracts/manual-base.contract';
+import type {
+  SetInitialBalanceCommand,
+  SetInitialBalanceResult,
+} from '../contracts/initial-balance.contract';
 import type {
   CreateBrokerCommand,
   CreateBrokerResult,
@@ -27,7 +30,7 @@ export type ElectronApi = {
   confirmImportOperations: (
     input: ConfirmImportOperationsCommand,
   ) => Promise<ConfirmImportOperationsResult>;
-  setManualBase: (input: SetManualBaseCommand) => Promise<SetManualBaseResult>;
+  setInitialBalance: (input: SetInitialBalanceCommand) => Promise<SetInitialBalanceResult>;
   listPositions: () => Promise<ListPositionsResult>;
   generateAssetsReport: (
     input: GenerateAssetsReportQuery,

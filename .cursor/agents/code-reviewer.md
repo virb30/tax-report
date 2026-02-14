@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-model: gpt-5.3-codex
+model: inherit
 description: Especialista em code review para validar código contra rules, TechSpec e Tasks. Use proativamente após implementação de tasks ou quando houver mudanças de código para revisar.
 ---
 

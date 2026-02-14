@@ -10,7 +10,10 @@ import { ImportBrokerageNoteUseCase } from './import-brokerage-note-use-case';
 import { ImportOperationsUseCase } from './import-operations-use-case';
 import { ListPositionsUseCase } from './list-positions-use-case';
 import { RecalculateAssetPositionUseCase } from './recalculate-asset-position-use-case';
-import { SetManualBaseUseCase } from './set-manual-base-use-case';
+import { SetInitialBalanceUseCase } from './set-initial-balance-use-case';
+import { KnexPositionRepository } from '../../infrastructure/persistence/knex-position.repository';
+import { KnexTransactionRepository } from '../../infrastructure/persistence/knex-transaction.repository';
+import { KnexBrokerRepository } from '../../infrastructure/persistence/knex-broker.repository';
 
 describe('Application contracts integration', () => {
   let database: Knex;
@@ -37,8 +40,17 @@ describe('Application contracts integration', () => {
       recalculateAssetPositionUseCase,
     );
     const importOperationsUseCase = new ImportOperationsUseCase(importBrokerageNoteUseCase);
-    const setManualBaseUseCase = new SetManualBaseUseCase(acl);
-    const listPositionsUseCase = new ListPositionsUseCase(acl);
+    const knexPositionRepository = new KnexPositionRepository(database);
+    const knexTransactionRepository = new KnexTransactionRepository(database);
+    const brokerRepository = new KnexBrokerRepository(database);
+    const setInitialBalanceUseCase = new SetInitialBalanceUseCase(
+      knexPositionRepository,
+      knexTransactionRepository,
+    );
+    const listPositionsUseCase = new ListPositionsUseCase(
+      knexPositionRepository,
+      brokerRepository,
+    );
     const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(acl, operationRepository);
 
     const importResult = await importOperationsUseCase.execute({
@@ -63,34 +75,30 @@ describe('Application contracts integration', () => {
       recalculatedPositionsCount: 1,
     });
 
-    const manualBaseResult = await setManualBaseUseCase.execute({
+    const initialBalanceResult = await setInitialBalanceUseCase.execute({
       ticker: 'IVVB11',
-      broker: 'XP',
+      brokerId: 'broker-xp',
       assetType: AssetType.Etf,
       quantity: 2,
       averagePrice: 300,
     });
 
-    expect(manualBaseResult).toEqual({
+    expect(initialBalanceResult).toEqual({
       ticker: 'IVVB11',
-      broker: 'XP',
+      brokerId: 'broker-xp',
       quantity: 2,
       averagePrice: 300,
-      isManualBase: true,
     });
 
     const positionsResult = await listPositionsUseCase.execute();
     expect(positionsResult.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          ticker: 'PETR4',
-          broker: 'XP',
-          totalCost: 201,
-        }),
-        expect.objectContaining({
           ticker: 'IVVB11',
-          broker: 'XP',
           totalCost: 600,
+          brokerBreakdown: expect.arrayContaining([
+            expect.objectContaining({ brokerId: 'broker-xp', quantity: 2 }),
+          ]),
         }),
       ]),
     );
@@ -119,14 +127,8 @@ describe('Application contracts integration', () => {
           totalCost: 201,
           revenueClassification: { group: '03', code: '01' },
         }),
-        expect.objectContaining({
-          ticker: 'IVVB11',
-          quantity: 2,
-          totalCost: 600,
-          revenueClassification: { group: '07', code: '09' },
-        }),
       ]),
     );
-    expect(reportResult.items).toHaveLength(2);
+    expect(reportResult.items).toHaveLength(1);
   });
 });

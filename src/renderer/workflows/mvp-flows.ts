@@ -1,5 +1,5 @@
 import type { GenerateAssetsReportQuery } from '@shared/contracts/assets-report.contract';
-import type { SetManualBaseCommand } from '@shared/contracts/manual-base.contract';
+import type { SetInitialBalanceCommand } from '@shared/contracts/initial-balance.contract';
 import type { PreviewImportFromFileCommand } from '@shared/contracts/preview-import.contract';
 import type { ElectronApi } from '@shared/types/electron-api';
 
@@ -13,11 +13,11 @@ export async function runImportPreviewAndConfirm(
   });
 }
 
-export async function runManualBaseAndRefresh(
+export async function runInitialBalanceAndRefresh(
   electronApi: ElectronApi,
-  input: SetManualBaseCommand,
+  input: SetInitialBalanceCommand,
 ): Promise<{ positionsCount: number }> {
-  await electronApi.setManualBase(input);
+  await electronApi.setInitialBalance(input);
   const listResult = await electronApi.listPositions();
   return {
     positionsCount: listResult.items.length,

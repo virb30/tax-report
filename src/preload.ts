@@ -3,7 +3,7 @@ import type { ElectronApi } from '@shared/types/electron-api';
 import type { GenerateAssetsReportQuery } from '@shared/contracts/assets-report.contract';
 import type { CreateBrokerCommand } from '@shared/contracts/brokers.contract';
 import type { ImportOperationsCommand } from '@shared/contracts/import-operations.contract';
-import type { SetManualBaseCommand } from '@shared/contracts/manual-base.contract';
+import type { SetInitialBalanceCommand } from '@shared/contracts/initial-balance.contract';
 import type {
   ConfirmImportOperationsCommand,
   PreviewImportFromFileCommand,
@@ -16,8 +16,8 @@ export const electronApi: ElectronApi = {
   importOperations: (input: ImportOperationsCommand) => ipcRenderer.invoke('import:operations', input),
   confirmImportOperations: (input: ConfirmImportOperationsCommand) =>
     ipcRenderer.invoke('import:confirm-operations', input),
-  setManualBase: (input: SetManualBaseCommand) =>
-    ipcRenderer.invoke('portfolio:set-manual-base', input),
+  setInitialBalance: (input: SetInitialBalanceCommand) =>
+    ipcRenderer.invoke('portfolio:set-initial-balance', input),
   listPositions: () => ipcRenderer.invoke('portfolio:list-positions'),
   generateAssetsReport: (input: GenerateAssetsReportQuery) =>
     ipcRenderer.invoke('report:assets-annual', input),
