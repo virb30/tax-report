@@ -38,6 +38,11 @@ describe('registerMainHandlers', () => {
         success: true,
         broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00' },
       }),
+      recalculatePosition: jest.fn().mockResolvedValue(undefined),
+      migrateYear: jest.fn().mockResolvedValue({
+        migratedPositionsCount: 2,
+        createdTransactionsCount: 4,
+      }),
     };
   }
 
@@ -54,17 +59,21 @@ describe('registerMainHandlers', () => {
       'import:confirm-operations',
       'portfolio:set-initial-balance',
       'portfolio:list-positions',
+      'portfolio:recalculate',
+      'portfolio:migrate-year',
       'report:assets-annual',
       'brokers:list',
       'brokers:create',
     ]);
-    expect(handle).toHaveBeenCalledTimes(9);
+    expect(handle).toHaveBeenCalledTimes(11);
     expect(handle).toHaveBeenCalledWith('app:health-check', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('import:preview-file', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('import:operations', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('import:confirm-operations', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('portfolio:set-initial-balance', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('portfolio:list-positions', expect.any(Function));
+    expect(handle).toHaveBeenCalledWith('portfolio:recalculate', expect.any(Function));
+    expect(handle).toHaveBeenCalledWith('portfolio:migrate-year', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('report:assets-annual', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('brokers:list', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('brokers:create', expect.any(Function));
@@ -88,8 +97,16 @@ describe('registerMainHandlers', () => {
     const setInitialBalanceHandler = handle.mock.calls[4]?.[1] as
       | ((_event: unknown, input: unknown) => Promise<unknown>)
       | undefined;
-    const listPositionsHandler = handle.mock.calls[5]?.[1] as (() => Promise<unknown>) | undefined;
-    const reportHandler = handle.mock.calls[6]?.[1] as
+    const listPositionsHandler = handle.mock.calls[5]?.[1] as
+      | ((_event: unknown, input: { baseYear: number }) => Promise<unknown>)
+      | undefined;
+    const recalculateHandler = handle.mock.calls[6]?.[1] as
+      | ((_event: unknown, input: { ticker: string }) => Promise<unknown>)
+      | undefined;
+    const migrateYearHandler = handle.mock.calls[7]?.[1] as
+      | ((_event: unknown, input: { sourceYear: number; targetYear: number }) => Promise<unknown>)
+      | undefined;
+    const reportHandler = handle.mock.calls[8]?.[1] as
       | ((_event: unknown, input: { baseYear: number }) => Promise<unknown>)
       | undefined;
 
@@ -100,6 +117,8 @@ describe('registerMainHandlers', () => {
       !confirmHandler ||
       !setInitialBalanceHandler ||
       !listPositionsHandler ||
+      !recalculateHandler ||
+      !migrateYearHandler ||
       !reportHandler
     ) {
       throw new Error('IPC handlers were not fully registered.');
@@ -134,15 +153,20 @@ describe('registerMainHandlers', () => {
       assetType: AssetType.Stock,
       quantity: 20,
       averagePrice: 10,
+      year: 2025,
     };
     const reportInput = { baseYear: 2025 };
+    const recalculateInput = { ticker: 'PETR4' };
+    const migrateYearInput = { sourceYear: 2024, targetYear: 2025 };
 
     expect(healthHandler()).toEqual({ status: 'ok' });
     await previewHandler({}, previewInput);
     await importHandler({}, importInput);
     await confirmHandler({}, confirmInput);
     await setInitialBalanceHandler({}, initialBalanceInput);
-    await listPositionsHandler();
+    await listPositionsHandler({}, { baseYear: 2025 });
+    await recalculateHandler({}, recalculateInput);
+    await migrateYearHandler({}, migrateYearInput);
     await reportHandler({}, reportInput);
 
     expect(dependencies.checkHealth).toHaveBeenCalledTimes(1);
@@ -150,7 +174,9 @@ describe('registerMainHandlers', () => {
     expect(dependencies.importOperations).toHaveBeenCalledWith(importInput);
     expect(dependencies.confirmImportOperations).toHaveBeenCalledWith(confirmInput);
     expect(dependencies.setInitialBalance).toHaveBeenCalledWith(initialBalanceInput);
-    expect(dependencies.listPositions).toHaveBeenCalledTimes(1);
+    expect(dependencies.listPositions).toHaveBeenCalledWith({ baseYear: 2025 });
+    expect(dependencies.recalculatePosition).toHaveBeenCalledWith(recalculateInput);
+    expect(dependencies.migrateYear).toHaveBeenCalledWith(migrateYearInput);
     expect(dependencies.generateAssetsReport).toHaveBeenCalledWith(reportInput);
   });
 
@@ -163,7 +189,7 @@ describe('registerMainHandlers', () => {
     const importHandler = handle.mock.calls[2]?.[1] as (_event: unknown, input: unknown) => unknown;
     const confirmHandler = handle.mock.calls[3]?.[1] as (_event: unknown, input: unknown) => unknown;
     const setInitialBalanceHandler = handle.mock.calls[4]?.[1] as (_event: unknown, input: unknown) => unknown;
-    const reportHandler = handle.mock.calls[6]?.[1] as (_event: unknown, input: unknown) => unknown;
+    const reportHandler = handle.mock.calls[8]?.[1] as (_event: unknown, input: unknown) => unknown;
 
     expect(() => previewHandler({}, null)).toThrow('Invalid payload for import preview.');
     expect(() => previewHandler({}, { broker: '', filePath: '/tmp/ops.csv' })).toThrow(
@@ -224,6 +250,7 @@ describe('registerMainHandlers', () => {
           assetType: AssetType.Stock,
           quantity: 1,
           averagePrice: 10,
+          year: 2025,
         }),
     ).toThrow('Invalid ticker for initial balance.');
     expect(
@@ -234,6 +261,7 @@ describe('registerMainHandlers', () => {
           assetType: AssetType.Stock,
           quantity: 1,
           averagePrice: 10,
+          year: 2025,
         }),
     ).toThrow('Invalid broker for initial balance.');
     expect(
@@ -244,6 +272,7 @@ describe('registerMainHandlers', () => {
           assetType: 'invalid' as AssetType,
           quantity: 1,
           averagePrice: 10,
+          year: 2025,
         }),
     ).toThrow('Invalid asset type for initial balance.');
     expect(
@@ -254,6 +283,7 @@ describe('registerMainHandlers', () => {
           assetType: AssetType.Stock,
           quantity: Number.NaN,
           averagePrice: 10,
+          year: 2025,
         }),
     ).toThrow('Invalid quantity for initial balance.');
     expect(
@@ -264,6 +294,7 @@ describe('registerMainHandlers', () => {
           assetType: AssetType.Stock,
           quantity: 1,
           averagePrice: Number.NaN,
+          year: 2025,
         }),
     ).toThrow('Invalid average price for initial balance.');
 

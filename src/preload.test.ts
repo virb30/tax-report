@@ -53,8 +53,9 @@ describe('preload', () => {
       assetType: AssetType.Etf,
       quantity: 2,
       averagePrice: 300,
+      year: 2025,
     });
-    await electronApi.listPositions();
+    await electronApi.listPositions({ baseYear: 2025 });
     await electronApi.generateAssetsReport({ baseYear: 2025 });
 
     expect(invoke).toHaveBeenNthCalledWith(1, 'import:preview-file', {
@@ -86,8 +87,9 @@ describe('preload', () => {
       assetType: AssetType.Etf,
       quantity: 2,
       averagePrice: 300,
+      year: 2025,
     });
-    expect(invoke).toHaveBeenNthCalledWith(5, 'portfolio:list-positions');
+    expect(invoke).toHaveBeenNthCalledWith(5, 'portfolio:list-positions', { baseYear: 2025 });
     expect(invoke).toHaveBeenNthCalledWith(6, 'report:assets-annual', { baseYear: 2025 });
   });
 
@@ -101,7 +103,9 @@ describe('preload', () => {
       'importOperations',
       'listBrokers',
       'listPositions',
+      'migrateYear',
       'previewImportFromFile',
+      'recalculatePosition',
       'setInitialBalance',
     ]);
     expect('invoke' in (electronApi as unknown as Record<string, unknown>)).toBe(false);

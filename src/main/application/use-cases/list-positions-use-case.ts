@@ -1,15 +1,30 @@
-import type { ListPositionsResult } from '@shared/contracts/list-positions.contract';
+import type {
+  ListPositionsQuery,
+  ListPositionsResult,
+} from '@shared/contracts/list-positions.contract';
 import type { PositionRepository } from '../repositories/position.repository';
+import type { TransactionRepository } from '../repositories/transaction.repository';
 import type { BrokerRepositoryPort } from '../repositories/broker.repository';
+import { computePositionsFromTransactions } from '../services/compute-positions-from-transactions';
 
 export class ListPositionsUseCase {
   constructor(
     private readonly positionRepository: PositionRepository,
+    private readonly transactionRepository: TransactionRepository,
     private readonly brokerRepository: BrokerRepositoryPort,
   ) {}
 
-  async execute(): Promise<ListPositionsResult> {
-    const snapshots = await this.positionRepository.findAll();
+  async execute(input: ListPositionsQuery): Promise<ListPositionsResult> {
+    const referenceDate = `${input.baseYear}-12-31`;
+    const transactions = await this.transactionRepository.findByPeriod({
+      startDate: '0000-01-01',
+      endDate: referenceDate,
+    });
+
+    const snapshots = await computePositionsFromTransactions(
+      transactions,
+      this.positionRepository,
+    );
 
     const items = await Promise.all(
       snapshots.map(async (snapshot) => {

@@ -10,6 +10,8 @@ import { AssetRepository } from '../../main/database/repositories/asset-reposito
 import { OperationRepository } from '../../main/database/repositories/operation-repository';
 import { LegacyPortfolioAcl } from '../../main/infrastructure/persistence/legacy/legacy-portfolio-acl';
 import { RecalculateAssetPositionUseCase } from '../../main/application/use-cases/recalculate-asset-position-use-case';
+import { RecalculatePositionUseCase } from '../../main/application/use-cases/recalculate-position-use-case';
+import { MigrateYearUseCase } from '../../main/application/use-cases/migrate-year-use-case';
 import { ImportBrokerageNoteUseCase } from '../../main/application/use-cases/import-brokerage-note-use-case';
 import { ImportOperationsUseCase } from '../../main/application/use-cases/import-operations-use-case';
 import { SetInitialBalanceUseCase } from '../../main/application/use-cases/set-initial-balance-use-case';
@@ -76,7 +78,17 @@ describe('MVP workflows integration', () => {
     );
     const listPositionsUseCase = new ListPositionsUseCase(
       knexPositionRepository,
+      knexTransactionRepository,
       brokerRepository,
+    );
+    const recalculatePositionUseCase = new RecalculatePositionUseCase(
+      knexPositionRepository,
+      knexTransactionRepository,
+    );
+    const migrateYearUseCase = new MigrateYearUseCase(
+      knexPositionRepository,
+      knexTransactionRepository,
+      (input) => recalculatePositionUseCase.execute(input),
     );
     const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(acl, operationRepository);
     const parserStrategy = new BrokerageNoteParserStrategy([new CsvXlsxBrokerageNoteParser()]);
@@ -112,7 +124,9 @@ describe('MVP workflows integration', () => {
         };
       },
       setInitialBalance: (input) => setInitialBalanceUseCase.execute(input),
-      listPositions: () => listPositionsUseCase.execute(),
+      listPositions: (input) => listPositionsUseCase.execute(input),
+      recalculatePosition: (input) => recalculatePositionUseCase.execute(input),
+      migrateYear: (input) => migrateYearUseCase.execute(input),
       generateAssetsReport: (input) => generateAssetsReportUseCase.execute(input),
       listBrokers: () => Promise.resolve({ items: [] }),
       createBroker: () =>
@@ -138,6 +152,7 @@ describe('MVP workflows integration', () => {
       assetType: AssetType.Etf,
       quantity: 2,
       averagePrice: 300,
+      year: 2025,
     });
     expect(initialBalanceResult.positionsCount).toBe(1);
 
@@ -164,7 +179,7 @@ function createElectronApiFromHandlers(handlers: Map<string, IpcHandler>): Elect
     importOperations: (input) => invoke('import:operations', input),
     confirmImportOperations: (input) => invoke('import:confirm-operations', input),
     setInitialBalance: (input) => invoke('portfolio:set-initial-balance', input),
-    listPositions: () => invoke('portfolio:list-positions'),
+    listPositions: (input) => invoke('portfolio:list-positions', input),
     generateAssetsReport: (input) => invoke('report:assets-annual', input),
     listBrokers: () => invoke('brokers:list'),
     createBroker: (input) => invoke('brokers:create', input),

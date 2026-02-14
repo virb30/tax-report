@@ -47,6 +47,12 @@ describe('createMainLifecycle', () => {
           success: true,
           broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00' },
         }),
+      recalculatePosition: () => Promise.resolve(),
+      migrateYear: () =>
+        Promise.resolve({
+          migratedPositionsCount: 0,
+          createdTransactionsCount: 0,
+        }),
     };
   }
 
@@ -82,6 +88,8 @@ describe('createMainLifecycle', () => {
     expect(ipcHandleMock).toHaveBeenCalledWith('import:confirm-operations', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:set-initial-balance', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:list-positions', expect.any(Function));
+    expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:recalculate', expect.any(Function));
+    expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:migrate-year', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('report:assets-annual', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('brokers:list', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('brokers:create', expect.any(Function));

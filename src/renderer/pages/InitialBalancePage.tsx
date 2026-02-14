@@ -5,7 +5,10 @@ import type { BrokerListItem, ListBrokersResult } from '../../shared/contracts/b
 import type { ListPositionsResult } from '../../shared/contracts/list-positions.contract';
 import { buildErrorMessage } from './build-error-message';
 
+const defaultBaseYear = new Date().getFullYear() - 1;
+
 export function InitialBalancePage(): JSX.Element {
+  const [year, setYear] = useState(defaultBaseYear);
   const [ticker, setTicker] = useState('');
   const [brokerId, setBrokerId] = useState('');
   const [assetType, setAssetType] = useState<AssetType>(AssetType.Stock);
@@ -33,7 +36,7 @@ export function InitialBalancePage(): JSX.Element {
   async function loadPositions(): Promise<void> {
     setIsLoading(true);
     try {
-      const result = await window.electronApi.listPositions();
+      const result = await window.electronApi.listPositions({ baseYear: year });
       setPositions(result.items);
     } catch (error: unknown) {
       setErrorMessage(buildErrorMessage(error));
@@ -48,7 +51,7 @@ export function InitialBalancePage(): JSX.Element {
 
   useEffect(() => {
     void loadPositions();
-  }, []);
+  }, [year]);
 
   async function handleSave(): Promise<void> {
     setIsSaving(true);
@@ -78,6 +81,7 @@ export function InitialBalancePage(): JSX.Element {
         assetType,
         quantity: qty,
         averagePrice: avg,
+        year,
       });
       setFeedbackMessage('Saldo inicial cadastrado com sucesso.');
       setTicker('');
@@ -99,6 +103,20 @@ export function InitialBalancePage(): JSX.Element {
       </p>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <label className="flex flex-col gap-1 text-sm text-slate-700">
+          Ano de referência (saldo em 01/01)
+          <select
+            className="rounded-md border border-slate-300 px-3 py-2"
+            value={year}
+            onChange={(event) => setYear(Number(event.target.value))}
+          >
+            {Array.from({ length: 15 }, (_, i) => defaultBaseYear - 5 + i).map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="flex flex-col gap-1 text-sm text-slate-700">
           Ticker
           <input
@@ -189,7 +207,9 @@ export function InitialBalancePage(): JSX.Element {
       ) : null}
 
       <div className="mt-6">
-        <h3 className="text-base font-semibold text-slate-800">Posições atuais</h3>
+        <h3 className="text-base font-semibold text-slate-800">
+          Posições em 31/12/{year}
+        </h3>
         {isLoading ? (
           <p className="mt-2 text-sm text-slate-600">Carregando...</p>
         ) : (
@@ -217,7 +237,7 @@ export function InitialBalancePage(): JSX.Element {
                 {positions.length === 0 ? (
                   <tr>
                     <td className="px-3 py-3 text-slate-500" colSpan={5}>
-                      Nenhuma posição cadastrada.
+                      Nenhuma posição em 31/12/{year}.
                     </td>
                   </tr>
                 ) : null}

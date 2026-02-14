@@ -9,6 +9,8 @@ import { KnexBrokerRepository } from './infrastructure/persistence/knex-broker.r
 import { ManageBrokersUseCase } from './application/use-cases/manage-brokers-use-case';
 import { LegacyPortfolioAcl } from './infrastructure/persistence/legacy/legacy-portfolio-acl';
 import { RecalculateAssetPositionUseCase } from './application/use-cases/recalculate-asset-position-use-case';
+import { RecalculatePositionUseCase } from './application/use-cases/recalculate-position-use-case';
+import { MigrateYearUseCase } from './application/use-cases/migrate-year-use-case';
 import { ImportBrokerageNoteUseCase } from './application/use-cases/import-brokerage-note-use-case';
 import { ImportOperationsUseCase } from './application/use-cases/import-operations-use-case';
 import { SetInitialBalanceUseCase } from './application/use-cases/set-initial-balance-use-case';
@@ -59,9 +61,9 @@ const lifecycle = createMainLifecycle({
       const dependencies = await handlersDependenciesPromise;
       return dependencies.setInitialBalanceUseCase.execute(input);
     },
-    listPositions: async () => {
+    listPositions: async (input) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.listPositionsUseCase.execute();
+      return dependencies.listPositionsUseCase.execute(input);
     },
     generateAssetsReport: async (input) => {
       const dependencies = await handlersDependenciesPromise;
@@ -74,6 +76,14 @@ const lifecycle = createMainLifecycle({
     createBroker: async (input) => {
       const dependencies = await handlersDependenciesPromise;
       return dependencies.manageBrokersUseCase.create(input);
+    },
+    recalculatePosition: async (input) => {
+      const dependencies = await handlersDependenciesPromise;
+      return dependencies.recalculatePositionUseCase.execute(input);
+    },
+    migrateYear: async (input) => {
+      const dependencies = await handlersDependenciesPromise;
+      return dependencies.migrateYearUseCase.execute(input);
     },
   },
   platform: process.platform,
@@ -91,6 +101,8 @@ type MainHandlersRuntimeDependencies = {
   listPositionsUseCase: ListPositionsUseCase;
   generateAssetsReportUseCase: GenerateAssetsReportUseCase;
   manageBrokersUseCase: ManageBrokersUseCase;
+  recalculatePositionUseCase: RecalculatePositionUseCase;
+  migrateYearUseCase: MigrateYearUseCase;
 };
 
 async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDependencies> {
@@ -120,7 +132,17 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
   );
   const listPositionsUseCase = new ListPositionsUseCase(
     knexPositionRepository,
+    knexTransactionRepository,
     brokerRepository,
+  );
+  const recalculatePositionUseCase = new RecalculatePositionUseCase(
+    knexPositionRepository,
+    knexTransactionRepository,
+  );
+  const migrateYearUseCase = new MigrateYearUseCase(
+    knexPositionRepository,
+    knexTransactionRepository,
+    (input) => recalculatePositionUseCase.execute(input),
   );
   const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
     legacyPortfolioAcl,
@@ -134,6 +156,8 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
     listPositionsUseCase,
     generateAssetsReportUseCase,
     manageBrokersUseCase,
+    recalculatePositionUseCase,
+    migrateYearUseCase,
   };
 }
 

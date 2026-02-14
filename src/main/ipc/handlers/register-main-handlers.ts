@@ -6,7 +6,10 @@ import type {
   ImportOperationsCommand,
   ImportOperationsResult,
 } from '@shared/contracts/import-operations.contract';
-import type { ListPositionsResult } from '@shared/contracts/list-positions.contract';
+import type {
+  ListPositionsQuery,
+  ListPositionsResult,
+} from '@shared/contracts/list-positions.contract';
 import type {
   SetInitialBalanceCommand,
   SetInitialBalanceResult,
@@ -22,6 +25,14 @@ import type {
   CreateBrokerResult,
   ListBrokersResult,
 } from '@shared/contracts/brokers.contract';
+import type {
+  RecalculatePositionCommand,
+  RecalculatePositionResult,
+} from '@shared/contracts/recalculate.contract';
+import type {
+  MigrateYearCommand,
+  MigrateYearResult,
+} from '@shared/contracts/migrate-year.contract';
 
 type IpcMainLike = {
   handle: (
@@ -38,12 +49,14 @@ export type MainHandlersDependencies = {
     input: ConfirmImportOperationsCommand,
   ) => Promise<ConfirmImportOperationsResult>;
   setInitialBalance: (input: SetInitialBalanceCommand) => Promise<SetInitialBalanceResult>;
-  listPositions: () => Promise<ListPositionsResult>;
+  listPositions: (input: ListPositionsQuery) => Promise<ListPositionsResult>;
   generateAssetsReport: (
     input: GenerateAssetsReportQuery,
   ) => Promise<GenerateAssetsReportResult>;
   listBrokers: () => Promise<ListBrokersResult>;
   createBroker: (input: CreateBrokerCommand) => Promise<CreateBrokerResult>;
+  recalculatePosition: (input: RecalculatePositionCommand) => Promise<RecalculatePositionResult>;
+  migrateYear: (input: MigrateYearCommand) => Promise<MigrateYearResult>;
 };
 
 export function registerMainHandlers(
@@ -57,6 +70,8 @@ export function registerMainHandlers(
     'import:confirm-operations',
     'portfolio:set-initial-balance',
     'portfolio:list-positions',
+    'portfolio:recalculate',
+    'portfolio:migrate-year',
     'report:assets-annual',
     'brokers:list',
     'brokers:create',
@@ -86,8 +101,19 @@ export function registerMainHandlers(
     return dependencies.setInitialBalance(payload);
   });
 
-  ipcMain.handle('portfolio:list-positions', () => {
-    return dependencies.listPositions();
+  ipcMain.handle('portfolio:list-positions', (_event, input: ListPositionsQuery) => {
+    const payload = parseListPositionsInput(input);
+    return dependencies.listPositions(payload);
+  });
+
+  ipcMain.handle('portfolio:recalculate', (_event, input: RecalculatePositionCommand) => {
+    const payload = parseRecalculatePositionInput(input);
+    return dependencies.recalculatePosition(payload);
+  });
+
+  ipcMain.handle('portfolio:migrate-year', (_event, input: MigrateYearCommand) => {
+    const payload = parseMigrateYearInput(input);
+    return dependencies.migrateYear(payload);
   });
 
   ipcMain.handle('report:assets-annual', (_event, input: GenerateAssetsReportQuery) => {
@@ -160,6 +186,17 @@ function parseConfirmImportOperationsInput(input: unknown): ConfirmImportOperati
   return input as ConfirmImportOperationsCommand;
 }
 
+function parseListPositionsInput(input: unknown): ListPositionsQuery {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid payload for list positions.');
+  }
+  const payload = input as { baseYear?: unknown };
+  if (typeof payload.baseYear !== 'number' || !Number.isInteger(payload.baseYear)) {
+    throw new Error('Invalid base year for list positions.');
+  }
+  return { baseYear: payload.baseYear };
+}
+
 function parseSetInitialBalanceInput(input: unknown): SetInitialBalanceCommand {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid payload for initial balance.');
@@ -170,6 +207,7 @@ function parseSetInitialBalanceInput(input: unknown): SetInitialBalanceCommand {
     assetType?: unknown;
     quantity?: unknown;
     averagePrice?: unknown;
+    year?: unknown;
   };
   if (typeof payload.ticker !== 'string' || payload.ticker.trim().length === 0) {
     throw new Error('Invalid ticker for initial balance.');
@@ -190,12 +228,16 @@ function parseSetInitialBalanceInput(input: unknown): SetInitialBalanceCommand {
   if (typeof payload.averagePrice !== 'number' || Number.isNaN(payload.averagePrice)) {
     throw new Error('Invalid average price for initial balance.');
   }
+  if (typeof payload.year !== 'number' || !Number.isInteger(payload.year)) {
+    throw new Error('Invalid year for initial balance.');
+  }
   return {
     ticker: payload.ticker,
     brokerId: payload.brokerId,
     assetType: payload.assetType as SetInitialBalanceCommand['assetType'],
     quantity: payload.quantity,
     averagePrice: payload.averagePrice,
+    year: payload.year,
   };
 }
 
@@ -209,6 +251,36 @@ function parseGenerateAssetsReportInput(input: unknown): GenerateAssetsReportQue
   }
   return {
     baseYear: payload.baseYear,
+  };
+}
+
+function parseRecalculatePositionInput(input: unknown): RecalculatePositionCommand {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid payload for recalculate position.');
+  }
+  const payload = input as { ticker?: unknown };
+  if (typeof payload.ticker !== 'string' || payload.ticker.trim().length === 0) {
+    throw new Error('Invalid ticker for recalculate position.');
+  }
+  return {
+    ticker: payload.ticker,
+  };
+}
+
+function parseMigrateYearInput(input: unknown): MigrateYearCommand {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid payload for migrate year.');
+  }
+  const payload = input as { sourceYear?: unknown; targetYear?: unknown };
+  if (typeof payload.sourceYear !== 'number' || !Number.isInteger(payload.sourceYear)) {
+    throw new Error('Invalid source year for migrate year.');
+  }
+  if (typeof payload.targetYear !== 'number' || !Number.isInteger(payload.targetYear)) {
+    throw new Error('Invalid target year for migrate year.');
+  }
+  return {
+    sourceYear: payload.sourceYear,
+    targetYear: payload.targetYear,
   };
 }
 

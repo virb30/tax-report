@@ -31,6 +31,7 @@ describe('SetInitialBalanceUseCase', () => {
       assetType: AssetType.Stock,
       quantity: 10,
       averagePrice: 20,
+      year: 2025,
     });
 
     expect(result).toEqual({
@@ -41,6 +42,8 @@ describe('SetInitialBalanceUseCase', () => {
     });
     expect(positionRepository.save).toHaveBeenCalledTimes(1);
     expect(transactionRepository.save).toHaveBeenCalledTimes(1);
+    const transactionCall = (transactionRepository.save as jest.Mock).mock.calls[0]?.[0];
+    expect(transactionCall.date).toBe('2025-01-01');
   });
 
   it('sums to existing position when ticker exists', async () => {
@@ -58,6 +61,7 @@ describe('SetInitialBalanceUseCase', () => {
       assetType: AssetType.Stock,
       quantity: 10,
       averagePrice: 30,
+      year: 2025,
     });
 
     const saveCall = (positionRepository.save as jest.Mock).mock.calls[0]?.[0];
@@ -73,6 +77,7 @@ describe('SetInitialBalanceUseCase', () => {
         assetType: AssetType.Stock,
         quantity: 10,
         averagePrice: 20,
+        year: 2025,
       }),
     ).rejects.toThrow('Ticker é obrigatório.');
   });

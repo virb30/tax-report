@@ -12,6 +12,8 @@ import { ImportBrokerageNoteUseCase } from '../../application/use-cases/import-b
 import { ImportOperationsUseCase } from '../../application/use-cases/import-operations-use-case';
 import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance-use-case';
 import { ListPositionsUseCase } from '../../application/use-cases/list-positions-use-case';
+import { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position-use-case';
+import { MigrateYearUseCase } from '../../application/use-cases/migrate-year-use-case';
 import { KnexPositionRepository } from '../../infrastructure/persistence/knex-position.repository';
 import { KnexTransactionRepository } from '../../infrastructure/persistence/knex-transaction.repository';
 import { KnexBrokerRepository } from '../../infrastructure/persistence/knex-broker.repository';
@@ -60,7 +62,17 @@ describe('IPC handlers integration', () => {
     );
     const listPositionsUseCase = new ListPositionsUseCase(
       knexPositionRepository,
+      knexTransactionRepository,
       brokerRepository,
+    );
+    const recalculatePositionUseCase = new RecalculatePositionUseCase(
+      knexPositionRepository,
+      knexTransactionRepository,
+    );
+    const migrateYearUseCase = new MigrateYearUseCase(
+      knexPositionRepository,
+      knexTransactionRepository,
+      (input) => recalculatePositionUseCase.execute(input),
     );
     const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(acl, operationRepository);
     const parserStrategy = new BrokerageNoteParserStrategy([new CsvXlsxBrokerageNoteParser()]);
@@ -106,7 +118,9 @@ describe('IPC handlers integration', () => {
         };
       },
       setInitialBalance: (input) => setInitialBalanceUseCase.execute(input),
-      listPositions: () => listPositionsUseCase.execute(),
+      listPositions: (input) => listPositionsUseCase.execute(input),
+      recalculatePosition: (input) => recalculatePositionUseCase.execute(input),
+      migrateYear: (input) => migrateYearUseCase.execute(input),
       generateAssetsReport: (input) => generateAssetsReportUseCase.execute(input),
       listBrokers: () => Promise.resolve({ items: [] }),
       createBroker: () =>
@@ -159,9 +173,10 @@ describe('IPC handlers integration', () => {
       assetType: AssetType.Etf,
       quantity: 2,
       averagePrice: 300,
+      year: 2025,
     });
 
-    const positionsResult = (await listPositionsHandler({}, undefined)) as {
+    const positionsResult = (await listPositionsHandler({}, { baseYear: 2025 })) as {
       items: Array<{ ticker: string }>;
     };
     expect(positionsResult.items.map((item) => item.ticker)).toEqual(

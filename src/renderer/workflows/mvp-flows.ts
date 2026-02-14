@@ -18,7 +18,7 @@ export async function runInitialBalanceAndRefresh(
   input: SetInitialBalanceCommand,
 ): Promise<{ positionsCount: number }> {
   await electronApi.setInitialBalance(input);
-  const listResult = await electronApi.listPositions();
+  const listResult = await electronApi.listPositions({ baseYear: input.year });
   return {
     positionsCount: listResult.items.length,
   };

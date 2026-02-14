@@ -49,6 +49,7 @@ describe('Application contracts integration', () => {
     );
     const listPositionsUseCase = new ListPositionsUseCase(
       knexPositionRepository,
+      knexTransactionRepository,
       brokerRepository,
     );
     const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(acl, operationRepository);
@@ -81,6 +82,7 @@ describe('Application contracts integration', () => {
       assetType: AssetType.Etf,
       quantity: 2,
       averagePrice: 300,
+      year: 2025,
     });
 
     expect(initialBalanceResult).toEqual({
@@ -90,7 +92,7 @@ describe('Application contracts integration', () => {
       averagePrice: 300,
     });
 
-    const positionsResult = await listPositionsUseCase.execute();
+    const positionsResult = await listPositionsUseCase.execute({ baseYear: 2025 });
     expect(positionsResult.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

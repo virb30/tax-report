@@ -36,10 +36,10 @@ export class SetInitialBalanceUseCase {
       brokerId: input.brokerId,
     });
 
-    const today = new Date().toISOString().slice(0, 10);
+    const transactionDate = `${input.year}-01-01`;
     const transaction = {
       id: randomUUID(),
-      date: today,
+      date: transactionDate,
       type: TransactionType.InitialBalance,
       ticker: input.ticker,
       quantity: input.quantity,
@@ -63,6 +63,9 @@ export class SetInitialBalanceUseCase {
   private validate(input: SetInitialBalanceCommand): void {
     if (!input.ticker || input.ticker.trim().length === 0) {
       throw new Error('Ticker é obrigatório.');
+    }
+    if (typeof input.year !== 'number' || !Number.isInteger(input.year) || input.year < 2000 || input.year > 2100) {
+      throw new Error('Ano inválido.');
     }
     if (!input.brokerId || input.brokerId.trim().length === 0) {
       throw new Error('Corretora é obrigatória.');
