@@ -42,6 +42,12 @@ describe('createMainLifecycle', () => {
           },
         ],
         }),
+      listBrokers: () => Promise.resolve({ items: [] }),
+      createBroker: () =>
+        Promise.resolve({
+          success: true,
+          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00' },
+        }),
     };
   }
 
@@ -78,6 +84,8 @@ describe('createMainLifecycle', () => {
     expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:set-manual-base', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:list-positions', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('report:assets-annual', expect.any(Function));
+    expect(ipcHandleMock).toHaveBeenCalledWith('brokers:list', expect.any(Function));
+    expect(ipcHandleMock).toHaveBeenCalledWith('brokers:create', expect.any(Function));
   });
 
   it('delegates main window creation to injected dependency', async () => {

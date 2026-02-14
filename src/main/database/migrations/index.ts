@@ -1,9 +1,12 @@
 import type { Knex } from 'knex';
-import { createAssetsMigration } from './001-create-assets';
-import { createOperationsMigration } from './002-create-operations';
-import { createAccumulatedLossesMigration } from './003-create-accumulated-losses';
-import { createTaxConfigMigration } from './004-create-tax-config';
-import { addImportIdempotencyToOperationsMigration } from './005-add-import-idempotency-to-operations';
+import { createBrokersMigration } from './001-create-brokers';
+import { createPositionsMigration } from './002-create-positions';
+import { createPositionBrokerAllocationsMigration } from './003-create-position-broker-allocations';
+import { createTransactionsMigration } from './004-create-transactions';
+import { createAccumulatedLossesMigration } from './005-create-accumulated-losses';
+import { createTaxConfigMigration } from './006-create-tax-config';
+import { createAssetsMigration } from './007-create-assets';
+import { createOperationsMigration } from './008-create-operations';
 
 export type DatabaseMigration = {
   name: string;
@@ -12,9 +15,12 @@ export type DatabaseMigration = {
 };
 
 export const databaseMigrations: DatabaseMigration[] = [
-  createAssetsMigration,
-  createOperationsMigration,
+  createBrokersMigration,
+  createPositionsMigration,
+  createPositionBrokerAllocationsMigration,
+  createTransactionsMigration,
   createAccumulatedLossesMigration,
   createTaxConfigMigration,
-  addImportIdempotencyToOperationsMigration,
+  createAssetsMigration,
+  createOperationsMigration,
 ];

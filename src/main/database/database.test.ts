@@ -45,12 +45,14 @@ describe('database', () => {
 
     await initializeDatabase(database, false);
 
+    const hasBrokersTable = await tableExists(database, 'brokers');
     const hasAssetsTable = await tableExists(database, 'assets');
     const hasOperationsTable = await tableExists(database, 'operations');
     const hasAccumulatedLossesTable = await tableExists(database, 'accumulated_losses');
     const hasTaxConfigTable = await tableExists(database, 'tax_config');
     const taxConfigRows = await database('tax_config').select('*');
 
+    expect(hasBrokersTable).toBe(true);
     expect(hasAssetsTable).toBe(true);
     expect(hasOperationsTable).toBe(true);
     expect(hasAccumulatedLossesTable).toBe(true);
@@ -66,12 +68,19 @@ describe('database', () => {
     const taxConfigRows = await database('tax_config')
       .select<{ asset_type: string }[]>('asset_type')
       .orderBy('asset_type', 'asc');
+    const brokerRows = await database('brokers').select<{ name: string }[]>('name');
 
     expect(taxConfigRows).toHaveLength(4);
     expect(taxConfigRows[0]?.asset_type).toBe('bdr');
     expect(taxConfigRows[1]?.asset_type).toBe('etf');
     expect(taxConfigRows[2]?.asset_type).toBe('fii');
     expect(taxConfigRows[3]?.asset_type).toBe('stock');
+    expect(brokerRows.length).toBeGreaterThanOrEqual(4);
+    const brokerNames = brokerRows.map((r) => r.name);
+    expect(brokerNames).toContain('XP Investimentos');
+    expect(brokerNames).toContain('Clear Corretora');
+    expect(brokerNames).toContain('Inter DTVM');
+    expect(brokerNames).toContain('Rico Investimentos');
   });
 
   it('creates and initializes a file database', async () => {

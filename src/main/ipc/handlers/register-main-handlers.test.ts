@@ -34,6 +34,11 @@ describe('registerMainHandlers', () => {
         referenceDate: '2025-12-31',
         items: [],
       }),
+      listBrokers: jest.fn().mockResolvedValue({ items: [] }),
+      createBroker: jest.fn().mockResolvedValue({
+        success: true,
+        broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00' },
+      }),
     };
   }
 
@@ -51,8 +56,10 @@ describe('registerMainHandlers', () => {
       'portfolio:set-manual-base',
       'portfolio:list-positions',
       'report:assets-annual',
+      'brokers:list',
+      'brokers:create',
     ]);
-    expect(handle).toHaveBeenCalledTimes(7);
+    expect(handle).toHaveBeenCalledTimes(9);
     expect(handle).toHaveBeenCalledWith('app:health-check', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('import:preview-file', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('import:operations', expect.any(Function));
@@ -60,6 +67,8 @@ describe('registerMainHandlers', () => {
     expect(handle).toHaveBeenCalledWith('portfolio:set-manual-base', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('portfolio:list-positions', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('report:assets-annual', expect.any(Function));
+    expect(handle).toHaveBeenCalledWith('brokers:list', expect.any(Function));
+    expect(handle).toHaveBeenCalledWith('brokers:create', expect.any(Function));
   });
 
   it('delegates payload handling to dependencies', async () => {

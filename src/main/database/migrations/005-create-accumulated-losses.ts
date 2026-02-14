@@ -1,7 +1,7 @@
 import type { Knex } from 'knex';
 
 export const createAccumulatedLossesMigration = {
-  name: '003-create-accumulated-losses',
+  name: '005-create-accumulated-losses',
   async up(knex: Knex): Promise<void> {
     await knex.schema.createTable('accumulated_losses', (table) => {
       table.increments('id').primary();

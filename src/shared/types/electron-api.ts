@@ -9,6 +9,11 @@ import type {
 import type { ListPositionsResult } from '../contracts/list-positions.contract';
 import type { SetManualBaseCommand, SetManualBaseResult } from '../contracts/manual-base.contract';
 import type {
+  CreateBrokerCommand,
+  CreateBrokerResult,
+  ListBrokersResult,
+} from '../contracts/brokers.contract';
+import type {
   ConfirmImportOperationsCommand,
   ConfirmImportOperationsResult,
   PreviewImportFromFileCommand,
@@ -27,4 +32,6 @@ export type ElectronApi = {
   generateAssetsReport: (
     input: GenerateAssetsReportQuery,
   ) => Promise<GenerateAssetsReportResult>;
+  listBrokers: () => Promise<ListBrokersResult>;
+  createBroker: (input: CreateBrokerCommand) => Promise<CreateBrokerResult>;
 };

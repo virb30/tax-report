@@ -10,9 +10,9 @@
 - [x] 6.0 Application Layer para Fluxo de Relatório de IR (MVP)
 - [x] 7.0 Adapters de Infraestrutura para Relatório de IR (MVP)
 - [x] 8.0 IPC, Preload Seguro e UI para Geração do Relatório (MVP)
-- [ ] 9.0 Gestão de Base Manual por Data + Migração entre Anos
-- [ ] 10.0 Relatório por Data da Posição + Ajustes de UX e Discriminação
-- [ ] 11.0 Importação via Seleção de Arquivo + Modelo de Planilha na Tela
-- [ ] 12.0 Validação Final do MVP (Relatório, Qualidade e Observabilidade)
-- [ ] 13.0 Fluxo de Posição Inicial e Gestão de Carteira por Planilha (Bootstrap + Upsert)
-- [ ] 14.0 v2 - Domínio TaxCompliance (Apuração Mensal, DARF e Prejuízo Acumulado)
+- [x] 9.0 Schema SQLite (Base Limpa), Broker e Gestão de Corretoras
+- [ ] 10.0 Core Domain Portfolio + Saldo Inicial (Gestão Manual de Carteira)
+- [ ] 11.0 Recálculo de Posição + Migração entre Anos
+- [ ] 12.0 Importação de Transações (Ingestion Context)
+- [ ] 13.0 Relatório de Bens e Direitos (Tax Reporting Context)
+- [ ] 14.0 Validação Final do MVP

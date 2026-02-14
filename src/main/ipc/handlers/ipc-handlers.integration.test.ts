@@ -96,6 +96,12 @@ describe('IPC handlers integration', () => {
       setManualBase: (input) => setManualBaseUseCase.execute(input),
       listPositions: () => listPositionsUseCase.execute(),
       generateAssetsReport: (input) => generateAssetsReportUseCase.execute(input),
+      listBrokers: () => Promise.resolve({ items: [] }),
+      createBroker: () =>
+        Promise.resolve({
+          success: true,
+          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00' },
+        }),
     };
 
     registerMainHandlers(ipcMain, dependencies);

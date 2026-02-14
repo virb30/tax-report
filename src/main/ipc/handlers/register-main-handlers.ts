@@ -14,6 +14,11 @@ import type {
   PreviewImportFromFileCommand,
   PreviewImportFromFileResult,
 } from '@shared/contracts/preview-import.contract';
+import type {
+  CreateBrokerCommand,
+  CreateBrokerResult,
+  ListBrokersResult,
+} from '@shared/contracts/brokers.contract';
 
 type IpcMainLike = {
   handle: (
@@ -34,6 +39,8 @@ export type MainHandlersDependencies = {
   generateAssetsReport: (
     input: GenerateAssetsReportQuery,
   ) => Promise<GenerateAssetsReportResult>;
+  listBrokers: () => Promise<ListBrokersResult>;
+  createBroker: (input: CreateBrokerCommand) => Promise<CreateBrokerResult>;
 };
 
 export function registerMainHandlers(
@@ -48,6 +55,8 @@ export function registerMainHandlers(
     'portfolio:set-manual-base',
     'portfolio:list-positions',
     'report:assets-annual',
+    'brokers:list',
+    'brokers:create',
   ];
 
   ipcMain.handle('app:health-check', () => {
@@ -81,6 +90,15 @@ export function registerMainHandlers(
   ipcMain.handle('report:assets-annual', (_event, input: GenerateAssetsReportQuery) => {
     const payload = parseGenerateAssetsReportInput(input);
     return dependencies.generateAssetsReport(payload);
+  });
+
+  ipcMain.handle('brokers:list', () => {
+    return dependencies.listBrokers();
+  });
+
+  ipcMain.handle('brokers:create', (_event, input: CreateBrokerCommand) => {
+    const payload = parseCreateBrokerInput(input);
+    return dependencies.createBroker(payload);
   });
 
   return registeredChannels;
@@ -174,5 +192,22 @@ function parseGenerateAssetsReportInput(input: unknown): GenerateAssetsReportQue
   }
   return {
     baseYear: payload.baseYear,
+  };
+}
+
+function parseCreateBrokerInput(input: unknown): CreateBrokerCommand {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid payload for create broker.');
+  }
+  const payload = input as { name?: unknown; cnpj?: unknown };
+  if (typeof payload.name !== 'string') {
+    throw new Error('Invalid name for create broker.');
+  }
+  if (typeof payload.cnpj !== 'string') {
+    throw new Error('Invalid CNPJ for create broker.');
+  }
+  return {
+    name: payload.name,
+    cnpj: payload.cnpj,
   };
 }

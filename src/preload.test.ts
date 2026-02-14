@@ -96,8 +96,10 @@ describe('preload', () => {
     expect(exposedKeys).toEqual([
       'appName',
       'confirmImportOperations',
+      'createBroker',
       'generateAssetsReport',
       'importOperations',
+      'listBrokers',
       'listPositions',
       'previewImportFromFile',
       'setManualBase',

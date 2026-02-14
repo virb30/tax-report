@@ -1,7 +1,7 @@
 import type { Knex } from 'knex';
 
 export const createOperationsMigration = {
-  name: '002-create-operations',
+  name: '008-create-operations',
   async up(knex: Knex): Promise<void> {
     await knex.schema.createTable('operations', (table) => {
       table.increments('id').primary();
@@ -20,6 +20,8 @@ export const createOperationsMigration = {
         .text('source_type')
         .notNullable()
         .checkIn(['pdf', 'csv', 'manual']);
+      table.text('external_ref').nullable().unique();
+      table.text('import_batch_id').nullable();
       table.timestamp('imported_at').notNullable().defaultTo(knex.fn.now());
     });
 
@@ -27,6 +29,7 @@ export const createOperationsMigration = {
       table.index(['ticker'], 'idx_operations_ticker');
       table.index(['trade_date'], 'idx_operations_trade_date');
       table.index(['operation_type', 'trade_date'], 'idx_operations_type_date');
+      table.index(['import_batch_id'], 'idx_operations_import_batch_id');
     });
   },
   async down(knex: Knex): Promise<void> {

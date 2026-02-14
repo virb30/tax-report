@@ -1,7 +1,7 @@
 import type { Knex } from 'knex';
 
 export const createTaxConfigMigration = {
-  name: '004-create-tax-config',
+  name: '006-create-tax-config',
   async up(knex: Knex): Promise<void> {
     await knex.schema.createTable('tax_config', (table) => {
       table.increments('id').primary();

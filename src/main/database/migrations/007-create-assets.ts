@@ -1,7 +1,7 @@
 import type { Knex } from 'knex';
 
 export const createAssetsMigration = {
-  name: '001-create-assets',
+  name: '007-create-assets',
   async up(knex: Knex): Promise<void> {
     await knex.schema.createTable('assets', (table) => {
       table.increments('id').primary();

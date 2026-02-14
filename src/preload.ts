@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { ElectronApi } from '@shared/types/electron-api';
 import type { GenerateAssetsReportQuery } from '@shared/contracts/assets-report.contract';
+import type { CreateBrokerCommand } from '@shared/contracts/brokers.contract';
 import type { ImportOperationsCommand } from '@shared/contracts/import-operations.contract';
 import type { SetManualBaseCommand } from '@shared/contracts/manual-base.contract';
 import type {
@@ -20,6 +21,9 @@ export const electronApi: ElectronApi = {
   listPositions: () => ipcRenderer.invoke('portfolio:list-positions'),
   generateAssetsReport: (input: GenerateAssetsReportQuery) =>
     ipcRenderer.invoke('report:assets-annual', input),
+  listBrokers: () => ipcRenderer.invoke('brokers:list'),
+  createBroker: (input: CreateBrokerCommand) =>
+    ipcRenderer.invoke('brokers:create', input),
 };
 
 contextBridge.exposeInMainWorld('electronApi', electronApi);
