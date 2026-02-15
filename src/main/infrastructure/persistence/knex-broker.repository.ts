@@ -18,15 +18,15 @@ function mapRowToRecord(row: BrokerRow): Broker {
     name: row.name,
     cnpj: new Cnpj(row.cnpj),
     code: row.code ?? '',
-    active: row.active ? row.active === 1 : true,
+    active: row.active ? true : false,
   });
 }
 
 export class KnexBrokerRepository implements BrokerRepository {
   constructor(private readonly database: Knex) {}
 
-  async findById(id: string): Promise<Broker | null> {
-    const row = await this.database<BrokerRow>('brokers').where({ id }).first();
+  async findById(id: Uuid): Promise<Broker | null> {
+    const row = await this.database<BrokerRow>('brokers').where({ id: id.value }).first();
     return row ? mapRowToRecord(row) : null;
   }
 
@@ -59,10 +59,10 @@ export class KnexBrokerRepository implements BrokerRepository {
   }
 
   async save(broker: Broker): Promise<void> {
-    const code = broker.code ?? broker.id;
+    const code = broker.code ?? broker.id.value;
     const active = broker.isActive() ? 1 : 0;
     await this.database('brokers').insert({
-      id: broker.id,
+      id: broker.id.value,
       name: broker.name,
       cnpj: broker.cnpj.value,
       code,
@@ -72,12 +72,12 @@ export class KnexBrokerRepository implements BrokerRepository {
 
   async update(broker: Broker): Promise<void> {
     const updatePayload: Record<string, unknown> = {
-      id: broker.id,
+      id: broker.id.value,
       name: broker.name,
-      cnpj: broker.cnpj,
+      cnpj: broker.cnpj.value,
       code: broker.code,
-      active: broker.active ? 1 : 0,
+      active: broker.isActive(),
     };
-    await this.database('brokers').where({ id: broker.id }).update(updatePayload);
+    await this.database('brokers').where({ id: broker.id.value }).update(updatePayload);
   }
 }

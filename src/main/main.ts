@@ -6,7 +6,6 @@ import { createAndInitializeDatabase } from './database/database';
 import { AssetRepository } from './database/repositories/asset-repository';
 import { OperationRepository } from './database/repositories/operation-repository';
 import { KnexBrokerRepository } from './infrastructure/persistence/knex-broker.repository';
-import { ManageBrokersUseCase } from './application/use-cases/manage-brokers-use-case';
 import { LegacyPortfolioAcl } from './infrastructure/persistence/legacy/legacy-portfolio-acl';
 import { RecalculateAssetPositionUseCase } from './application/use-cases/recalculate-asset-position-use-case';
 import { RecalculatePositionUseCase } from './application/use-cases/recalculate-position-use-case';
@@ -30,6 +29,9 @@ import { ReportGenerator } from './domain/tax-reporting/report-generator.service
 import type { OperationsFileParserPort } from './application/ports/operations-file-parser.port';
 import { WindowManager } from './window-manager';
 import { CreateBrokerUseCase } from './application/use-cases/create-broker/create-broker.use-case';
+import { ListBrokersUseCase } from './application/use-cases/list-brokers/list-brokers.use-case';
+import { UpdateBrokerUseCase } from './application/use-cases/update-broker/update-broker.use-case';
+import { ToggleActiveBrokerUseCase } from './application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
 
 const handlersDependenciesPromise = createMainHandlersDependencies();
 const windowManager = new WindowManager();
@@ -106,7 +108,7 @@ const lifecycle = createMainLifecycle({
     },
     listBrokers: async (input) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.manageBrokersUseCase.list(input);
+      return dependencies.listBrokersUseCase.execute(input);
     },
     createBroker: async (input) => {
       const dependencies = await handlersDependenciesPromise;
@@ -114,11 +116,11 @@ const lifecycle = createMainLifecycle({
     },
     updateBroker: async (input) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.manageBrokersUseCase.update(input);
+      return dependencies.updateBrokerUseCase.execute(input);
     },
     toggleBrokerActive: async (input) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.manageBrokersUseCase.toggleActive(input);
+      return dependencies.toggleActiveBrokerUseCase.execute(input);
     },
     recalculatePosition: async (input) => {
       const dependencies = await handlersDependenciesPromise;
@@ -157,8 +159,10 @@ type MainHandlersRuntimeDependencies = {
   setInitialBalanceUseCase: SetInitialBalanceUseCase;
   listPositionsUseCase: ListPositionsUseCase;
   generateAssetsReportUseCase: GenerateAssetsReportUseCase;
-  manageBrokersUseCase: ManageBrokersUseCase;
+  toggleActiveBrokerUseCase: ToggleActiveBrokerUseCase;
   createBrokerUseCase: CreateBrokerUseCase;
+  updateBrokerUseCase: UpdateBrokerUseCase;
+  listBrokersUseCase: ListBrokersUseCase;
   recalculatePositionUseCase: RecalculatePositionUseCase;
   migrateYearUseCase: MigrateYearUseCase;
   importConsolidatedPositionUseCase: ImportConsolidatedPositionUseCase;
@@ -183,7 +187,10 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
   const importOperationsUseCase = new ImportOperationsUseCase(importBrokerageNoteUseCase);
   const parserStrategy = new BrokerageNoteParserStrategy([new CsvXlsxBrokerageNoteParser()]);
   const brokerRepository = new KnexBrokerRepository(database);
-  const manageBrokersUseCase = new ManageBrokersUseCase(brokerRepository);
+  const createBrokerUseCase = new CreateBrokerUseCase(brokerRepository);
+  const updateBrokerUseCase = new UpdateBrokerUseCase(brokerRepository);
+  const listBrokersUseCase = new ListBrokersUseCase(brokerRepository);
+  const toggleActiveBrokerUseCase = new ToggleActiveBrokerUseCase(brokerRepository);
   const knexPositionRepository = new KnexPositionRepository(database);
   const knexTransactionRepository = new KnexTransactionRepository(database);
   const recalculatePositionUseCase = new RecalculatePositionUseCase(
@@ -253,7 +260,10 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
     setInitialBalanceUseCase,
     listPositionsUseCase,
     generateAssetsReportUseCase,
-    manageBrokersUseCase,
+    toggleActiveBrokerUseCase,
+    createBrokerUseCase,
+    updateBrokerUseCase,
+    listBrokersUseCase,
     recalculatePositionUseCase,
     migrateYearUseCase,
     importConsolidatedPositionUseCase,

@@ -13,18 +13,19 @@ type RestoreBrokerProps = BrokerProps;
 
 type CreateBrokerProps = Omit<BrokerProps, 'id'>;
 
+
 export class Broker {
   private readonly _id: Uuid;
-  readonly name: string;
-  readonly cnpj: Cnpj;
-  readonly code: string;
+  private _name: string;
+  private _cnpj: Cnpj;
+  private _code: string;
   private _active: boolean;
 
   private constructor(props: BrokerProps) {
     this._id = props.id;
-    this.name = props.name.trim();
-    this.cnpj = props.cnpj;
-    this.code = props.code.trim();
+    this._name = props.name.trim();
+    this._cnpj = props.cnpj;
+    this._code = props.code.trim().toUpperCase();
     this._active = props.active ?? true;
     this.validate();
   }
@@ -49,8 +50,8 @@ export class Broker {
     });
   }
 
-  get id(): string {
-    return this._id.value;
+  get id(): Uuid {
+    return this._id;
   }
 
   private validate(): void {
@@ -74,8 +75,31 @@ export class Broker {
     return this._active;
   }
 
-  get active(): boolean {
-    return this._active;
+  changeName(name: string): void {
+    this._name = name.trim();
+    this.validate();
+  }
+
+  changeCode(code: string): void {
+    this._code = code.trim().toUpperCase();
+    this.validate();
+  }
+
+  changeCnpj(cnpj: Cnpj): void {
+    this._cnpj = cnpj;
+    this.validate();
+  }
+
+  get name(): string {
+    return this._name;
+  }
+
+  get cnpj(): Cnpj {
+    return this._cnpj;
+  }
+
+  get code(): string {
+    return this._code;
   }
 }
 

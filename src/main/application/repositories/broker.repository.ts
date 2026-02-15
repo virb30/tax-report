@@ -2,7 +2,7 @@ import { Broker } from '@main/domain/portfolio/broker.entity';
 import { Cnpj } from '@main/domain/shared/cnpj.vo';
 
 export interface BrokerRepository {
-  findById(id: string): Promise<Broker | null>;
+  findById(id: Uuid): Promise<Broker | null>;
   findByName(name: string): Promise<Broker | null>;
   findByCode(codigo: string): Promise<Broker | null>;
   findByCnpj(cnpj: Cnpj): Promise<Broker | null>;

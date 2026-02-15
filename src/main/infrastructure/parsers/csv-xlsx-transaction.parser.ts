@@ -41,7 +41,7 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParserPort {
 
       batches.push({
         tradeDate: cmd.tradeDate,
-        brokerId: broker.id,
+        brokerId: broker.id.value,
         totalOperationalCosts: cmd.totalOperationalCosts,
         operations,
       });

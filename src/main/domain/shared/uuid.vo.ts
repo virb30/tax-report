@@ -15,6 +15,10 @@ export class Uuid {
     return new Uuid(uuidv7());
   }
 
+  equals(other: Uuid): boolean {
+    return this.value === other.value;
+  }
+
   private validate(value: string): void {
     if (!validateUuid(value)) {
       throw new Error(`Invalid UUID: ${value}`);

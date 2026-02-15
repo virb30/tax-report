@@ -3,6 +3,9 @@ import type { Knex } from 'knex';
 import { createDatabaseConnection } from '../../database/database-connection';
 import { initializeDatabase } from '../../database/database';
 import { KnexBrokerRepository } from './knex-broker.repository';
+import { Broker } from '@main/domain/portfolio/broker.entity';
+import { Cnpj } from '@main/domain/shared/cnpj.vo';
+import { Uuid } from '@main/domain/shared/uuid.vo';
 
 describe('KnexBrokerRepository', () => {
   let database: Knex;
@@ -16,6 +19,7 @@ describe('KnexBrokerRepository', () => {
   async function setupDatabase(): Promise<Knex> {
     database = createDatabaseConnection(':memory:');
     await initializeDatabase(database, false);
+    await database.raw('DELETE FROM brokers');
     return database;
   }
 
@@ -23,25 +27,31 @@ describe('KnexBrokerRepository', () => {
     await setupDatabase();
     const repo = new KnexBrokerRepository(database);
 
-    await repo.save({
-      id: 'broker-test-1',
+    const broker = Broker.create({
       name: 'Test Broker',
-      cnpj: '11.222.333/0001-44',
+      cnpj: new Cnpj('11.222.333/0001-44'),
       code: 'TEST',
-      active: true,
     });
+    await repo.save(broker);
 
-    const found = await repo.findById('broker-test-1');
+    const found = await repo.findById(broker.id);
     expect(found).not.toBeNull();
     expect(found?.name).toBe('Test Broker');
-    expect(found?.cnpj).toBe('11.222.333/0001-44');
+    expect(found?.cnpj.value).toBe('11.222.333/0001-44');
   });
 
   it('returns null when broker does not exist', async () => {
     await setupDatabase();
     const repo = new KnexBrokerRepository(database);
 
-    const found = await repo.findById('non-existent');
+    const broker = Broker.create({
+      name: 'Test Broker',
+      cnpj: new Cnpj('11.222.333/0001-44'),
+      code: 'TEST',
+    });
+    await repo.save(broker);
+
+    const found = await repo.findById(Uuid.create());
     expect(found).toBeNull();
   });
 
@@ -49,44 +59,40 @@ describe('KnexBrokerRepository', () => {
     await setupDatabase();
     const repo = new KnexBrokerRepository(database);
 
-    await repo.save({
-      id: 'b1',
+    const broker = Broker.create({
       name: 'Unique Name',
-      cnpj: '11.111.111/0001-11',
+      cnpj: new Cnpj('11.111.111/0001-11'),
       code: 'UNIQ',
-      active: true,
     });
+    await repo.save(broker);
 
     const found = await repo.findByName('Unique Name');
     expect(found).not.toBeNull();
-    expect(found?.id).toBe('b1');
+    expect(found?.id.value).toEqual(broker.id.value);
   });
 
   it('returns all brokers ordered by name', async () => {
     await setupDatabase();
     const repo = new KnexBrokerRepository(database);
-
-    await repo.save({
-      id: 'b-z',
+    const broker1 = Broker.create({
       name: 'Zebra',
-      cnpj: '99.999.999/0001-99',
+      cnpj: new Cnpj('99.999.999/0001-99'),
       code: 'ZEBRA',
-      active: true,
     });
-    await repo.save({
-      id: 'b-a',
+    const broker2 = Broker.create({
       name: 'Alpha',
-      cnpj: '11.111.111/0001-11',
+      cnpj: new Cnpj('11.111.111/0001-11'),
       code: 'ALPHA',
-      active: true,
     });
-    await repo.save({
-      id: 'b-m',
+    const broker3 = Broker.create({
       name: 'Middle',
-      cnpj: '55.555.555/0001-55',
+      cnpj: new Cnpj('55.555.555/0001-55'),
       code: 'MID',
-      active: true,
     });
+
+    await repo.save(broker1);
+    await repo.save(broker2);
+    await repo.save(broker3);
 
     const all = await repo.findAll();
     expect(all).toHaveLength(3);
@@ -98,21 +104,20 @@ describe('KnexBrokerRepository', () => {
   it('findAllActive returns only active brokers', async () => {
     await setupDatabase();
     const repo = new KnexBrokerRepository(database);
-
-    await repo.save({
-      id: 'b1',
+    const broker1 = Broker.create({
       name: 'Active Broker',
-      cnpj: '11.111.111/0001-11',
+      cnpj: new Cnpj('11.111.111/0001-11'),
       code: 'ACTIVE',
-      active: true,
     });
-    await repo.save({
-      id: 'b2',
+    const broker2 = Broker.create({
       name: 'Inactive Broker',
-      cnpj: '22.222.222/0001-22',
+      cnpj: new Cnpj('22.222.222/0001-22'),
       code: 'INACTIVE',
-      active: false,
     });
+    broker2.deactivate();
+
+    await repo.save(broker1);
+    await repo.save(broker2);
 
     const active = await repo.findAllActive();
     expect(active).toHaveLength(1);
@@ -122,19 +127,27 @@ describe('KnexBrokerRepository', () => {
   it('update modifies broker fields', async () => {
     await setupDatabase();
     const repo = new KnexBrokerRepository(database);
-
-    await repo.save({
-      id: 'b1',
+    const broker = Broker.create({
       name: 'Original',
-      cnpj: '11.111.111/0001-11',
+      cnpj: new Cnpj('11.111.111/0001-11'),
       code: 'ORIG',
-      active: true,
     });
 
-    await repo.update('b1', { name: 'Updated', code: 'UPD' });
-    const found = await repo.findById('b1');
+    await repo.save(broker);
+
+    const original = await repo.findById(broker.id);
+    expect(original?.name).toBe('Original');
+    expect(original?.code).toBe('ORIG');
+    expect(original?.isActive()).toBe(true);
+
+    broker.changeName('Updated');
+    broker.changeCode('UPD');
+    broker.deactivate();
+
+    await repo.update(broker);
+    const found = await repo.findById(broker.id);
     expect(found?.name).toBe('Updated');
     expect(found?.code).toBe('UPD');
-    expect(found?.active).toBe(true);
+    expect(found?.isActive()).toBe(false);
   });
 });

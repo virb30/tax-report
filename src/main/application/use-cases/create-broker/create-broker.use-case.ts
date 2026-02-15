@@ -1,8 +1,7 @@
-import { Broker } from '@main/domain/portfolio/broker.entity';
-
-import type { BrokerRepository } from '@main/application/repositories/broker.repository';
+import { Broker } from '../../../domain/portfolio/broker.entity';
+import { Cnpj } from '../../../domain/shared/cnpj.vo';
+import type { BrokerRepository } from '../../repositories/broker.repository';
 import { CreateBrokerInput } from './create-broker.input';
-import { Cnpj } from '@main/domain/shared/cnpj.vo';
 import { CreateBrokerOutput } from './create-broker.output';
 
 export class CreateBrokerUseCase {
@@ -27,7 +26,7 @@ export class CreateBrokerUseCase {
 
     await this.brokerRepository.save(broker);
     return {
-      id: broker.id,
+      id: broker.id.value,
       name: broker.name,
       cnpj: broker.cnpj.value,
       code: broker.code,

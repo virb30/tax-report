@@ -27,8 +27,10 @@ import {
   registerMainHandlers,
   type MainHandlersDependencies,
 } from './register-main-handlers';
-import { ManageBrokersUseCase } from '../../application/use-cases/manage-brokers-use-case';
-import { CreateBrokerUseCase } from '@main/application/use-cases/create-broker/create-broker.use-case';
+import { CreateBrokerUseCase } from '../../application/use-cases/create-broker/create-broker.use-case';
+import { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
+import { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
+import { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
 
 type IpcHandler = (_event: unknown, ...args: unknown[]) => unknown;
 
@@ -142,18 +144,27 @@ describe('IPC handlers integration', () => {
       listBrokers: (_input?: { activeOnly?: boolean }) => Promise.resolve({ items: [] }),
       createBroker: () =>
         Promise.resolve({
-          success: true,
-          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST', active: true } as BrokerListItem,
+          id: 'broker-1',
+          name: 'Test',
+          cnpj: '00.000.000/0001-00',
+          code: 'TEST',
+          active: true,
         }),
       updateBroker: () =>
         Promise.resolve({
-          success: true,
-          broker: { id: 'broker-1', name: 'Updated', cnpj: '00.000.000/0001-00', code: 'TEST', active: true } as BrokerListItem,
+          id: 'broker-1',
+          name: 'Updated',
+          cnpj: '00.000.000/0001-00',
+          code: 'TEST',
+          active: true,
         }),
       toggleBrokerActive: () =>
         Promise.resolve({
-          success: true,
-          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST', active: false } as BrokerListItem,
+          id: 'broker-1',
+          name: 'Test',
+          cnpj: '00.000.000/0001-00',
+          code: 'TEST',
+          active: false,
         }),
       previewConsolidatedPosition: () => Promise.resolve({ rows: [] }),
       importConsolidatedPosition: () =>
@@ -224,8 +235,10 @@ describe('IPC handlers integration', () => {
 
   it('brokers:list, brokers:create, brokers:update, brokers:toggle-active work end-to-end', async () => {
     const brokerRepository = new KnexBrokerRepository(database);
-    const manageBrokersUseCase = new ManageBrokersUseCase(brokerRepository);
     const createBrokerUseCase = new CreateBrokerUseCase(brokerRepository);
+    const updateBrokerUseCase = new UpdateBrokerUseCase(brokerRepository);
+    const listBrokersUseCase = new ListBrokersUseCase(brokerRepository);
+    const toggleActiveBrokerUseCase = new ToggleActiveBrokerUseCase(brokerRepository);
 
     const handlers = new Map<string, IpcHandler>();
     const ipcMain = {
@@ -253,10 +266,10 @@ describe('IPC handlers integration', () => {
         Promise.resolve({ migratedPositionsCount: 0, createdTransactionsCount: 0 }),
       generateAssetsReport: () =>
         Promise.resolve({ referenceDate: '2025-12-31', items: [] }),
-      listBrokers: (input) => manageBrokersUseCase.list(input),
+      listBrokers: (input) => listBrokersUseCase.execute(input),
       createBroker: (input) => createBrokerUseCase.execute(input),
-      updateBroker: (input) => manageBrokersUseCase.update(input),
-      toggleBrokerActive: (input) => manageBrokersUseCase.toggleActive(input),
+      updateBroker: (input) => updateBrokerUseCase.execute(input),
+      toggleBrokerActive: (input) => toggleActiveBrokerUseCase.execute(input),
       previewConsolidatedPosition: () => Promise.resolve({ rows: [] }),
       importConsolidatedPosition: () =>
         Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),

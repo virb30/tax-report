@@ -25,15 +25,6 @@ import type {
   PreviewImportTransactionsResult,
 } from '@shared/contracts/preview-import.contract';
 import type {
-  CreateBrokerCommand,
-  ListBrokersQuery,
-  ListBrokersResult,
-  UpdateBrokerCommand,
-  UpdateBrokerResult,
-  ToggleBrokerActiveCommand,
-  ToggleBrokerActiveResult,
-} from '@shared/contracts/brokers.contract';
-import type {
   RecalculatePositionCommand,
   RecalculatePositionResult,
 } from '@shared/contracts/recalculate.contract';
@@ -53,6 +44,12 @@ import type {
 } from '@shared/contracts/delete-position.contract';
 import { CreateBrokerOutput } from '@main/application/use-cases/create-broker/create-broker.output';
 import { CreateBrokerInput } from '@main/application/use-cases/create-broker/create-broker.input';
+import { UpdateBrokerOutput } from '@main/application/use-cases/update-broker/update-broker.output';
+import { ListBrokersOutput } from '@main/application/use-cases/list-brokers/list-brokers.output';
+import { ListBrokersInput } from '@main/application/use-cases/list-brokers/list-brokers.input';
+import { UpdateBrokerInput } from '@main/application/use-cases/update-broker/update-broker.input';
+import { ToggleActiveBrokerInput } from '@main/application/use-cases/toggle-active-broker/toggle-active-broker.input';
+import { ToggleActiveBrokerOutput } from '@main/application/use-cases/toggle-active-broker/toggle-active-broker.output';
 
 type IpcMainLike = {
   handle: (
@@ -80,10 +77,10 @@ export type MainHandlersDependencies = {
   generateAssetsReport: (
     input: GenerateAssetsReportQuery,
   ) => Promise<GenerateAssetsReportResult>;
-  listBrokers: (input?: ListBrokersQuery) => Promise<ListBrokersResult>;
-  createBroker: (input: CreateBrokerCommand) => Promise<CreateBrokerOutput>;
-  updateBroker: (input: UpdateBrokerCommand) => Promise<UpdateBrokerResult>;
-  toggleBrokerActive: (input: ToggleBrokerActiveCommand) => Promise<ToggleBrokerActiveResult>;
+  listBrokers: (input?: ListBrokersInput) => Promise<ListBrokersOutput>;
+  createBroker: (input: CreateBrokerInput) => Promise<CreateBrokerOutput>;
+  updateBroker: (input: UpdateBrokerInput) => Promise<UpdateBrokerOutput>;
+  toggleBrokerActive: (input: ToggleActiveBrokerInput) => Promise<ToggleActiveBrokerOutput>;
   recalculatePosition: (input: RecalculatePositionCommand) => Promise<RecalculatePositionResult>;
   migrateYear: (input: MigrateYearCommand) => Promise<MigrateYearResult>;
   previewConsolidatedPosition: (
@@ -200,7 +197,7 @@ export function registerMainHandlers(
     return dependencies.generateAssetsReport(payload);
   });
 
-  ipcMain.handle('brokers:list', (_event, input?: ListBrokersQuery) => {
+  ipcMain.handle('brokers:list', async (_event, input?: unknown) => {
     const payload = parseListBrokersInput(input);
     return dependencies.listBrokers(payload);
   });
@@ -219,14 +216,32 @@ export function registerMainHandlers(
     }
   });
 
-  ipcMain.handle('brokers:update', (_event, input: UpdateBrokerCommand) => {
-    const payload = parseUpdateBrokerInput(input);
-    return dependencies.updateBroker(payload);
+  ipcMain.handle('brokers:update', async (_event, input: unknown) => {
+    try {
+      const payload = parseUpdateBrokerInput(input);
+      const broker = await dependencies.updateBroker(payload);
+      return { success: true, broker };
+    } catch (error: unknown) {
+      console.error(error);
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      return { success: false, error: 'Erro ao atualizar corretora.' };
+    }
   });
 
-  ipcMain.handle('brokers:toggle-active', (_event, input: ToggleBrokerActiveCommand) => {
-    const payload = parseToggleBrokerActiveInput(input);
-    return dependencies.toggleBrokerActive(payload);
+  ipcMain.handle('brokers:toggle-active', async (_event, input: unknown) => {
+    try {
+      const payload = parseToggleBrokerActiveInput(input);
+      const broker = await dependencies.toggleBrokerActive(payload);
+      return { success: true, broker };
+    } catch (error: unknown) {
+      console.error(error);
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      return { success: false, error: 'Erro ao ativar/desativar corretora.' };
+    }
   });
 
   return registeredChannels;
@@ -454,7 +469,7 @@ function parseDeletePositionInput(input: unknown): DeletePositionCommand {
   return { ticker: payload.ticker, year: payload.year };
 }
 
-function parseListBrokersInput(input: unknown): ListBrokersQuery | undefined {
+function parseListBrokersInput(input: unknown): ListBrokersInput | undefined {
   if (input === undefined || input === null) {
     return undefined;
   }
@@ -490,7 +505,7 @@ function parseCreateBrokerInput(input: unknown): CreateBrokerInput {
   };
 }
 
-function parseUpdateBrokerInput(input: unknown): UpdateBrokerCommand {
+function parseUpdateBrokerInput(input: unknown): UpdateBrokerInput {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid payload for update broker.');
   }
@@ -506,7 +521,7 @@ function parseUpdateBrokerInput(input: unknown): UpdateBrokerCommand {
   };
 }
 
-function parseToggleBrokerActiveInput(input: unknown): ToggleBrokerActiveCommand {
+function parseToggleBrokerActiveInput(input: unknown): ToggleActiveBrokerInput {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid payload for toggle broker active.');
   }

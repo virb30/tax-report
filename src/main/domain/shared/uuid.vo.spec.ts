@@ -20,4 +20,18 @@ describe('Uuid', () => {
     const invalidUuidVersion = '019c5d29-fa57-435e-ba78-acc07b179392';
     expect(() => Uuid.from(invalidUuidVersion)).toThrow(`Invalid UUID version: ${invalidUuidVersion}`);
   });
+
+  describe('equals', () => {
+    it('should return true if the UUIDs are the same', () => {
+      const uuid1 = Uuid.create();
+      const uuid2 = Uuid.from(uuid1.value);
+      expect(uuid1.equals(uuid2)).toBe(true);
+    });
+
+    it('should return false if the UUIDs are different', () => {
+      const uuid1 = Uuid.create();
+      const uuid2 = Uuid.create();
+      expect(uuid1.equals(uuid2)).toBe(false);
+    });
+  });
 });
