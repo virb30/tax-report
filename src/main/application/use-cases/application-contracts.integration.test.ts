@@ -10,7 +10,7 @@ import { KnexPositionRepository } from '../../infrastructure/persistence/knex-po
 import { KnexTransactionRepository } from '../../infrastructure/persistence/knex-transaction.repository';
 import { KnexTickerDataRepository } from '../../infrastructure/persistence/knex-ticker-data.repository';
 import { GenerateAssetsReportUseCase } from './generate-assets-report-use-case';
-import { ListPositionsUseCase } from './list-positions-use-case';
+import { ListPositionsUseCase } from './list-positions/list-positions-use-case';
 import { SetInitialBalanceUseCase } from './set-initial-balance/set-initial-balance-use-case';
 import { ImportConsolidatedPositionUseCase } from './import-consolidated-position-use-case';
 import { DeletePositionUseCase } from './delete-position/delete-position-use-case';

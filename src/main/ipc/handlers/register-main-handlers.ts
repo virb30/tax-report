@@ -47,6 +47,8 @@ import { SetInitialBalanceOutput } from '@main/application/use-cases/set-initial
 import { AssetType } from '@shared/types/domain';
 import { DeletePositionInput } from '@main/application/use-cases/delete-position/delete-position.input';
 import { DeletePositionOutput } from '@main/application/use-cases/delete-position/delete-position.output';
+import { ListPositionsInput } from '@main/application/use-cases/list-positions/list-positions.input';
+import { ListPositionsOutput } from '@main/application/use-cases/list-positions/list-positions.output';
 
 type IpcMainLike = {
   handle: (
@@ -70,7 +72,7 @@ export type MainHandlersDependencies = {
     input: ConfirmImportTransactionsCommand,
   ) => Promise<ConfirmImportTransactionsResult>;
   setInitialBalance: (input: SetInitialBalanceInput) => Promise<SetInitialBalanceOutput>;
-  listPositions: (input: ListPositionsQuery) => Promise<ListPositionsResult>;
+  listPositions: (input: ListPositionsInput) => Promise<ListPositionsOutput>;
   generateAssetsReport: (
     input: GenerateAssetsReportQuery,
   ) => Promise<GenerateAssetsReportResult>;
@@ -153,7 +155,7 @@ export function registerMainHandlers(
     return dependencies.setInitialBalance(payload);
   });
 
-  ipcMain.handle('portfolio:list-positions', (_event, input: ListPositionsQuery) => {
+  ipcMain.handle('portfolio:list-positions', (_event, input: unknown) => {
     const payload = parseListPositionsInput(input);
     return dependencies.listPositions(payload);
   });
@@ -321,7 +323,7 @@ function parseConfirmImportTransactionsInput(
   return { filePath: payload.filePath };
 }
 
-function parseListPositionsInput(input: unknown): ListPositionsQuery {
+function parseListPositionsInput(input: unknown): ListPositionsInput {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid payload for list positions.');
   }
