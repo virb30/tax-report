@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { mock } from 'jest-mock-extended';
 import { DeletePositionUseCase } from './delete-position-use-case';
-import type { PositionRepository } from '../repositories/position.repository';
-import type { TransactionRepository } from '../repositories/transaction.repository';
-import { AssetType } from '@shared/types/domain';
+import type { PositionRepository } from '../../repositories/position.repository';
+import type { TransactionRepository } from '../../repositories/transaction.repository';
+import { AssetType } from '../../../../shared/types/domain';
+import { Uuid } from '../../../domain/shared/uuid.vo';
+import { AssetPosition } from '../../../domain/portfolio/asset-position.entity';
 
 describe('DeletePositionUseCase', () => {
   let positionRepo: jest.Mocked<PositionRepository>;
@@ -12,26 +14,28 @@ describe('DeletePositionUseCase', () => {
 
   beforeEach(() => {
     positionRepo = mock<PositionRepository>();
-    transactionRepo = mock<TransactionRepository>();
-    transactionRepo.deleteInitialBalanceByTickerAndYear.mockResolvedValue(undefined);
+    transactionRepo = mock<TransactionRepository>();    
+    transactionRepo.deleteByTickerAndYear.mockResolvedValue(undefined);
     positionRepo.delete.mockResolvedValue(undefined);
 
     useCase = new DeletePositionUseCase(positionRepo, transactionRepo);
   });
 
-  it('deletes position and initial balance transactions when position exists', async () => {
-    positionRepo.findByTickerAndYear.mockResolvedValue({
+  it('deletes position and transactions when position exists', async () => {
+    const brokerId = Uuid.create();
+    positionRepo.findByTickerAndYear.mockResolvedValue(AssetPosition.restore({
       ticker: 'PETR4',
       assetType: AssetType.Stock,
+      year: 2024,
       totalQuantity: 100,
       averagePrice: 25,
-      brokerBreakdown: [{ brokerId: 'broker-xp', quantity: 100 }],
-    });
+      brokerBreakdown: [{ brokerId,  quantity: 100 }],
+    }));
 
     const result = await useCase.execute({ ticker: 'PETR4', year: 2024 });
 
     expect(result.deleted).toBe(true);
-    expect(transactionRepo.deleteInitialBalanceByTickerAndYear).toHaveBeenCalledWith(
+    expect(transactionRepo.deleteByTickerAndYear).toHaveBeenCalledWith(
       'PETR4',
       2024,
     );
@@ -44,7 +48,7 @@ describe('DeletePositionUseCase', () => {
     const result = await useCase.execute({ ticker: 'PETR4', year: 2024 });
 
     expect(result.deleted).toBe(false);
-    expect(transactionRepo.deleteInitialBalanceByTickerAndYear).not.toHaveBeenCalled();
+    expect(transactionRepo.deleteByTickerAndYear).not.toHaveBeenCalled();
     expect(positionRepo.delete).not.toHaveBeenCalled();
   });
 

@@ -3,10 +3,10 @@ import type { PositionRepository } from '../../repositories/position.repository'
 import type { TransactionRepository } from '../../repositories/transaction.repository';
 import { TransactionType } from '../../../../shared/types/domain';
 import { SourceType } from '../../../../shared/types/domain';
-import { randomUUID } from 'node:crypto';
 import { Uuid } from '../../../domain/shared/uuid.vo';
 import type { SetInitialBalanceOutput } from './set-initial-balance.output';
 import type { SetInitialBalanceInput } from './set-initial-balance.input';
+import { Transaction } from '../../../domain/portfolio/transaction.entity';
 
 export class SetInitialBalanceUseCase {
   constructor(
@@ -37,17 +37,16 @@ export class SetInitialBalanceUseCase {
     });
 
     const transactionDate = `${input.year}-01-01`;
-    const transaction = {
-      id: randomUUID(),
+    const transaction = Transaction.create({
       date: transactionDate,
       type: TransactionType.InitialBalance,
       ticker: input.ticker,
       quantity: input.quantity,
       unitPrice: input.averagePrice,
       fees: 0,
-      brokerId: input.brokerId,
+      brokerId: Uuid.from(input.brokerId),
       sourceType: SourceType.Manual,
-    };
+    });
 
     await this.transactionRepository.save(transaction);
     await this.positionRepository.save(position);

@@ -1,7 +1,8 @@
 import type { Knex } from 'knex';
 import type { TransactionRepository } from '../../application/repositories/transaction.repository';
-import type { TransactionRecord } from '../../domain/portfolio/transaction.entity';
-import { randomUUID } from 'node:crypto';
+import type { Transaction } from '../../domain/portfolio/transaction.entity';
+import { Uuid } from '../../domain/shared/uuid.vo';
+import { SourceType, TransactionType } from '../../../shared/types/domain';
 
 type TransactionRow = {
   id: string;
@@ -19,12 +20,12 @@ type TransactionRow = {
   import_batch_id: string | null;
 };
 
-function mapRecordToRow(record: TransactionRecord): Record<string, unknown> {
+function toPersistence(record: Transaction): Record<string, unknown> {
   const unitPriceCents = Math.round(record.unitPrice * 100);
   const feesCents = Math.round(record.fees * 100);
 
   return {
-    id: record.id,
+    id: record.id.value,
     date: record.date,
     type: record.type,
     ticker: record.ticker,
@@ -33,24 +34,24 @@ function mapRecordToRow(record: TransactionRecord): Record<string, unknown> {
     unit_price_cents: unitPriceCents,
     fees: record.fees,
     fees_cents: feesCents,
-    broker_id: record.brokerId,
+    broker_id: record.brokerId.value,
     source_type: record.sourceType,
     external_ref: record.externalRef ?? null,
     import_batch_id: record.importBatchId ?? null,
   };
 }
 
-function mapRowToRecord(row: TransactionRow): TransactionRecord {
+function toDomain(row: TransactionRow): Transaction {
   return {
-    id: row.id,
+    id: Uuid.from(row.id),
     date: row.date,
-    type: row.type as TransactionRecord['type'],
+    type: row.type as TransactionType,
     ticker: row.ticker,
     quantity: row.quantity,
     unitPrice: row.unit_price,
     fees: row.fees,
-    brokerId: row.broker_id,
-    sourceType: row.source_type as TransactionRecord['sourceType'],
+    brokerId: Uuid.from(row.broker_id),
+    sourceType: row.source_type as SourceType,
     externalRef: row.external_ref ?? undefined,
     importBatchId: row.import_batch_id ?? undefined,
   };
@@ -59,45 +60,38 @@ function mapRowToRecord(row: TransactionRow): TransactionRecord {
 export class KnexTransactionRepository implements TransactionRepository {
   constructor(private readonly database: Knex) {}
 
-  async save(transaction: TransactionRecord): Promise<void> {
-    const record = {
-      ...transaction,
-      id: transaction.id || randomUUID(),
-    };
-    await this.database('transactions').insert(mapRecordToRow(record));
+  async save(transaction: Transaction): Promise<void> {
+    await this.database('transactions').insert(toPersistence(transaction));
   }
 
-  async saveMany(transactions: TransactionRecord[]): Promise<void> {
+  async saveMany(transactions: Transaction[]): Promise<void> {
     if (transactions.length === 0) {
       return;
     }
 
-    const rows = transactions.map((t) =>
-      mapRecordToRow({
-        ...t,
-        id: t.id || randomUUID(),
-      }),
+    const rows = transactions.map((transaction) =>
+      toPersistence(transaction),
     );
     await this.database('transactions').insert(rows);
   }
 
-  async findByTicker(ticker: string): Promise<TransactionRecord[]> {
+  async findByTicker(ticker: string): Promise<Transaction[]> {
     const rows = await this.database<TransactionRow>('transactions')
       .where({ ticker })
       .orderBy('date', 'asc')
       .select('*');
-    return rows.map(mapRowToRecord);
+    return rows.map(toDomain);
   }
 
   async findByPeriod(input: {
     startDate: string;
     endDate: string;
-  }): Promise<TransactionRecord[]> {
+  }): Promise<Transaction[]> {
     const rows = await this.database<TransactionRow>('transactions')
       .whereBetween('date', [input.startDate, input.endDate])
       .orderBy('date', 'asc')
       .select('*');
-    return rows.map(mapRowToRecord);
+    return rows.map(toDomain);
   }
 
   async findExistingExternalRefs(externalRefs: string[]): Promise<Set<string>> {
@@ -119,6 +113,15 @@ export class KnexTransactionRepository implements TransactionRepository {
     const yearEnd = `${year}-12-31`;
     await this.database('transactions')
       .where({ ticker, type: 'initial_balance' })
+      .whereBetween('date', [yearStart, yearEnd])
+      .delete();
+  }
+
+  async deleteByTickerAndYear(ticker: string, year: number): Promise<void> {
+    const yearStart = `${year}-01-01`;
+    const yearEnd = `${year}-12-31`;
+    await this.database('transactions')
+      .where({ ticker })
       .whereBetween('date', [yearStart, yearEnd])
       .delete();
   }

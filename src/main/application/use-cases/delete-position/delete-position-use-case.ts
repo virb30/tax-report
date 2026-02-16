@@ -1,9 +1,7 @@
-import type {
-  DeletePositionCommand,
-  DeletePositionResult,
-} from '@shared/contracts/delete-position.contract';
-import type { PositionRepository } from '../repositories/position.repository';
-import type { TransactionRepository } from '../repositories/transaction.repository';
+import type { PositionRepository } from '../../repositories/position.repository';
+import type { TransactionRepository } from '../../repositories/transaction.repository';
+import { DeletePositionInput } from './delete-position.input';
+import { DeletePositionOutput } from './delete-position.output';
 
 export class DeletePositionUseCase {
   constructor(
@@ -11,19 +9,19 @@ export class DeletePositionUseCase {
     private readonly transactionRepository: TransactionRepository,
   ) {}
 
-  async execute(input: DeletePositionCommand): Promise<DeletePositionResult> {
+  async execute(input: DeletePositionInput): Promise<DeletePositionOutput> {
     this.validate(input);
 
-    const existing = await this.positionRepository.findByTickerAndYear(
+    const position = await this.positionRepository.findByTickerAndYear(
       input.ticker,
       input.year,
     );
 
-    if (!existing) {
+    if (!position) {
       return { deleted: false };
     }
 
-    await this.transactionRepository.deleteInitialBalanceByTickerAndYear(
+    await this.transactionRepository.deleteByTickerAndYear(
       input.ticker,
       input.year,
     );
@@ -32,7 +30,7 @@ export class DeletePositionUseCase {
     return { deleted: true };
   }
 
-  private validate(input: DeletePositionCommand): void {
+  private validate(input: DeletePositionInput): void {
     if (typeof input.ticker !== 'string' || input.ticker.trim().length === 0) {
       throw new Error('Ticker inválido.');
     }

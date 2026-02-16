@@ -11,10 +11,6 @@ import type {
   ListPositionsResult,
 } from '@shared/contracts/list-positions.contract';
 import type {
-  SetInitialBalanceCommand,
-  SetInitialBalanceResult,
-} from '@shared/contracts/initial-balance.contract';
-import type {
   ConfirmImportOperationsCommand,
   ConfirmImportOperationsResult,
   ConfirmImportTransactionsCommand,
@@ -38,10 +34,6 @@ import type {
   PreviewConsolidatedPositionCommand,
   PreviewConsolidatedPositionResult,
 } from '@shared/contracts/import-consolidated-position.contract';
-import type {
-  DeletePositionCommand,
-  DeletePositionResult,
-} from '@shared/contracts/delete-position.contract';
 import { CreateBrokerOutput } from '@main/application/use-cases/create-broker/create-broker.output';
 import { CreateBrokerInput } from '@main/application/use-cases/create-broker/create-broker.input';
 import { UpdateBrokerOutput } from '@main/application/use-cases/update-broker/update-broker.output';
@@ -50,6 +42,11 @@ import { ListBrokersInput } from '@main/application/use-cases/list-brokers/list-
 import { UpdateBrokerInput } from '@main/application/use-cases/update-broker/update-broker.input';
 import { ToggleActiveBrokerInput } from '@main/application/use-cases/toggle-active-broker/toggle-active-broker.input';
 import { ToggleActiveBrokerOutput } from '@main/application/use-cases/toggle-active-broker/toggle-active-broker.output';
+import { SetInitialBalanceInput } from '@main/application/use-cases/set-initial-balance/set-initial-balance.input';
+import { SetInitialBalanceOutput } from '@main/application/use-cases/set-initial-balance/set-initial-balance.output';
+import { AssetType } from '@shared/types/domain';
+import { DeletePositionInput } from '@main/application/use-cases/delete-position/delete-position.input';
+import { DeletePositionOutput } from '@main/application/use-cases/delete-position/delete-position.output';
 
 type IpcMainLike = {
   handle: (
@@ -72,7 +69,7 @@ export type MainHandlersDependencies = {
   confirmImportTransactions: (
     input: ConfirmImportTransactionsCommand,
   ) => Promise<ConfirmImportTransactionsResult>;
-  setInitialBalance: (input: SetInitialBalanceCommand) => Promise<SetInitialBalanceResult>;
+  setInitialBalance: (input: SetInitialBalanceInput) => Promise<SetInitialBalanceOutput>;
   listPositions: (input: ListPositionsQuery) => Promise<ListPositionsResult>;
   generateAssetsReport: (
     input: GenerateAssetsReportQuery,
@@ -89,7 +86,7 @@ export type MainHandlersDependencies = {
   importConsolidatedPosition: (
     input: ImportConsolidatedPositionCommand,
   ) => Promise<ImportConsolidatedPositionResult>;
-  deletePosition: (input: DeletePositionCommand) => Promise<DeletePositionResult>;
+  deletePosition: (input: DeletePositionInput) => Promise<DeletePositionOutput>;
 };
 
 export function registerMainHandlers(
@@ -151,7 +148,7 @@ export function registerMainHandlers(
     return dependencies.confirmImportTransactions(payload);
   });
 
-  ipcMain.handle('portfolio:set-initial-balance', (_event, input: SetInitialBalanceCommand) => {
+  ipcMain.handle('portfolio:set-initial-balance', (_event, input: unknown) => {
     const payload = parseSetInitialBalanceInput(input);
     return dependencies.setInitialBalance(payload);
   });
@@ -187,7 +184,7 @@ export function registerMainHandlers(
     },
   );
 
-  ipcMain.handle('portfolio:delete-position', (_event, input: DeletePositionCommand) => {
+  ipcMain.handle('portfolio:delete-position', (_event, input: unknown) => {
     const payload = parseDeletePositionInput(input);
     return dependencies.deletePosition(payload);
   });
@@ -335,7 +332,7 @@ function parseListPositionsInput(input: unknown): ListPositionsQuery {
   return { baseYear: payload.baseYear };
 }
 
-function parseSetInitialBalanceInput(input: unknown): SetInitialBalanceCommand {
+function parseSetInitialBalanceInput(input: unknown): SetInitialBalanceInput {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid payload for initial balance.');
   }
@@ -372,7 +369,7 @@ function parseSetInitialBalanceInput(input: unknown): SetInitialBalanceCommand {
   return {
     ticker: payload.ticker,
     brokerId: payload.brokerId,
-    assetType: payload.assetType as SetInitialBalanceCommand['assetType'],
+    assetType: payload.assetType as AssetType,
     quantity: payload.quantity,
     averagePrice: payload.averagePrice,
     year: payload.year,
@@ -455,7 +452,7 @@ function parseImportConsolidatedPositionInput(
   return { filePath: payload.filePath, year: payload.year };
 }
 
-function parseDeletePositionInput(input: unknown): DeletePositionCommand {
+function parseDeletePositionInput(input: unknown): DeletePositionInput {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid payload for delete position.');
   }
