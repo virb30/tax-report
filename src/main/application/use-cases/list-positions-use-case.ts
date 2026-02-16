@@ -4,14 +4,14 @@ import type {
 } from '@shared/contracts/list-positions.contract';
 import type { PositionRepository } from '../repositories/position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
-import type { BrokerRepositoryPort } from '../repositories/broker.repository';
+import type { BrokerRepository } from '../repositories/broker.repository';
 import { computePositionsFromTransactions } from '../services/compute-positions-from-transactions';
 
 export class ListPositionsUseCase {
   constructor(
     private readonly positionRepository: PositionRepository,
     private readonly transactionRepository: TransactionRepository,
-    private readonly brokerRepository: BrokerRepositoryPort,
+    private readonly brokerRepository: BrokerRepository,
   ) {}
 
   async execute(input: ListPositionsQuery): Promise<ListPositionsResult> {
@@ -21,33 +21,33 @@ export class ListPositionsUseCase {
       endDate: referenceDate,
     });
 
-    const snapshots = await computePositionsFromTransactions(
+    const positions = await computePositionsFromTransactions(
       transactions,
       this.positionRepository,
       input.baseYear,
     );
 
     const items = await Promise.all(
-      snapshots.map(async (snapshot) => {
+      positions.map(async (position) => {
         const brokerBreakdown = await Promise.all(
-          snapshot.brokerBreakdown.map(async (allocation) => {
+          position.brokerBreakdown.map(async (allocation) => {
             const broker = await this.brokerRepository.findById(allocation.brokerId);
             return {
-              brokerId: allocation.brokerId,
-              brokerName: broker?.name ?? allocation.brokerId,
-              brokerCnpj: broker?.cnpj ?? '',
+              brokerId: allocation.brokerId.value,
+              brokerName: broker?.name ?? allocation.brokerId.value,
+              brokerCnpj: broker?.cnpj?.value ?? '',
               quantity: allocation.quantity,
             };
           }),
         );
 
-        const totalCost = snapshot.totalQuantity * snapshot.averagePrice;
+        const totalCost = position.totalQuantity * position.averagePrice;
 
         return {
-          ticker: snapshot.ticker,
-          assetType: snapshot.assetType,
-          totalQuantity: snapshot.totalQuantity,
-          averagePrice: snapshot.averagePrice,
+          ticker: position.ticker,
+          assetType: position.assetType,
+          totalQuantity: position.totalQuantity,
+          averagePrice: position.averagePrice,
           totalCost,
           brokerBreakdown,
         };

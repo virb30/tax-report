@@ -79,7 +79,7 @@ export class MigrateYearUseCase {
           quantity: allocation.quantity,
           unitPrice: position.averagePrice,
           fees: 0,
-          brokerId: allocation.brokerId,
+          brokerId: allocation.brokerId.value,
           sourceType: SourceType.Manual,
         });
       }

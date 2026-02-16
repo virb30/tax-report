@@ -11,7 +11,7 @@ import { KnexTransactionRepository } from '../../infrastructure/persistence/knex
 import { KnexTickerDataRepository } from '../../infrastructure/persistence/knex-ticker-data.repository';
 import { GenerateAssetsReportUseCase } from './generate-assets-report-use-case';
 import { ListPositionsUseCase } from './list-positions-use-case';
-import { SetInitialBalanceUseCase } from './set-initial-balance-use-case';
+import { SetInitialBalanceUseCase } from './set-initial-balance/set-initial-balance-use-case';
 import { ImportConsolidatedPositionUseCase } from './import-consolidated-position-use-case';
 import { DeletePositionUseCase } from './delete-position-use-case';
 import { ReportGenerator } from '../../domain/tax-reporting/report-generator.service';

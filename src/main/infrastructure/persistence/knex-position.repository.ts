@@ -1,10 +1,11 @@
 import type { Knex } from 'knex';
 import type { PositionRepository } from '../../application/repositories/position.repository';
-import type {
-  AssetPositionSnapshot,
+import {
+  AssetPosition,
   BrokerAllocation,
 } from '../../domain/portfolio/asset-position.entity';
 import type { AssetType } from '../../../shared/types/domain';
+import { Uuid } from '../../domain/shared/uuid.vo';
 
 type PositionRow = {
   ticker: string;
@@ -46,7 +47,7 @@ export class KnexPositionRepository implements PositionRepository {
   async findByTickerAndYear(
     ticker: string,
     year: number,
-  ): Promise<AssetPositionSnapshot | null> {
+  ): Promise<AssetPosition | null> {
     const row = await this.database<PositionRow>('positions')
       .where({ ticker, year })
       .first();
@@ -62,80 +63,85 @@ export class KnexPositionRepository implements PositionRepository {
       .select('broker_id', 'quantity');
 
     const brokerBreakdown: BrokerAllocation[] = allocations.map((a) => ({
-      brokerId: a.broker_id,
+      brokerId: Uuid.from(a.broker_id),
       quantity: a.quantity,
     }));
 
-    return {
+    return AssetPosition.restore({
       ticker: row.ticker,
       assetType: toAssetType(row.asset_type),
+      year: row.year,
       totalQuantity: row.total_quantity,
       averagePrice: row.average_price,
       brokerBreakdown,
-    };
+    });
+
   }
 
-  async findAllByYear(year: number): Promise<AssetPositionSnapshot[]> {
+  async findAllByYear(year: number): Promise<AssetPosition[]> {
     const rows = await this.database<PositionRow>('positions')
       .where({ year })
       .select('*')
       .orderBy('ticker', 'asc');
 
-    const result: AssetPositionSnapshot[] = [];
+    const allocations = await this.database<AllocationRow>('position_broker_allocations')
+      .whereIn('position_ticker', rows.map((r) => r.ticker))
+      .where('position_year', year)
+      .select('position_ticker', 'broker_id', 'quantity');
 
-    for (const row of rows) {
-      const allocations = await this.database<AllocationRow>(
-        'position_broker_allocations',
-      )
-        .where({ position_ticker: row.ticker, position_year: row.year })
-        .select('broker_id', 'quantity');
+    const allocationsByTicker = new Map<string, BrokerAllocation[]>();
 
-      result.push({
+    allocations.forEach((a) => {
+      const allocations = allocationsByTicker.get(a.position_ticker) ?? [];
+      allocationsByTicker.set(a.position_ticker, [...allocations, {
+        brokerId: Uuid.from(a.broker_id),
+        quantity: a.quantity,
+      }]);
+    });
+
+    return rows.map((row) => {
+      return AssetPosition.restore({
         ticker: row.ticker,
         assetType: toAssetType(row.asset_type),
+        year: row.year,
         totalQuantity: row.total_quantity,
         averagePrice: row.average_price,
-        brokerBreakdown: allocations.map((a) => ({
-          brokerId: a.broker_id,
-          quantity: a.quantity,
-        })),
+        brokerBreakdown: allocationsByTicker.get(row.ticker) ?? [],
       });
-    }
-
-    return result;
+    });
   }
 
-  async save(snapshot: AssetPositionSnapshot, year: number): Promise<void> {
+  async save(position: AssetPosition): Promise<void> {
     await this.database.transaction(async (trx) => {
-      const averagePriceCents = Math.round(snapshot.averagePrice * 100);
+      const averagePriceCents = Math.round(position.averagePrice * 100);
 
       await trx('positions')
         .insert({
-          ticker: snapshot.ticker,
-          year,
-          asset_type: toAssetTypeColumn(snapshot.assetType),
-          total_quantity: snapshot.totalQuantity,
-          average_price: snapshot.averagePrice,
+          ticker: position.ticker,
+          year: position.year,
+          asset_type: toAssetTypeColumn(position.assetType),
+          total_quantity: position.totalQuantity,
+          average_price: position.averagePrice,
           average_price_cents: averagePriceCents,
         })
         .onConflict(['ticker', 'year'])
         .merge({
-          asset_type: toAssetTypeColumn(snapshot.assetType),
-          total_quantity: snapshot.totalQuantity,
-          average_price: snapshot.averagePrice,
+          asset_type: toAssetTypeColumn(position.assetType),
+          total_quantity: position.totalQuantity,
+          average_price: position.averagePrice,
           average_price_cents: averagePriceCents,
         });
 
       await trx('position_broker_allocations')
-        .where({ position_ticker: snapshot.ticker, position_year: year })
+        .where({ position_ticker: position.ticker, position_year: position.year })
         .delete();
 
-      if (snapshot.brokerBreakdown.length > 0) {
+      if (position.brokerBreakdown.length > 0) {
         await trx('position_broker_allocations').insert(
-          snapshot.brokerBreakdown.map((a) => ({
-            position_ticker: snapshot.ticker,
-            position_year: year,
-            broker_id: a.brokerId,
+          position.brokerBreakdown.map((a) => ({
+            position_ticker: position.ticker,
+            position_year: position.year,
+            broker_id: a.brokerId.value,
             quantity: a.quantity,
           })),
         );

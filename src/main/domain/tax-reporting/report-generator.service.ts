@@ -1,5 +1,5 @@
 import { AssetType } from '../../../shared/types/domain';
-import type { AssetPositionSnapshot } from '../portfolio/asset-position.entity';
+import type { AssetPosition } from '../portfolio/asset-position.entity';
 import { Broker } from '../portfolio/broker.entity';
 
 const STOCK_CLASSIFICATION = { group: '03', code: '01' } as const;
@@ -7,7 +7,7 @@ const FII_CLASSIFICATION = { group: '07', code: '03' } as const;
 const ETF_CLASSIFICATION = { group: '07', code: '09' } as const;
 
 export type ReportItemInput = {
-  position: AssetPositionSnapshot;
+  position: AssetPosition;
   brokersMap: Map<string, Broker>;
   /** CNPJ do emissor (empresa do ativo), de ticker_data. Usar "N/A" quando não cadastrado. */
   issuerCnpj: string;
@@ -105,9 +105,9 @@ export class ReportGenerator {
       const allocations = position.brokerBreakdown
         .filter((a) => a.quantity > 0)
         .map((allocation) => {
-          const broker = brokersMap.get(allocation.brokerId);
+          const broker = brokersMap.get(allocation.brokerId.value);
           const brokerName = broker?.name ?? 'Corretora não cadastrada';
-          const brokerCnpj = broker?.cnpj ?? 'N/A';
+          const brokerCnpj = broker?.cnpj?.value ?? 'N/A';
           const allocTotalCost =
             Math.round(allocation.quantity * position.averagePrice * 100) / 100;
 
@@ -122,7 +122,7 @@ export class ReportGenerator {
           });
 
           return {
-            brokerId: allocation.brokerId,
+            brokerId: allocation.brokerId.value,
             brokerName,
             cnpj: brokerCnpj,
             quantity: allocation.quantity,

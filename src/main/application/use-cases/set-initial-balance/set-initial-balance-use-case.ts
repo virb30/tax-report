@@ -1,13 +1,12 @@
-import type {
-  SetInitialBalanceCommand,
-  SetInitialBalanceResult,
-} from '@shared/contracts/initial-balance.contract';
-import { AssetPosition } from '../../domain/portfolio/asset-position.entity';
-import type { PositionRepository } from '../repositories/position.repository';
-import type { TransactionRepository } from '../repositories/transaction.repository';
-import { TransactionType } from '../../../shared/types/domain';
-import { SourceType } from '../../../shared/types/domain';
+import { AssetPosition } from '../../../domain/portfolio/asset-position.entity';
+import type { PositionRepository } from '../../repositories/position.repository';
+import type { TransactionRepository } from '../../repositories/transaction.repository';
+import { TransactionType } from '../../../../shared/types/domain';
+import { SourceType } from '../../../../shared/types/domain';
 import { randomUUID } from 'node:crypto';
+import { Uuid } from '../../../domain/shared/uuid.vo';
+import type { SetInitialBalanceOutput } from './set-initial-balance.output';
+import type { SetInitialBalanceInput } from './set-initial-balance.input';
 
 export class SetInitialBalanceUseCase {
   constructor(
@@ -15,28 +14,26 @@ export class SetInitialBalanceUseCase {
     private readonly transactionRepository: TransactionRepository,
   ) {}
 
-  async execute(input: SetInitialBalanceCommand): Promise<SetInitialBalanceResult> {
+  async execute(input: SetInitialBalanceInput): Promise<SetInitialBalanceOutput> {
     this.validate(input);
 
-    const existingSnapshot = await this.positionRepository.findByTickerAndYear(
+    let position = await this.positionRepository.findByTickerAndYear(
       input.ticker,
       input.year,
     );
 
-    const position = existingSnapshot
-      ? AssetPosition.create(existingSnapshot)
-      : AssetPosition.create({
-          ticker: input.ticker,
-          assetType: input.assetType,
-          totalQuantity: 0,
-          averagePrice: 0,
-          brokerBreakdown: [],
-        });
+    if (!position) {
+      position = AssetPosition.create({
+        ticker: input.ticker,
+        assetType: input.assetType,
+        year: input.year,
+      });
+    }
 
     position.applyInitialBalance({
       quantity: input.quantity,
       averagePrice: input.averagePrice,
-      brokerId: input.brokerId,
+      brokerId: Uuid.from(input.brokerId),
     });
 
     const transactionDate = `${input.year}-01-01`;
@@ -53,17 +50,17 @@ export class SetInitialBalanceUseCase {
     };
 
     await this.transactionRepository.save(transaction);
-    await this.positionRepository.save(position.toSnapshot(), input.year);
+    await this.positionRepository.save(position);
 
     return {
       ticker: input.ticker,
       brokerId: input.brokerId,
-      quantity: input.quantity,
-      averagePrice: input.averagePrice,
+      quantity: position.totalQuantity,
+      averagePrice: position.averagePrice,
     };
   }
 
-  private validate(input: SetInitialBalanceCommand): void {
+  private validate(input: SetInitialBalanceInput): void {
     if (!input.ticker || input.ticker.trim().length === 0) {
       throw new Error('Ticker é obrigatório.');
     }

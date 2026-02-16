@@ -2,7 +2,7 @@ import type {
   GenerateAssetsReportQuery,
   GenerateAssetsReportResult,
 } from '../../../shared/contracts/assets-report.contract';
-import type { BrokerRepositoryPort } from '../repositories/broker.repository';
+import type { BrokerRepository } from '../repositories/broker.repository';
 import type { PositionRepository } from '../repositories/position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import type { TickerDataRepository } from '../repositories/ticker-data.repository';
@@ -13,7 +13,7 @@ export class GenerateAssetsReportUseCase {
   constructor(
     private readonly transactionRepository: TransactionRepository,
     private readonly positionRepository: PositionRepository,
-    private readonly brokerRepository: BrokerRepositoryPort,
+    private readonly brokerRepository: BrokerRepository,
     private readonly tickerDataRepository: TickerDataRepository,
     private readonly reportGenerator: ReportGenerator,
   ) {}
@@ -26,17 +26,17 @@ export class GenerateAssetsReportUseCase {
       endDate: referenceDate,
     });
 
-    const positionSnapshots = await computePositionsFromTransactions(
+    const positions = await computePositionsFromTransactions(
       transactions,
       this.positionRepository,
       input.baseYear,
     );
 
     const brokers = await this.brokerRepository.findAll();
-    const brokersMap = new Map(brokers.map((b) => [b.id, b]));
+    const brokersMap = new Map(brokers.map((b) => [b.id.value, b]));
 
     const reportInputs = await Promise.all(
-      positionSnapshots.map(async (position) => {
+      positions.map(async (position) => {
         const tickerData = await this.tickerDataRepository.findByTicker(position.ticker);
         const issuerCnpj = tickerData?.cnpj ?? 'N/A';
         return { position, brokersMap, issuerCnpj };

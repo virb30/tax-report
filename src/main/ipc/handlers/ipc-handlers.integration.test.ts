@@ -11,7 +11,7 @@ import { LegacyPortfolioAcl } from '../../infrastructure/persistence/legacy/lega
 import { RecalculateAssetPositionUseCase } from '../../application/use-cases/recalculate-asset-position-use-case';
 import { ImportBrokerageNoteUseCase } from '../../application/use-cases/import-brokerage-note-use-case';
 import { ImportOperationsUseCase } from '../../application/use-cases/import-operations-use-case';
-import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance-use-case';
+import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance-use-case';
 import { ListPositionsUseCase } from '../../application/use-cases/list-positions-use-case';
 import { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position-use-case';
 import { MigrateYearUseCase } from '../../application/use-cases/migrate-year-use-case';

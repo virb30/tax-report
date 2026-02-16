@@ -3,6 +3,7 @@ import { AssetPosition } from '../../domain/portfolio/asset-position.entity';
 import type { TransactionRecord } from '../../domain/portfolio/transaction.entity';
 import { TransactionType } from '../../../shared/types/domain';
 import type { PositionRepository } from '../repositories/position.repository';
+import { Uuid } from '../../domain/shared/uuid.vo';
 
 export type PositionSnapshot = {
   ticker: string;
@@ -16,7 +17,7 @@ export async function computePositionsFromTransactions(
   transactions: TransactionRecord[],
   positionRepository: PositionRepository,
   year: number,
-): Promise<PositionSnapshot[]> {
+): Promise<AssetPosition[]> {
   const positionsByTicker = new Map<string, AssetPosition>();
 
   for (const tx of transactions) {
@@ -33,6 +34,7 @@ export async function computePositionsFromTransactions(
         totalQuantity: 0,
         averagePrice: 0,
         brokerBreakdown: [],
+        year,
       });
       positionsByTicker.set(tx.ticker, position);
     }
@@ -43,20 +45,20 @@ export async function computePositionsFromTransactions(
           quantity: tx.quantity,
           unitPrice: tx.unitPrice,
           fees: tx.fees,
-          brokerId: tx.brokerId,
+          brokerId: Uuid.from(tx.brokerId),
         });
         break;
       case TransactionType.Sell:
-        position.applySell({ quantity: tx.quantity, brokerId: tx.brokerId });
+        position.applySell({ quantity: tx.quantity, brokerId: Uuid.from(tx.brokerId) });
         break;
       case TransactionType.Bonus:
-        position.applyBonus({ quantity: tx.quantity, brokerId: tx.brokerId });
+        position.applyBonus({ quantity: tx.quantity, brokerId: Uuid.from(tx.brokerId) });
         break;
       case TransactionType.InitialBalance:
         position.applyInitialBalance({
           quantity: tx.quantity,
           averagePrice: tx.unitPrice,
-          brokerId: tx.brokerId,
+          brokerId: Uuid.from(tx.brokerId),
         });
         break;
       default: {
@@ -66,5 +68,5 @@ export async function computePositionsFromTransactions(
     }
   }
 
-  return Array.from(positionsByTicker.values()).map((p) => p.toSnapshot());
+  return Array.from(positionsByTicker.values());
 }
