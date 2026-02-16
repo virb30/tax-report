@@ -13,7 +13,7 @@ import { GenerateAssetsReportUseCase } from './generate-assets-report-use-case';
 import { ListPositionsUseCase } from './list-positions/list-positions-use-case';
 import { SetInitialBalanceUseCase } from './set-initial-balance/set-initial-balance-use-case';
 import { ImportConsolidatedPositionUseCase } from './import-consolidated-position-use-case';
-import { DeletePositionUseCase } from './delete-position/delete-position-use-case';
+import { DeletePositionUseCase } from './delete-position/delete-position.use-case';
 import { ReportGenerator } from '../../domain/tax-reporting/report-generator.service';
 import { CsvXlsxConsolidatedPositionParser } from '../../infrastructure/parsers/csv-xlsx-consolidated-position.parser';
 import { RecalculatePositionUseCase } from './recalculate-position-use-case';

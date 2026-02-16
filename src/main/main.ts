@@ -18,7 +18,7 @@ import { TaxApportioner } from './domain/ingestion/tax-apportioner.service';
 import { CsvXlsxTransactionParser } from './infrastructure/parsers/csv-xlsx-transaction.parser';
 import { CsvXlsxConsolidatedPositionParser } from './infrastructure/parsers/csv-xlsx-consolidated-position.parser';
 import { ImportConsolidatedPositionUseCase } from './application/use-cases/import-consolidated-position-use-case';
-import { DeletePositionUseCase } from './application/use-cases/delete-position/delete-position-use-case';
+import { DeletePositionUseCase } from './application/use-cases/delete-position/delete-position.use-case';
 import { SetInitialBalanceUseCase } from './application/use-cases/set-initial-balance/set-initial-balance-use-case';
 import { ListPositionsUseCase } from './application/use-cases/list-positions/list-positions-use-case';
 import { KnexPositionRepository } from './infrastructure/persistence/knex-position.repository';
