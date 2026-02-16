@@ -3,7 +3,7 @@ import type {
   GenerateAssetsReportResult,
 } from '../../../shared/contracts/assets-report.contract';
 import type { BrokerRepository } from '../repositories/broker.repository';
-import type { PositionRepository } from '../repositories/position.repository';
+import type { AssetPositionRepository } from '../repositories/asset-position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import type { TickerDataRepository } from '../repositories/ticker-data.repository';
 import { computePositionsFromTransactions } from '../services/compute-positions-from-transactions';
@@ -12,7 +12,7 @@ import type { ReportGenerator } from '../../domain/tax-reporting/report-generato
 export class GenerateAssetsReportUseCase {
   constructor(
     private readonly transactionRepository: TransactionRepository,
-    private readonly positionRepository: PositionRepository,
+    private readonly positionRepository: AssetPositionRepository,
     private readonly brokerRepository: BrokerRepository,
     private readonly tickerDataRepository: TickerDataRepository,
     private readonly reportGenerator: ReportGenerator,

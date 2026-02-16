@@ -1,11 +1,11 @@
-import type { PositionRepository } from '../../repositories/position.repository';
+import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { BrokerRepository } from '../../repositories/broker.repository';
 import { ListPositionsInput } from './list-positions.input';
 import { ListPositionsOutput } from './list-positions.output';
 
 export class ListPositionsUseCase {
   constructor(
-    private readonly positionRepository: PositionRepository,
+    private readonly positionRepository: AssetPositionRepository,
     private readonly brokerRepository: BrokerRepository,
   ) {}
 

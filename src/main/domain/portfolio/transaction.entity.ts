@@ -1,4 +1,4 @@
-import type { SourceType, TransactionType } from '../../../shared/types/domain';
+import { SourceType, TransactionType } from '../../../shared/types/domain';
 import { Uuid } from '../shared/uuid.vo';
 
 interface TransactionProps {
@@ -75,5 +75,9 @@ export class Transaction {
       externalRef: props.externalRef,
       importBatchId: props.importBatchId,
     });
+  }
+
+  isInitialBalance(): boolean {
+    return this.type === TransactionType.InitialBalance;
   }
 }

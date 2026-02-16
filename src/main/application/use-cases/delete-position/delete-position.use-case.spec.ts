@@ -1,19 +1,19 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { mock } from 'jest-mock-extended';
 import { DeletePositionUseCase } from './delete-position.use-case';
-import type { PositionRepository } from '../../repositories/position.repository';
+import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
 import { AssetType } from '../../../../shared/types/domain';
 import { Uuid } from '../../../domain/shared/uuid.vo';
 import { AssetPosition } from '../../../domain/portfolio/asset-position.entity';
 
 describe('DeletePositionUseCase', () => {
-  let positionRepo: jest.Mocked<PositionRepository>;
+  let positionRepo: jest.Mocked<AssetPositionRepository>;
   let transactionRepo: jest.Mocked<TransactionRepository>;
   let useCase: DeletePositionUseCase;
 
   beforeEach(() => {
-    positionRepo = mock<PositionRepository>();
+    positionRepo = mock<AssetPositionRepository>();
     transactionRepo = mock<TransactionRepository>();    
     transactionRepo.deleteByTickerAndYear.mockResolvedValue(undefined);
     positionRepo.delete.mockResolvedValue(undefined);

@@ -14,7 +14,7 @@ import { ImportOperationsUseCase } from '../../application/use-cases/import-oper
 import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance-use-case';
 import { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
 import { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position-use-case';
-import { MigrateYearUseCase } from '../../application/use-cases/migrate-year-use-case';
+import { MigrateYearUseCase } from '../../application/use-cases/migrate-year/migrate-year.use-case';
 import { KnexPositionRepository } from '../../infrastructure/persistence/knex-position.repository';
 import { KnexTransactionRepository } from '../../infrastructure/persistence/knex-transaction.repository';
 import { KnexBrokerRepository } from '../../infrastructure/persistence/knex-broker.repository';

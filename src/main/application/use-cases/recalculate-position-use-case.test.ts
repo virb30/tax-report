@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { AssetType } from '../../../shared/types/domain';
 import { TransactionType } from '../../../shared/types/domain';
 import { SourceType } from '../../../shared/types/domain';
-import type { PositionRepository } from '../repositories/position.repository';
+import type { AssetPositionRepository } from '../repositories/asset-position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import { RecalculatePositionUseCase } from './recalculate-position-use-case';
 
 describe('RecalculatePositionUseCase', () => {
-  let positionRepository: PositionRepository;
+  let positionRepository: AssetPositionRepository;
   let transactionRepository: TransactionRepository;
   let useCase: RecalculatePositionUseCase;
 

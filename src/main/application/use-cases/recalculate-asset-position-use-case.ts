@@ -10,6 +10,9 @@ export type RecalculateAssetPositionInput = {
   assetType: AssetType;
 };
 
+/**
+ * @deprecated Use RecalculatePositionUseCase instead
+ */
 export class RecalculateAssetPositionUseCase {
   constructor(
     private readonly portfolioPositionRepository: PortfolioPositionRepositoryPort,

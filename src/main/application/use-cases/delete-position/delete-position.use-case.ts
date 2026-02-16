@@ -1,11 +1,11 @@
-import type { PositionRepository } from '../../repositories/position.repository';
+import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
 import { DeletePositionInput } from './delete-position.input';
 import { DeletePositionOutput } from './delete-position.output';
 
 export class DeletePositionUseCase {
   constructor(
-    private readonly positionRepository: PositionRepository,
+    private readonly positionRepository: AssetPositionRepository,
     private readonly transactionRepository: TransactionRepository,
   ) {}
 

@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import type { PositionRepository } from '../../application/repositories/position.repository';
+import type { AssetPositionRepository } from '../../application/repositories/asset-position.repository';
 import {
   AssetPosition,
   BrokerAllocation,
@@ -41,7 +41,7 @@ function toAssetTypeColumn(assetType: AssetType): string {
   return assetType;
 }
 
-export class KnexPositionRepository implements PositionRepository {
+export class KnexPositionRepository implements AssetPositionRepository {
   constructor(private readonly database: Knex) {}
 
   async findByTickerAndYear(

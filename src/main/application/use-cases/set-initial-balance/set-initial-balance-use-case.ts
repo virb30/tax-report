@@ -1,5 +1,5 @@
 import { AssetPosition } from '../../../domain/portfolio/asset-position.entity';
-import type { PositionRepository } from '../../repositories/position.repository';
+import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
 import { TransactionType } from '../../../../shared/types/domain';
 import { SourceType } from '../../../../shared/types/domain';
@@ -10,7 +10,7 @@ import { Transaction } from '../../../domain/portfolio/transaction.entity';
 
 export class SetInitialBalanceUseCase {
   constructor(
-    private readonly positionRepository: PositionRepository,
+    private readonly positionRepository: AssetPositionRepository,
     private readonly transactionRepository: TransactionRepository,
   ) {}
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { AssetType } from '../../../../shared/types/domain';
-import type { PositionRepository } from '../../repositories/position.repository';
+import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
 import { SetInitialBalanceUseCase } from './set-initial-balance-use-case';
 import { mock } from 'jest-mock-extended';
@@ -8,7 +8,7 @@ import { AssetPosition } from '../../../domain/portfolio/asset-position.entity';
 import { Uuid } from '../../../domain/shared/uuid.vo';
 
 describe('SetInitialBalanceUseCase', () => {
-  const positionRepository = mock<PositionRepository>();
+  const positionRepository = mock<AssetPositionRepository>();
   const transactionRepository = mock<TransactionRepository>();
   let useCase: SetInitialBalanceUseCase;
 

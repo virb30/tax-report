@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { AssetType, SourceType, TransactionType } from '../../../shared/types/domain';
 import type { BrokerRepositoryPort } from '../repositories/broker.repository';
-import type { PositionRepository } from '../repositories/position.repository';
+import type { PositionRepository } from '../repositories/asset-position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import type { TickerDataRepository } from '../repositories/ticker-data.repository';
 import { GenerateAssetsReportUseCase } from './generate-assets-report-use-case';

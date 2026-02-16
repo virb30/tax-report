@@ -2,7 +2,7 @@ import { AssetType } from '../../../shared/types/domain';
 import { AssetPosition } from '../../domain/portfolio/asset-position.entity';
 import type { TransactionRecord } from '../../domain/portfolio/transaction.entity';
 import { TransactionType } from '../../../shared/types/domain';
-import type { PositionRepository } from '../repositories/position.repository';
+import type { AssetPositionRepository } from '../repositories/asset-position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import { Uuid } from '../../domain/shared/uuid.vo';
 
@@ -13,7 +13,7 @@ export type RecalculatePositionInput = {
 
 export class RecalculatePositionUseCase {
   constructor(
-    private readonly positionRepository: PositionRepository,
+    private readonly positionRepository: AssetPositionRepository,
     private readonly transactionRepository: TransactionRepository,
   ) {}
 

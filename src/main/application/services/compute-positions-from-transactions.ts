@@ -2,18 +2,13 @@ import { AssetType } from '../../../shared/types/domain';
 import { AssetPosition } from '../../domain/portfolio/asset-position.entity';
 import type { Transaction } from '../../domain/portfolio/transaction.entity';
 import { TransactionType } from '../../../shared/types/domain';
-import type { PositionRepository } from '../repositories/position.repository';
 
 export async function computePositionsFromTransactions(
   transactions: Transaction[],
-  positionRepository: PositionRepository,
+  positions: AssetPosition[],
   year: number,
 ): Promise<AssetPosition[]> {
-  const positions = await positionRepository.findAllByYear(year);
   const positionsByTicker = new Map<string, AssetPosition>(positions.map((position) => [position.ticker, position]));
-  positions.forEach((position) => {
-    positionsByTicker.set(position.ticker, position);
-  });
 
   transactions.forEach((tx) => {
     let position = positionsByTicker.get(tx.ticker);

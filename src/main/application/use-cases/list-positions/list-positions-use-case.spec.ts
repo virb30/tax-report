@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { mock } from 'jest-mock-extended';
 import { AssetType } from '../../../../shared/types/domain';
-import type { PositionRepository } from '../../repositories/position.repository';
+import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { BrokerRepository } from '../../repositories/broker.repository';
 import { ListPositionsUseCase } from './list-positions-use-case';
 import { Broker } from '@main/domain/portfolio/broker.entity';
@@ -10,7 +10,7 @@ import { Cnpj } from '@main/domain/shared/cnpj.vo';
 import { AssetPosition } from '@main/domain/portfolio/asset-position.entity';
 
 describe('ListPositionsUseCase', () => {
-  const positionRepository = mock<PositionRepository>();
+  const positionRepository = mock<AssetPositionRepository>();
   const brokerRepository = mock<BrokerRepository>();
   const brokerId = Uuid.create();
   let useCase: ListPositionsUseCase;

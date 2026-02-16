@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { TransactionType } from '../../../shared/types/domain';
-import { SourceType } from '../../../shared/types/domain';
-import type { PositionRepository } from '../repositories/position.repository';
-import type { TransactionRepository } from '../repositories/transaction.repository';
-import { MigrateYearUseCase } from './migrate-year-use-case';
+import { TransactionType } from '../../../../shared/types/domain';
+import { SourceType } from '../../../../shared/types/domain';
+import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
+import type { TransactionRepository } from '../../repositories/transaction.repository';
+import { MigrateYearUseCase } from './migrate-year.use-case';
 
 describe('MigrateYearUseCase', () => {
-  let positionRepository: PositionRepository;
+  let positionRepository: AssetPositionRepository;
   let transactionRepository: TransactionRepository;
   let recalculateFn: jest.Mock;
   let useCase: MigrateYearUseCase;
