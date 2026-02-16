@@ -20,10 +20,6 @@ export class UpdateBrokerUseCase {
       broker.changeName(input.name);
     }
 
-    if (input.code !== undefined) {
-      broker.changeCode(input.code);
-    }
-
     if (input.cnpj !== undefined) {
       const cnpj = new Cnpj(input.cnpj);
       const existingByCnpj = await this.brokerRepository.findByCnpj(cnpj);
@@ -31,6 +27,14 @@ export class UpdateBrokerUseCase {
         throw new Error('CNPJ ja cadastrado para outra corretora.');
       }
       broker.changeCnpj(new Cnpj(input.cnpj));
+    }
+
+    if (input.code !== undefined) {
+      const existingByCode = await this.brokerRepository.findByCode(input.code);
+      if (existingByCode && !existingByCode.id.equals(broker.id)) {
+        throw new Error('Código ja cadastrado para outra corretora.');
+      }
+      broker.changeCode(input.code);
     }
 
     await this.brokerRepository.update(broker);

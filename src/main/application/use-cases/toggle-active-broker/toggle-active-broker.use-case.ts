@@ -1,4 +1,4 @@
-import { Uuid } from '@main/domain/shared/uuid.vo';
+import { Uuid } from '../../../domain/shared/uuid.vo';
 import type { BrokerRepository } from '../../repositories/broker.repository';
 import { ToggleActiveBrokerInput } from './toggle-active-broker.input';
 import { ToggleActiveBrokerOutput } from './toggle-active-broker.output';

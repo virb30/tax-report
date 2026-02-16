@@ -1,5 +1,6 @@
 import { Broker } from '@main/domain/portfolio/broker.entity';
 import { Cnpj } from '@main/domain/shared/cnpj.vo';
+import { Uuid } from '@main/domain/shared/uuid.vo';
 
 export interface BrokerRepository {
   findById(id: Uuid): Promise<Broker | null>;

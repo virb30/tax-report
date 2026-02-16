@@ -19,6 +19,24 @@ Use arquitetura em camadas baseada em Clean Architecture.
 - Orquestre fluxos de negocio sem acoplamento com detalhes de infraestrutura.
 - Mantenha nesta camada: use cases, services e portas para servicos externos.
 
+### Estrutura de Use Cases
+
+Cada use case deve ficar em sua própria pasta com nomenclatura `[verbo]-[objeto]` (ex: `create-broker`, `list-brokers`, `update-broker`, `toggle-active-broker`).
+
+**Arquivos obrigatórios:**
+- `[nome].use-case.ts` - Classe com método `execute(input): Promise<output>`
+- `[nome].input.ts` - Interface de entrada (DTO)
+- `[nome].output.ts` - Interface de saída (DTO)
+
+**Arquivo opcional:**
+- `[nome].use-case.spec.ts` - Testes unitários
+
+**Padrões do use case:**
+- Classe: `[PascalCaseVerboObjeto]UseCase`
+- Injeção de dependências (repositories, portas) via construtor
+- Método único: `execute(input: InputType): Promise<OutputType>`
+- Para queries sem parâmetros, o input pode ser opcional: `execute(query?: InputType)`
+
 ## Infrastructure Layer
 
 - Implemente adaptadores concretos para integrar com banco, APIs e bibliotecas externas.
@@ -43,4 +61,6 @@ Exemplo:
 - `assets-knex.repository.ts` implementação concreta do repositorio de ativos usando knex
 - `asset-type.vo.ts` value-object que representa tipo de ativo
 - `assets.query.ts` interface para queries que lidam com assets (CQS)
+- `create-broker.use-case.ts` use case de criação de corretora
+- `create-broker.input.ts` / `create-broker.output.ts` DTOs de entrada e saída do use case
 

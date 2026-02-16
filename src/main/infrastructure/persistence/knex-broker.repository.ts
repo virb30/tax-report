@@ -12,13 +12,13 @@ type BrokerRow = {
   active?: number;
 };
 
-function mapRowToRecord(row: BrokerRow): Broker {
+function toDomain(row: BrokerRow): Broker {
   return Broker.restore({
     id: Uuid.from(row.id),
     name: row.name,
     cnpj: new Cnpj(row.cnpj),
     code: row.code ?? '',
-    active: row.active ? true : false,
+    active: row.active === 1,
   });
 }
 
@@ -27,27 +27,27 @@ export class KnexBrokerRepository implements BrokerRepository {
 
   async findById(id: Uuid): Promise<Broker | null> {
     const row = await this.database<BrokerRow>('brokers').where({ id: id.value }).first();
-    return row ? mapRowToRecord(row) : null;
+    return row ? toDomain(row) : null;
   }
 
   async findByName(name: string): Promise<Broker | null> {
     const row = await this.database<BrokerRow>('brokers').where({ name }).first();
-    return row ? mapRowToRecord(row) : null;
+    return row ? toDomain(row) : null;
   }
 
   async findByCode(code: string): Promise<Broker | null> {
     const row = await this.database<BrokerRow>('brokers').where({ code }).first();
-    return row ? mapRowToRecord(row) : null;
+    return row ? toDomain(row) : null;
   }
 
   async findByCnpj(cnpj: Cnpj): Promise<Broker | null> {
     const row = await this.database<BrokerRow>('brokers').where({ cnpj: cnpj.value }).first();
-    return row ? mapRowToRecord(row) : null;
+    return row ? toDomain(row) : null;
   }
 
   async findAll(): Promise<Broker[]> {
     const rows = await this.database<BrokerRow>('brokers').select('*').orderBy('name', 'asc');
-    return rows.map(mapRowToRecord);
+    return rows.map(toDomain);
   }
 
   async findAllActive(): Promise<Broker[]> {
@@ -55,7 +55,7 @@ export class KnexBrokerRepository implements BrokerRepository {
       .select('*')
       .where({ active: 1 })
       .orderBy('name', 'asc');
-    return rows.map(mapRowToRecord);
+    return rows.map(toDomain);
   }
 
   async save(broker: Broker): Promise<void> {
