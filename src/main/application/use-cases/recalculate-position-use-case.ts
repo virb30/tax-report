@@ -1,6 +1,6 @@
 import { AssetType } from '../../../shared/types/domain';
-import { AssetPosition } from '../../domain/portfolio/asset-position.entity';
-import type { TransactionRecord } from '../../domain/portfolio/transaction.entity';
+import { AssetPosition } from '../../domain/portfolio/entities/asset-position.entity';
+import type { TransactionRecord } from '../../domain/portfolio/entities/transaction.entity';
 import { TransactionType } from '../../../shared/types/domain';
 import type { AssetPositionRepository } from '../repositories/asset-position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';

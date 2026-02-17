@@ -1,6 +1,6 @@
-import { Uuid } from "../shared/uuid.vo";
+import { Uuid } from "../../shared/uuid.vo";
 import { Broker } from "./broker.entity";
-import { Cnpj } from "../shared/cnpj.vo";
+import { Cnpj } from "../../shared/cnpj.vo";
 
 describe('BrokerEntity', () => {
   it('should create a broker', () => {

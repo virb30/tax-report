@@ -1,6 +1,6 @@
 import { AssetType } from '../../../shared/types/domain';
-import type { AssetPosition } from '../portfolio/asset-position.entity';
-import { Broker } from '../portfolio/broker.entity';
+import type { AssetPosition } from '../portfolio/entities/asset-position.entity';
+import { Broker } from '../portfolio/entities/broker.entity';
 
 const STOCK_CLASSIFICATION = { group: '03', code: '01' } as const;
 const FII_CLASSIFICATION = { group: '07', code: '03' } as const;

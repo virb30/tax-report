@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 import type { TransactionRepository } from '../../application/repositories/transaction.repository';
-import type { Transaction } from '../../domain/portfolio/transaction.entity';
+import { Transaction } from '../../domain/portfolio/entities/transaction.entity';
 import { Uuid } from '../../domain/shared/uuid.vo';
 import { SourceType, TransactionType } from '../../../shared/types/domain';
 
@@ -42,7 +42,7 @@ function toPersistence(record: Transaction): Record<string, unknown> {
 }
 
 function toDomain(row: TransactionRow): Transaction {
-  return {
+  return Transaction.restore({
     id: Uuid.from(row.id),
     date: row.date,
     type: row.type as TransactionType,
@@ -54,7 +54,7 @@ function toDomain(row: TransactionRow): Transaction {
     sourceType: row.source_type as SourceType,
     externalRef: row.external_ref ?? undefined,
     importBatchId: row.import_batch_id ?? undefined,
-  };
+  });
 }
 
 export class KnexTransactionRepository implements TransactionRepository {

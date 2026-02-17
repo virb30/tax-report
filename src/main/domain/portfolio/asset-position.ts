@@ -1,5 +1,5 @@
 import type { AssetType } from '../../../shared/types/domain';
-import { AveragePriceService } from './average-price-service';
+import { AveragePriceService } from './services/average-price.service';
 
 export type AssetPositionSnapshot = {
   ticker: string;
@@ -10,6 +10,9 @@ export type AssetPositionSnapshot = {
   isManualBase: boolean;
 };
 
+/**
+ * @deprecated Use AssetPositionEntity instead
+ */
 export class AssetPosition {
   private readonly averagePriceService: AveragePriceService;
   private quantity: number;

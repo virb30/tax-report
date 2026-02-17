@@ -225,7 +225,6 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
   const migrateYearUseCase = new MigrateYearUseCase(
     knexPositionRepository,
     knexTransactionRepository,
-    (input) => recalculatePositionUseCase.execute(input),
   );
 
   const consolidatedPositionParser = new CsvXlsxConsolidatedPositionParser();

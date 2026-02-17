@@ -1,4 +1,4 @@
-import { AssetPosition } from '../../../domain/portfolio/asset-position.entity';
+import { AssetPosition } from '../../../domain/portfolio/entities/asset-position.entity';
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
 import { TransactionType } from '../../../../shared/types/domain';
@@ -6,7 +6,7 @@ import { SourceType } from '../../../../shared/types/domain';
 import { Uuid } from '../../../domain/shared/uuid.vo';
 import type { SetInitialBalanceOutput } from './set-initial-balance.output';
 import type { SetInitialBalanceInput } from './set-initial-balance.input';
-import { Transaction } from '../../../domain/portfolio/transaction.entity';
+import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
 
 export class SetInitialBalanceUseCase {
   constructor(

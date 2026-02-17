@@ -1,4 +1,4 @@
-import type { AssetPosition } from '../../domain/portfolio/asset-position.entity';
+import type { AssetPosition } from '../../domain/portfolio/entities/asset-position.entity';
 
 export interface AssetPositionRepository {
   findByTickerAndYear(ticker: string, year: number): Promise<AssetPosition | null>;

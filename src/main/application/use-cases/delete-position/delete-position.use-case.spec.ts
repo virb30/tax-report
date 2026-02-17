@@ -5,7 +5,7 @@ import type { AssetPositionRepository } from '../../repositories/asset-position.
 import type { TransactionRepository } from '../../repositories/transaction.repository';
 import { AssetType } from '../../../../shared/types/domain';
 import { Uuid } from '../../../domain/shared/uuid.vo';
-import { AssetPosition } from '../../../domain/portfolio/asset-position.entity';
+import { AssetPosition } from '../../../domain/portfolio/entities/asset-position.entity';
 
 describe('DeletePositionUseCase', () => {
   let positionRepo: jest.Mocked<AssetPositionRepository>;

@@ -3,7 +3,7 @@ import { mock, mockReset } from 'jest-mock-extended';
 import { BrokerRepository } from '@main/application/repositories/broker.repository';
 import { UpdateBrokerUseCase } from './update-broker.use-case';
 import { Uuid } from '@main/domain/shared/uuid.vo';
-import { Broker } from '@main/domain/portfolio/broker.entity';
+import { Broker } from '@main/domain/portfolio/entities/broker.entity';
 import { Cnpj } from '@main/domain/shared/cnpj.vo';
 
 describe('UpdateBrokerUseCase', () => {

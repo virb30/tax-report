@@ -1,6 +1,6 @@
 import { SourceType, TransactionType } from "@shared/types/domain";
 import { Transaction } from "./transaction.entity";
-import { Uuid } from "../shared/uuid.vo";
+import { Uuid } from "../../shared/uuid.vo";
 
 describe('TransactionEntity', () => {
 

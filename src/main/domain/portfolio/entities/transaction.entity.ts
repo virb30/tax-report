@@ -1,5 +1,5 @@
-import { SourceType, TransactionType } from '../../../shared/types/domain';
-import { Uuid } from '../shared/uuid.vo';
+import { SourceType, TransactionType } from '../../../../shared/types/domain';
+import { Uuid } from '../../shared/uuid.vo';
 
 interface TransactionProps {
   id: Uuid;

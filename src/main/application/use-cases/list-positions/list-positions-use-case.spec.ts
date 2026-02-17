@@ -4,10 +4,10 @@ import { AssetType } from '../../../../shared/types/domain';
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { BrokerRepository } from '../../repositories/broker.repository';
 import { ListPositionsUseCase } from './list-positions-use-case';
-import { Broker } from '@main/domain/portfolio/broker.entity';
+import { Broker } from '@main/domain/portfolio/entities/broker.entity';
 import { Uuid } from '@main/domain/shared/uuid.vo';
 import { Cnpj } from '@main/domain/shared/cnpj.vo';
-import { AssetPosition } from '@main/domain/portfolio/asset-position.entity';
+import { AssetPosition } from '@main/domain/portfolio/entities/asset-position.entity';
 
 describe('ListPositionsUseCase', () => {
   const positionRepository = mock<AssetPositionRepository>();

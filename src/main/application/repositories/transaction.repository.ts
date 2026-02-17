@@ -1,4 +1,4 @@
-import type { Transaction } from '../../domain/portfolio/transaction.entity';
+import type { Transaction } from '../../domain/portfolio/entities/transaction.entity';
 
 export interface TransactionRepository {
   save(transaction: Transaction): Promise<void>;

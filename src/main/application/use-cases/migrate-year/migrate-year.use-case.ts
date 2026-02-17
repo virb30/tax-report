@@ -2,11 +2,10 @@ import { TransactionType } from '../../../../shared/types/domain';
 import { SourceType } from '../../../../shared/types/domain';
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
-import { randomUUID } from 'node:crypto';
-import { computePositionsFromTransactions } from '../../services/compute-positions-from-transactions';
 import { MigrateYearOutput } from './migrate-year.output';
 import { MigrateYearInput } from './migrate-year.input';
-import { Transaction } from '@main/domain/portfolio/transaction.entity';
+import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
+import { PositionCalculatorService } from '../../../domain/portfolio/services/position-calculator.service';
 
 
 
@@ -14,10 +13,6 @@ export class MigrateYearUseCase {
   constructor(
     private readonly positionRepository: AssetPositionRepository,
     private readonly transactionRepository: TransactionRepository,
-    private readonly recalculatePosition: (input: {
-      ticker: string;
-      year: number;
-    }) => Promise<void>,
   ) {}
 
   async execute(input: MigrateYearInput): Promise<MigrateYearOutput> {
@@ -37,8 +32,6 @@ export class MigrateYearUseCase {
       );
     }
 
-    const sourceYearEnd = `${input.sourceYear}-12-31`;
-
     const sourceYearPositions = await this.positionRepository.findAllByYear(input.sourceYear);
     const targetInitialBalanceTransactions: Transaction[] = [];
     sourceYearPositions.forEach((position) => {
@@ -57,15 +50,17 @@ export class MigrateYearUseCase {
         targetInitialBalanceTransactions.push(transaction);
       });
     });
-    await this.transactionRepository.saveMany(targetInitialBalanceTransactions);
 
-    const positionsAtYearEnd = await computePositionsFromTransactions(
+
+    const positionCalculator = new PositionCalculatorService();
+    const positionsAtYearEnd = positionCalculator.compute(
       [...existingTargetYearTransactions, ...targetInitialBalanceTransactions],
       [],
       input.targetYear,
     );
-    await this.positionRepository.saveMany(positionsAtYearEnd);
+
     const positionsWithQuantity = positionsAtYearEnd.filter((p) => p.totalQuantity > 0);
+
     if (positionsWithQuantity.length === 0) {
       return {
         migratedPositionsCount: 0,
@@ -74,17 +69,12 @@ export class MigrateYearUseCase {
       };
     }
 
-    this.positionRepository.saveMany(positionsAtYearEnd);
-
-   
-    const affectedTickers = [...new Set(positionsWithQuantity.map((p) => p.ticker))];
-    for (const ticker of affectedTickers) {
-      await this.recalculatePosition({ ticker, year: input.targetYear });
-    }
+    await this.transactionRepository.saveMany(targetInitialBalanceTransactions);
+    await this.positionRepository.saveMany(positionsWithQuantity);
 
     return {
       migratedPositionsCount: positionsWithQuantity.length,
-      createdTransactionsCount: initialBalanceTransactions.length,
+      createdTransactionsCount: targetInitialBalanceTransactions.length,
     };
   }
 

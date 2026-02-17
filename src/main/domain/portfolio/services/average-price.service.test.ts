@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { AveragePriceService } from './average-price-service';
+import { AveragePriceService } from './average-price.service';
 
 describe('AveragePriceService', () => {
   it('calculates weighted average with operational costs', () => {

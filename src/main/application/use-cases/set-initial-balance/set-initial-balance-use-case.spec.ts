@@ -4,7 +4,7 @@ import type { AssetPositionRepository } from '../../repositories/asset-position.
 import type { TransactionRepository } from '../../repositories/transaction.repository';
 import { SetInitialBalanceUseCase } from './set-initial-balance-use-case';
 import { mock } from 'jest-mock-extended';
-import { AssetPosition } from '../../../domain/portfolio/asset-position.entity';
+import { AssetPosition } from '../../../domain/portfolio/entities/asset-position.entity';
 import { Uuid } from '../../../domain/shared/uuid.vo';
 
 describe('SetInitialBalanceUseCase', () => {

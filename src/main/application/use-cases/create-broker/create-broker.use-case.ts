@@ -1,4 +1,4 @@
-import { Broker } from '../../../domain/portfolio/broker.entity';
+import { Broker } from '../../../domain/portfolio/entities/broker.entity';
 import { Cnpj } from '../../../domain/shared/cnpj.vo';
 import type { BrokerRepository } from '../../repositories/broker.repository';
 import { CreateBrokerInput } from './create-broker.input';

@@ -1,6 +1,6 @@
 import { AssetType } from '../../../shared/types/domain';
-import { AssetPosition } from '../../domain/portfolio/asset-position.entity';
-import type { Transaction } from '../../domain/portfolio/transaction.entity';
+import { AssetPosition } from '../../domain/portfolio/entities/asset-position.entity';
+import type { Transaction } from '../../domain/portfolio/entities/transaction.entity';
 import { TransactionType } from '../../../shared/types/domain';
 
 export async function computePositionsFromTransactions(

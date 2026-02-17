@@ -1,5 +1,5 @@
-import { Money } from './money.vo';
-import { Quantity } from './quantity.vo';
+import { Money } from '../value-objects/money.vo';
+import { Quantity } from '../value-objects/quantity.vo';
 
 export type CalculateAveragePriceInput = {
   currentQuantity: number;

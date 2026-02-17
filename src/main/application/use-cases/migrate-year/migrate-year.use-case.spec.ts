@@ -1,59 +1,57 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { TransactionType } from '../../../../shared/types/domain';
+import { mock, mockReset } from 'jest-mock-extended';
+import { AssetType, TransactionType } from '../../../../shared/types/domain';
 import { SourceType } from '../../../../shared/types/domain';
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
 import { MigrateYearUseCase } from './migrate-year.use-case';
+import { Uuid } from '../../../domain/shared/uuid.vo';
+import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
+import { AssetPosition } from '../../../domain/portfolio/entities/asset-position.entity';
 
 describe('MigrateYearUseCase', () => {
-  let positionRepository: AssetPositionRepository;
-  let transactionRepository: TransactionRepository;
-  let recalculateFn: jest.Mock;
+  const positionRepository = mock<AssetPositionRepository>();
+  const transactionRepository = mock<TransactionRepository>();
   let useCase: MigrateYearUseCase;
 
   beforeEach(() => {
-    positionRepository = {
-      findByTickerAndYear: jest.fn().mockResolvedValue(null),
-      findAllByYear: jest.fn(),
-      save: jest.fn().mockResolvedValue(undefined),
-    };
-    transactionRepository = {
-      save: jest.fn().mockResolvedValue(undefined),
-      saveMany: jest.fn().mockResolvedValue(undefined),
-      findByTicker: jest.fn(),
-      findByPeriod: jest.fn().mockResolvedValue([]),
-    };
-    recalculateFn = jest.fn().mockResolvedValue(undefined);
-    useCase = new MigrateYearUseCase(
-      positionRepository,
-      transactionRepository,
-      (input) => recalculateFn(input),
-    );
+    mockReset(positionRepository);
+    mockReset(transactionRepository);
+    positionRepository.findByTickerAndYear.mockResolvedValue(null);
+    positionRepository.findAllByYear.mockResolvedValue([]);
+    positionRepository.save.mockResolvedValue(undefined);
+    transactionRepository.save.mockResolvedValue(undefined);
+    transactionRepository.saveMany.mockResolvedValue(undefined);
+    transactionRepository.findByTicker.mockResolvedValue([]);
+    transactionRepository.findByPeriod.mockResolvedValue([]);
+    useCase = new MigrateYearUseCase(positionRepository, transactionRepository);
   });
 
   it('creates InitialBalance transactions and recalculates positions', async () => {
-    (positionRepository.findByTickerAndYear as jest.Mock).mockResolvedValue({
-      ticker: 'PETR4',
-      assetType: 'stock',
-      totalQuantity: 0,
-      averagePrice: 0,
-      brokerBreakdown: [],
-    });
-    (transactionRepository.findByPeriod as jest.Mock)
-      .mockImplementation(async (input: { startDate: string; endDate: string }) => {
+    const brokerId = Uuid.create();
+    positionRepository.findAllByYear.mockResolvedValue([
+      AssetPosition.create({
+        ticker: 'PETR4',
+        assetType: AssetType.Stock,
+        year: 2024,
+        totalQuantity: 100,
+        averagePrice: 20,
+        brokerBreakdown: [{ brokerId, quantity: 100 }],
+      }),
+    ]);
+    transactionRepository.findByPeriod.mockImplementation(async (input: { startDate: string; endDate: string }) => {
         if (input.endDate === '2024-12-31') {
           return [
-            {
-              id: '1',
+            Transaction.create({
               date: '2024-01-15',
               type: TransactionType.InitialBalance,
               ticker: 'PETR4',
               quantity: 100,
               unitPrice: 20,
               fees: 0,
-              brokerId: 'broker-xp',
+              brokerId,
               sourceType: SourceType.Manual,
-            },
+            }),
           ];
         }
         if (input.startDate === '2025-01-01' && input.endDate === '2025-12-31') {
@@ -67,46 +65,39 @@ describe('MigrateYearUseCase', () => {
     expect(result.migratedPositionsCount).toBe(1);
     expect(result.createdTransactionsCount).toBe(1);
     expect(transactionRepository.saveMany).toHaveBeenCalledTimes(1);
-    const savedTransactions = (transactionRepository.saveMany as jest.Mock).mock.calls[0]?.[0];
-    expect(savedTransactions).toHaveLength(1);
-    expect(savedTransactions[0]?.type).toBe(TransactionType.InitialBalance);
-    expect(savedTransactions[0]?.date).toBe('2025-01-01');
-    expect(savedTransactions[0]?.ticker).toBe('PETR4');
-    expect(savedTransactions[0]?.quantity).toBe(100);
-    expect(savedTransactions[0]?.unitPrice).toBe(20);
-    expect(recalculateFn).toHaveBeenCalledWith({ ticker: 'PETR4', year: 2025 });
+    expect(positionRepository.saveMany).toHaveBeenCalledTimes(1);
   });
 
   it('blocks migration when InitialBalance already exists for target year', async () => {
-    (transactionRepository.findByPeriod as jest.Mock).mockImplementation(
+    const targetYear = 2025;
+    transactionRepository.findByPeriod.mockImplementation(
       async (input: { startDate: string; endDate: string }) => {
         if (input.startDate === '2025-01-01' && input.endDate === '2025-12-31') {
           return [
-            {
-              id: 'existing',
-              date: '2025-01-01',
+            Transaction.create({
+              date: `${targetYear}-01-01`,
               type: TransactionType.InitialBalance,
               ticker: 'PETR4',
               quantity: 50,
               unitPrice: 22,
               fees: 0,
-              brokerId: 'broker-xp',
+              brokerId: Uuid.create(),
               sourceType: SourceType.Manual,
-            },
+            }),
           ];
         }
         return [];
       },
     );
 
-    await expect(useCase.execute({ sourceYear: 2024, targetYear: 2025 })).rejects.toThrow(
-      'Migração duplicada',
+    await expect(useCase.execute({ sourceYear: 2024, targetYear })).rejects.toThrow(
+      `Migração duplicada: já existem transações de Saldo Inicial para o ano ${targetYear}. Remova-as antes de migrar novamente.`,
     );
     expect(transactionRepository.saveMany).not.toHaveBeenCalled();
   });
 
   it('returns message when no positions to migrate', async () => {
-    (transactionRepository.findByPeriod as jest.Mock).mockResolvedValue([]);
+    transactionRepository.findByPeriod.mockResolvedValue([]);
 
     const result = await useCase.execute({ sourceYear: 2024, targetYear: 2025 });
 

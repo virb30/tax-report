@@ -1,4 +1,4 @@
-import { Broker } from "../../../domain/portfolio/broker.entity";
+import { Broker } from "../../../domain/portfolio/entities/broker.entity";
 import { BrokerRepository } from "../../repositories/broker.repository";
 import { ListBrokersInput } from "./list-brokers.input";
 import { BrokerOutput, ListBrokersOutput } from "./list-brokers.output";

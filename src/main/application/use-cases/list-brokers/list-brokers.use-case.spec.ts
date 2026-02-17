@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 import { mock, mockReset } from 'jest-mock-extended';
 import { ListBrokersUseCase } from './list-brokers.use-case';
-import { Broker } from '../../../domain/portfolio/broker.entity';
+import { Broker } from '../../../domain/portfolio/entities/broker.entity';
 import { Cnpj } from '../../../domain/shared/cnpj.vo';
 import type { BrokerRepository } from '../../repositories/broker.repository';
 

@@ -3,7 +3,7 @@ import type { AssetPositionRepository } from '../../application/repositories/ass
 import {
   AssetPosition,
   BrokerAllocation,
-} from '../../domain/portfolio/asset-position.entity';
+} from '../../domain/portfolio/entities/asset-position.entity';
 import type { AssetType } from '../../../shared/types/domain';
 import { Uuid } from '../../domain/shared/uuid.vo';
 
@@ -39,6 +39,27 @@ function toAssetType(assetType: string): AssetType {
 
 function toAssetTypeColumn(assetType: AssetType): string {
   return assetType;
+}
+
+function postitionToPersistence(position: AssetPosition): Record<string, unknown> {
+  const averagePriceCents = Math.round(position.averagePrice * 100);
+  return {
+      ticker: position.ticker,
+      year: position.year,
+      asset_type: toAssetTypeColumn(position.assetType),
+      total_quantity: position.totalQuantity,
+      average_price: position.averagePrice,
+      average_price_cents: averagePriceCents,
+  };
+}
+
+function brokerBreakdownToPersistence(position: AssetPosition): Record<string, unknown>[] {
+  return position.brokerBreakdown.map((allocation) => ({
+    position_ticker: position.ticker,
+    position_year: position.year,
+    broker_id: allocation.brokerId.value,
+    quantity: allocation.quantity,
+  }));
 }
 
 export class KnexPositionRepository implements AssetPositionRepository {
@@ -116,14 +137,7 @@ export class KnexPositionRepository implements AssetPositionRepository {
       const averagePriceCents = Math.round(position.averagePrice * 100);
 
       await trx('positions')
-        .insert({
-          ticker: position.ticker,
-          year: position.year,
-          asset_type: toAssetTypeColumn(position.assetType),
-          total_quantity: position.totalQuantity,
-          average_price: position.averagePrice,
-          average_price_cents: averagePriceCents,
-        })
+        .insert(postitionToPersistence(position))
         .onConflict(['ticker', 'year'])
         .merge({
           asset_type: toAssetTypeColumn(position.assetType),
@@ -138,13 +152,41 @@ export class KnexPositionRepository implements AssetPositionRepository {
 
       if (position.brokerBreakdown.length > 0) {
         await trx('position_broker_allocations').insert(
-          position.brokerBreakdown.map((a) => ({
-            position_ticker: position.ticker,
-            position_year: position.year,
-            broker_id: a.brokerId.value,
-            quantity: a.quantity,
-          })),
+          brokerBreakdownToPersistence(position),
         );
+      }
+    });
+  }
+
+  async saveMany(positions: AssetPosition[]): Promise<void> {
+    if (positions.length === 0) return;
+
+    await this.database.transaction(async (trx) => {
+      const positionRows = positions.map((p) => postitionToPersistence(p));
+      const positionPairs = positions.map((p) => [p.ticker, p.year] as [string, number]);
+      const allocationRows = positions.flatMap((p) => brokerBreakdownToPersistence(p));
+
+      await trx('positions')
+        .insert(positionRows)
+        .onConflict(['ticker', 'year'])
+        .merge([
+          'asset_type',
+          'total_quantity',
+          'average_price',
+          'average_price_cents',
+        ]);
+
+      await trx('position_broker_allocations')
+        .whereIn(['position_ticker', 'position_year'], positionPairs)
+        .delete();
+
+      if (allocationRows.length > 0) {
+        const chunkSize = 500;
+        for (let i = 0; i < allocationRows.length; i += chunkSize) {
+          await trx('position_broker_allocations').insert(
+            allocationRows.slice(i, i + chunkSize),
+          );
+        }
       }
     });
   }

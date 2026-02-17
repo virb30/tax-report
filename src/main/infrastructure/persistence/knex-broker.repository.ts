@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 import type { BrokerRepository } from '../../application/repositories/broker.repository';
-import { Broker } from '../../domain/portfolio/broker.entity';
+import { Broker } from '../../domain/portfolio/entities/broker.entity';
 import { Uuid } from '../../domain/shared/uuid.vo';
 import { Cnpj } from '../../domain/shared/cnpj.vo';
 
