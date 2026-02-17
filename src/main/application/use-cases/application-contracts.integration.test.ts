@@ -11,12 +11,16 @@ import { KnexTransactionRepository } from '../../infrastructure/persistence/knex
 import { KnexTickerDataRepository } from '../../infrastructure/persistence/knex-ticker-data.repository';
 import { GenerateAssetsReportUseCase } from './generate-assets-report-use-case';
 import { ListPositionsUseCase } from './list-positions/list-positions-use-case';
-import { SetInitialBalanceUseCase } from './set-initial-balance/set-initial-balance-use-case';
+import { SetInitialBalanceUseCase } from './set-initial-balance/set-initial-balance.use-case';
 import { ImportConsolidatedPositionUseCase } from './import-consolidated-position-use-case';
 import { DeletePositionUseCase } from './delete-position/delete-position.use-case';
 import { ReportGenerator } from '../../domain/tax-reporting/report-generator.service';
 import { CsvXlsxConsolidatedPositionParser } from '../../infrastructure/parsers/csv-xlsx-consolidated-position.parser';
-import { RecalculatePositionUseCase } from './recalculate-position-use-case';
+import { RecalculatePositionUseCase } from './recalculate-position/recalculate-position.use-case';
+import { Transaction } from '@main/domain/portfolio/entities/transaction.entity';
+import { Uuid } from '@main/domain/shared/uuid.vo';
+import { Broker } from '@main/domain/portfolio/entities/broker.entity';
+import { Cnpj } from '@main/domain/shared/cnpj.vo';
 
 describe('Application contracts integration', () => {
   let database: Knex;
@@ -42,7 +46,6 @@ describe('Application contracts integration', () => {
     );
     const listPositionsUseCase = new ListPositionsUseCase(
       knexPositionRepository,
-      knexTransactionRepository,
       brokerRepository,
     );
     const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
@@ -53,23 +56,31 @@ describe('Application contracts integration', () => {
       reportGenerator,
     );
 
+    const broker = Broker.create({
+      name: 'Test',
+      cnpj: new Cnpj('11.111.111/0001-00'),
+      code: 'TEST',
+    });
+    const brokerId = broker.id;
+
+    await brokerRepository.save(broker);
+
     await knexTransactionRepository.saveMany([
-      {
-        id: 'tx-petr4-1',
+      Transaction.create({
         date: '2025-03-01',
         type: TransactionType.Buy,
         ticker: 'PETR4',
         quantity: 10,
         unitPrice: 20,
         fees: 1,
-        brokerId: 'broker-xp',
+        brokerId,
         sourceType: SourceType.Csv,
-      },
+      }),
     ]);
 
     const initialBalanceResult = await setInitialBalanceUseCase.execute({
       ticker: 'IVVB11',
-      brokerId: 'broker-xp',
+      brokerId: brokerId.value,
       assetType: AssetType.Etf,
       quantity: 2,
       averagePrice: 300,
@@ -78,7 +89,7 @@ describe('Application contracts integration', () => {
 
     expect(initialBalanceResult).toEqual({
       ticker: 'IVVB11',
-      brokerId: 'broker-xp',
+      brokerId: brokerId.value,
       quantity: 2,
       averagePrice: 300,
     });
@@ -90,7 +101,7 @@ describe('Application contracts integration', () => {
           ticker: 'IVVB11',
           totalCost: 600,
           brokerBreakdown: expect.arrayContaining([
-            expect.objectContaining({ brokerId: 'broker-xp', quantity: 2 }),
+            expect.objectContaining({ brokerId: brokerId.value, quantity: 2 }),
           ]),
         }),
       ]),
@@ -109,8 +120,8 @@ describe('Application contracts integration', () => {
           revenueClassification: { group: '03', code: '01' },
           allocations: expect.arrayContaining([
             expect.objectContaining({
-              brokerName: 'XP Investimentos',
-              cnpj: '02.332.886/0001-04',
+              brokerName: 'Test',
+              cnpj: '11.111.111/0001-00',
               quantity: 10,
               totalCost: 201,
             }),
@@ -142,7 +153,6 @@ describe('Application contracts integration', () => {
     );
     const listPositionsUseCase = new ListPositionsUseCase(
       knexPositionRepository,
-      knexTransactionRepository,
       brokerRepository,
     );
 

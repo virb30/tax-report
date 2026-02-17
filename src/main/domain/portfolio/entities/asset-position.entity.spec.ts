@@ -150,7 +150,7 @@ describe('AssetPosition', () => {
     expect(position.brokerBreakdown).toEqual([{ brokerId, quantity: 2 }]);
   });
 
-  it('applyInitialBalance sums when broker already has allocation', () => {
+  it('applyInitialBalance resets when broker already has allocation', () => {
     const brokerId = Uuid.create();
     const position = AssetPosition.create({
       ticker: 'PETR4',
@@ -167,9 +167,9 @@ describe('AssetPosition', () => {
       brokerId,
     });
 
-    expect(position.totalQuantity).toBe(20);
-    expect(position.averagePrice).toBe(25);
-    expect(position.brokerBreakdown).toEqual([{ brokerId, quantity: 20 }]);
+    expect(position.totalQuantity).toBe(10);
+    expect(position.averagePrice).toBe(30);
+    expect(position.brokerBreakdown).toEqual([{ brokerId, quantity: 10 }]);
   });
 
   it('throws when selling more than broker allocation', () => {

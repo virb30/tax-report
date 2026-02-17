@@ -26,9 +26,11 @@ export class GenerateAssetsReportUseCase {
       endDate: referenceDate,
     });
 
+    const basePositions = await this.positionRepository.findAllByYear(input.baseYear);
+
     const positions = await computePositionsFromTransactions(
       transactions,
-      this.positionRepository,
+      basePositions,
       input.baseYear,
     );
 

@@ -24,7 +24,7 @@ export class Money {
   }
 
   toNumber(): number {
-    return this.amount;
+    return Number(this.amount.toFixed(2));
   }
 
   private validate(amount: number): void {

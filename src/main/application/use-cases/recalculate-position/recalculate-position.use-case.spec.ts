@@ -9,8 +9,9 @@ import { mock, mockReset } from 'jest-mock-extended';
 import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
 import { Uuid } from '../../../domain/shared/uuid.vo';
 import { AssetPosition } from '../../../domain/portfolio/entities/asset-position.entity';
+import { Money } from '../../../domain/portfolio/value-objects/money.vo';
 
-describe.skip('RecalculatePositionUseCase', () => {
+describe('RecalculatePositionUseCase', () => {
   const positionRepository = mock<AssetPositionRepository>();
   const transactionRepository = mock<TransactionRepository>();
   let useCase: RecalculatePositionUseCase;
@@ -20,10 +21,7 @@ describe.skip('RecalculatePositionUseCase', () => {
     mockReset(transactionRepository);
     positionRepository.findByTickerAndYear.mockResolvedValue(null);
     positionRepository.findAllByYear.mockResolvedValue([]);
-    positionRepository.save.mockImplementation((position) => {
-      console.log('Saving position:', position);
-      return Promise.resolve();
-    });
+    positionRepository.save.mockResolvedValue(undefined);
     transactionRepository.save.mockResolvedValue(undefined);
     transactionRepository.saveMany.mockResolvedValue(undefined);
     transactionRepository.findByTicker.mockResolvedValue([]);
@@ -79,7 +77,15 @@ describe.skip('RecalculatePositionUseCase', () => {
     ]);
 
     const result = await useCase.execute({ ticker: 'PETR4', year: 2024 });
-    console.log(result);
+    expect(positionRepository.save).toHaveBeenCalledTimes(1);
+    expect(positionRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+      totalQuantity: 120,
+      averagePrice: 21.7,
+    }));
+    expect(result).toEqual({
+      totalQuantity: 120,
+      averagePrice: 21.7,
+    });
   });
 
   it('uses existing position assetType when recalculating', async () => {
@@ -105,7 +111,17 @@ describe.skip('RecalculatePositionUseCase', () => {
       }),
     ]);
 
-    await useCase.execute({ ticker: 'HGLG11', year: 2024 });
+    const result = await useCase.execute({ ticker: 'HGLG11', year: 2024 });
+    expect(positionRepository.save).toHaveBeenCalledTimes(1);
+    expect(positionRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+      totalQuantity: 10,
+      averagePrice: 150,
+      assetType: AssetType.Fii,
+    }));
+    expect(result).toEqual({
+      totalQuantity: 10,
+      averagePrice: 150,
+    });
   });
 
   it('persists empty position when no transactions exist', async () => {
@@ -124,6 +140,14 @@ describe.skip('RecalculatePositionUseCase', () => {
 
   it('applies bonus correctly diluting average price', async () => {
     const brokerId = Uuid.create();
+    positionRepository.findByTickerAndYear.mockResolvedValue(AssetPosition.create({
+      ticker: 'ITSA4',
+      year: 2024,
+      assetType: AssetType.Stock,
+      totalQuantity: 100,
+      averagePrice: 10,
+      brokerBreakdown: [{ brokerId, quantity: 100 }],
+    }));
     transactionRepository.findByTicker.mockResolvedValue([
       Transaction.create({
         date: '2024-01-01',
@@ -147,6 +171,16 @@ describe.skip('RecalculatePositionUseCase', () => {
       }),
     ]);
 
-    await useCase.execute({ ticker: 'ITSA4', year: 2024 });
+    const result = await useCase.execute({ ticker: 'ITSA4', year: 2024 });
+    const expectedAveragePrice = Money.from(1000).divideBy(150).toNumber();
+    expect(positionRepository.save).toHaveBeenCalledTimes(1);
+    expect(positionRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+      totalQuantity: 150,
+      averagePrice: expectedAveragePrice,
+    }));
+    expect(result).toEqual({
+      totalQuantity: 150,
+      averagePrice: expectedAveragePrice,
+    });
   });
 });

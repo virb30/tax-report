@@ -93,9 +93,7 @@ export class AssetPosition {
     }
 
     const nextQuantity = this._totalQuantity + input.quantity;
-    const nextAveragePrice = this.averagePriceService.calculateAfterBuy({
-      currentQuantity: this._totalQuantity,
-      currentAveragePrice: this._averagePrice,
+    const nextAveragePrice = this.averagePriceService.calculateAfterBuy(this, {
       buyQuantity: input.quantity,
       buyUnitPrice: input.unitPrice,
       operationalCosts: input.fees ?? 0,
@@ -129,11 +127,7 @@ export class AssetPosition {
     }
 
     const nextQuantity = this._totalQuantity + input.quantity;
-    const nextAveragePrice = this.averagePriceService.calculateAfterBonus({
-      currentQuantity: this._totalQuantity,
-      currentAveragePrice: this._averagePrice,
-      bonusQuantity: input.quantity,
-    });
+    const nextAveragePrice = this.averagePriceService.calculateAfterBonus(this, input.quantity);
 
     this.incrementBrokerQuantity(input.brokerId, input.quantity);
 
@@ -150,16 +144,10 @@ export class AssetPosition {
       throw new Error('Initial balance average price must be greater than zero.');
     }
 
-    const existingTotalCost = this._totalQuantity * this._averagePrice;
-    const newBrokerCost = input.quantity * input.averagePrice;
+    this.setBrokerQuantity(input.brokerId, input.quantity);
+    this._averagePrice = input.averagePrice;
+    this._totalQuantity = this.calculateTotalQuantity();
 
-    const nextQuantity = this._totalQuantity + input.quantity;
-    const nextTotalCost = existingTotalCost + newBrokerCost;
-    const nextAveragePrice = nextTotalCost / nextQuantity;
-
-    this.incrementBrokerQuantity(input.brokerId, input.quantity);
-    this._totalQuantity = nextQuantity;
-    this._averagePrice = nextAveragePrice;
     this.validate();
   }
 
@@ -187,6 +175,10 @@ export class AssetPosition {
     return this.props.ticker;
   }
 
+  get totalCost(): number {
+    return this._totalQuantity * this._averagePrice;
+  }
+
   private validate(): void {
     if (this._totalQuantity < 0) {
       throw new Error('Total quantity cannot be negative.');
@@ -209,6 +201,14 @@ export class AssetPosition {
         `Broker breakdown sum (${breakdownSum}) must equal total quantity (${this._totalQuantity}).`,
       );
     }
+  }
+
+  private calculateTotalQuantity(): number {
+    return Array.from(this._brokerBreakdown.values()).reduce((acc, quantity) => acc + quantity, 0);
+  }
+
+  private setBrokerQuantity(brokerId: Uuid, quantity: number): void {
+    this._brokerBreakdown.set(brokerId.value, quantity);
   }
 
   private incrementBrokerQuantity(brokerId: Uuid, quantity: number): void {

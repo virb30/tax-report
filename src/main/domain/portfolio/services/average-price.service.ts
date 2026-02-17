@@ -1,33 +1,26 @@
 import { Money } from '../value-objects/money.vo';
 import { Quantity } from '../value-objects/quantity.vo';
+import { AssetPosition } from '../entities/asset-position.entity';
 
 export type CalculateAveragePriceInput = {
-  currentQuantity: number;
-  currentAveragePrice: number;
   buyQuantity: number;
   buyUnitPrice: number;
   operationalCosts: number;
 };
 
-export type CalculateAfterBonusInput = {
-  currentQuantity: number;
-  currentAveragePrice: number;
-  bonusQuantity: number;
-};
 
 export class AveragePriceService {
-  calculateAfterBuy(input: CalculateAveragePriceInput): number {
-    const currentQuantity = Quantity.from(input.currentQuantity);
+  calculateAfterBuy(position: AssetPosition, input: CalculateAveragePriceInput): number {
+    const currentQuantity = Quantity.from(position.totalQuantity);
     const buyQuantity = Quantity.from(input.buyQuantity);
     if (buyQuantity.isZero()) {
       throw new Error('Buy quantity must be greater than zero.');
     }
 
-    const currentAveragePrice = Money.from(input.currentAveragePrice);
     const buyUnitPrice = Money.from(input.buyUnitPrice);
     const operationalCosts = Money.from(input.operationalCosts);
 
-    const currentTotalCost = currentAveragePrice.multiplyBy(currentQuantity.toNumber());
+    const currentTotalCost = Money.from(position.totalCost);
     const buyTotalCost = buyUnitPrice.multiplyBy(buyQuantity.toNumber());
     const nextTotalCost = currentTotalCost.add(buyTotalCost).add(operationalCosts);
     const nextQuantity = currentQuantity.add(buyQuantity);
@@ -35,19 +28,19 @@ export class AveragePriceService {
     return nextTotalCost.divideBy(nextQuantity.toNumber()).toNumber();
   }
 
-  /** Bonificação: aumenta quantidade mantendo custo total → PM dilui */
-  calculateAfterBonus(input: CalculateAfterBonusInput): number {
-    if (input.bonusQuantity <= 0) {
+  calculateAfterBonus(position: AssetPosition, bonusQty: number): number {
+    const bonusQuantity = Quantity.from(bonusQty);
+    if (bonusQuantity.isZero()) {
       throw new Error('Bonus quantity must be greater than zero.');
     }
 
-    const currentTotalCost = input.currentQuantity * input.currentAveragePrice;
-    const nextQuantity = input.currentQuantity + input.bonusQuantity;
+    const currentTotalCost = Money.from(position.totalCost);
+    const nextQuantity = Quantity.from(position.totalQuantity).add(bonusQuantity);
 
-    if (nextQuantity <= 0) {
+    if (nextQuantity.isZero()) {
       throw new Error('Total quantity after bonus must be greater than zero.');
     }
 
-    return currentTotalCost / nextQuantity;
+    return currentTotalCost.divideBy(nextQuantity.toNumber()).toNumber();
   }
 }

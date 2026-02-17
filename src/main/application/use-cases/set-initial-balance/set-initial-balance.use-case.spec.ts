@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { AssetType } from '../../../../shared/types/domain';
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
-import { SetInitialBalanceUseCase } from './set-initial-balance-use-case';
+import { SetInitialBalanceUseCase } from './set-initial-balance.use-case';
 import { mock } from 'jest-mock-extended';
 import { AssetPosition } from '../../../domain/portfolio/entities/asset-position.entity';
 import { Uuid } from '../../../domain/shared/uuid.vo';
