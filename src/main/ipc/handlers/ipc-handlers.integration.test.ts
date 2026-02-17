@@ -13,7 +13,7 @@ import { ImportBrokerageNoteUseCase } from '../../application/use-cases/import-b
 import { ImportOperationsUseCase } from '../../application/use-cases/import-operations-use-case';
 import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance-use-case';
 import { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
-import { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position-use-case';
+import { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
 import { MigrateYearUseCase } from '../../application/use-cases/migrate-year/migrate-year.use-case';
 import { KnexPositionRepository } from '../../infrastructure/persistence/knex-position.repository';
 import { KnexTransactionRepository } from '../../infrastructure/persistence/knex-transaction.repository';
@@ -68,7 +68,6 @@ describe('IPC handlers integration', () => {
     );
     const listPositionsUseCase = new ListPositionsUseCase(
       knexPositionRepository,
-      knexTransactionRepository,
       brokerRepository,
     );
     const recalculatePositionUseCase = new RecalculatePositionUseCase(
@@ -78,7 +77,6 @@ describe('IPC handlers integration', () => {
     const migrateYearUseCase = new MigrateYearUseCase(
       knexPositionRepository,
       knexTransactionRepository,
-      (input) => recalculatePositionUseCase.execute(input),
     );
     const reportGenerator = new ReportGenerator();
     const tickerDataRepository = new KnexTickerDataRepository(database);

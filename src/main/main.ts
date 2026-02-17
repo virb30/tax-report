@@ -8,7 +8,7 @@ import { OperationRepository } from './database/repositories/operation-repositor
 import { KnexBrokerRepository } from './infrastructure/persistence/knex-broker.repository';
 import { LegacyPortfolioAcl } from './infrastructure/persistence/legacy/legacy-portfolio-acl';
 import { RecalculateAssetPositionUseCase } from './application/use-cases/recalculate-asset-position-use-case';
-import { RecalculatePositionUseCase } from './application/use-cases/recalculate-position-use-case';
+import { RecalculatePositionUseCase } from './application/use-cases/recalculate-position/recalculate-position.use-case';
 import { MigrateYearUseCase } from './application/use-cases/migrate-year/migrate-year.use-case';
 import { ImportBrokerageNoteUseCase } from './application/use-cases/import-brokerage-note-use-case';
 import { ImportOperationsUseCase } from './application/use-cases/import-operations-use-case';

@@ -83,6 +83,17 @@ export class KnexTransactionRepository implements TransactionRepository {
     return rows.map(toDomain);
   }
 
+  async findByTickerAndYear(ticker: string, year: number): Promise<Transaction[]> {
+    const yearStart = `${year}-01-01`;
+    const yearEnd = `${year}-12-31`;
+    const rows = await this.database<TransactionRow>('transactions')
+      .where({ ticker })
+      .whereBetween('date', [yearStart, yearEnd])
+      .orderBy('date', 'asc')
+      .select('*');
+    return rows.map(toDomain);
+  }
+
   async findByPeriod(input: {
     startDate: string;
     endDate: string;
