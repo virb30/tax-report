@@ -1,38 +1,13 @@
-import { AssetType } from '../../../shared/types/domain';
-import type { AssetPosition } from '../portfolio/entities/asset-position.entity';
-import { Broker } from '../portfolio/entities/broker.entity';
+import { AssetType } from '../../../../shared/types/domain';
+import type { ReportItemInput } from './report-generator.input';
+import type { ReportItemOutput } from './report-generator.output';
 
 const STOCK_CLASSIFICATION = { group: '03', code: '01' } as const;
 const FII_CLASSIFICATION = { group: '07', code: '03' } as const;
 const ETF_CLASSIFICATION = { group: '07', code: '09' } as const;
 
-export type ReportItemInput = {
-  position: AssetPosition;
-  brokersMap: Map<string, Broker>;
-  /** CNPJ do emissor (empresa do ativo), de ticker_data. Usar "N/A" quando não cadastrado. */
-  issuerCnpj: string;
-};
 
-export type ReportItemOutput = {
-  ticker: string;
-  assetType: AssetType;
-  totalQuantity: number;
-  averagePrice: number;
-  totalCost: number;
-  revenueClassification: { group: string; code: string };
-  allocations: Array<{
-    brokerId: string;
-    brokerName: string;
-    cnpj: string;
-    quantity: number;
-    totalCost: number;
-    description: string;
-  }>;
-};
 
-/**
- * Formata valor monetário no padrão brasileiro (R$ 1.234,56).
- */
 export function formatBrl(value: number): string {
   return value.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
@@ -40,9 +15,6 @@ export function formatBrl(value: number): string {
   });
 }
 
-/**
- * Retorna o termo correto para quantidade: "ações" (stock/bdr) ou "cotas" (fii/etf).
- */
 function getAssetUnitLabel(assetType: AssetType): string {
   if (assetType === AssetType.Stock || assetType === AssetType.Bdr) {
     return 'ações';
@@ -50,9 +22,6 @@ function getAssetUnitLabel(assetType: AssetType): string {
   return 'cotas';
 }
 
-/**
- * Retorna classificação RFB por tipo de ativo.
- */
 export function getRevenueClassification(assetType: AssetType): { group: string; code: string } {
   if (assetType === AssetType.Stock || assetType === AssetType.Bdr) {
     return STOCK_CLASSIFICATION;
@@ -66,11 +35,6 @@ export function getRevenueClassification(assetType: AssetType): { group: string;
   throw new Error(`Unsupported asset type for report: ${assetType as string}`);
 }
 
-/**
- * Gera o texto de discriminação no formato RFB para uma alocação por corretora.
- * Formato: "[QTD] ações/cotas [TICKER]. CNPJ: [CNPJ emissor]. Corretora: [NOME]. Custo médio: R$ [PM]. Custo total: R$ [TOTAL]."
- * O CNPJ é do emissor do ativo (empresa), vindo de ticker_data. Use "N/A" quando não cadastrado.
- */
 export function buildDiscriminationText(input: {
   quantity: number;
   ticker: string;
@@ -87,9 +51,6 @@ export function buildDiscriminationText(input: {
   return `${input.quantity} ${unitLabel} ${input.ticker}. CNPJ: ${input.issuerCnpj}. Corretora: ${input.brokerName}. Custo médio: R$ ${avgFormatted}. Custo total: R$ ${totalFormatted}.`;
 }
 
-/**
- * Serviço de domínio que gera relatório de Bens e Direitos a partir de posições consolidadas e dados de corretoras.
- */
 export class ReportGenerator {
   generate(items: ReportItemInput[]): ReportItemOutput[] {
     const result: ReportItemOutput[] = [];

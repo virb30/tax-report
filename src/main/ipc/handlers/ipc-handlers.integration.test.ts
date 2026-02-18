@@ -18,8 +18,8 @@ import { MigrateYearUseCase } from '../../application/use-cases/migrate-year/mig
 import { KnexPositionRepository } from '../../infrastructure/persistence/knex-position.repository';
 import { KnexTransactionRepository } from '../../infrastructure/persistence/knex-transaction.repository';
 import { KnexBrokerRepository } from '../../infrastructure/persistence/knex-broker.repository';
-import { KnexTickerDataRepository } from '../../infrastructure/persistence/knex-ticker-data.repository';
-import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-assets-report-use-case';
+import { KnexTickerDataRepository } from '../../infrastructure/persistence/knex-asset.repository';
+import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-asset-report/generate-assets-report.use-case';
 import { ReportGenerator } from '../../domain/tax-reporting/report-generator.service';
 import { BrokerageNoteParserStrategy } from '../../infrastructure/parsers/brokerage-note-parser.strategy';
 import { CsvXlsxBrokerageNoteParser } from '../../infrastructure/parsers/csv-xlsx-brokerage-note.parser';

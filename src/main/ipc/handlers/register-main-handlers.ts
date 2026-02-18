@@ -1,15 +1,7 @@
 import type {
-  GenerateAssetsReportQuery,
-  GenerateAssetsReportResult,
-} from '@shared/contracts/assets-report.contract';
-import type {
   ImportOperationsCommand,
   ImportOperationsResult,
 } from '@shared/contracts/import-operations.contract';
-import type {
-  ListPositionsQuery,
-  ListPositionsResult,
-} from '@shared/contracts/list-positions.contract';
 import type {
   ConfirmImportOperationsCommand,
   ConfirmImportOperationsResult,
@@ -20,14 +12,6 @@ import type {
   PreviewImportTransactionsCommand,
   PreviewImportTransactionsResult,
 } from '@shared/contracts/preview-import.contract';
-import type {
-  RecalculatePositionCommand,
-  RecalculatePositionResult,
-} from '@shared/contracts/recalculate.contract';
-import type {
-  MigrateYearCommand,
-  MigrateYearResult,
-} from '@shared/contracts/migrate-year.contract';
 import type {
   ImportConsolidatedPositionCommand,
   ImportConsolidatedPositionResult,
@@ -49,6 +33,12 @@ import { DeletePositionInput } from '@main/application/use-cases/delete-position
 import { DeletePositionOutput } from '@main/application/use-cases/delete-position/delete-position.output';
 import { ListPositionsInput } from '@main/application/use-cases/list-positions/list-positions.input';
 import { ListPositionsOutput } from '@main/application/use-cases/list-positions/list-positions.output';
+import { RecalculatePositionInput } from '@main/application/use-cases/recalculate-position/recalculate-position.input';
+import { MigrateYearInput } from '@main/application/use-cases/migrate-year/migrate-year.input';
+import { MigrateYearOutput } from '@main/application/use-cases/migrate-year/migrate-year.output';
+import { GenerateAssetReportInput } from '@main/application/use-cases/generate-asset-report/generate-asset-report.input';
+import { GenerateAssetReportOutput } from '@main/application/use-cases/generate-asset-report/generate-asset-report.output';
+import { RecalculatePositionOutput } from '@main/application/use-cases/recalculate-position/recalculate-position.output';
 
 type IpcMainLike = {
   handle: (
@@ -74,14 +64,14 @@ export type MainHandlersDependencies = {
   setInitialBalance: (input: SetInitialBalanceInput) => Promise<SetInitialBalanceOutput>;
   listPositions: (input: ListPositionsInput) => Promise<ListPositionsOutput>;
   generateAssetsReport: (
-    input: GenerateAssetsReportQuery,
-  ) => Promise<GenerateAssetsReportResult>;
+    input: GenerateAssetReportInput,
+  ) => Promise<GenerateAssetReportOutput>;
   listBrokers: (input?: ListBrokersInput) => Promise<ListBrokersOutput>;
   createBroker: (input: CreateBrokerInput) => Promise<CreateBrokerOutput>;
   updateBroker: (input: UpdateBrokerInput) => Promise<UpdateBrokerOutput>;
   toggleBrokerActive: (input: ToggleActiveBrokerInput) => Promise<ToggleActiveBrokerOutput>;
-  recalculatePosition: (input: RecalculatePositionCommand) => Promise<RecalculatePositionResult>;
-  migrateYear: (input: MigrateYearCommand) => Promise<MigrateYearResult>;
+  recalculatePosition: (input: RecalculatePositionInput) => Promise<RecalculatePositionOutput>;
+  migrateYear: (input: MigrateYearInput) => Promise<MigrateYearOutput>;
   previewConsolidatedPosition: (
     input: PreviewConsolidatedPositionCommand,
   ) => Promise<PreviewConsolidatedPositionResult>;
@@ -160,12 +150,12 @@ export function registerMainHandlers(
     return dependencies.listPositions(payload);
   });
 
-  ipcMain.handle('portfolio:recalculate', (_event, input: RecalculatePositionCommand) => {
+  ipcMain.handle('portfolio:recalculate', (_event, input: unknown) => {
     const payload = parseRecalculatePositionInput(input);
     return dependencies.recalculatePosition(payload);
   });
 
-  ipcMain.handle('portfolio:migrate-year', (_event, input: MigrateYearCommand) => {
+  ipcMain.handle('portfolio:migrate-year', (_event, input: unknown) => {
     const payload = parseMigrateYearInput(input);
     return dependencies.migrateYear(payload);
   });
@@ -191,7 +181,7 @@ export function registerMainHandlers(
     return dependencies.deletePosition(payload);
   });
 
-  ipcMain.handle('report:assets-annual', (_event, input: GenerateAssetsReportQuery) => {
+  ipcMain.handle('report:assets-annual', (_event, input: unknown) => {
     const payload = parseGenerateAssetsReportInput(input);
     return dependencies.generateAssetsReport(payload);
   });
@@ -378,7 +368,7 @@ function parseSetInitialBalanceInput(input: unknown): SetInitialBalanceInput {
   };
 }
 
-function parseGenerateAssetsReportInput(input: unknown): GenerateAssetsReportQuery {
+function parseGenerateAssetsReportInput(input: unknown): GenerateAssetReportInput {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid payload for assets report.');
   }
@@ -391,7 +381,7 @@ function parseGenerateAssetsReportInput(input: unknown): GenerateAssetsReportQue
   };
 }
 
-function parseRecalculatePositionInput(input: unknown): RecalculatePositionCommand {
+function parseRecalculatePositionInput(input: unknown): RecalculatePositionInput {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid payload for recalculate position.');
   }
@@ -408,7 +398,7 @@ function parseRecalculatePositionInput(input: unknown): RecalculatePositionComma
   };
 }
 
-function parseMigrateYearInput(input: unknown): MigrateYearCommand {
+function parseMigrateYearInput(input: unknown): MigrateYearInput {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid payload for migrate year.');
   }

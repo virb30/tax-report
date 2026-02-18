@@ -4,6 +4,7 @@
   "description": "Tax Report desktop application",
   "main": ".vite/build/main.js",
   "scripts": {
+    "predev": "npm run postinstall",
     "dev": "electron-forge start",
     "prestart": "npm run postinstall",
     "start": "electron-forge start",

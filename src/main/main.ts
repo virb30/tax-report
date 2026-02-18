@@ -23,9 +23,9 @@ import { SetInitialBalanceUseCase } from './application/use-cases/set-initial-ba
 import { ListPositionsUseCase } from './application/use-cases/list-positions/list-positions-use-case';
 import { KnexPositionRepository } from './infrastructure/persistence/knex-position.repository';
 import { KnexTransactionRepository } from './infrastructure/persistence/knex-transaction.repository';
-import { KnexTickerDataRepository } from './infrastructure/persistence/knex-ticker-data.repository';
-import { GenerateAssetsReportUseCase } from './application/use-cases/generate-assets-report-use-case';
-import { ReportGenerator } from './domain/tax-reporting/report-generator.service';
+import { KnexAssetRepository } from './infrastructure/persistence/knex-asset.repository';
+import { GenerateAssetsReportUseCase } from './application/use-cases/generate-asset-report/generate-assets-report.use-case';
+import { ReportGenerator } from './application/services/report-generator/report-generator.service';
 import type { OperationsFileParserPort } from './application/ports/operations-file-parser.port';
 import { WindowManager } from './window-manager';
 import { CreateBrokerUseCase } from './application/use-cases/create-broker/create-broker.use-case';
@@ -241,9 +241,8 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
   );
 
   const reportGenerator = new ReportGenerator();
-  const tickerDataRepository = new KnexTickerDataRepository(database);
+  const tickerDataRepository = new KnexAssetRepository(database);
   const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
-    knexTransactionRepository,
     knexPositionRepository,
     brokerRepository,
     tickerDataRepository,

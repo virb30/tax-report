@@ -1,11 +1,15 @@
 import { describe, expect, it } from '@jest/globals';
-import { AssetType } from '../../../shared/types/domain';
+import { AssetType } from '../../../../shared/types/domain';
 import {
   ReportGenerator,
   buildDiscriminationText,
   formatBrl,
   getRevenueClassification,
 } from './report-generator.service';
+import { AssetPosition } from '@main/domain/portfolio/entities/asset-position.entity';
+import { Broker } from '@main/domain/portfolio/entities/broker.entity';
+import { Uuid } from '@main/domain/shared/uuid.vo';
+import { Cnpj } from '@main/domain/shared/cnpj.vo';
 
 describe('ReportGenerator', () => {
   describe('formatBrl', () => {
@@ -70,14 +74,20 @@ describe('ReportGenerator', () => {
       const generator = new ReportGenerator();
       const result = generator.generate([
         {
-          position: {
+          position: AssetPosition.create({
             ticker: 'PETR4',
             assetType: AssetType.Stock,
             totalQuantity: 0,
             averagePrice: 20,
             brokerBreakdown: [],
-          },
-          brokersMap: new Map(),
+            year: 2025,
+          }),
+          brokersMap: new Map([
+            [
+              'broker-xp',
+              Broker.create({ name: 'XP Investimentos', cnpj: new Cnpj('02.332.886/0001-04'), code: 'xp-broker' }),
+            ],
+          ]),
           issuerCnpj: 'N/A',
         },
       ]);
@@ -86,22 +96,23 @@ describe('ReportGenerator', () => {
 
     it('generates one allocation per broker with correct discrimination using issuer CNPJ', () => {
       const generator = new ReportGenerator();
-      const brokersMap = new Map([
-        [
-          'broker-xp',
-          { id: 'broker-xp', name: 'XP Investimentos', cnpj: '02.332.886/0001-04' },
-        ],
-      ]);
+      const broker = Broker.create({ name: 'XP Investimentos', cnpj: new Cnpj('02.332.886/0001-04'), code: 'xp-broker' });
       const result = generator.generate([
         {
-          position: {
+          position: AssetPosition.create({
             ticker: 'PETR4',
             assetType: AssetType.Stock,
             totalQuantity: 100,
             averagePrice: 35.2,
-            brokerBreakdown: [{ brokerId: 'broker-xp', quantity: 100 }],
-          },
-          brokersMap,
+            brokerBreakdown: [{ brokerId: broker.id, quantity: 100 }],
+            year: 2025,
+          }),
+          brokersMap: new Map([
+            [
+              broker.id.value,
+              broker,
+            ],
+          ]),
           issuerCnpj: '33.000.167/0001-01',
         },
       ]);
@@ -116,9 +127,9 @@ describe('ReportGenerator', () => {
         revenueClassification: { group: '03', code: '01' },
         allocations: [
           {
-            brokerId: 'broker-xp',
+            brokerId: broker.id.value,
             brokerName: 'XP Investimentos',
-            cnpj: '02.332.886/0001-04',
+            cnpj: broker.cnpj.value,
             quantity: 100,
             totalCost: 3520,
             description:
@@ -130,29 +141,25 @@ describe('ReportGenerator', () => {
 
     it('generates multiple allocations for multi-broker position', () => {
       const generator = new ReportGenerator();
-      const brokersMap = new Map([
-        [
-          'broker-xp',
-          { id: 'broker-xp', name: 'XP Investimentos', cnpj: '02.332.886/0001-04' },
-        ],
-        [
-          'broker-clear',
-          { id: 'broker-clear', name: 'Clear Corretora', cnpj: '02.332.886/0011-78' },
-        ],
-      ]);
+      const broker = Broker.create({ name: 'XP Investimentos', cnpj: new Cnpj('02.332.886/0001-04'), code: 'xp-broker' });
+      const broker2 = Broker.create({ name: 'Clear Corretora', cnpj: new Cnpj('02.332.886/0011-78'), code: 'clear-broker' });
       const result = generator.generate([
         {
-          position: {
+          position: AssetPosition.create({
             ticker: 'PETR4',
             assetType: AssetType.Stock,
             totalQuantity: 150,
             averagePrice: 35.2,
             brokerBreakdown: [
-              { brokerId: 'broker-xp', quantity: 100 },
-              { brokerId: 'broker-clear', quantity: 50 },
+              { brokerId: broker.id, quantity: 100 },
+              { brokerId: broker2.id, quantity: 50 },
             ],
-          },
-          brokersMap,
+            year: 2025,
+          }),
+          brokersMap: new Map([
+            [broker.id.value, broker],
+            [broker2.id.value, broker2],
+          ]),
           issuerCnpj: '33.000.167/0001-01',
         },
       ]);
@@ -160,14 +167,16 @@ describe('ReportGenerator', () => {
       expect(result).toHaveLength(1);
       expect(result[0]?.allocations).toHaveLength(2);
       expect(result[0]?.allocations[0]).toMatchObject({
-        brokerId: 'broker-xp',
+        brokerId: broker.id.value,
         quantity: 100,
         totalCost: 3520,
+        cnpj: broker.cnpj.value,
       });
       expect(result[0]?.allocations[1]).toMatchObject({
-        brokerId: 'broker-clear',
+        brokerId: broker2.id.value,
         quantity: 50,
         totalCost: 1760,
+        cnpj: broker2.cnpj.value,
       });
     });
 
@@ -175,14 +184,20 @@ describe('ReportGenerator', () => {
       const generator = new ReportGenerator();
       const result = generator.generate([
         {
-          position: {
+          position: AssetPosition.create({
             ticker: 'VALE3',
             assetType: AssetType.Stock,
             totalQuantity: 50,
             averagePrice: 60,
-            brokerBreakdown: [{ brokerId: 'unknown-broker', quantity: 50 }],
-          },
-          brokersMap: new Map(),
+            brokerBreakdown: [{ brokerId: Uuid.create(), quantity: 50 }],
+            year: 2025,
+          }),
+          brokersMap: new Map([
+            [
+              Uuid.create().value,
+              Broker.create({ name: 'Corretora não cadastrada', cnpj: new Cnpj('00.000.000/0001-00'), code: 'unknown-broker' }),
+            ],
+          ]),
           issuerCnpj: 'N/A',
         },
       ]);
