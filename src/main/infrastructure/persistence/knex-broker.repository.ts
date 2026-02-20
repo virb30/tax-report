@@ -40,6 +40,11 @@ export class KnexBrokerRepository implements BrokerRepository {
     return row ? toDomain(row) : null;
   }
 
+  async findAllByCodes(codes: string[]): Promise<Broker[]> {
+    const rows = await this.database<BrokerRow>('brokers').whereIn('code', codes).orderBy('name', 'asc');
+    return rows.map(toDomain);
+  }
+
   async findByCnpj(cnpj: Cnpj): Promise<Broker | null> {
     const row = await this.database<BrokerRow>('brokers').where({ cnpj: cnpj.value }).first();
     return row ? toDomain(row) : null;

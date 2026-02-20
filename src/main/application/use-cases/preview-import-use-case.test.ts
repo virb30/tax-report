@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { TransactionType } from '../../../shared/types/domain';
 import { PreviewImportUseCase } from './preview-import-use-case';
-import type { ImportTransactionsParserPort } from '../ports/import-transactions-parser.port';
+import type { ImportTransactionsParserPort } from '../interfaces/transactions.parser.interface';
 
 describe('PreviewImportUseCase', () => {
   it('parses and apportions fees without persisting', async () => {

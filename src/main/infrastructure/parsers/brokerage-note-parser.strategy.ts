@@ -1,9 +1,9 @@
 import type { ImportOperationsCommand } from '../../../shared/contracts/import-operations.contract';
-import type { OperationsFileParserPort } from '../../application/ports/operations-file-parser.port';
+import type { OperationsFileParserPort } from '../../application/interfaces/operations-file-parser.port';
 import type {
   BrokerageNoteParserPort,
   ParserFileType,
-} from '../../application/ports/brokerage-note-parser.port';
+} from '../../application/interfaces/brokerage-note-parser.port';
 
 export class BrokerageNoteParserStrategy implements OperationsFileParserPort {
   constructor(private readonly parsers: BrokerageNoteParserPort[]) {}

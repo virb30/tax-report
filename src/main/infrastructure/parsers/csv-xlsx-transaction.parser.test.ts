@@ -3,15 +3,39 @@ import { mock } from 'jest-mock-extended';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { CsvXlsxBrokerageNoteParser } from './csv-xlsx-brokerage-note.parser';
+import * as XLSX from 'xlsx';
+import { SheetjsSpreadsheetFileReader } from '../adapters/file-readers/sheetjs.spreadsheet.file-reader';
 import { CsvXlsxTransactionParser } from './csv-xlsx-transaction.parser';
-import type { BrokerRepositoryPort } from '../../application/repositories/broker.repository';
+import type { BrokerRepository } from '../../application/repositories/broker.repository';
 
-async function createTempFile(fileName: string, content: string): Promise<string> {
+async function createTempCsvFile(fileName: string, content: string): Promise<string> {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'tx-parser-test-'));
   const filePath = path.join(directory, fileName);
   await fs.writeFile(filePath, content, 'utf-8');
   return filePath;
+}
+
+async function createTempXlsxFile(
+  fileName: string,
+  rows: Array<Record<string, string | number>>,
+): Promise<string> {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'tx-parser-test-'));
+  const filePath = path.join(directory, fileName);
+  const workbook = XLSX.utils.book_new();
+  const sheet = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(workbook, sheet, 'Sheet1');
+  XLSX.writeFile(workbook, filePath);
+  return filePath;
+}
+
+function createBrokerMock(id: string) {
+  return {
+    id: { value: id },
+    name: 'XP Investimentos',
+    cnpj: '00.000.000/0001-00',
+    code: 'XP',
+    active: true,
+  };
 }
 
 describe('CsvXlsxTransactionParser', () => {
@@ -30,32 +54,29 @@ describe('CsvXlsxTransactionParser', () => {
     createdDirs.length = 0;
   });
 
-  it('parses csv and resolves broker by code to brokerId', async () => {
-    const brokerRepo = mock<BrokerRepositoryPort>();
-    brokerRepo.findById.mockResolvedValue(null);
-    brokerRepo.findByName.mockResolvedValue(null);
-    brokerRepo.findByCode.mockImplementation((code) =>
+  it('parses xlsx and resolves broker by code to brokerId', async () => {
+    const brokerRepo = mock<BrokerRepository>();
+    brokerRepo.findAllByCodes.mockImplementation((codes) =>
       Promise.resolve(
-        code === 'XP'
-          ? { id: 'broker-xp', name: 'XP Investimentos', cnpj: '00.000.000/0001-00', code: 'XP', active: true }
-          : null,
+        codes.includes('XP') ? [createBrokerMock('broker-xp')] : [],
       ),
     );
-    brokerRepo.findAll.mockResolvedValue([]);
-    brokerRepo.findAllActive.mockResolvedValue([]);
-    brokerRepo.save.mockResolvedValue(undefined);
-    brokerRepo.update.mockResolvedValue(undefined);
-    const filePath = await createTempFile(
-      'ops.csv',
-      [
-        'Data;Tipo;Ticker;Quantidade;Preco Unitario;Taxas Totais;Corretora',
-        '2025-04-01;Compra;PETR4;10;20;1;XP',
-      ].join('\n'),
-    );
+
+    const filePath = await createTempXlsxFile('ops.xlsx', [
+      {
+        Data: '2025-04-01',
+        Tipo: 'Compra',
+        Ticker: 'PETR4',
+        Quantidade: 10,
+        'Preco Unitario': 20,
+        'Taxas Totais': 1,
+        Corretora: 'XP',
+      },
+    ]);
     createdDirs.push(path.dirname(filePath));
 
     const parser = new CsvXlsxTransactionParser(
-      new CsvXlsxBrokerageNoteParser(),
+      new SheetjsSpreadsheetFileReader(),
       brokerRepo,
     );
     const result = await parser.parse(filePath);
@@ -69,28 +90,78 @@ describe('CsvXlsxTransactionParser', () => {
   });
 
   it('throws when broker code is not found in repository', async () => {
-    const brokerRepo = mock<BrokerRepositoryPort>();
-    brokerRepo.findById.mockResolvedValue(null);
-    brokerRepo.findByName.mockResolvedValue(null);
-    brokerRepo.findByCode.mockResolvedValue(null);
-    brokerRepo.findAll.mockResolvedValue([]);
-    brokerRepo.save.mockResolvedValue(undefined);
-    const filePath = await createTempFile(
+    const brokerRepo = mock<BrokerRepository>();
+    brokerRepo.findAllByCodes.mockResolvedValue([]);
+
+    const filePath = await createTempXlsxFile('ops.xlsx', [
+      {
+        Data: '2025-04-01',
+        Tipo: 'Compra',
+        Ticker: 'PETR4',
+        Quantidade: 10,
+        'Preco Unitario': 20,
+        'Taxas Totais': 1,
+        Corretora: 'INVALIDO',
+      },
+    ]);
+    createdDirs.push(path.dirname(filePath));
+
+    const parser = new CsvXlsxTransactionParser(
+      new SheetjsSpreadsheetFileReader(),
+      brokerRepo,
+    );
+
+    await expect(parser.parse(filePath)).rejects.toThrow(
+      'Corretoras nao encontradas: INVALIDO. Cadastre-as em Corretoras antes de importar.',
+    );
+  });
+
+  it('throws with all missing broker codes when multiple are invalid', async () => {
+    const brokerRepo = mock<BrokerRepository>();
+    brokerRepo.findAllByCodes.mockResolvedValue([]);
+
+    const filePath = await createTempXlsxFile('ops.xlsx', [
+      { Data: '2025-04-01', Tipo: 'Compra', Ticker: 'PETR4', Quantidade: 10, 'Preco Unitario': 20, Corretora: 'XP' },
+      { Data: '2025-04-01', Tipo: 'Venda', Ticker: 'VALE3', Quantidade: 5, 'Preco Unitario': 40, Corretora: 'YY' },
+    ]);
+    createdDirs.push(path.dirname(filePath));
+
+    const parser = new CsvXlsxTransactionParser(
+      new SheetjsSpreadsheetFileReader(),
+      brokerRepo,
+    );
+
+    await expect(parser.parse(filePath)).rejects.toThrow(
+      'Corretoras nao encontradas: XP, YY. Cadastre-as em Corretoras antes de importar.',
+    );
+  });
+
+  it('parses csv and handles date format', async () => {
+    const brokerRepo = mock<BrokerRepository>();
+    brokerRepo.findAllByCodes.mockImplementation((codes) =>
+      Promise.resolve(
+        codes.includes('XP') ? [createBrokerMock('broker-xp')] : [],
+      ),
+    );
+
+    const filePath = await createTempCsvFile(
       'ops.csv',
       [
         'Data;Tipo;Ticker;Quantidade;Preco Unitario;Taxas Totais;Corretora',
-        '2025-04-01;Compra;PETR4;10;20;1;INVALIDO',
+        '2025-04-01;Compra;PETR4;10;20;1;XP',
       ].join('\n'),
     );
     createdDirs.push(path.dirname(filePath));
 
     const parser = new CsvXlsxTransactionParser(
-      new CsvXlsxBrokerageNoteParser(),
+      new SheetjsSpreadsheetFileReader(),
       brokerRepo,
     );
+    const result = await parser.parse(filePath);
 
-    await expect(parser.parse(filePath)).rejects.toThrow(
-      "Corretora com codigo 'INVALIDO' nao encontrada. Cadastre-a em Corretoras antes de importar.",
-    );
+    expect(result).toHaveLength(1);
+    expect(result[0]?.brokerId).toBe('broker-xp');
+    expect(result[0]?.tradeDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(result[0]?.operations[0]?.ticker).toBe('PETR4');
   });
 });

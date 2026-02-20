@@ -1,6 +1,6 @@
 import { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
 import type { BrokerageNoteInput } from '../contracts/brokerage-note.contract';
-import type { OperationWritePort } from '../ports/operation-write.port';
+import type { OperationWritePort } from '../interfaces/operation-write.port';
 import type { RecalculateAssetPositionUseCase } from './recalculate-asset-position-use-case';
 
 export type ImportBrokerageNoteResult = {

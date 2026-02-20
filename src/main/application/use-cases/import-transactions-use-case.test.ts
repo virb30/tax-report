@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { TransactionType } from '../../../shared/types/domain';
 import { ImportTransactionsUseCase } from './import-transactions-use-case';
-import type { ImportTransactionsParserPort } from '../ports/import-transactions-parser.port';
+import type { ImportTransactionsParserPort } from '../interfaces/transactions.parser.interface';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import type { RecalculatePositionUseCase } from './recalculate-position-use-case';
 

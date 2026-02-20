@@ -5,7 +5,7 @@ import type { ImportOperationsCommand } from '../../../shared/contracts/import-o
 import type {
   BrokerageNoteParserPort,
   ParserFileType,
-} from '../../application/ports/brokerage-note-parser.port';
+} from '../../application/interfaces/brokerage-note-parser.port';
 
 type SpreadsheetRow = Record<string, string | number | null | undefined>;
 

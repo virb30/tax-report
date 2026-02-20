@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { SourceType } from '../../../shared/types/domain';
-import type { BrokerageNoteParserPort } from '../../application/ports/brokerage-note-parser.port';
+import type { BrokerageNoteParserPort } from '../../application/interfaces/brokerage-note-parser.port';
 import { BrokerageNoteParserStrategy } from './brokerage-note-parser.strategy';
 
 describe('BrokerageNoteParserStrategy', () => {

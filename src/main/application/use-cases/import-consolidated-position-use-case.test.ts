@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { mock } from 'jest-mock-extended';
 import { ImportConsolidatedPositionUseCase } from './import-consolidated-position-use-case';
-import type { ConsolidatedPositionParserPort } from '../ports/consolidated-position-parser.port';
+import type { ConsolidatedPositionParserPort } from '../interfaces/consolidated-position-parser.port';
 import type { BrokerRepositoryPort } from '../repositories/broker.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import type { RecalculatePositionUseCase } from './recalculate-position-use-case';

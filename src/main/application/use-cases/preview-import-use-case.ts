@@ -1,4 +1,4 @@
-import type { ImportTransactionsParserPort } from '../ports/import-transactions-parser.port';
+import type { ImportTransactionsParserPort } from '../interfaces/transactions.parser.interface';
 import type { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
 import type { ParsedTransactionBatch } from '@shared/contracts/import-transactions.contract';
 import type {

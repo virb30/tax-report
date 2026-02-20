@@ -6,7 +6,7 @@ import type {
 } from '@shared/contracts/import-consolidated-position.contract';
 import { SourceType, TransactionType } from '../../../shared/types/domain';
 import { randomUUID } from 'node:crypto';
-import type { ConsolidatedPositionParserPort } from '../ports/consolidated-position-parser.port';
+import type { ConsolidatedPositionParserPort } from '../interfaces/consolidated-position-parser.port';
 import type { BrokerRepositoryPort } from '../repositories/broker.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import type { RecalculatePositionUseCase } from './recalculate-position-use-case';

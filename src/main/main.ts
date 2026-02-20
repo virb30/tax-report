@@ -16,6 +16,7 @@ import { ImportTransactionsUseCase } from './application/use-cases/import-transa
 import { PreviewImportUseCase } from './application/use-cases/preview-import-use-case';
 import { TaxApportioner } from './domain/ingestion/tax-apportioner.service';
 import { CsvXlsxTransactionParser } from './infrastructure/parsers/csv-xlsx-transaction.parser';
+import { SheetjsSpreadsheetFileReader } from './infrastructure/adapters/file-readers/sheetjs.spreadsheet.file-reader';
 import { CsvXlsxConsolidatedPositionParser } from './infrastructure/parsers/csv-xlsx-consolidated-position.parser';
 import { ImportConsolidatedPositionUseCase } from './application/use-cases/import-consolidated-position-use-case';
 import { DeletePositionUseCase } from './application/use-cases/delete-position/delete-position.use-case';
@@ -26,7 +27,7 @@ import { KnexTransactionRepository } from './infrastructure/persistence/knex-tra
 import { KnexAssetRepository } from './infrastructure/persistence/knex-asset.repository';
 import { GenerateAssetsReportUseCase } from './application/use-cases/generate-asset-report/generate-assets-report.use-case';
 import { ReportGenerator } from './application/services/report-generator/report-generator.service';
-import type { OperationsFileParserPort } from './application/ports/operations-file-parser.port';
+import type { OperationsFileParserPort } from './application/interfaces/operations-file-parser.port';
 import { WindowManager } from './window-manager';
 import { CreateBrokerUseCase } from './application/use-cases/create-broker/create-broker.use-case';
 import { ListBrokersUseCase } from './application/use-cases/list-brokers/list-brokers.use-case';
@@ -198,8 +199,9 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
     knexTransactionRepository,
   );
   const taxApportioner = new TaxApportioner();
+  const spreadsheetFileReader = new SheetjsSpreadsheetFileReader();
   const csvXlsxTransactionParser = new CsvXlsxTransactionParser(
-    new CsvXlsxBrokerageNoteParser(),
+    spreadsheetFileReader,
     brokerRepository,
   );
   const importTransactionsUseCase = new ImportTransactionsUseCase(

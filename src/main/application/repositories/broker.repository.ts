@@ -7,6 +7,7 @@ export interface BrokerRepository {
   findByName(name: string): Promise<Broker | null>;
   findByCode(codigo: string): Promise<Broker | null>;
   findByCnpj(cnpj: Cnpj): Promise<Broker | null>;
+  findAllByCodes(codes: string[]): Promise<Broker[]>;
   findAll(): Promise<Broker[]>;
   findAllActive(): Promise<Broker[]>;
   save(broker: Broker): Promise<void>;

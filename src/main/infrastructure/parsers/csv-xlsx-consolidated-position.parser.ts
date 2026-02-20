@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 import type {
   ConsolidatedPositionParserPort,
   ConsolidatedPositionRow,
-} from '../../application/ports/consolidated-position-parser.port';
+} from '../../application/interfaces/consolidated-position-parser.port';
 
 type SpreadsheetRow = Record<string, string | number | null | undefined>;
 
