@@ -139,26 +139,7 @@ export function ImportPage(): JSX.Element {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm text-slate-700">
-          Códigos das corretoras cadastradas
-          <select
-            className="rounded-md border border-slate-300 px-3 py-2 bg-white"
-            value=""
-            onChange={() => {}}
-            title="Códigos das corretoras cadastradas"
-          >
-            <option value="">-- Referência --</option>
-            {brokers.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.codigo} ({b.name})
-              </option>
-            ))}
-          </select>
-          <span className="text-xs text-slate-500">
-            A coluna Corretora deve conter o código da corretora
-          </span>
-        </label>
+      <div className="mt-4 grid gap-3 md:grid-cols-1">
         <label className="flex flex-col gap-1 text-sm text-slate-700">
           Arquivo selecionado
           <div className="flex gap-2">

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
-import type { BrokerListItem, ListBrokersResult } from '../../shared/contracts/brokers.contract';
 import { buildErrorMessage } from '../errors/build-error-message';
+import type { Broker } from '../types/broker.types';
+import { listBrokers } from '../services/api/list-brokers';
 
 export function BrokersPage(): JSX.Element {
-  const [brokers, setBrokers] = useState<BrokerListItem[]>([]);
+  const [brokers, setBrokers] = useState<Broker[]>([]);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [cnpj, setCnpj] = useState('');
@@ -12,7 +13,7 @@ export function BrokersPage(): JSX.Element {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [editingBroker, setEditingBroker] = useState<BrokerListItem | null>(null);
+  const [editingBroker, setEditingBroker] = useState<Broker | null>(null);
   const [editName, setEditName] = useState('');
   const [editCode, setEditCode] = useState('');
   const [editCnpj, setEditCnpj] = useState('');
@@ -22,8 +23,8 @@ export function BrokersPage(): JSX.Element {
     setIsLoading(true);
     setErrorMessage('');
     try {
-      const result: ListBrokersResult = await window.electronApi.listBrokers();
-      setBrokers(result.items);
+      const brokers = await listBrokers();
+      setBrokers(brokers);
     } catch (error: unknown) {
       setErrorMessage(buildErrorMessage(error));
     } finally {
@@ -35,7 +36,7 @@ export function BrokersPage(): JSX.Element {
     void loadBrokers();
   }, []);
 
-  function openEditModal(broker: BrokerListItem): void {
+  function openEditModal(broker: Broker): void {
     setEditingBroker(broker);
     setEditName(broker.name);
     setEditCode(broker.code);
@@ -98,7 +99,7 @@ export function BrokersPage(): JSX.Element {
     }
   }
 
-  async function handleToggleActive(broker: BrokerListItem): Promise<void> {
+  async function handleToggleActive(broker: Broker): Promise<void> {
     setTogglingId(broker.id);
     setErrorMessage('');
     setFeedbackMessage('');

@@ -1,4 +1,4 @@
-export type BrokerListItem = {
+type BrokerListItem = {
   id: string;
   name: string;
   cnpj: string;

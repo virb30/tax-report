@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
 import { AssetType } from '../../shared/types/domain';
-import type { BrokerListItem, ListBrokersResult } from '../../shared/contracts/brokers.contract';
 import type { ListPositionsResult } from '../../shared/contracts/list-positions.contract';
 import { buildErrorMessage } from '../errors/build-error-message';
+import { listActiveBrokers } from '../services/api/list-brokers';
+import type { Broker } from '../types/broker.types';
 
 const defaultBaseYear = new Date().getFullYear() - 1;
 
@@ -14,7 +15,7 @@ export function InitialBalancePage(): JSX.Element {
   const [assetType, setAssetType] = useState<AssetType>(AssetType.Stock);
   const [quantity, setQuantity] = useState('');
   const [averagePrice, setAveragePrice] = useState('');
-  const [brokers, setBrokers] = useState<BrokerListItem[]>([]);
+  const [brokers, setBrokers] = useState<Broker[]>([]);
   const [positions, setPositions] = useState<ListPositionsResult['items']>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
@@ -23,12 +24,10 @@ export function InitialBalancePage(): JSX.Element {
 
   async function loadBrokers(): Promise<void> {
     try {
-      const result: ListBrokersResult = await window.electronApi.listBrokers({
-        activeOnly: true,
-      });
-      setBrokers(result.items);
-      if (result.items.length > 0 && !brokerId) {
-        setBrokerId(result.items[0].id);
+      const brokers = await listActiveBrokers();
+      setBrokers(brokers);
+      if (brokers.length > 0 && !brokerId) {
+        setBrokerId(brokers[0].id);
       }
     } catch (error: unknown) {
       setErrorMessage(buildErrorMessage(error));
