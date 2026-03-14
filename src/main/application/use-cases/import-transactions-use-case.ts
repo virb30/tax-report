@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { SourceType } from '../../../shared/types/domain';
-import type { TransactionRecord } from '../../domain/portfolio/entities/transaction.entity';
+import { Transaction } from '../../domain/portfolio/entities/transaction.entity';
+import { Uuid } from '../../domain/shared/uuid.vo';
 import type { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
 import type { ImportTransactionsParserPort } from '../interfaces/transactions.parser.interface';
 import type { TransactionRepository } from '../repositories/transaction.repository';
@@ -21,7 +22,7 @@ export class ImportTransactionsUseCase {
   async execute(input: ImportTransactionsCommand): Promise<ImportTransactionsResult> {
     const batches = await this.parser.parse(input.filePath);
     const importBatchId = `batch-${Date.now()}-${randomUUID().slice(0, 8)}`;
-    const allTransactions: TransactionRecord[] = [];
+    const allTransactions: Transaction[] = [];
     const affectedTickers = new Set<string>();
 
     for (const batch of batches) {
@@ -50,27 +51,26 @@ export class ImportTransactionsUseCase {
           brokerId: batch.brokerId,
           sourceType: SourceType.Csv,
         });
-        allTransactions.push({
-          id: randomUUID(),
+        allTransactions.push(Transaction.create({
           date: batch.tradeDate,
           type: op.type,
           ticker: op.ticker,
           quantity: op.quantity,
           unitPrice: op.unitPrice,
           fees,
-          brokerId: batch.brokerId,
+          brokerId: Uuid.from(batch.brokerId),
           sourceType: SourceType.Csv,
           externalRef,
           importBatchId,
-        });
+        }));
         affectedTickers.add(op.ticker);
       }
     }
 
     const existingRefs = await this.transactionRepository.findExistingExternalRefs(
-      allTransactions.map((t) => t.externalRef!).filter(Boolean),
+      allTransactions.map((t) => t.externalRef).filter(Boolean) as string[],
     );
-    const newTransactions = allTransactions.filter((t) => !existingRefs.has(t.externalRef!));
+    const newTransactions = allTransactions.filter((t) => !existingRefs.has(t.externalRef ?? ''));
 
     if (newTransactions.length > 0) {
       await this.transactionRepository.saveMany(newTransactions);
@@ -99,7 +99,7 @@ export class ImportTransactionsUseCase {
 
 function createExternalRef(input: {
   tradeDate: string;
-  type: TransactionRecord['type'];
+  type: Transaction['type'];
   ticker: string;
   quantity: number;
   unitPrice: number;

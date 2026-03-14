@@ -1,17 +1,9 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
-import { CsvXlsxBrokerageNoteParser } from './infrastructure/parsers/csv-xlsx-brokerage-note.parser';
-import { BrokerageNoteParserStrategy } from './infrastructure/parsers/brokerage-note-parser.strategy';
 import { createMainLifecycle } from './infrastructure/composition/create-main-lifecycle';
 import { createAndInitializeDatabase } from './database/database';
-import { AssetRepository } from './database/repositories/asset-repository';
-import { OperationRepository } from './database/repositories/operation-repository';
 import { KnexBrokerRepository } from './infrastructure/persistence/knex-broker.repository';
-import { LegacyPortfolioAcl } from './infrastructure/persistence/legacy/legacy-portfolio-acl';
-import { RecalculateAssetPositionUseCase } from './application/use-cases/recalculate-asset-position-use-case';
 import { RecalculatePositionUseCase } from './application/use-cases/recalculate-position/recalculate-position.use-case';
 import { MigrateYearUseCase } from './application/use-cases/migrate-year/migrate-year.use-case';
-import { ImportBrokerageNoteUseCase } from './application/use-cases/import-brokerage-note-use-case';
-import { ImportOperationsUseCase } from './application/use-cases/import-operations-use-case';
 import { ImportTransactionsUseCase } from './application/use-cases/import-transactions-use-case';
 import { PreviewImportUseCase } from './application/use-cases/preview-import-use-case';
 import { TaxApportioner } from './domain/ingestion/tax-apportioner.service';
@@ -27,7 +19,6 @@ import { KnexTransactionRepository } from './infrastructure/persistence/knex-tra
 import { KnexAssetRepository } from './infrastructure/persistence/knex-asset.repository';
 import { GenerateAssetsReportUseCase } from './application/use-cases/generate-asset-report/generate-assets-report.use-case';
 import { ReportGenerator } from './application/services/report-generator/report-generator.service';
-import type { OperationsFileParserPort } from './application/interfaces/operations-file-parser.port';
 import { WindowManager } from './window-manager';
 import { CreateBrokerUseCase } from './application/use-cases/create-broker/create-broker.use-case';
 import { ListBrokersUseCase } from './application/use-cases/list-brokers/list-brokers.use-case';
@@ -56,36 +47,9 @@ const lifecycle = createMainLifecycle({
       }
       return { filePath: result.filePaths[0] ?? null };
     },
-    previewImportFromFile: async (input) => {
-      const dependencies = await handlersDependenciesPromise;
-      const commands = await dependencies.operationsFileParser.parse({
-        broker: input.broker,
-        fileType: resolveFileTypeFromPath(input.filePath),
-        filePath: input.filePath,
-      });
-      return { commands };
-    },
     previewImportTransactions: async (input) => {
       const dependencies = await handlersDependenciesPromise;
       return dependencies.previewImportUseCase.execute(input);
-    },
-    importOperations: async (input) => {
-      const dependencies = await handlersDependenciesPromise;
-      return dependencies.importOperationsUseCase.execute(input);
-    },
-    confirmImportOperations: async (input) => {
-      const dependencies = await handlersDependenciesPromise;
-      let createdOperationsCount = 0;
-      let recalculatedPositionsCount = 0;
-      for (const command of input.commands) {
-        const result = await dependencies.importOperationsUseCase.execute(command);
-        createdOperationsCount += result.createdOperationsCount;
-        recalculatedPositionsCount += result.recalculatedPositionsCount;
-      }
-      return {
-        createdOperationsCount,
-        recalculatedPositionsCount,
-      };
     },
     confirmImportTransactions: async (input) => {
       const dependencies = await handlersDependenciesPromise;
@@ -153,8 +117,6 @@ const lifecycle = createMainLifecycle({
 lifecycle.register();
 
 type MainHandlersRuntimeDependencies = {
-  operationsFileParser: OperationsFileParserPort;
-  importOperationsUseCase: ImportOperationsUseCase;
   importTransactionsUseCase: ImportTransactionsUseCase;
   previewImportUseCase: PreviewImportUseCase;
   setInitialBalanceUseCase: SetInitialBalanceUseCase;
@@ -174,19 +136,6 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
   await app.whenReady();
   const userDataPath = app.getPath('userData');
   const { database } = await createAndInitializeDatabase(userDataPath);
-  const assetRepository = new AssetRepository(database);
-  const operationRepository = new OperationRepository(database);
-  const legacyPortfolioAcl = new LegacyPortfolioAcl(assetRepository, operationRepository);
-  const recalculateAssetPositionUseCase = new RecalculateAssetPositionUseCase(
-    legacyPortfolioAcl,
-    legacyPortfolioAcl,
-  );
-  const importBrokerageNoteUseCase = new ImportBrokerageNoteUseCase(
-    operationRepository,
-    recalculateAssetPositionUseCase,
-  );
-  const importOperationsUseCase = new ImportOperationsUseCase(importBrokerageNoteUseCase);
-  const parserStrategy = new BrokerageNoteParserStrategy([new CsvXlsxBrokerageNoteParser()]);
   const brokerRepository = new KnexBrokerRepository(database);
   const createBrokerUseCase = new CreateBrokerUseCase(brokerRepository);
   const updateBrokerUseCase = new UpdateBrokerUseCase(brokerRepository);
@@ -252,8 +201,6 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
   );
 
   return {
-    operationsFileParser: parserStrategy,
-    importOperationsUseCase,
     importTransactionsUseCase,
     previewImportUseCase,
     setInitialBalanceUseCase,
@@ -268,18 +215,4 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
     importConsolidatedPositionUseCase,
     deletePositionUseCase,
   };
-}
-
-function resolveFileTypeFromPath(filePath: string): 'csv' | 'xlsx' | 'pdf' {
-  const normalizedFilePath = filePath.toLowerCase();
-  if (normalizedFilePath.endsWith('.csv')) {
-    return 'csv';
-  }
-  if (normalizedFilePath.endsWith('.xlsx')) {
-    return 'xlsx';
-  }
-  if (normalizedFilePath.endsWith('.pdf')) {
-    return 'pdf';
-  }
-  throw new Error('Unsupported file extension.');
 }

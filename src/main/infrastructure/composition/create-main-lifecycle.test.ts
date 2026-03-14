@@ -7,19 +7,8 @@ describe('createMainLifecycle', () => {
     return {
       checkHealth: () => ({ status: 'ok' }),
       importSelectFile: () => Promise.resolve({ filePath: null }),
-      previewImportFromFile: () => Promise.resolve({ commands: [] }),
       previewImportTransactions: () =>
         Promise.resolve({ batches: [], transactionsPreview: [] }),
-      importOperations: () =>
-        Promise.resolve({
-        createdOperationsCount: 1,
-        recalculatedPositionsCount: 1,
-        }),
-      confirmImportOperations: () =>
-        Promise.resolve({
-          createdOperationsCount: 1,
-          recalculatedPositionsCount: 1,
-        }),
       confirmImportTransactions: () =>
         Promise.resolve({ importedCount: 1, recalculatedTickers: ['PETR4'] }),
       setInitialBalance: () =>
@@ -98,9 +87,8 @@ describe('createMainLifecycle', () => {
 
     expect(lifecycle).toBeDefined();
     expect(ipcHandleMock).toHaveBeenCalledWith('app:health-check', expect.any(Function));
-    expect(ipcHandleMock).toHaveBeenCalledWith('import:preview-file', expect.any(Function));
-    expect(ipcHandleMock).toHaveBeenCalledWith('import:operations', expect.any(Function));
-    expect(ipcHandleMock).toHaveBeenCalledWith('import:confirm-operations', expect.any(Function));
+    expect(ipcHandleMock).toHaveBeenCalledWith('import:preview-transactions', expect.any(Function));
+    expect(ipcHandleMock).toHaveBeenCalledWith('import:confirm-transactions', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:set-initial-balance', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:list-positions', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:recalculate', expect.any(Function));

@@ -10,9 +10,6 @@ import {
   initializeDatabase,
 } from './database';
 import { databaseMigrations } from './migrations';
-import { AssetType, OperationType, SourceType } from '../../shared/types/domain';
-import { AssetRepository } from './repositories/asset-repository';
-import { OperationRepository } from './repositories/operation-repository';
 
 async function tableExists(database: Knex, tableName: string): Promise<boolean> {
   const row = await database('sqlite_master')
@@ -101,36 +98,4 @@ describe('database', () => {
     expect(hasAssetsAfterUp).toBe(true);
   });
 
-  it('allows multiple repositories to work together', async () => {
-    database = createDatabaseConnection(':memory:');
-    await initializeDatabase(database, true);
-
-    const assetRepository = new AssetRepository(database);
-    const operationRepository = new OperationRepository(database);
-
-    const asset = await assetRepository.create({
-      ticker: 'PETR4',
-      name: 'Petrobras',
-      cnpj: null,
-      assetType: AssetType.Stock,
-      broker: 'XP',
-      averagePrice: 30,
-      quantity: 10,
-      isManualBase: false,
-    });
-    const operation = await operationRepository.create({
-      tradeDate: '2025-01-01',
-      operationType: OperationType.Buy,
-      ticker: 'PETR4',
-      quantity: 10,
-      unitPrice: 30,
-      operationalCosts: 1,
-      irrfWithheld: 0,
-      broker: 'XP',
-      sourceType: SourceType.Pdf,
-    });
-
-    expect(asset.id).toBeGreaterThan(0);
-    expect(operation.id).toBeGreaterThan(0);
-  });
 });

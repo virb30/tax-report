@@ -1,14 +1,6 @@
 import type {
-  ImportOperationsCommand,
-  ImportOperationsResult,
-} from '@shared/contracts/import-operations.contract';
-import type {
-  ConfirmImportOperationsCommand,
-  ConfirmImportOperationsResult,
   ConfirmImportTransactionsCommand,
   ConfirmImportTransactionsResult,
-  PreviewImportFromFileCommand,
-  PreviewImportFromFileResult,
   PreviewImportTransactionsCommand,
   PreviewImportTransactionsResult,
 } from '@shared/contracts/preview-import.contract';
@@ -18,46 +10,41 @@ import type {
   PreviewConsolidatedPositionCommand,
   PreviewConsolidatedPositionResult,
 } from '@shared/contracts/import-consolidated-position.contract';
-import { CreateBrokerOutput } from '@main/application/use-cases/create-broker/create-broker.output';
-import { CreateBrokerInput } from '@main/application/use-cases/create-broker/create-broker.input';
-import { UpdateBrokerOutput } from '@main/application/use-cases/update-broker/update-broker.output';
-import { ListBrokersOutput } from '@main/application/use-cases/list-brokers/list-brokers.output';
-import { ListBrokersInput } from '@main/application/use-cases/list-brokers/list-brokers.input';
-import { UpdateBrokerInput } from '@main/application/use-cases/update-broker/update-broker.input';
-import { ToggleActiveBrokerInput } from '@main/application/use-cases/toggle-active-broker/toggle-active-broker.input';
-import { ToggleActiveBrokerOutput } from '@main/application/use-cases/toggle-active-broker/toggle-active-broker.output';
-import { SetInitialBalanceInput } from '@main/application/use-cases/set-initial-balance/set-initial-balance.input';
-import { SetInitialBalanceOutput } from '@main/application/use-cases/set-initial-balance/set-initial-balance.output';
-import { AssetType } from '@shared/types/domain';
-import { DeletePositionInput } from '@main/application/use-cases/delete-position/delete-position.input';
-import { DeletePositionOutput } from '@main/application/use-cases/delete-position/delete-position.output';
-import { ListPositionsInput } from '@main/application/use-cases/list-positions/list-positions.input';
-import { ListPositionsOutput } from '@main/application/use-cases/list-positions/list-positions.output';
-import { RecalculatePositionInput } from '@main/application/use-cases/recalculate-position/recalculate-position.input';
-import { MigrateYearInput } from '@main/application/use-cases/migrate-year/migrate-year.input';
-import { MigrateYearOutput } from '@main/application/use-cases/migrate-year/migrate-year.output';
-import { GenerateAssetReportInput } from '@main/application/use-cases/generate-asset-report/generate-asset-report.input';
-import { GenerateAssetReportOutput } from '@main/application/use-cases/generate-asset-report/generate-asset-report.output';
-import { RecalculatePositionOutput } from '@main/application/use-cases/recalculate-position/recalculate-position.output';
+import type { CreateBrokerOutput } from '@main/application/use-cases/create-broker/create-broker.output';
+import type { CreateBrokerInput } from '@main/application/use-cases/create-broker/create-broker.input';
+import type { UpdateBrokerOutput } from '@main/application/use-cases/update-broker/update-broker.output';
+import type { ListBrokersOutput } from '@main/application/use-cases/list-brokers/list-brokers.output';
+import type { ListBrokersInput } from '@main/application/use-cases/list-brokers/list-brokers.input';
+import type { UpdateBrokerInput } from '@main/application/use-cases/update-broker/update-broker.input';
+import type { ToggleActiveBrokerInput } from '@main/application/use-cases/toggle-active-broker/toggle-active-broker.input';
+import type { ToggleActiveBrokerOutput } from '@main/application/use-cases/toggle-active-broker/toggle-active-broker.output';
+import type { SetInitialBalanceInput } from '@main/application/use-cases/set-initial-balance/set-initial-balance.input';
+import type { SetInitialBalanceOutput } from '@main/application/use-cases/set-initial-balance/set-initial-balance.output';
+import type { AssetType } from '@shared/types/domain';
+import type { DeletePositionInput } from '@main/application/use-cases/delete-position/delete-position.input';
+import type { DeletePositionOutput } from '@main/application/use-cases/delete-position/delete-position.output';
+import type { ListPositionsInput } from '@main/application/use-cases/list-positions/list-positions.input';
+import type { ListPositionsOutput } from '@main/application/use-cases/list-positions/list-positions.output';
+import type { RecalculatePositionInput } from '@main/application/use-cases/recalculate-position/recalculate-position.input';
+import type { MigrateYearInput } from '@main/application/use-cases/migrate-year/migrate-year.input';
+import type { MigrateYearOutput } from '@main/application/use-cases/migrate-year/migrate-year.output';
+import type { GenerateAssetReportInput } from '@main/application/use-cases/generate-asset-report/generate-asset-report.input';
+import type { GenerateAssetReportOutput } from '@main/application/use-cases/generate-asset-report/generate-asset-report.output';
+import type { RecalculatePositionOutput } from '@main/application/use-cases/recalculate-position/recalculate-position.output';
 
 type IpcMainLike = {
   handle: (
     channel: string,
-    listener: (_event: unknown, ...args: unknown[]) => Promise<unknown>,
+    listener: (_event: unknown, ...args: unknown[]) => unknown,
   ) => void;
 };
 
 export type MainHandlersDependencies = {
   checkHealth: () => { status: 'ok' };
   importSelectFile: () => Promise<{ filePath: string | null }>;
-  previewImportFromFile: (input: PreviewImportFromFileCommand) => Promise<PreviewImportFromFileResult>;
   previewImportTransactions: (
     input: PreviewImportTransactionsCommand,
   ) => Promise<PreviewImportTransactionsResult>;
-  importOperations: (input: ImportOperationsCommand) => Promise<ImportOperationsResult>;
-  confirmImportOperations: (
-    input: ConfirmImportOperationsCommand,
-  ) => Promise<ConfirmImportOperationsResult>;
   confirmImportTransactions: (
     input: ConfirmImportTransactionsCommand,
   ) => Promise<ConfirmImportTransactionsResult>;
@@ -88,10 +75,7 @@ export function registerMainHandlers(
   const registeredChannels = [
     'app:health-check',
     'import:select-file',
-    'import:preview-file',
     'import:preview-transactions',
-    'import:operations',
-    'import:confirm-operations',
     'import:confirm-transactions',
     'portfolio:set-initial-balance',
     'portfolio:list-positions',
@@ -115,27 +99,12 @@ export function registerMainHandlers(
     return dependencies.importSelectFile();
   });
 
-  ipcMain.handle('import:preview-file', (_event, input: PreviewImportFromFileCommand) => {
-    const payload = parsePreviewImportFromFileInput(input);
-    return dependencies.previewImportFromFile(payload);
-  });
-
-  ipcMain.handle('import:preview-transactions', (_event, input: PreviewImportTransactionsCommand) => {
+  ipcMain.handle('import:preview-transactions', (_event, input: unknown) => {
     const payload = parsePreviewImportTransactionsInput(input);
     return dependencies.previewImportTransactions(payload);
   });
 
-  ipcMain.handle('import:operations', (_event, input: ImportOperationsCommand) => {
-    const payload = parseImportOperationsInput(input);
-    return dependencies.importOperations(payload);
-  });
-
-  ipcMain.handle('import:confirm-operations', (_event, input: ConfirmImportOperationsCommand) => {
-    const payload = parseConfirmImportOperationsInput(input);
-    return dependencies.confirmImportOperations(payload);
-  });
-
-  ipcMain.handle('import:confirm-transactions', (_event, input: ConfirmImportTransactionsCommand) => {
+  ipcMain.handle('import:confirm-transactions', (_event, input: unknown) => {
     const payload = parseConfirmImportTransactionsInput(input);
     return dependencies.confirmImportTransactions(payload);
   });
@@ -162,7 +131,7 @@ export function registerMainHandlers(
 
   ipcMain.handle(
     'portfolio:preview-consolidated-position',
-    (_event, input: PreviewConsolidatedPositionCommand) => {
+    (_event, input: unknown) => {
       const payload = parsePreviewConsolidatedPositionInput(input);
       return dependencies.previewConsolidatedPosition(payload);
     },
@@ -170,7 +139,7 @@ export function registerMainHandlers(
 
   ipcMain.handle(
     'portfolio:import-consolidated-position',
-    (_event, input: ImportConsolidatedPositionCommand) => {
+    (_event, input: unknown) => {
       const payload = parseImportConsolidatedPositionInput(input);
       return dependencies.importConsolidatedPosition(payload);
     },
@@ -234,59 +203,6 @@ export function registerMainHandlers(
   });
 
   return registeredChannels;
-}
-
-function parsePreviewImportFromFileInput(input: unknown): PreviewImportFromFileCommand {
-  if (!input || typeof input !== 'object') {
-    throw new Error('Invalid payload for import preview.');
-  }
-  const payload = input as { broker?: unknown; filePath?: unknown };
-  if (typeof payload.broker !== 'string' || payload.broker.trim().length === 0) {
-    throw new Error('Invalid broker for import preview.');
-  }
-  if (typeof payload.filePath !== 'string' || payload.filePath.trim().length === 0) {
-    throw new Error('Invalid file path for import preview.');
-  }
-  return {
-    broker: payload.broker,
-    filePath: payload.filePath,
-  };
-}
-
-function parseImportOperationsInput(input: unknown): ImportOperationsCommand {
-  if (!input || typeof input !== 'object') {
-    throw new Error('Invalid payload for import operations.');
-  }
-  const payload = input as {
-    tradeDate?: unknown;
-    broker?: unknown;
-    totalOperationalCosts?: unknown;
-    operations?: unknown;
-  };
-  if (typeof payload.tradeDate !== 'string' || payload.tradeDate.trim().length === 0) {
-    throw new Error('Invalid trade date for import operations.');
-  }
-  if (typeof payload.broker !== 'string' || payload.broker.trim().length === 0) {
-    throw new Error('Invalid broker for import operations.');
-  }
-  if (typeof payload.totalOperationalCosts !== 'number' || Number.isNaN(payload.totalOperationalCosts)) {
-    throw new Error('Invalid operational costs for import operations.');
-  }
-  if (!Array.isArray(payload.operations)) {
-    throw new Error('Invalid operations list for import operations.');
-  }
-  return input as ImportOperationsCommand;
-}
-
-function parseConfirmImportOperationsInput(input: unknown): ConfirmImportOperationsCommand {
-  if (!input || typeof input !== 'object') {
-    throw new Error('Invalid payload for confirm import operations.');
-  }
-  const payload = input as { commands?: unknown };
-  if (!Array.isArray(payload.commands)) {
-    throw new Error('Invalid commands list for confirm import operations.');
-  }
-  return input as ConfirmImportOperationsCommand;
 }
 
 function parsePreviewImportTransactionsInput(input: unknown): PreviewImportTransactionsCommand {

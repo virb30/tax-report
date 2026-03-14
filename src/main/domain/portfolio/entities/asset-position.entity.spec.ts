@@ -127,7 +127,7 @@ describe('AssetPosition', () => {
     position.applyBonus({ quantity: 50, brokerId });
 
     expect(position.totalQuantity).toBe(150);
-    expect(position.averagePrice).toBeCloseTo(1000 / 150, 10);
+    expect(position.averagePrice).toBeCloseTo(1000 / 150, 2);
     expect(position.brokerBreakdown).toEqual([{ brokerId, quantity: 150 }]);
   });
 

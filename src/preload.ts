@@ -14,26 +14,18 @@ import type {
   PreviewConsolidatedPositionCommand,
 } from '@shared/contracts/import-consolidated-position.contract';
 import type { DeletePositionCommand } from '@shared/contracts/delete-position.contract';
-import type { ImportOperationsCommand } from '@shared/contracts/import-operations.contract';
 import type { SetInitialBalanceCommand } from '@shared/contracts/initial-balance.contract';
 import type { ListPositionsQuery } from '@shared/contracts/list-positions.contract';
 import type {
-  ConfirmImportOperationsCommand,
   ConfirmImportTransactionsCommand,
-  PreviewImportFromFileCommand,
   PreviewImportTransactionsCommand,
 } from '@shared/contracts/preview-import.contract';
 
 export const electronApi: ElectronApi = {
   appName: 'tax-report',
   importSelectFile: () => ipcRenderer.invoke('import:select-file'),
-  previewImportFromFile: (input: PreviewImportFromFileCommand) =>
-    ipcRenderer.invoke('import:preview-file', input),
   previewImportTransactions: (input: PreviewImportTransactionsCommand) =>
     ipcRenderer.invoke('import:preview-transactions', input),
-  importOperations: (input: ImportOperationsCommand) => ipcRenderer.invoke('import:operations', input),
-  confirmImportOperations: (input: ConfirmImportOperationsCommand) =>
-    ipcRenderer.invoke('import:confirm-operations', input),
   confirmImportTransactions: (input: ConfirmImportTransactionsCommand) =>
     ipcRenderer.invoke('import:confirm-transactions', input),
   setInitialBalance: (input: SetInitialBalanceCommand) =>

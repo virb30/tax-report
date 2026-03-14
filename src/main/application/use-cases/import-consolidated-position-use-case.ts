@@ -5,11 +5,12 @@ import type {
   PreviewConsolidatedPositionResult,
 } from '@shared/contracts/import-consolidated-position.contract';
 import { SourceType, TransactionType } from '../../../shared/types/domain';
-import { randomUUID } from 'node:crypto';
 import type { ConsolidatedPositionParserPort } from '../interfaces/consolidated-position-parser.port';
-import type { BrokerRepositoryPort } from '../repositories/broker.repository';
+import type { BrokerRepository } from '../repositories/broker.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
-import type { RecalculatePositionUseCase } from './recalculate-position-use-case';
+import type { RecalculatePositionUseCase } from './recalculate-position/recalculate-position.use-case';
+import { Transaction } from '../../domain/portfolio/entities/transaction.entity';
+import { Uuid } from '../../domain/shared/uuid.vo';
 
 type ResolvedRow = {
   ticker: string;
@@ -21,7 +22,7 @@ type ResolvedRow = {
 export class ImportConsolidatedPositionUseCase {
   constructor(
     private readonly parser: ConsolidatedPositionParserPort,
-    private readonly brokerRepository: BrokerRepositoryPort,
+    private readonly brokerRepository: BrokerRepository,
     private readonly transactionRepository: TransactionRepository,
     private readonly recalculatePositionUseCase: RecalculatePositionUseCase,
   ) {}
@@ -61,17 +62,18 @@ export class ImportConsolidatedPositionUseCase {
       );
 
       const tickerRows = grouped.filter((r) => r.ticker === ticker);
-      const transactions = tickerRows.map((row) => ({
-        id: randomUUID(),
+      const transactions = tickerRows.map((row) =>
+        Transaction.create({
         date: `${input.year}-01-01`,
         type: TransactionType.InitialBalance,
         ticker: row.ticker,
         quantity: row.quantity,
         unitPrice: row.averagePrice,
         fees: 0,
-        brokerId: row.brokerId,
+        brokerId: Uuid.from(row.brokerId),
         sourceType: SourceType.Csv,
-      }));
+      }),
+      );
 
       await this.transactionRepository.saveMany(transactions);
       await this.recalculatePositionUseCase.execute({
@@ -114,7 +116,7 @@ export class ImportConsolidatedPositionUseCase {
         ticker: row.ticker,
         quantity: row.quantity,
         averagePrice: row.averagePrice,
-        brokerId: broker.id,
+        brokerId: broker.id.value,
       });
     }
 

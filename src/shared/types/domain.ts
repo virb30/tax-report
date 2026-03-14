@@ -52,18 +52,3 @@ export type Operation = {
   externalRef: string | null;
   importBatchId: string | null;
 };
-
-export type AccumulatedLoss = {
-  id: number;
-  assetType: AssetType;
-  amount: number;
-  updatedAt: string;
-};
-
-export type TaxConfig = {
-  id: number;
-  assetType: AssetType;
-  taxRate: number;
-  monthlyExemptionLimit: number;
-  irrfRate: number;
-};

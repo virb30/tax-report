@@ -1,8 +1,8 @@
 import { Money } from '../value-objects/money.vo';
 import { Quantity } from '../value-objects/quantity.vo';
-import { AssetPosition } from '../entities/asset-position.entity';
+import type { AssetPosition } from '../entities/asset-position.entity';
 
-export type CalculateAveragePriceInput = {
+type CalculateAveragePriceInput = {
   buyQuantity: number;
   buyUnitPrice: number;
   operationalCosts: number;

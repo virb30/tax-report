@@ -108,18 +108,20 @@ describe('App critical UI flows (E2E)', () => {
     window.electronApi = {
       appName: 'tax-report',
       importSelectFile,
-      previewImportFromFile: jest.fn<ElectronApi['previewImportFromFile']>(),
       previewImportTransactions,
-      importOperations: jest.fn<ElectronApi['importOperations']>(),
-      confirmImportOperations: jest.fn<ElectronApi['confirmImportOperations']>(),
       confirmImportTransactions,
       setInitialBalance,
       listPositions,
       generateAssetsReport,
       listBrokers,
       createBroker,
+      updateBroker: jest.fn<ElectronApi['updateBroker']>(),
+      toggleBrokerActive: jest.fn<ElectronApi['toggleBrokerActive']>(),
       recalculatePosition: jest.fn<ElectronApi['recalculatePosition']>(),
       migrateYear: jest.fn<ElectronApi['migrateYear']>(),
+      previewConsolidatedPosition: jest.fn<ElectronApi['previewConsolidatedPosition']>(),
+      importConsolidatedPosition: jest.fn<ElectronApi['importConsolidatedPosition']>(),
+      deletePosition: jest.fn<ElectronApi['deletePosition']>(),
     };
 
     Object.defineProperty(navigator, 'clipboard', {

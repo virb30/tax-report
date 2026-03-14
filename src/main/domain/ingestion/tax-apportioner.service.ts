@@ -1,10 +1,10 @@
-export type TaxApportionerOperation = {
+type TaxApportionerOperation = {
   ticker: string;
   quantity: number;
   unitPrice: number;
 };
 
-export type TaxApportionerInput = {
+type TaxApportionerInput = {
   totalOperationalCosts: number;
   operations: TaxApportionerOperation[];
 };

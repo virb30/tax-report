@@ -3,10 +3,6 @@ import type {
   GenerateAssetsReportResult,
 } from '../contracts/assets-report.contract';
 import type {
-  ImportOperationsCommand,
-  ImportOperationsResult,
-} from '../contracts/import-operations.contract';
-import type {
   ListPositionsQuery,
   ListPositionsResult,
 } from '../contracts/list-positions.contract';
@@ -43,12 +39,8 @@ import type {
   DeletePositionResult,
 } from '../contracts/delete-position.contract';
 import type {
-  ConfirmImportOperationsCommand,
-  ConfirmImportOperationsResult,
   ConfirmImportTransactionsCommand,
   ConfirmImportTransactionsResult,
-  PreviewImportFromFileCommand,
-  PreviewImportFromFileResult,
   PreviewImportTransactionsCommand,
   PreviewImportTransactionsResult,
 } from '../contracts/preview-import.contract';
@@ -56,14 +48,9 @@ import type {
 export type ElectronApi = {
   appName: string;
   importSelectFile: () => Promise<{ filePath: string | null }>;
-  previewImportFromFile: (input: PreviewImportFromFileCommand) => Promise<PreviewImportFromFileResult>;
   previewImportTransactions: (
     input: PreviewImportTransactionsCommand,
   ) => Promise<PreviewImportTransactionsResult>;
-  importOperations: (input: ImportOperationsCommand) => Promise<ImportOperationsResult>;
-  confirmImportOperations: (
-    input: ConfirmImportOperationsCommand,
-  ) => Promise<ConfirmImportOperationsResult>;
   confirmImportTransactions: (
     input: ConfirmImportTransactionsCommand,
   ) => Promise<ConfirmImportTransactionsResult>;

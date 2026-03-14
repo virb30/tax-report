@@ -1,6 +1,6 @@
-import { Cnpj } from '../../shared/cnpj.vo';
+import type { Cnpj } from '../../shared/cnpj.vo';
 
-export type AssetProps = {
+type AssetProps = {
   ticker: string;
   issuerCnpj?: Cnpj;
   name?: string;

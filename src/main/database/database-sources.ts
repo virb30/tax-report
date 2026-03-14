@@ -2,7 +2,7 @@ import type { Knex } from 'knex';
 import type { DatabaseMigration } from './migrations';
 import type { DatabaseSeed } from './seeds';
 
-export type MigrationSource = {
+type MigrationSource = {
   getMigrations: () => Promise<DatabaseMigration[]>;
   getMigrationName: (migration: DatabaseMigration) => string;
   getMigration: (migration: DatabaseMigration) => Promise<{
@@ -11,32 +11,32 @@ export type MigrationSource = {
   }>;
 };
 
-export type SeedSource = {
+type SeedSource = {
   getSeeds: () => Promise<DatabaseSeed[]>;
   getSeed: (seed: DatabaseSeed) => Promise<DatabaseSeed>;
 };
 
 export function createMigrationSource(migrations: DatabaseMigration[]): MigrationSource {
   return {
-    async getMigrations() {
-      return migrations;
+    getMigrations() {
+      return Promise.resolve(migrations);
     },
     getMigrationName(migration) {
       return migration.name;
     },
-    async getMigration(migration) {
-      return migration;
+    getMigration(migration) {
+      return Promise.resolve(migration);
     },
   };
 }
 
 export function createSeedSource(seeds: DatabaseSeed[]): SeedSource {
   return {
-    async getSeeds() {
-      return seeds;
+    getSeeds() {
+      return Promise.resolve(seeds);
     },
-    async getSeed(seed) {
-      return seed;
+    getSeed(seed) {
+      return Promise.resolve(seed);
     },
   };
 }

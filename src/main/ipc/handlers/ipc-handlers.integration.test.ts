@@ -3,14 +3,8 @@ import path from 'node:path';
 import os from 'node:os';
 import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import type { Knex } from 'knex';
-import { AssetType, SourceType } from '../../../shared/types/domain';
+import { AssetType } from '../../../shared/types/domain';
 import { createDatabaseConnection, initializeDatabase } from '../../database/database';
-import { AssetRepository } from '../../database/repositories/asset-repository';
-import { OperationRepository } from '../../database/repositories/operation-repository';
-import { LegacyPortfolioAcl } from '../../infrastructure/persistence/legacy/legacy-portfolio-acl';
-import { RecalculateAssetPositionUseCase } from '../../application/use-cases/recalculate-asset-position-use-case';
-import { ImportBrokerageNoteUseCase } from '../../application/use-cases/import-brokerage-note-use-case';
-import { ImportOperationsUseCase } from '../../application/use-cases/import-operations-use-case';
 import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance.use-case';
 import { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
 import { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
@@ -18,11 +12,15 @@ import { MigrateYearUseCase } from '../../application/use-cases/migrate-year/mig
 import { KnexPositionRepository } from '../../infrastructure/persistence/knex-position.repository';
 import { KnexTransactionRepository } from '../../infrastructure/persistence/knex-transaction.repository';
 import { KnexBrokerRepository } from '../../infrastructure/persistence/knex-broker.repository';
-import { KnexTickerDataRepository } from '../../infrastructure/persistence/knex-asset.repository';
+import { KnexAssetRepository } from '../../infrastructure/persistence/knex-asset.repository';
 import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-asset-report/generate-assets-report.use-case';
-import { ReportGenerator } from '../../domain/tax-reporting/report-generator.service';
-import { BrokerageNoteParserStrategy } from '../../infrastructure/parsers/brokerage-note-parser.strategy';
-import { CsvXlsxBrokerageNoteParser } from '../../infrastructure/parsers/csv-xlsx-brokerage-note.parser';
+import { ReportGenerator } from '../../application/services/report-generator/report-generator.service';
+import { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
+import { CsvXlsxTransactionParser } from '../../infrastructure/parsers/csv-xlsx-transaction.parser';
+import { SheetjsSpreadsheetFileReader } from '../../infrastructure/adapters/file-readers/sheetjs.spreadsheet.file-reader';
+import { PreviewImportUseCase } from '../../application/use-cases/preview-import-use-case';
+import { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions-use-case';
+import { AssetPosition } from '../../domain/portfolio/entities/asset-position.entity';
 import {
   registerMainHandlers,
   type MainHandlersDependencies,
@@ -49,16 +47,7 @@ describe('IPC handlers integration', () => {
     await fs.rm(temporaryDirectory, { recursive: true, force: true });
   });
 
-  it('runs preview, confirm, manual base, list and report channels end-to-end', async () => {
-    const assetRepository = new AssetRepository(database);
-    const operationRepository = new OperationRepository(database);
-    const acl = new LegacyPortfolioAcl(assetRepository, operationRepository);
-    const recalculateAssetPositionUseCase = new RecalculateAssetPositionUseCase(acl, acl);
-    const importBrokerageNoteUseCase = new ImportBrokerageNoteUseCase(
-      operationRepository,
-      recalculateAssetPositionUseCase,
-    );
-    const importOperationsUseCase = new ImportOperationsUseCase(importBrokerageNoteUseCase);
+  it('runs transaction preview, confirm, manual base, list and report channels end-to-end', async () => {
     const knexPositionRepository = new KnexPositionRepository(database);
     const knexTransactionRepository = new KnexTransactionRepository(database);
     const brokerRepository = new KnexBrokerRepository(database);
@@ -79,22 +68,45 @@ describe('IPC handlers integration', () => {
       knexTransactionRepository,
     );
     const reportGenerator = new ReportGenerator();
-    const tickerDataRepository = new KnexTickerDataRepository(database);
+    const tickerDataRepository = new KnexAssetRepository(database);
     const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
-      knexTransactionRepository,
       knexPositionRepository,
       brokerRepository,
       tickerDataRepository,
       reportGenerator,
     );
-    const parserStrategy = new BrokerageNoteParserStrategy([new CsvXlsxBrokerageNoteParser()]);
+    const spreadsheetFileReader = new SheetjsSpreadsheetFileReader();
+    const transactionParser = new CsvXlsxTransactionParser(
+      spreadsheetFileReader,
+      brokerRepository,
+    );
+    const taxApportioner = new TaxApportioner();
+    const previewImportUseCase = new PreviewImportUseCase(transactionParser, taxApportioner);
+    const importTransactionsUseCase = new ImportTransactionsUseCase(
+      transactionParser,
+      taxApportioner,
+      knexTransactionRepository,
+      recalculatePositionUseCase,
+    );
+    const xpBroker = await brokerRepository.findByCode('XP');
+    if (!xpBroker) {
+      throw new Error('Expected broker XP to exist in test database.');
+    }
+
+    await knexPositionRepository.save(
+      AssetPosition.create({
+        ticker: 'PETR4',
+        assetType: AssetType.Stock,
+        year: 2025,
+      }),
+    );
 
     const csvPath = path.join(temporaryDirectory, 'movements.csv');
     await fs.writeFile(
       csvPath,
       [
-        'Data;Tipo;Ticker;Quantidade;Preco Unitario;Taxas Totais;Corretora;Tipo Ativo;IRRF',
-        '2025-03-10;Compra;PETR4;10;20;1;XP;stock;0',
+        'Data;Tipo;Ticker;Quantidade;Preco Unitario;Taxas Totais;Corretora',
+        '2025-03-10;Compra;PETR4;10;20;1;XP',
       ].join('\n'),
       'utf-8',
     );
@@ -109,37 +121,14 @@ describe('IPC handlers integration', () => {
     const dependencies: MainHandlersDependencies = {
       checkHealth: () => ({ status: 'ok' }),
       importSelectFile: () => Promise.resolve({ filePath: null }),
-      previewImportFromFile: async (input) => ({
-        commands: await parserStrategy.parse({
-          broker: input.broker,
-          fileType: 'csv',
-          filePath: input.filePath,
-        }),
-      }),
-      importOperations: (input) => importOperationsUseCase.execute(input),
-      previewImportTransactions: () =>
-        Promise.resolve({ batches: [], transactionsPreview: [] }),
-      confirmImportOperations: async (input) => {
-        let createdOperationsCount = 0;
-        let recalculatedPositionsCount = 0;
-        for (const command of input.commands) {
-          const result = await importOperationsUseCase.execute(command);
-          createdOperationsCount += result.createdOperationsCount;
-          recalculatedPositionsCount += result.recalculatedPositionsCount;
-        }
-        return {
-          createdOperationsCount,
-          recalculatedPositionsCount,
-        };
-      },
-      confirmImportTransactions: () =>
-        Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
+      previewImportTransactions: (input) => previewImportUseCase.execute(input),
+      confirmImportTransactions: (input) => importTransactionsUseCase.execute(input),
       setInitialBalance: (input) => setInitialBalanceUseCase.execute(input),
       listPositions: (input) => listPositionsUseCase.execute(input),
       recalculatePosition: (input) => recalculatePositionUseCase.execute(input),
       migrateYear: (input) => migrateYearUseCase.execute(input),
       generateAssetsReport: (input) => generateAssetsReportUseCase.execute(input),
-      listBrokers: (_input?: { activeOnly?: boolean }) => Promise.resolve({ items: [] }),
+      listBrokers: () => Promise.resolve({ items: [] }),
       createBroker: () =>
         Promise.resolve({
           id: 'broker-1',
@@ -173,8 +162,8 @@ describe('IPC handlers integration', () => {
     registerMainHandlers(ipcMain, dependencies);
 
     const healthHandler = handlers.get('app:health-check');
-    const previewHandler = handlers.get('import:preview-file');
-    const confirmHandler = handlers.get('import:confirm-operations');
+    const previewHandler = handlers.get('import:preview-transactions');
+    const confirmHandler = handlers.get('import:confirm-transactions');
     const setInitialBalanceHandler = handlers.get('portfolio:set-initial-balance');
     const listPositionsHandler = handlers.get('portfolio:list-positions');
     const reportHandler = handlers.get('report:assets-annual');
@@ -193,23 +182,23 @@ describe('IPC handlers integration', () => {
     expect(healthHandler({})).toEqual({ status: 'ok' });
 
     const previewResult = (await previewHandler({}, {
-      broker: 'XP',
       filePath: csvPath,
-    })) as { commands: Array<{ sourceType: SourceType }> };
-    expect(previewResult.commands).toHaveLength(1);
-    expect(previewResult.commands[0]?.sourceType).toBe(SourceType.Csv);
+    })) as { transactionsPreview: Array<{ ticker: string }>; batches: Array<{ brokerId: string }> };
+    expect(previewResult.transactionsPreview).toHaveLength(1);
+    expect(previewResult.batches).toHaveLength(1);
+    expect(previewResult.batches[0]?.brokerId).toBeDefined();
 
     const importResult = (await confirmHandler({}, {
-      commands: previewResult.commands,
-    })) as { createdOperationsCount: number; recalculatedPositionsCount: number };
+      filePath: csvPath,
+    })) as { importedCount: number; recalculatedTickers: string[] };
     expect(importResult).toEqual({
-      createdOperationsCount: 1,
-      recalculatedPositionsCount: 1,
+      importedCount: 1,
+      recalculatedTickers: ['PETR4'],
     });
 
     await setInitialBalanceHandler({}, {
       ticker: 'IVVB11',
-      brokerId: 'broker-xp',
+      brokerId: xpBroker.id.value,
       assetType: AssetType.Etf,
       quantity: 2,
       averagePrice: 300,
@@ -248,13 +237,8 @@ describe('IPC handlers integration', () => {
     const dependencies: MainHandlersDependencies = {
       checkHealth: () => ({ status: 'ok' }),
       importSelectFile: () => Promise.resolve({ filePath: null }),
-      previewImportFromFile: () => Promise.resolve({ commands: [] }),
       previewImportTransactions: () =>
         Promise.resolve({ batches: [], transactionsPreview: [] }),
-      importOperations: () =>
-        Promise.resolve({ createdOperationsCount: 0, recalculatedPositionsCount: 0 }),
-      confirmImportOperations: () =>
-        Promise.resolve({ createdOperationsCount: 0, recalculatedPositionsCount: 0 }),
       confirmImportTransactions: () =>
         Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
       setInitialBalance: () => Promise.resolve({ ticker: 'IVVB11', brokerId: 'broker-xp', assetType: AssetType.Etf, quantity: 2, averagePrice: 300, year: 2025 }),

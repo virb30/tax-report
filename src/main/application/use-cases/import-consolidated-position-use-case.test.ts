@@ -2,29 +2,47 @@ import { beforeEach, describe, expect, it } from '@jest/globals';
 import { mock } from 'jest-mock-extended';
 import { ImportConsolidatedPositionUseCase } from './import-consolidated-position-use-case';
 import type { ConsolidatedPositionParserPort } from '../interfaces/consolidated-position-parser.port';
-import type { BrokerRepositoryPort } from '../repositories/broker.repository';
+import type { BrokerRepository } from '../repositories/broker.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
-import type { RecalculatePositionUseCase } from './recalculate-position-use-case';
+import type { RecalculatePositionUseCase } from './recalculate-position/recalculate-position.use-case';
+import { Broker } from '../../domain/portfolio/entities/broker.entity';
 
 describe('ImportConsolidatedPositionUseCase', () => {
   let parser: jest.Mocked<ConsolidatedPositionParserPort>;
-  let brokerRepo: jest.Mocked<BrokerRepositoryPort>;
+  let brokerRepo: jest.Mocked<BrokerRepository>;
   let transactionRepo: jest.Mocked<TransactionRepository>;
   let recalculateUseCase: jest.Mocked<RecalculatePositionUseCase>;
   let useCase: ImportConsolidatedPositionUseCase;
+  let xpBroker: Broker;
+  let clearBroker: Broker;
 
   beforeEach(() => {
     parser = mock<ConsolidatedPositionParserPort>();
-    brokerRepo = mock<BrokerRepositoryPort>();
+    brokerRepo = mock<BrokerRepository>();
     transactionRepo = mock<TransactionRepository>();
     recalculateUseCase = mock<RecalculatePositionUseCase>();
+
+    xpBroker = Broker.create({
+      id: '019cece0-4a22-75b8-95c4-45eb6f4cb2f4',
+      name: 'XP',
+      cnpj: '00.000.000/0001-00',
+      code: 'XP',
+      active: true,
+    });
+    clearBroker = Broker.create({
+      id: '019cece0-f8b9-7cd8-9021-8f3b0f36a674',
+      name: 'Clear',
+      cnpj: '11.111.111/0001-11',
+      code: 'CLEAR',
+      active: true,
+    });
 
     brokerRepo.findByCode.mockImplementation((code) =>
       Promise.resolve(
         code === 'XP'
-          ? { id: 'broker-xp', name: 'XP', cnpj: '00.000.000/0001-00', code: 'XP', active: true }
+          ? xpBroker
           : code === 'CLEAR'
-            ? { id: 'broker-clear', name: 'Clear', cnpj: '11.111.111/0001-11', code: 'CLEAR', active: true }
+            ? clearBroker
             : null,
       ),
     );
@@ -92,7 +110,7 @@ describe('ImportConsolidatedPositionUseCase', () => {
           ticker: 'PETR4',
           quantity: 150,
           unitPrice: 26,
-          brokerId: 'broker-xp',
+          brokerId: expect.objectContaining({ value: xpBroker.id.value }),
         }),
       ]),
     );
@@ -112,8 +130,16 @@ describe('ImportConsolidatedPositionUseCase', () => {
     expect(result.importedCount).toBe(2);
     expect(transactionRepo.saveMany).toHaveBeenCalledWith(
       expect.arrayContaining([
-        expect.objectContaining({ ticker: 'PETR4', quantity: 100, brokerId: 'broker-xp' }),
-        expect.objectContaining({ ticker: 'PETR4', quantity: 50, brokerId: 'broker-clear' }),
+        expect.objectContaining({
+          ticker: 'PETR4',
+          quantity: 100,
+          brokerId: expect.objectContaining({ value: xpBroker.id.value }),
+        }),
+        expect.objectContaining({
+          ticker: 'PETR4',
+          quantity: 50,
+          brokerId: expect.objectContaining({ value: clearBroker.id.value }),
+        }),
       ]),
     );
   });

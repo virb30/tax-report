@@ -7,11 +7,12 @@ import type { RecalculatePositionUseCase } from './recalculate-position-use-case
 
 describe('ImportTransactionsUseCase', () => {
   it('parses, apportions fees, persists and recalculates positions', async () => {
+    const brokerId = '019cece0-4a22-75b8-95c4-45eb6f4cb2f4';
     const mockParser: ImportTransactionsParserPort = {
       parse: jest.fn().mockResolvedValue([
         {
           tradeDate: '2025-04-01',
-          brokerId: 'broker-xp',
+          brokerId,
           totalOperationalCosts: 1,
           operations: [
             { ticker: 'PETR4', type: TransactionType.Buy, quantity: 10, unitPrice: 20 },
@@ -64,11 +65,12 @@ describe('ImportTransactionsUseCase', () => {
   });
 
   it('skips duplicates via externalRef (idempotence)', async () => {
+    const brokerId = '019cece0-4a22-75b8-95c4-45eb6f4cb2f4';
     const mockParser: ImportTransactionsParserPort = {
       parse: jest.fn().mockResolvedValue([
         {
           tradeDate: '2025-04-01',
-          brokerId: 'broker-xp',
+          brokerId,
           totalOperationalCosts: 0,
           operations: [{ ticker: 'PETR4', type: TransactionType.Buy, quantity: 1, unitPrice: 10 }],
         },
