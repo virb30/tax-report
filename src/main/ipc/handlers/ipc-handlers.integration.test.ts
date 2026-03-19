@@ -29,6 +29,8 @@ import { CreateBrokerUseCase } from '../../application/use-cases/create-broker/c
 import { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
 import { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
 import { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
+import { MemoryQueueAdapter } from '../../infrastructure/events/memory-queue.adapter';
+import { RecalculatePositionHandler } from '../../application/events/handlers/recalculate-position.handler';
 
 type IpcHandler = (_event: unknown, ...args: unknown[]) => unknown;
 
@@ -63,6 +65,11 @@ describe('IPC handlers integration', () => {
       knexPositionRepository,
       knexTransactionRepository,
     );
+    const queue = new MemoryQueueAdapter();
+    const recalculatePositionHandler = new RecalculatePositionHandler(
+      queue,
+      recalculatePositionUseCase,
+    );
     const migrateYearUseCase = new MigrateYearUseCase(
       knexPositionRepository,
       knexTransactionRepository,
@@ -86,7 +93,7 @@ describe('IPC handlers integration', () => {
       transactionParser,
       taxApportioner,
       knexTransactionRepository,
-      recalculatePositionUseCase,
+      queue,
     );
     const xpBroker = await brokerRepository.findByCode('XP');
     if (!xpBroker) {
@@ -243,7 +250,7 @@ describe('IPC handlers integration', () => {
         Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
       setInitialBalance: () => Promise.resolve({ ticker: 'IVVB11', brokerId: 'broker-xp', assetType: AssetType.Etf, quantity: 2, averagePrice: 300, year: 2025 }),
       listPositions: () => Promise.resolve({ items: [] }),
-      recalculatePosition: () => Promise.resolve(undefined),
+      recalculatePosition: () => Promise.resolve({ totalQuantity: 0, averagePrice: 0 }),
       migrateYear: () =>
         Promise.resolve({ migratedPositionsCount: 0, createdTransactionsCount: 0 }),
       generateAssetsReport: () =>

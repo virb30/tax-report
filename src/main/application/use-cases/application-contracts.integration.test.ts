@@ -17,6 +17,8 @@ import { DeletePositionUseCase } from './delete-position/delete-position.use-cas
 import { ReportGenerator } from '../services/report-generator/report-generator.service';
 import { CsvXlsxConsolidatedPositionParser } from '../../infrastructure/parsers/csv-xlsx-consolidated-position.parser';
 import { RecalculatePositionUseCase } from './recalculate-position/recalculate-position.use-case';
+import { MemoryQueueAdapter } from '../../infrastructure/events/memory-queue.adapter';
+import { RecalculatePositionHandler } from '../events/handlers/recalculate-position.handler';
 import { Transaction } from '@main/domain/portfolio/entities/transaction.entity';
 import { Broker } from '@main/domain/portfolio/entities/broker.entity';
 import { AssetPosition } from '@main/domain/portfolio/entities/asset-position.entity';
@@ -154,12 +156,14 @@ describe('Application contracts integration', () => {
       knexPositionRepository,
       knexTransactionRepository,
     );
+    const queue = new MemoryQueueAdapter();
+    new RecalculatePositionHandler(queue, recalculatePositionUseCase);
     const consolidatedParser = new CsvXlsxConsolidatedPositionParser();
     const importConsolidatedUseCase = new ImportConsolidatedPositionUseCase(
       consolidatedParser,
       brokerRepository,
       knexTransactionRepository,
-      recalculatePositionUseCase,
+      queue,
     );
     const deletePositionUseCase = new DeletePositionUseCase(
       knexPositionRepository,

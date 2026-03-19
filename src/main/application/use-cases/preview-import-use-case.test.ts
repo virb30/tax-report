@@ -1,37 +1,31 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { TransactionType } from '../../../shared/types/domain';
 import { PreviewImportUseCase } from './preview-import-use-case';
-import type { ImportTransactionsParserPort } from '../interfaces/transactions.parser.interface';
+import type { ImportTransactionsParser } from '../interfaces/transactions.parser.interface';
+import { mock } from 'jest-mock-extended';
+import { TaxApportioner } from '@main/domain/ingestion/tax-apportioner.service';
 
 describe('PreviewImportUseCase', () => {
+  const mockParser = mock<ImportTransactionsParser>();
   it('parses and apportions fees without persisting', async () => {
-    const mockParser: ImportTransactionsParserPort = {
-      parse: jest.fn().mockResolvedValue([
-        {
-          tradeDate: '2025-04-01',
-          brokerId: 'broker-xp',
-          totalOperationalCosts: 1,
-          operations: [
-            { ticker: 'PETR4', type: TransactionType.Buy, quantity: 10, unitPrice: 20 },
-            { ticker: 'VALE3', type: TransactionType.Sell, quantity: 5, unitPrice: 40 },
-          ],
-        },
-      ]),
-    };
-    const taxApportioner = { allocate: jest.fn().mockReturnValue([0.33, 0.67]) };
+    mockParser.parse.mockResolvedValue([
+      {
+        tradeDate: '2025-04-01',
+        brokerId: 'broker-xp',
+        totalOperationalCosts: 1,
+        operations: [
+          { ticker: 'PETR4', type: TransactionType.Buy, quantity: 10, unitPrice: 20 },
+          { ticker: 'VALE3', type: TransactionType.Sell, quantity: 10, unitPrice: 40 },
+        ],
+      },
+    ]);
+    const taxApportioner = new TaxApportioner();
 
-    const useCase = new PreviewImportUseCase(mockParser, taxApportioner as never);
+    const useCase = new PreviewImportUseCase(mockParser, taxApportioner);
 
     const result = await useCase.execute({ filePath: '/tmp/ops.csv' });
 
     expect(mockParser.parse).toHaveBeenCalledWith('/tmp/ops.csv');
-    expect(taxApportioner.allocate).toHaveBeenCalledWith({
-      totalOperationalCosts: 1,
-      operations: [
-        { ticker: 'PETR4', quantity: 10, unitPrice: 20 },
-        { ticker: 'VALE3', quantity: 5, unitPrice: 40 },
-      ],
-    });
     expect(result.transactionsPreview).toHaveLength(2);
     expect(result.transactionsPreview[0]).toEqual({
       date: '2025-04-01',

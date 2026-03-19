@@ -22,6 +22,8 @@ Use arquitetura em camadas baseada em Clean Architecture.
 ### Estrutura de Use Cases
 
 Cada use case deve ficar em sua própria pasta com nomenclatura `[verbo]-[objeto]` (ex: `create-broker`, `list-brokers`, `update-broker`, `toggle-active-broker`).
+Casos de uso devem ter uma responsabilidade clara e bem definida, representando a intenção do usuário.
+Um caso de uso não pode depender diretamente de outro caso de uso.
 
 **Arquivos obrigatórios:**
 - `[nome].use-case.ts` - Classe com método `execute(input): Promise<output>`

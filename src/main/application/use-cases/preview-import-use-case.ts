@@ -1,15 +1,15 @@
-import type { ImportTransactionsParserPort } from '../interfaces/transactions.parser.interface';
+import type { ImportTransactionsParser } from '../interfaces/transactions.parser.interface';
 import type { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
-import type { ParsedTransactionBatch } from '@shared/contracts/import-transactions.contract';
 import type {
   PreviewImportTransactionsCommand,
   PreviewImportTransactionsResult,
   PreviewTransactionItem,
 } from '@shared/contracts/preview-import.contract';
+import { TransactionType } from '@shared/types/domain';
 
 export class PreviewImportUseCase {
   constructor(
-    private readonly parser: ImportTransactionsParserPort,
+    private readonly parser: ImportTransactionsParser,
     private readonly taxApportioner: TaxApportioner,
   ) {}
 
@@ -36,7 +36,7 @@ export class PreviewImportUseCase {
         transactionsPreview.push({
           date: batch.tradeDate,
           ticker: op.ticker,
-          type: op.type,
+          type: op.type === TransactionType.Buy ? 'buy' : 'sell',
           quantity: op.quantity,
           unitPrice: op.unitPrice,
           fees,

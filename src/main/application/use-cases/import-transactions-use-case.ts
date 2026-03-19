@@ -3,20 +3,21 @@ import { SourceType } from '../../../shared/types/domain';
 import { Transaction } from '../../domain/portfolio/entities/transaction.entity';
 import { Uuid } from '../../domain/shared/uuid.vo';
 import type { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
-import type { ImportTransactionsParserPort } from '../interfaces/transactions.parser.interface';
+import type { ImportTransactionsParser } from '../interfaces/transactions.parser.interface';
 import type { TransactionRepository } from '../repositories/transaction.repository';
-import type { RecalculatePositionUseCase } from './recalculate-position-use-case';
+import type { Queue } from '../events/queue.interface';
 import type {
   ImportTransactionsCommand,
   ImportTransactionsResult,
 } from '@shared/contracts/import-transactions.contract';
+import { TransactionsImportedEvent } from '../../domain/events/transactions-imported.event';
 
 export class ImportTransactionsUseCase {
   constructor(
-    private readonly parser: ImportTransactionsParserPort,
+    private readonly parser: ImportTransactionsParser,
     private readonly taxApportioner: TaxApportioner,
     private readonly transactionRepository: TransactionRepository,
-    private readonly recalculatePositionUseCase: RecalculatePositionUseCase,
+    private readonly queue: Queue,
   ) {}
 
   async execute(input: ImportTransactionsCommand): Promise<ImportTransactionsResult> {
@@ -86,7 +87,8 @@ export class ImportTransactionsUseCase {
     }
     for (const [ticker, years] of tickerYears) {
       for (const year of years) {
-        await this.recalculatePositionUseCase.execute({ ticker, year });
+        const event = new TransactionsImportedEvent({ ticker, year });
+        await this.queue.publish(event);
       }
     }
 

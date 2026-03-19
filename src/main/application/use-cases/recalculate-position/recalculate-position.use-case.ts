@@ -1,9 +1,8 @@
-import { AssetPosition } from '../../../domain/portfolio/entities/asset-position.entity';
-import type { AssetPositionRepository } from '../../../application/repositories/asset-position.repository';
-import type { TransactionRepository } from '../../../application/repositories/transaction.repository';
-import { RecalculatePositionInput } from './recalculate-position.input';
+import type { RecalculatePositionInput } from './recalculate-position.input';
+import type { RecalculatePositionOutput } from './recalculate-position.output';
+import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
+import type { TransactionRepository } from '../../repositories/transaction.repository';
 import { PositionCalculatorService } from '../../../domain/portfolio/services/position-calculator.service';
-import { RecalculatePositionOutput } from './recalculate-position.output';
 
 export class RecalculatePositionUseCase {
   constructor(
@@ -14,24 +13,22 @@ export class RecalculatePositionUseCase {
   async execute(input: RecalculatePositionInput): Promise<RecalculatePositionOutput> {
     const allTransactions = await this.transactionRepository.findByTicker(input.ticker);
     const yearEnd = `${input.year}-12-31`;
-    const transactions = allTransactions.filter((tx) => tx.date <= yearEnd);
+    const transactions = allTransactions.filter((transaction) => transaction.date <= yearEnd);
 
-    const position = await this.positionRepository.findByTickerAndYear(
-      input.ticker,
-      input.year,
-    );
-
+    const position = await this.positionRepository.findByTickerAndYear(input.ticker, input.year);
     if (!position) {
       throw new Error(`Position not found for ticker ${input.ticker} and year ${input.year}`);
     }
 
     const positionCalculator = new PositionCalculatorService();
     const positions = positionCalculator.compute(transactions, [position], input.year);
+    const recalculatedPosition = positions[0];
 
-    await this.positionRepository.save(positions[0]);
+    await this.positionRepository.save(recalculatedPosition);
+
     return {
-      totalQuantity: positions[0].totalQuantity,
-      averagePrice: positions[0].averagePrice,
-    }
+      totalQuantity: recalculatedPosition.totalQuantity,
+      averagePrice: recalculatedPosition.averagePrice,
+    };
   }
 }

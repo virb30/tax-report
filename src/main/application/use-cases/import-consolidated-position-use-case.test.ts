@@ -1,17 +1,20 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { mock } from 'jest-mock-extended';
 import { ImportConsolidatedPositionUseCase } from './import-consolidated-position-use-case';
 import type { ConsolidatedPositionParserPort } from '../interfaces/consolidated-position-parser.port';
 import type { BrokerRepository } from '../repositories/broker.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
-import type { RecalculatePositionUseCase } from './recalculate-position/recalculate-position.use-case';
+import type { Queue } from '../events/queue.interface';
 import { Broker } from '../../domain/portfolio/entities/broker.entity';
+import { Cnpj } from '../../domain/shared/cnpj.vo';
+import { ConsolidatedPositionImportedEvent } from '../../domain/events/consolidated-position-imported.event';
 
 describe('ImportConsolidatedPositionUseCase', () => {
   let parser: jest.Mocked<ConsolidatedPositionParserPort>;
   let brokerRepo: jest.Mocked<BrokerRepository>;
   let transactionRepo: jest.Mocked<TransactionRepository>;
-  let recalculateUseCase: jest.Mocked<RecalculatePositionUseCase>;
+  let queue: jest.Mocked<Queue>;
   let useCase: ImportConsolidatedPositionUseCase;
   let xpBroker: Broker;
   let clearBroker: Broker;
@@ -20,19 +23,17 @@ describe('ImportConsolidatedPositionUseCase', () => {
     parser = mock<ConsolidatedPositionParserPort>();
     brokerRepo = mock<BrokerRepository>();
     transactionRepo = mock<TransactionRepository>();
-    recalculateUseCase = mock<RecalculatePositionUseCase>();
+    queue = mock<Queue>();
 
     xpBroker = Broker.create({
-      id: '019cece0-4a22-75b8-95c4-45eb6f4cb2f4',
       name: 'XP',
-      cnpj: '00.000.000/0001-00',
+      cnpj: new Cnpj('00.000.000/0001-00'),
       code: 'XP',
       active: true,
     });
     clearBroker = Broker.create({
-      id: '019cece0-f8b9-7cd8-9021-8f3b0f36a674',
       name: 'Clear',
-      cnpj: '11.111.111/0001-11',
+      cnpj: new Cnpj('11.111.111/0001-11'),
       code: 'CLEAR',
       active: true,
     });
@@ -48,13 +49,13 @@ describe('ImportConsolidatedPositionUseCase', () => {
     );
     transactionRepo.saveMany.mockResolvedValue(undefined);
     transactionRepo.deleteInitialBalanceByTickerAndYear.mockResolvedValue(undefined);
-    recalculateUseCase.execute.mockResolvedValue(undefined);
+    queue.publish.mockResolvedValue(undefined);
 
     useCase = new ImportConsolidatedPositionUseCase(
       parser,
       brokerRepo,
       transactionRepo,
-      recalculateUseCase,
+      queue,
     );
   });
 
@@ -81,14 +82,12 @@ describe('ImportConsolidatedPositionUseCase', () => {
       2024,
     );
     expect(transactionRepo.saveMany).toHaveBeenCalledTimes(2);
-    expect(recalculateUseCase.execute).toHaveBeenCalledWith({
-      ticker: 'PETR4',
-      year: 2024,
-    });
-    expect(recalculateUseCase.execute).toHaveBeenCalledWith({
-      ticker: 'VALE3',
-      year: 2024,
-    });
+    expect(queue.publish).toHaveBeenCalledWith(
+      expect.objectContaining({ name: ConsolidatedPositionImportedEvent.name, ticker: 'PETR4', year: 2024 }),
+    );
+    expect(queue.publish).toHaveBeenCalledWith(
+      expect.objectContaining({ name: ConsolidatedPositionImportedEvent.name, ticker: 'VALE3', year: 2024 }),
+    );
   });
 
   it('groups same ticker+broker and keeps last row (upsert)', async () => {

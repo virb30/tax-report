@@ -24,6 +24,8 @@ import { CreateBrokerUseCase } from './application/use-cases/create-broker/creat
 import { ListBrokersUseCase } from './application/use-cases/list-brokers/list-brokers.use-case';
 import { UpdateBrokerUseCase } from './application/use-cases/update-broker/update-broker.use-case';
 import { ToggleActiveBrokerUseCase } from './application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
+import { MemoryQueueAdapter } from './infrastructure/events/memory-queue.adapter';
+import { RecalculatePositionHandler } from './application/events/handlers/recalculate-position.handler';
 
 const handlersDependenciesPromise = createMainHandlersDependencies();
 const windowManager = new WindowManager();
@@ -147,6 +149,11 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
     knexPositionRepository,
     knexTransactionRepository,
   );
+  const queue = new MemoryQueueAdapter();
+  new RecalculatePositionHandler(
+    queue,
+    recalculatePositionUseCase,
+  );
   const taxApportioner = new TaxApportioner();
   const spreadsheetFileReader = new SheetjsSpreadsheetFileReader();
   const csvXlsxTransactionParser = new CsvXlsxTransactionParser(
@@ -157,7 +164,7 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
     csvXlsxTransactionParser,
     taxApportioner,
     knexTransactionRepository,
-    recalculatePositionUseCase,
+    queue,
   );
   const previewImportUseCase = new PreviewImportUseCase(
     csvXlsxTransactionParser,
@@ -183,7 +190,7 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
     consolidatedPositionParser,
     brokerRepository,
     knexTransactionRepository,
-    recalculatePositionUseCase,
+    queue,
   );
 
   const deletePositionUseCase = new DeletePositionUseCase(

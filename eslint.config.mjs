@@ -19,6 +19,16 @@ export default [
     plugins: {
       '@typescript-eslint': tsPlugin,
     },
+    overrides: [
+      {
+        files: ['**/*.test.ts', '**/*.spec.ts'],
+        plugins: ['jest'],
+        rules: {
+          '@typescript-eslint/unbound-method': 'off',
+          'jest/unbound-method': 'error',
+        },
+      },
+    ],
     rules: {
       ...tsPlugin.configs.recommended.rules,
       ...tsPlugin.configs['recommended-type-checked'].rules,
@@ -33,5 +43,5 @@ export default [
   },
   {
     ignores: ['out/**', '.vite/**', 'coverage/**'],
-  },
+  }
 ];
