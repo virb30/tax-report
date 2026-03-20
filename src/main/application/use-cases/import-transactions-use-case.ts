@@ -9,7 +9,7 @@ import type { Queue } from '../events/queue.interface';
 import type {
   ImportTransactionsCommand,
   ImportTransactionsResult,
-} from '@shared/contracts/import-transactions.contract';
+} from '../../../shared/contracts/import-transactions.contract';
 import { TransactionsImportedEvent } from '../../domain/events/transactions-imported.event';
 
 export class ImportTransactionsUseCase {

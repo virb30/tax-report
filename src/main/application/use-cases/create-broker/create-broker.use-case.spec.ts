@@ -1,9 +1,9 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { BrokerRepository } from '@main/application/repositories/broker.repository';
+import { BrokerRepository } from '../../repositories/broker.repository';
 import { mock, mockReset } from 'jest-mock-extended';
 import { CreateBrokerUseCase } from './create-broker.use-case';
-import { Cnpj } from '@main/domain/shared/cnpj.vo';
-import { Broker } from '@main/domain/portfolio/entities/broker.entity';
+import { Cnpj } from '../../../domain/shared/cnpj.vo';
+import { Broker } from '../../../domain/portfolio/entities/broker.entity';
 
 describe('CreateBrokerUseCase', () => {
   const brokerRepository = mock<BrokerRepository>();

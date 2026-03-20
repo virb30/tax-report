@@ -1,7 +1,7 @@
-import type { Queue } from '../queue.interface';
-import { ConsolidatedPositionImportedEvent } from '../../../domain/events/consolidated-position-imported.event';
-import { TransactionsImportedEvent } from '../../../domain/events/transactions-imported.event';
-import type { RecalculatePositionUseCase } from '../../use-cases/recalculate-position/recalculate-position.use-case';
+import type { Queue } from '../../application/events/queue.interface';
+import { ConsolidatedPositionImportedEvent } from '../../domain/events/consolidated-position-imported.event';
+import { TransactionsImportedEvent } from '../../domain/events/transactions-imported.event';
+import type { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
 
 export class RecalculatePositionHandler {
   constructor(

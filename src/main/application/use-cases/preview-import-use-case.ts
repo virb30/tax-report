@@ -4,8 +4,8 @@ import type {
   PreviewImportTransactionsCommand,
   PreviewImportTransactionsResult,
   PreviewTransactionItem,
-} from '@shared/contracts/preview-import.contract';
-import { TransactionType } from '@shared/types/domain';
+} from '../../../shared/contracts/preview-import.contract';
+import { TransactionType } from '../../../shared/types/domain';
 
 export class PreviewImportUseCase {
   constructor(

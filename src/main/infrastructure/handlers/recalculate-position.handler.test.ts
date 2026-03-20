@@ -1,11 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import type { Queue } from '../queue.interface';
-import type { RecalculatePositionUseCase } from '../../use-cases/recalculate-position/recalculate-position.use-case';
+import type { Queue } from '../../application/events/queue.interface';
+import type { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
 import { RecalculatePositionHandler } from './recalculate-position.handler';
-import { ConsolidatedPositionImportedEvent } from '../../../domain/events/consolidated-position-imported.event';
-import { TransactionsImportedEvent } from '../../../domain/events/transactions-imported.event';
+import { ConsolidatedPositionImportedEvent } from '../../domain/events/consolidated-position-imported.event';
+import { TransactionsImportedEvent } from '../../domain/events/transactions-imported.event';
 import { mock, mockReset } from 'jest-mock-extended';
-import { MemoryQueueAdapter } from '@main/infrastructure/events/memory-queue.adapter';
+import { MemoryQueueAdapter } from '../events/memory-queue.adapter';
 
 describe('RecalculatePositionHandler', () => {
   const recalculatePositionUseCase = mock<RecalculatePositionUseCase>();

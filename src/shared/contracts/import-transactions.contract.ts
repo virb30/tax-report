@@ -1,4 +1,4 @@
-import type { TransactionType } from '@shared/types/domain';
+import type { TransactionType } from '../types/domain';
 
 export type ParsedTransactionOperation = {
   ticker: string;

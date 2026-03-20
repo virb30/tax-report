@@ -2,7 +2,7 @@ import { OperationType, TransactionType } from '../../../shared/types/domain';
 import type {
   ParsedTransactionBatch,
   ParsedTransactionOperation,
-} from '@shared/contracts/import-transactions.contract';
+} from '../../../shared/contracts/import-transactions.contract';
 import type { ImportTransactionsParser } from '../../application/interfaces/transactions.parser.interface';
 import type { SpreadsheetFileReader } from '../../application/interfaces/spreadsheet.file-reader';
 import type { SpreadsheetRow } from '../../application/interfaces/spreadsheet.file-reader';

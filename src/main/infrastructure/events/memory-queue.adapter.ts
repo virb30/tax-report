@@ -1,4 +1,4 @@
-import { DomainEvent } from '@main/domain/events/domain-event.interface';
+import { DomainEvent } from '../../domain/events/domain-event.interface';
 import type { EventHandler, Queue } from '../../application/events/queue.interface';
 
 export class MemoryQueueAdapter implements Queue {

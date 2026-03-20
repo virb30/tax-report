@@ -9,10 +9,10 @@ import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initia
 import { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
 import { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
 import { MigrateYearUseCase } from '../../application/use-cases/migrate-year/migrate-year.use-case';
-import { KnexPositionRepository } from '../../infrastructure/persistence/knex-position.repository';
-import { KnexTransactionRepository } from '../../infrastructure/persistence/knex-transaction.repository';
-import { KnexBrokerRepository } from '../../infrastructure/persistence/knex-broker.repository';
-import { KnexAssetRepository } from '../../infrastructure/persistence/knex-asset.repository';
+import { KnexPositionRepository } from '../../infrastructure/repositories/knex-position.repository';
+import { KnexTransactionRepository } from '../../infrastructure/repositories/knex-transaction.repository';
+import { KnexBrokerRepository } from '../../infrastructure/repositories/knex-broker.repository';
+import { KnexAssetRepository } from '../../infrastructure/repositories/knex-asset.repository';
 import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-asset-report/generate-assets-report.use-case';
 import { ReportGenerator } from '../../application/services/report-generator/report-generator.service';
 import { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
@@ -30,7 +30,7 @@ import { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/u
 import { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
 import { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
 import { MemoryQueueAdapter } from '../../infrastructure/events/memory-queue.adapter';
-import { RecalculatePositionHandler } from '../../application/events/handlers/recalculate-position.handler';
+import { RecalculatePositionHandler } from '../../infrastructure/handlers/recalculate-position.handler';
 
 type IpcHandler = (_event: unknown, ...args: unknown[]) => unknown;
 

@@ -1,4 +1,4 @@
-import type { AssetType } from '@shared/types/domain';
+import type { AssetType } from '../types/domain';
 
 export type GenerateAssetsReportQuery = {
   baseYear: number;

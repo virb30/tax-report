@@ -1,4 +1,4 @@
-import type { OperationType } from "@shared/types/domain";
+import type { OperationType } from "../../../shared/types/domain";
 
 export interface RecalculableTrade {
   operationType: OperationType;

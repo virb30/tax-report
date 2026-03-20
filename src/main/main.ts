@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { createMainLifecycle } from './infrastructure/composition/create-main-lifecycle';
 import { createAndInitializeDatabase } from './database/database';
-import { KnexBrokerRepository } from './infrastructure/persistence/knex-broker.repository';
+import { KnexBrokerRepository } from './infrastructure/repositories/knex-broker.repository';
 import { RecalculatePositionUseCase } from './application/use-cases/recalculate-position/recalculate-position.use-case';
 import { MigrateYearUseCase } from './application/use-cases/migrate-year/migrate-year.use-case';
 import { ImportTransactionsUseCase } from './application/use-cases/import-transactions-use-case';
@@ -14,9 +14,9 @@ import { ImportConsolidatedPositionUseCase } from './application/use-cases/impor
 import { DeletePositionUseCase } from './application/use-cases/delete-position/delete-position.use-case';
 import { SetInitialBalanceUseCase } from './application/use-cases/set-initial-balance/set-initial-balance.use-case';
 import { ListPositionsUseCase } from './application/use-cases/list-positions/list-positions-use-case';
-import { KnexPositionRepository } from './infrastructure/persistence/knex-position.repository';
-import { KnexTransactionRepository } from './infrastructure/persistence/knex-transaction.repository';
-import { KnexAssetRepository } from './infrastructure/persistence/knex-asset.repository';
+import { KnexPositionRepository } from './infrastructure/repositories/knex-position.repository';
+import { KnexTransactionRepository } from './infrastructure/repositories/knex-transaction.repository';
+import { KnexAssetRepository } from './infrastructure/repositories/knex-asset.repository';
 import { GenerateAssetsReportUseCase } from './application/use-cases/generate-asset-report/generate-assets-report.use-case';
 import { ReportGenerator } from './application/services/report-generator/report-generator.service';
 import { WindowManager } from './window-manager';
@@ -25,7 +25,7 @@ import { ListBrokersUseCase } from './application/use-cases/list-brokers/list-br
 import { UpdateBrokerUseCase } from './application/use-cases/update-broker/update-broker.use-case';
 import { ToggleActiveBrokerUseCase } from './application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
 import { MemoryQueueAdapter } from './infrastructure/events/memory-queue.adapter';
-import { RecalculatePositionHandler } from './application/events/handlers/recalculate-position.handler';
+import { RecalculatePositionHandler } from './infrastructure/handlers/recalculate-position.handler';
 
 const handlersDependenciesPromise = createMainHandlersDependencies();
 const windowManager = new WindowManager();

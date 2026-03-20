@@ -1,4 +1,4 @@
-import { DomainEvent } from '@main/domain/events/domain-event.interface';
+import { DomainEvent } from '../../domain/events/domain-event.interface';
 
 export type EventHandler = (event: DomainEvent) => Promise<void>;
 

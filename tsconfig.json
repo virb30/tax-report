@@ -12,11 +12,6 @@
     "isolatedModules": true,
     "types": ["node"],
     "baseUrl": ".",
-    "paths": {
-      "@renderer/*": ["src/renderer/*"],
-      "@main/*": ["src/main/*"],
-      "@shared/*": ["src/shared/*"]
-    }
   },
   "include": [
     "src/**/*"

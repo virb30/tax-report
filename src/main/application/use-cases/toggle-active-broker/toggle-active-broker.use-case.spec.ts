@@ -4,7 +4,7 @@ import { Broker } from '../../../domain/portfolio/entities/broker.entity';
 import { Cnpj } from '../../../domain/shared/cnpj.vo';
 import type { BrokerRepository } from '../../repositories/broker.repository';
 import { ToggleActiveBrokerUseCase } from './toggle-active-broker.use-case';
-import { Uuid } from '@main/domain/shared/uuid.vo';
+import { Uuid } from '../../../domain/shared/uuid.vo';
 
 describe('ToggleActiveBrokerUseCase', () => {
   const brokerRepository = mock<BrokerRepository>();

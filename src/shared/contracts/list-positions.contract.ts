@@ -1,4 +1,4 @@
-import type { AssetType } from '@shared/types/domain';
+import type { AssetType } from '../types/domain';
 
 export type ListPositionsQuery = {
   /** Posição consolidada em 31/12 deste ano */

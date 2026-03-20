@@ -3,34 +3,34 @@ import type {
   ConfirmImportTransactionsResult,
   PreviewImportTransactionsCommand,
   PreviewImportTransactionsResult,
-} from '@shared/contracts/preview-import.contract';
+} from '../../../shared/contracts/preview-import.contract';
 import type {
   ImportConsolidatedPositionCommand,
   ImportConsolidatedPositionResult,
   PreviewConsolidatedPositionCommand,
   PreviewConsolidatedPositionResult,
-} from '@shared/contracts/import-consolidated-position.contract';
-import type { CreateBrokerOutput } from '@main/application/use-cases/create-broker/create-broker.output';
-import type { CreateBrokerInput } from '@main/application/use-cases/create-broker/create-broker.input';
-import type { UpdateBrokerOutput } from '@main/application/use-cases/update-broker/update-broker.output';
-import type { ListBrokersOutput } from '@main/application/use-cases/list-brokers/list-brokers.output';
-import type { ListBrokersInput } from '@main/application/use-cases/list-brokers/list-brokers.input';
-import type { UpdateBrokerInput } from '@main/application/use-cases/update-broker/update-broker.input';
-import type { ToggleActiveBrokerInput } from '@main/application/use-cases/toggle-active-broker/toggle-active-broker.input';
-import type { ToggleActiveBrokerOutput } from '@main/application/use-cases/toggle-active-broker/toggle-active-broker.output';
-import type { SetInitialBalanceInput } from '@main/application/use-cases/set-initial-balance/set-initial-balance.input';
-import type { SetInitialBalanceOutput } from '@main/application/use-cases/set-initial-balance/set-initial-balance.output';
-import type { AssetType } from '@shared/types/domain';
-import type { DeletePositionInput } from '@main/application/use-cases/delete-position/delete-position.input';
-import type { DeletePositionOutput } from '@main/application/use-cases/delete-position/delete-position.output';
-import type { ListPositionsInput } from '@main/application/use-cases/list-positions/list-positions.input';
-import type { ListPositionsOutput } from '@main/application/use-cases/list-positions/list-positions.output';
-import type { RecalculatePositionInput } from '@main/application/use-cases/recalculate-position/recalculate-position.input';
-import type { MigrateYearInput } from '@main/application/use-cases/migrate-year/migrate-year.input';
-import type { MigrateYearOutput } from '@main/application/use-cases/migrate-year/migrate-year.output';
-import type { GenerateAssetReportInput } from '@main/application/use-cases/generate-asset-report/generate-asset-report.input';
-import type { GenerateAssetReportOutput } from '@main/application/use-cases/generate-asset-report/generate-asset-report.output';
-import type { RecalculatePositionOutput } from '@main/application/use-cases/recalculate-position/recalculate-position.output';
+} from '../../../shared/contracts/import-consolidated-position.contract';
+import type { CreateBrokerOutput } from '../../application/use-cases/create-broker/create-broker.output';
+import type { CreateBrokerInput } from '../../application/use-cases/create-broker/create-broker.input';
+import type { UpdateBrokerOutput } from '../../application/use-cases/update-broker/update-broker.output';
+import type { ListBrokersOutput } from '../../application/use-cases/list-brokers/list-brokers.output';
+import type { ListBrokersInput } from '../../application/use-cases/list-brokers/list-brokers.input';
+import type { UpdateBrokerInput } from '../../application/use-cases/update-broker/update-broker.input';
+import type { ToggleActiveBrokerInput } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.input';
+import type { ToggleActiveBrokerOutput } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.output';
+import type { SetInitialBalanceInput } from '../../application/use-cases/set-initial-balance/set-initial-balance.input';
+import type { SetInitialBalanceOutput } from '../../application/use-cases/set-initial-balance/set-initial-balance.output';
+import type { AssetType } from '../../../shared/types/domain';
+import type { DeletePositionInput } from '../../application/use-cases/delete-position/delete-position.input';
+import type { DeletePositionOutput } from '../../application/use-cases/delete-position/delete-position.output';
+import type { ListPositionsInput } from '../../application/use-cases/list-positions/list-positions.input';
+import type { ListPositionsOutput } from '../../application/use-cases/list-positions/list-positions.output';
+import type { RecalculatePositionInput } from '../../application/use-cases/recalculate-position/recalculate-position.input';
+import type { MigrateYearInput } from '../../application/use-cases/migrate-year/migrate-year.input';
+import type { MigrateYearOutput } from '../../application/use-cases/migrate-year/migrate-year.output';
+import type { GenerateAssetReportInput } from '../../application/use-cases/generate-asset-report/generate-asset-report.input';
+import type { GenerateAssetReportOutput } from '../../application/use-cases/generate-asset-report/generate-asset-report.output';
+import type { RecalculatePositionOutput } from '../../application/use-cases/recalculate-position/recalculate-position.output';
 
 type IpcMainLike = {
   handle: (

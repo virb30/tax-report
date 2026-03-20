@@ -5,10 +5,10 @@ import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import type { Knex } from 'knex';
 import { AssetType, SourceType, TransactionType } from '../../../shared/types/domain';
 import { createDatabaseConnection, initializeDatabase } from '../../database/database';
-import { KnexBrokerRepository } from '../../infrastructure/persistence/knex-broker.repository';
-import { KnexPositionRepository } from '../../infrastructure/persistence/knex-position.repository';
-import { KnexTransactionRepository } from '../../infrastructure/persistence/knex-transaction.repository';
-import { KnexAssetRepository } from '../../infrastructure/persistence/knex-asset.repository';
+import { KnexBrokerRepository } from '../../infrastructure/repositories/knex-broker.repository';
+import { KnexPositionRepository } from '../../infrastructure/repositories/knex-position.repository';
+import { KnexTransactionRepository } from '../../infrastructure/repositories/knex-transaction.repository';
+import { KnexAssetRepository } from '../../infrastructure/repositories/knex-asset.repository';
 import { GenerateAssetsReportUseCase } from './generate-asset-report/generate-assets-report.use-case';
 import { ListPositionsUseCase } from './list-positions/list-positions-use-case';
 import { SetInitialBalanceUseCase } from './set-initial-balance/set-initial-balance.use-case';
@@ -18,11 +18,11 @@ import { ReportGenerator } from '../services/report-generator/report-generator.s
 import { CsvXlsxConsolidatedPositionParser } from '../../infrastructure/parsers/csv-xlsx-consolidated-position.parser';
 import { RecalculatePositionUseCase } from './recalculate-position/recalculate-position.use-case';
 import { MemoryQueueAdapter } from '../../infrastructure/events/memory-queue.adapter';
-import { RecalculatePositionHandler } from '../events/handlers/recalculate-position.handler';
-import { Transaction } from '@main/domain/portfolio/entities/transaction.entity';
-import { Broker } from '@main/domain/portfolio/entities/broker.entity';
-import { AssetPosition } from '@main/domain/portfolio/entities/asset-position.entity';
-import { Cnpj } from '@main/domain/shared/cnpj.vo';
+import { RecalculatePositionHandler } from '../../infrastructure/handlers/recalculate-position.handler';
+import { Transaction } from '../../domain/portfolio/entities/transaction.entity';
+import { Broker } from '../../domain/portfolio/entities/broker.entity';
+import { AssetPosition } from '../../domain/portfolio/entities/asset-position.entity';
+import { Cnpj } from '../../domain/shared/cnpj.vo';
 
 describe('Application contracts integration', () => {
   let database: Knex;

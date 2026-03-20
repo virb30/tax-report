@@ -1,4 +1,4 @@
-import { Cnpj } from "@main/domain/shared/cnpj.vo";
+import { Cnpj } from "../../shared/cnpj.vo";
 import { Asset } from "./asset.entity";
 
 describe('AssetEntity', () => {

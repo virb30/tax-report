@@ -3,7 +3,7 @@ import type {
   ImportConsolidatedPositionResult,
   PreviewConsolidatedPositionCommand,
   PreviewConsolidatedPositionResult,
-} from '@shared/contracts/import-consolidated-position.contract';
+} from '../../../shared/contracts/import-consolidated-position.contract';
 import { SourceType, TransactionType } from '../../../shared/types/domain';
 import type { ConsolidatedPositionParserPort } from '../interfaces/consolidated-position-parser.port';
 import type { BrokerRepository } from '../repositories/broker.repository';

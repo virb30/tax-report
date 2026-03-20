@@ -1,25 +1,25 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { ElectronApi } from '@shared/types/electron-api';
-import type { GenerateAssetsReportQuery } from '@shared/contracts/assets-report.contract';
+import type { ElectronApi } from './shared/types/electron-api';
+import type { GenerateAssetsReportQuery } from './shared/contracts/assets-report.contract';
 import type {
   CreateBrokerCommand,
   ListBrokersQuery,
   UpdateBrokerCommand,
   ToggleBrokerActiveCommand,
-} from '@shared/contracts/brokers.contract';
-import type { RecalculatePositionCommand } from '@shared/contracts/recalculate.contract';
-import type { MigrateYearCommand } from '@shared/contracts/migrate-year.contract';
+} from './shared/contracts/brokers.contract';
+import type { RecalculatePositionCommand } from './shared/contracts/recalculate.contract';
+import type { MigrateYearCommand } from './shared/contracts/migrate-year.contract';
 import type {
   ImportConsolidatedPositionCommand,
   PreviewConsolidatedPositionCommand,
-} from '@shared/contracts/import-consolidated-position.contract';
-import type { DeletePositionCommand } from '@shared/contracts/delete-position.contract';
-import type { SetInitialBalanceCommand } from '@shared/contracts/initial-balance.contract';
-import type { ListPositionsQuery } from '@shared/contracts/list-positions.contract';
+} from './shared/contracts/import-consolidated-position.contract';
+import type { DeletePositionCommand } from './shared/contracts/delete-position.contract';
+import type { SetInitialBalanceCommand } from './shared/contracts/initial-balance.contract';
+import type { ListPositionsQuery } from './shared/contracts/list-positions.contract';
 import type {
   ConfirmImportTransactionsCommand,
   PreviewImportTransactionsCommand,
-} from '@shared/contracts/preview-import.contract';
+} from './shared/contracts/preview-import.contract';
 
 export const electronApi: ElectronApi = {
   appName: 'tax-report',

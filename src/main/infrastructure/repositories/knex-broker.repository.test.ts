@@ -3,9 +3,9 @@ import type { Knex } from 'knex';
 import { createDatabaseConnection } from '../../database/database-connection';
 import { initializeDatabase } from '../../database/database';
 import { KnexBrokerRepository } from './knex-broker.repository';
-import { Broker } from '@main/domain/portfolio/entities/broker.entity';
-import { Cnpj } from '@main/domain/shared/cnpj.vo';
-import { Uuid } from '@main/domain/shared/uuid.vo';
+import { Broker } from '../../domain/portfolio/entities/broker.entity';
+import { Cnpj } from '../../domain/shared/cnpj.vo';
+import { Uuid } from '../../domain/shared/uuid.vo';
 
 describe('KnexBrokerRepository', () => {
   let database: Knex;

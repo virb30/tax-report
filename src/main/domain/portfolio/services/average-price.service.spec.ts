@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import { AveragePriceService } from './average-price.service';
 import { AssetType } from '../../../../shared/types/domain';
 import { AssetPosition } from '../entities/asset-position.entity';
-import { Uuid } from '@main/domain/shared/uuid.vo';
+import { Uuid } from '../../shared/uuid.vo';
 import { Money } from '../value-objects/money.vo';
 
 describe('AveragePriceService', () => {
