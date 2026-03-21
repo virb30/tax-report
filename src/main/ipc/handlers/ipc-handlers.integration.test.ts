@@ -5,6 +5,10 @@ import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import type { Knex } from 'knex';
 import { AssetType } from '../../../shared/types/domain';
 import { BrokersController } from '../controllers/brokers.controller';
+import { AppController } from '../controllers/app.controller';
+import { ImportController } from '../controllers/import.controller';
+import { PortfolioController } from '../controllers/portfolio.controller';
+import { ReportController } from '../controllers/report.controller';
 import { createDatabaseConnection, initializeDatabase } from '../../database/database';
 import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance.use-case';
 import { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
@@ -21,16 +25,15 @@ import { SheetjsSpreadsheetFileReader } from '../../infrastructure/adapters/file
 import { PreviewImportUseCase } from '../../application/use-cases/preview-import/preview-import-use-case';
 import { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions/import-transactions-use-case';
 import { AssetPosition } from '../../domain/portfolio/entities/asset-position.entity';
-import {
-  registerMainHandlers,
-  type MainHandlersDependencies,
-} from './register-main-handlers';
 import { CreateBrokerUseCase } from '../../application/use-cases/create-broker/create-broker.use-case';
 import { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
 import { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
 import { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
 import { MemoryQueueAdapter } from '../../infrastructure/events/memory-queue.adapter';
 import { RecalculatePositionHandler } from '../../infrastructure/handlers/recalculate-position.handler';
+import { ImportConsolidatedPositionUseCase } from '../../application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
+import { DeletePositionUseCase } from '../../application/use-cases/delete-position/delete-position.use-case';
+import { CsvXlsxConsolidatedPositionParser } from '../../infrastructure/parsers/csv-xlsx-consolidated-position.parser';
 
 type IpcHandler = (_event: unknown, ...args: unknown[]) => unknown;
 
@@ -85,6 +88,7 @@ describe('IPC handlers integration', () => {
       spreadsheetFileReader,
       brokerRepository,
     );
+    const consolidatedPositionParser = new CsvXlsxConsolidatedPositionParser();
     const taxApportioner = new TaxApportioner();
     const previewImportUseCase = new PreviewImportUseCase(transactionParser, taxApportioner);
     const importTransactionsUseCase = new ImportTransactionsUseCase(
@@ -93,6 +97,17 @@ describe('IPC handlers integration', () => {
       knexTransactionRepository,
       queue,
     );
+    const importConsolidatedPositionUseCase = new ImportConsolidatedPositionUseCase(
+      consolidatedPositionParser,
+      brokerRepository,
+      knexTransactionRepository,
+      queue,
+    );
+    const deletePositionUseCase = new DeletePositionUseCase(
+      knexPositionRepository,
+      knexTransactionRepository,
+    );
+
     const xpBroker = await brokerRepository.findByCode('XP');
     if (!xpBroker) {
       throw new Error('Expected broker XP to exist in test database.');
@@ -123,23 +138,22 @@ describe('IPC handlers integration', () => {
       },
     };
 
-    const dependencies: MainHandlersDependencies = {
-      checkHealth: () => ({ status: 'ok' }),
-      importSelectFile: () => Promise.resolve({ filePath: null }),
-      previewImportTransactions: (input) => previewImportUseCase.execute(input),
-      confirmImportTransactions: (input) => importTransactionsUseCase.execute(input),
-      setInitialBalance: (input) => setInitialBalanceUseCase.execute(input),
-      listPositions: (input) => listPositionsUseCase.execute(input),
-      recalculatePosition: (input) => recalculatePositionUseCase.execute(input),
-      migrateYear: (input) => migrateYearUseCase.execute(input),
-      generateAssetsReport: (input) => generateAssetsReportUseCase.execute(input),
-      previewConsolidatedPosition: () => Promise.resolve({ rows: [] }),
-      importConsolidatedPosition: () =>
-        Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
-      deletePosition: () => Promise.resolve({ deleted: false }),
-    };
+    const appController = new AppController();
+    const importController = new ImportController(previewImportUseCase, importTransactionsUseCase);
+    const portfolioController = new PortfolioController(
+      setInitialBalanceUseCase,
+      listPositionsUseCase,
+      recalculatePositionUseCase,
+      migrateYearUseCase,
+      importConsolidatedPositionUseCase,
+      deletePositionUseCase,
+    );
+    const reportController = new ReportController(generateAssetsReportUseCase);
 
-    registerMainHandlers(ipcMain, dependencies);
+    appController.register(ipcMain as any);
+    importController.register(ipcMain as any);
+    portfolioController.register(ipcMain as any);
+    reportController.register(ipcMain as any);
 
     const healthHandler = handlers.get('app:health-check');
     const previewHandler = handlers.get('import:preview-transactions');
@@ -159,7 +173,7 @@ describe('IPC handlers integration', () => {
       throw new Error('Some IPC handlers are missing.');
     }
 
-    expect(healthHandler({})).toEqual({ status: 'ok' });
+    expect(await healthHandler({})).toEqual({ status: 'ok' });
 
     const previewResult = (await previewHandler({}, {
       filePath: csvPath,
@@ -214,29 +228,6 @@ describe('IPC handlers integration', () => {
       },
     };
 
-    const dependencies: MainHandlersDependencies = {
-      checkHealth: () => ({ status: 'ok' }),
-      importSelectFile: () => Promise.resolve({ filePath: null }),
-      previewImportTransactions: () =>
-        Promise.resolve({ batches: [], transactionsPreview: [] }),
-      confirmImportTransactions: () =>
-        Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
-      setInitialBalance: () => Promise.resolve({ ticker: 'IVVB11', brokerId: 'broker-xp', assetType: AssetType.Etf, quantity: 2, averagePrice: 300, year: 2025 }),
-      listPositions: () => Promise.resolve({ items: [] }),
-      recalculatePosition: () => Promise.resolve({ totalQuantity: 0, averagePrice: 0 }),
-      migrateYear: () =>
-        Promise.resolve({ migratedPositionsCount: 0, createdTransactionsCount: 0 }),
-      generateAssetsReport: () =>
-        Promise.resolve({ referenceDate: '2025-12-31', items: [] }),
-      previewConsolidatedPosition: () => Promise.resolve({ rows: [] }),
-      importConsolidatedPosition: () =>
-        Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
-      deletePosition: () => Promise.resolve({ deleted: false }),
-    };
-
-    registerMainHandlers(ipcMain, dependencies);
-
-    // Register BrokersController
     const brokersController = new BrokersController(
       listBrokersUseCase,
       createBrokerUseCase,

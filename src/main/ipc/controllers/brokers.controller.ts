@@ -1,12 +1,38 @@
+import { z } from 'zod';
 import { IpcController } from './ipc-controller.interface';
 import { CreateBrokerUseCase } from '../../application/use-cases/create-broker/create-broker.use-case';
 import { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
 import { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
 import { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
-import { CreateBrokerInput } from '../../application/use-cases/create-broker/create-broker.input';
-import { UpdateBrokerInput } from '../../application/use-cases/update-broker/update-broker.input';
-import { ToggleActiveBrokerInput } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.input';
-import { ListBrokersInput } from '../../application/use-cases/list-brokers/list-brokers.input';
+
+const listBrokersSchema = z.object({
+  activeOnly: z.boolean().optional(),
+}).optional().catch(undefined);
+
+const createBrokerSchema = z.object({
+  name: z.string({ message: 'Invalid name for create broker.' }),
+  cnpj: z.string({ message: 'Invalid CNPJ for create broker.' }),
+  code: z.string().optional(),
+  codigo: z.string().optional(),
+}).refine(data => data.code !== undefined || data.codigo !== undefined, {
+  message: 'Invalid code for create broker.',
+  path: ['code']
+}).transform(data => ({
+  name: data.name,
+  cnpj: data.cnpj,
+  code: (data.code ?? data.codigo) as string,
+}));
+
+const updateBrokerSchema = z.object({
+  id: z.string().trim().min(1, 'Invalid id for update broker.'),
+  name: z.string().optional(),
+  cnpj: z.string().optional(),
+  code: z.string().optional(),
+});
+
+const toggleActiveBrokerSchema = z.object({
+  id: z.string().trim().min(1, 'Invalid id for toggle broker active.'),
+});
 
 export class BrokersController implements IpcController {
   constructor(
@@ -25,17 +51,20 @@ export class BrokersController implements IpcController {
     ];
 
     ipcMain.handle('brokers:list', async (_event, input?: unknown) => {
-      const payload = this.parseListBrokersInput(input);
+      const payload = listBrokersSchema.parse(input);
       return this.listBrokersUseCase.execute(payload);
     });
 
     ipcMain.handle('brokers:create', async (_event, input: unknown) => {
       try {
-        const payload = this.parseCreateBrokerInput(input);
+        const payload = createBrokerSchema.parse(input);
         const broker = await this.createBrokerUseCase.execute(payload);
         return { success: true, broker };
       } catch (error: unknown) {
         console.error(error);
+        if (error instanceof z.ZodError) {
+          return { success: false, error: error.issues[0].message };
+        }
         if (error instanceof Error) {
           return { success: false, error: error.message };
         }
@@ -45,11 +74,14 @@ export class BrokersController implements IpcController {
 
     ipcMain.handle('brokers:update', async (_event, input: unknown) => {
       try {
-        const payload = this.parseUpdateBrokerInput(input);
+        const payload = updateBrokerSchema.parse(input);
         const broker = await this.updateBrokerUseCase.execute(payload);
         return { success: true, broker };
       } catch (error: unknown) {
         console.error(error);
+        if (error instanceof z.ZodError) {
+          return { success: false, error: error.issues[0].message };
+        }
         if (error instanceof Error) {
           return { success: false, error: error.message };
         }
@@ -59,11 +91,14 @@ export class BrokersController implements IpcController {
 
     ipcMain.handle('brokers:toggle-active', async (_event, input: unknown) => {
       try {
-        const payload = this.parseToggleBrokerActiveInput(input);
+        const payload = toggleActiveBrokerSchema.parse(input);
         const broker = await this.toggleActiveBrokerUseCase.execute(payload);
         return { success: true, broker };
       } catch (error: unknown) {
         console.error(error);
+        if (error instanceof z.ZodError) {
+          return { success: false, error: error.issues[0].message };
+        }
         if (error instanceof Error) {
           return { success: false, error: error.message };
         }
@@ -72,68 +107,5 @@ export class BrokersController implements IpcController {
     });
 
     return channels;
-  }
-
-  private parseListBrokersInput(input: unknown): ListBrokersInput | undefined {
-    if (input === undefined || input === null) {
-      return undefined;
-    }
-    if (typeof input !== 'object') {
-      return undefined;
-    }
-    const payload = input as { activeOnly?: unknown };
-    if (typeof payload.activeOnly === 'boolean') {
-      return { activeOnly: payload.activeOnly };
-    }
-    return undefined;
-  }
-
-  private parseCreateBrokerInput(input: unknown): CreateBrokerInput {
-    if (!input || typeof input !== 'object') {
-      throw new Error('Invalid payload for create broker.');
-    }
-    const payload = input as { name?: unknown; cnpj?: unknown; codigo?: unknown; code?: unknown };
-    if (typeof payload.name !== 'string') {
-      throw new Error('Invalid name for create broker.');
-    }
-    if (typeof payload.cnpj !== 'string') {
-      throw new Error('Invalid CNPJ for create broker.');
-    }
-    const codeValue = payload.code ?? payload.codigo;
-    if (typeof codeValue !== 'string') {
-      throw new Error('Invalid code for create broker.');
-    }
-    return {
-      name: payload.name,
-      cnpj: payload.cnpj,
-      code: codeValue,
-    };
-  }
-
-  private parseUpdateBrokerInput(input: unknown): UpdateBrokerInput {
-    if (!input || typeof input !== 'object') {
-      throw new Error('Invalid payload for update broker.');
-    }
-    const payload = input as { id?: unknown; name?: unknown; cnpj?: unknown; code?: unknown };
-    if (typeof payload.id !== 'string' || payload.id.trim().length === 0) {
-      throw new Error('Invalid id for update broker.');
-    }
-    return {
-      id: payload.id,
-      ...(typeof payload.name === 'string' && { name: payload.name }),
-      ...(typeof payload.cnpj === 'string' && { cnpj: payload.cnpj }),
-      ...(typeof payload.code === 'string' && { code: payload.code }),
-    };
-  }
-
-  private parseToggleBrokerActiveInput(input: unknown): ToggleActiveBrokerInput {
-    if (!input || typeof input !== 'object') {
-      throw new Error('Invalid payload for toggle broker active.');
-    }
-    const payload = input as { id?: unknown };
-    if (typeof payload.id !== 'string' || payload.id.trim().length === 0) {
-      throw new Error('Invalid id for toggle broker active.');
-    }
-    return { id: payload.id };
   }
 }

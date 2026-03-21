@@ -26,6 +26,12 @@ import { DeletePositionUseCase } from '../../application/use-cases/delete-positi
 import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-asset-report/generate-assets-report.use-case';
 
 import { BrokersController } from '../../ipc/controllers/brokers.controller';
+import { AppController } from '../../ipc/controllers/app.controller';
+import { ImportController } from '../../ipc/controllers/import.controller';
+import { PortfolioController } from '../../ipc/controllers/portfolio.controller';
+import { ReportController } from '../../ipc/controllers/report.controller';
+import { IpcRegistry } from '../../ipc/controllers/ipc-registry';
+import { IpcController } from '../../ipc/controllers/ipc-controller.interface';
 
 export interface AppCradle {
   database: Knex;
@@ -55,6 +61,13 @@ export interface AppCradle {
   generateAssetsReportUseCase: GenerateAssetsReportUseCase;
   
   brokersController: BrokersController;
+  appController: AppController;
+  importController: ImportController;
+  portfolioController: PortfolioController;
+  reportController: ReportController;
+
+  ipcControllers: IpcController[];
+  ipcRegistry: IpcRegistry;
 }
 
 export const container = createContainer<AppCradle>({
@@ -113,6 +126,20 @@ export function registerDependencies(db: Knex) {
     
     // Controllers
     brokersController: asClass(BrokersController).singleton(),
+    appController: asClass(AppController).singleton(),
+    importController: asClass(ImportController).singleton(),
+    portfolioController: asClass(PortfolioController).singleton(),
+    reportController: asClass(ReportController).singleton(),
+    
+    // IPC
+    ipcControllers: asFunction((c: AppCradle) => [
+      c.brokersController,
+      c.appController,
+      c.importController,
+      c.portfolioController,
+      c.reportController,
+    ]).singleton(),
+    ipcRegistry: asClass(IpcRegistry).singleton(),
   });
 
   container.resolve('recalculatePositionHandler');
