@@ -29,8 +29,27 @@ describe('RecalculatePositionUseCase', () => {
     useCase = new RecalculatePositionUseCase(positionRepository, transactionRepository);
   });
 
-  it('throws an error when position not found', async () => {
-    await expect(useCase.execute({ ticker: 'PETR4', year: 2024 })).rejects.toThrow('Position not found for ticker PETR4 and year 2024');
+  it('creates a new position when position not found but transactions exist', async () => {
+    const brokerId = Uuid.create();
+    transactionRepository.findByTicker.mockResolvedValue([
+      Transaction.create({
+        date: '2024-06-15',
+        type: TransactionType.Buy,
+        ticker: 'PETR4',
+        quantity: 50,
+        unitPrice: 25,
+        fees: 5,
+        brokerId,
+        sourceType: SourceType.Manual,
+      }),
+    ]);
+
+    const result = await useCase.execute({ ticker: 'PETR4', year: 2024 });
+    expect(positionRepository.save).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      totalQuantity: 50,
+      averagePrice: 25.1,
+    });
   });
 
   it('recalculates position from mix of Buy, Sell, Bonus and InitialBalance', async () => {

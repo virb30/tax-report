@@ -16,12 +16,18 @@ export class RecalculatePositionUseCase {
     const transactions = allTransactions.filter((transaction) => transaction.date <= yearEnd);
 
     const position = await this.positionRepository.findByTickerAndYear(input.ticker, input.year);
-    if (!position) {
-      throw new Error(`Position not found for ticker ${input.ticker} and year ${input.year}`);
-    }
+    const basePositions = position ? [position] : [];
 
     const positionCalculator = new PositionCalculatorService();
-    const positions = positionCalculator.compute(transactions, [position], input.year);
+    const positions = positionCalculator.compute(transactions, basePositions, input.year);
+    
+    if (positions.length === 0) {
+      return {
+        totalQuantity: 0,
+        averagePrice: 0,
+      };
+    }
+
     const recalculatedPosition = positions[0];
 
     await this.positionRepository.save(recalculatedPosition);

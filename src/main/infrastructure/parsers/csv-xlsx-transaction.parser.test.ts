@@ -164,4 +164,31 @@ describe('CsvXlsxTransactionParser', () => {
     expect(result[0]?.tradeDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(result[0]?.operations[0]?.ticker).toBe('PETR4');
   });
+
+  it('correctly parses Excel serial date without timezone issues', async () => {
+    const brokerRepo = mock<BrokerRepository>();
+    brokerRepo.findAllByCodes.mockResolvedValue([createBrokerMock('broker-xp')]);
+
+    // 45672 corresponds to 2025-01-15 in Excel
+    const filePath = await createTempXlsxFile('ops.xlsx', [
+      {
+        Data: 45672,
+        Tipo: 'Compra',
+        Ticker: 'PETR4',
+        Quantidade: 10,
+        'Preco Unitario': 20,
+        Corretora: 'XP',
+      },
+    ]);
+    createdDirs.push(path.dirname(filePath));
+
+    const parser = new CsvXlsxTransactionParser(
+      new SheetjsSpreadsheetFileReader(),
+      brokerRepo,
+    );
+    const result = await parser.parse(filePath);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.tradeDate).toBe('2025-01-15');
+  });
 });

@@ -21,6 +21,8 @@ Você é um assistente IA especializado em Quality Assurance. Sua tarefa é vali
 - TechSpec: `./docs/tasks/prd-[nome-funcionalidade]/techspec.md`
 - Tasks: `./docs/tasks/prd-[nome-funcionalidade]/tasks.md`
 - Bugs: `./docs/tasks/prd-[nome-funcionalidade]/bugs.md`
+- Relatório final de QA: `./docs/taks/prd-[nome-funcionalidade]/report/qa.md`
+    - evidências para auditoria: `./docs/taks/prd-[nome-funcionalidade]/report/screenshots`
 - Regras do Projeto: @.cursor/rules
 - Ambiente: localhost
 
@@ -39,6 +41,8 @@ Você é um assistente IA especializado em Quality Assurance. Sua tarefa é vali
 
 - Verificar se a aplicação está rodando em localhost com modo debug
     - Se não estiver execute o comando `npm run start:debug` para iniciar a aplicação
+    - NOTA: NÃO EXECUTE EM SANDBOX
+    - Lembre-se de manter o terminal ativo
 - Usar `playwright_navigate` do Playwright MCP para acessar a aplicação
 - Confirmar que a página carregou corretamente com `playwright_snapshot`
 

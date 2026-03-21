@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx';
 import { OperationType, TransactionType } from '../../../shared/types/domain';
 import type {
   ParsedTransactionBatch,
@@ -232,18 +233,20 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
 
   private toDateString(value: unknown): string {
     const str = String(value).trim();
-    if (str && str !== 'undefined') {
-      const num = Number(str);
-      if (!Number.isNaN(num) && num > 0 && num < 1000000) {
-        const serial = Math.floor(num);
-        const date = new Date((serial - 25569) * 86400 * 1000);
-        const y = date.getUTCFullYear();
-        const m = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const d = String(date.getUTCDate()).padStart(2, '0');
-        return `${y}-${m}-${d}`;
-      }
+    if (!str || str === 'undefined') {
+      return '';
+    }
+
+    const num = Number(str);
+    if (!Number.isNaN(num) && num > 0 && num < 1000000) {
+      return XLSX.SSF.format('yyyy-mm-dd', Math.round(num));
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (dateRegex.test(str)) {
       return str;
     }
-    return '';
+
+    throw new Error(`Formato de data inválido: "${str}". Esperado YYYY-MM-DD ou data do Excel.`);
   }
 }

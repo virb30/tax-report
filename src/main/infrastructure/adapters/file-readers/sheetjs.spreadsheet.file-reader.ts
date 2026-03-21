@@ -11,7 +11,8 @@ export class SheetjsSpreadsheetFileReader implements SpreadsheetFileReader {
   async read(filePath: string): Promise<RawSpreadsheetDto> {
     this.validateFileExtension(filePath);
 
-    const workbook = XLSX.readFile(filePath, { raw: false });
+    const UTF8_CODEPAGE = 65001;
+    const workbook = XLSX.readFile(filePath, { raw: false, codepage: UTF8_CODEPAGE });
     const firstSheetName = workbook.SheetNames[0];
     if (!firstSheetName) {
       return { rows: [] };

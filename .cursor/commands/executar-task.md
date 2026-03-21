@@ -76,7 +76,7 @@ Após fornecer o resumo e abordagem, **comece imediatamente a implementar a tare
 - Garantir que todos os requisitos sejam atendidos
 
 <critical>**VOCÊ DEVE** iniciar a implementação logo após o processo acima.</critical>
-<critical>Utilize o Context7 MCP para analisar a documentação da linguagem, frameworks e bibliotecas envolvidas na implementação</critical>
+<critical>Utilize o Context7 para analisar a documentação da linguagem, frameworks e bibliotecas envolvidas na implementação</critical>
 <critical>Após completar a tarefa, marque como completa em tasks.md</critical>
 <critical>Você não pode finalizar a tarefa sem executar o agente de review @code-reviewer, caso ele não passe você deve resolver os problemas e analisar novamente</critical>
 <critical>PARA REVISAR A TAREFA SEMPRE INVOCE O SUBAGENT @code-reviewer</critical>
