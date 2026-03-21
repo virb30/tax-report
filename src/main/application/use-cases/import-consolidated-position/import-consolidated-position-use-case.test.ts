@@ -2,13 +2,13 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { mock } from 'jest-mock-extended';
 import { ImportConsolidatedPositionUseCase } from './import-consolidated-position-use-case';
-import type { ConsolidatedPositionParserPort } from '../interfaces/consolidated-position-parser.port';
-import type { BrokerRepository } from '../repositories/broker.repository';
-import type { TransactionRepository } from '../repositories/transaction.repository';
-import type { Queue } from '../events/queue.interface';
-import { Broker } from '../../domain/portfolio/entities/broker.entity';
-import { Cnpj } from '../../domain/shared/cnpj.vo';
-import { ConsolidatedPositionImportedEvent } from '../../domain/events/consolidated-position-imported.event';
+import type { ConsolidatedPositionParserPort } from '../../interfaces/consolidated-position-parser.port';
+import type { BrokerRepository } from '../../repositories/broker.repository';
+import type { TransactionRepository } from '../../repositories/transaction.repository';
+import type { Queue } from '../../events/queue.interface';
+import { Broker } from '../../../domain/portfolio/entities/broker.entity';
+import { Cnpj } from '../../../domain/shared/cnpj.vo';
+import { ConsolidatedPositionImportedEvent } from '../../../domain/events/consolidated-position-imported.event';
 
 describe('ImportConsolidatedPositionUseCase', () => {
   let parser: jest.Mocked<ConsolidatedPositionParserPort>;

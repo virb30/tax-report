@@ -1,11 +1,11 @@
-import type { ImportTransactionsParser } from '../interfaces/transactions.parser.interface';
-import type { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
+import type { ImportTransactionsParser } from '../../interfaces/transactions.parser.interface';
+import type { TaxApportioner } from '../../../domain/ingestion/tax-apportioner.service';
 import type {
   PreviewImportTransactionsCommand,
   PreviewImportTransactionsResult,
   PreviewTransactionItem,
-} from '../../../shared/contracts/preview-import.contract';
-import { TransactionType } from '../../../shared/types/domain';
+} from '../../../../shared/contracts/preview-import.contract';
+import { TransactionType } from '../../../../shared/types/domain';
 
 export class PreviewImportUseCase {
   constructor(

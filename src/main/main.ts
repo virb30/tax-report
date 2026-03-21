@@ -4,13 +4,13 @@ import { createAndInitializeDatabase } from './database/database';
 import { KnexBrokerRepository } from './infrastructure/repositories/knex-broker.repository';
 import { RecalculatePositionUseCase } from './application/use-cases/recalculate-position/recalculate-position.use-case';
 import { MigrateYearUseCase } from './application/use-cases/migrate-year/migrate-year.use-case';
-import { ImportTransactionsUseCase } from './application/use-cases/import-transactions-use-case';
-import { PreviewImportUseCase } from './application/use-cases/preview-import-use-case';
+import { ImportTransactionsUseCase } from './application/use-cases/import-transactions/import-transactions-use-case';
+import { PreviewImportUseCase } from './application/use-cases/preview-import/preview-import-use-case';
 import { TaxApportioner } from './domain/ingestion/tax-apportioner.service';
 import { CsvXlsxTransactionParser } from './infrastructure/parsers/csv-xlsx-transaction.parser';
 import { SheetjsSpreadsheetFileReader } from './infrastructure/adapters/file-readers/sheetjs.spreadsheet.file-reader';
 import { CsvXlsxConsolidatedPositionParser } from './infrastructure/parsers/csv-xlsx-consolidated-position.parser';
-import { ImportConsolidatedPositionUseCase } from './application/use-cases/import-consolidated-position-use-case';
+import { ImportConsolidatedPositionUseCase } from './application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
 import { DeletePositionUseCase } from './application/use-cases/delete-position/delete-position.use-case';
 import { SetInitialBalanceUseCase } from './application/use-cases/set-initial-balance/set-initial-balance.use-case';
 import { ListPositionsUseCase } from './application/use-cases/list-positions/list-positions-use-case';
@@ -18,7 +18,7 @@ import { KnexPositionRepository } from './infrastructure/repositories/knex-posit
 import { KnexTransactionRepository } from './infrastructure/repositories/knex-transaction.repository';
 import { KnexAssetRepository } from './infrastructure/repositories/knex-asset.repository';
 import { GenerateAssetsReportUseCase } from './application/use-cases/generate-asset-report/generate-assets-report.use-case';
-import { ReportGenerator } from './application/services/report-generator/report-generator.service';
+import { ReportGenerator } from './domain/tax-reporting/report-generator.service';
 import { WindowManager } from './window-manager';
 import { CreateBrokerUseCase } from './application/use-cases/create-broker/create-broker.use-case';
 import { ListBrokersUseCase } from './application/use-cases/list-brokers/list-brokers.use-case';
@@ -198,13 +198,11 @@ async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDepe
     knexTransactionRepository,
   );
 
-  const reportGenerator = new ReportGenerator();
   const tickerDataRepository = new KnexAssetRepository(database);
   const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
     knexPositionRepository,
     brokerRepository,
     tickerDataRepository,
-    reportGenerator,
   );
 
   return {

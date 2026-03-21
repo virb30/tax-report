@@ -1,11 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { TransactionType } from '../../../shared/types/domain';
+import { TransactionType } from '../../../../shared/types/domain';
 import { ImportTransactionsUseCase } from './import-transactions-use-case';
-import type { ImportTransactionsParser } from '../interfaces/transactions.parser.interface';
-import type { TransactionRepository } from '../repositories/transaction.repository';
-import type { Queue } from '../events/queue.interface';
-import { TransactionsImportedEvent } from '../../domain/events/transactions-imported.event';
-import type { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
+import type { ImportTransactionsParser } from '../../interfaces/transactions.parser.interface';
+import type { TransactionRepository } from '../../repositories/transaction.repository';
+import type { Queue } from '../../events/queue.interface';
+import { TransactionsImportedEvent } from '../../../domain/events/transactions-imported.event';
+import type { TaxApportioner } from '../../../domain/ingestion/tax-apportioner.service';
 import { mock, mockReset } from 'jest-mock-extended';
 
 describe('ImportTransactionsUseCase', () => {

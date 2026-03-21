@@ -14,12 +14,11 @@ import { KnexTransactionRepository } from '../../infrastructure/repositories/kne
 import { KnexBrokerRepository } from '../../infrastructure/repositories/knex-broker.repository';
 import { KnexAssetRepository } from '../../infrastructure/repositories/knex-asset.repository';
 import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-asset-report/generate-assets-report.use-case';
-import { ReportGenerator } from '../../application/services/report-generator/report-generator.service';
 import { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
 import { CsvXlsxTransactionParser } from '../../infrastructure/parsers/csv-xlsx-transaction.parser';
 import { SheetjsSpreadsheetFileReader } from '../../infrastructure/adapters/file-readers/sheetjs.spreadsheet.file-reader';
-import { PreviewImportUseCase } from '../../application/use-cases/preview-import-use-case';
-import { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions-use-case';
+import { PreviewImportUseCase } from '../../application/use-cases/preview-import/preview-import-use-case';
+import { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions/import-transactions-use-case';
 import { AssetPosition } from '../../domain/portfolio/entities/asset-position.entity';
 import {
   registerMainHandlers,
@@ -74,13 +73,11 @@ describe('IPC handlers integration', () => {
       knexPositionRepository,
       knexTransactionRepository,
     );
-    const reportGenerator = new ReportGenerator();
     const tickerDataRepository = new KnexAssetRepository(database);
     const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
       knexPositionRepository,
       brokerRepository,
       tickerDataRepository,
-      reportGenerator,
     );
     const spreadsheetFileReader = new SheetjsSpreadsheetFileReader();
     const transactionParser = new CsvXlsxTransactionParser(

@@ -16,7 +16,6 @@ describe('GenerateAssetsReportUseCase', () => {
   const positionRepository = mock<AssetPositionRepository>();
   const brokerRepository = mock<BrokerRepository>();
   const assetRepository = mock<AssetRepository>();
-  const reportGenerator = new ReportGenerator();
   let useCase: GenerateAssetsReportUseCase;
   let broker: Broker;
 
@@ -33,7 +32,7 @@ describe('GenerateAssetsReportUseCase', () => {
     assetRepository.findByTickersList.mockResolvedValue([]);
     assetRepository.findAll.mockResolvedValue([]);
     assetRepository.save.mockResolvedValue(undefined);
-    useCase = new GenerateAssetsReportUseCase(positionRepository, brokerRepository, assetRepository, reportGenerator);
+    useCase = new GenerateAssetsReportUseCase(positionRepository, brokerRepository, assetRepository);
   });
 
   it('generates annual report with persisted positions', async () => {

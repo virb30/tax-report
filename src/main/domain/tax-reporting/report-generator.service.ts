@@ -1,6 +1,9 @@
-import { AssetType } from '../../../../shared/types/domain';
-import type { ReportItemInput } from './report-generator.input';
+import { AssetType } from '../../../shared/types/domain';
+import { AssetPosition } from '../portfolio/entities/asset-position.entity';
 import type { ReportItemOutput } from './report-generator.output';
+
+import { Asset } from '../portfolio/entities/asset.entity';
+import { Broker } from '../portfolio/entities/broker.entity';
 
 const STOCK_CLASSIFICATION = { group: '03', code: '01' } as const;
 const FII_CLASSIFICATION = { group: '07', code: '03' } as const;
@@ -52,21 +55,30 @@ export function buildDiscriminationText(input: {
 }
 
 export class ReportGenerator {
-  generate(items: ReportItemInput[]): ReportItemOutput[] {
+  private readonly brokersMap: Map<string, Broker>;
+  private readonly assetsMap: Map<string, Asset>;
+
+  constructor(brokers: Broker[], assets: Asset[] = []) {
+    this.brokersMap = new Map(brokers.map((b) => [b.id.value, b]));
+    this.assetsMap = new Map(assets.map((a) => [a.ticker, a]));
+  }
+
+  generate(positions: AssetPosition[]): ReportItemOutput[] {
     const result: ReportItemOutput[] = [];
 
-    for (const { position, brokersMap, issuerCnpj } of items) {
+    for (const position of positions) {
       if (position.totalQuantity <= 0) {
         continue;
       }
 
+      const issuerCnpj = this.assetsMap.get(position.ticker)?.issuerCnpj ?? 'N/A';
       const revenueClassification = getRevenueClassification(position.assetType);
       const totalCost = Math.round(position.totalQuantity * position.averagePrice * 100) / 100;
 
       const allocations = position.brokerBreakdown
         .filter((a) => a.quantity > 0)
         .map((allocation) => {
-          const broker = brokersMap.get(allocation.brokerId.value);
+          const broker = this.brokersMap.get(allocation.brokerId.value);
           const brokerName = broker?.name ?? 'Corretora não cadastrada';
           const brokerCnpj = broker?.cnpj?.value ?? 'N/A';
           const allocTotalCost =

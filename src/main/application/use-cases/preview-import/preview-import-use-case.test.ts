@@ -1,9 +1,9 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { TransactionType } from '../../../shared/types/domain';
+import { TransactionType } from '../../../../shared/types/domain';
 import { PreviewImportUseCase } from './preview-import-use-case';
-import type { ImportTransactionsParser } from '../interfaces/transactions.parser.interface';
+import type { ImportTransactionsParser } from '../../interfaces/transactions.parser.interface';
 import { mock } from 'jest-mock-extended';
-import { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
+import { TaxApportioner } from '../../../domain/ingestion/tax-apportioner.service';
 
 describe('PreviewImportUseCase', () => {
   const mockParser = mock<ImportTransactionsParser>();

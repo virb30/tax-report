@@ -3,15 +3,15 @@ import type {
   ImportConsolidatedPositionResult,
   PreviewConsolidatedPositionCommand,
   PreviewConsolidatedPositionResult,
-} from '../../../shared/contracts/import-consolidated-position.contract';
-import { SourceType, TransactionType } from '../../../shared/types/domain';
-import type { ConsolidatedPositionParserPort } from '../interfaces/consolidated-position-parser.port';
-import type { BrokerRepository } from '../repositories/broker.repository';
-import type { TransactionRepository } from '../repositories/transaction.repository';
-import { Transaction } from '../../domain/portfolio/entities/transaction.entity';
-import { Uuid } from '../../domain/shared/uuid.vo';
-import type { Queue } from '../events/queue.interface';
-import { ConsolidatedPositionImportedEvent } from '../../domain/events/consolidated-position-imported.event';
+} from '../../../../shared/contracts/import-consolidated-position.contract';
+import { SourceType, TransactionType } from '../../../../shared/types/domain';
+import type { ConsolidatedPositionParserPort } from '../../interfaces/consolidated-position-parser.port';
+import type { BrokerRepository } from '../../repositories/broker.repository';
+import type { TransactionRepository } from '../../repositories/transaction.repository';
+import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
+import { Uuid } from '../../../domain/shared/uuid.vo';
+import type { Queue } from '../../events/queue.interface';
+import { ConsolidatedPositionImportedEvent } from '../../../domain/events/consolidated-position-imported.event';
 
 type ResolvedRow = {
   ticker: string;

@@ -1,16 +1,16 @@
 import { randomUUID } from 'node:crypto';
-import { SourceType } from '../../../shared/types/domain';
-import { Transaction } from '../../domain/portfolio/entities/transaction.entity';
-import { Uuid } from '../../domain/shared/uuid.vo';
-import type { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
-import type { ImportTransactionsParser } from '../interfaces/transactions.parser.interface';
-import type { TransactionRepository } from '../repositories/transaction.repository';
-import type { Queue } from '../events/queue.interface';
+import { SourceType } from '../../../../shared/types/domain';
+import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
+import { Uuid } from '../../../domain/shared/uuid.vo';
+import type { TaxApportioner } from '../../../domain/ingestion/tax-apportioner.service';
+import type { ImportTransactionsParser } from '../../interfaces/transactions.parser.interface';
+import type { TransactionRepository } from '../../repositories/transaction.repository';
+import type { Queue } from '../../events/queue.interface';
 import type {
   ImportTransactionsCommand,
   ImportTransactionsResult,
-} from '../../../shared/contracts/import-transactions.contract';
-import { TransactionsImportedEvent } from '../../domain/events/transactions-imported.event';
+} from '../../../../shared/contracts/import-transactions.contract';
+import { TransactionsImportedEvent } from '../../../domain/events/transactions-imported.event';
 
 export class ImportTransactionsUseCase {
   constructor(

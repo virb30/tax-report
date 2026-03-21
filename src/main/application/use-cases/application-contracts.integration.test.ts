@@ -12,9 +12,8 @@ import { KnexAssetRepository } from '../../infrastructure/repositories/knex-asse
 import { GenerateAssetsReportUseCase } from './generate-asset-report/generate-assets-report.use-case';
 import { ListPositionsUseCase } from './list-positions/list-positions-use-case';
 import { SetInitialBalanceUseCase } from './set-initial-balance/set-initial-balance.use-case';
-import { ImportConsolidatedPositionUseCase } from './import-consolidated-position-use-case';
+import { ImportConsolidatedPositionUseCase } from './import-consolidated-position/import-consolidated-position-use-case';
 import { DeletePositionUseCase } from './delete-position/delete-position.use-case';
-import { ReportGenerator } from '../services/report-generator/report-generator.service';
 import { CsvXlsxConsolidatedPositionParser } from '../../infrastructure/parsers/csv-xlsx-consolidated-position.parser';
 import { RecalculatePositionUseCase } from './recalculate-position/recalculate-position.use-case';
 import { MemoryQueueAdapter } from '../../infrastructure/events/memory-queue.adapter';
@@ -40,7 +39,6 @@ describe('Application contracts integration', () => {
     const knexPositionRepository = new KnexPositionRepository(database);
     const knexTransactionRepository = new KnexTransactionRepository(database);
     const brokerRepository = new KnexBrokerRepository(database);
-    const reportGenerator = new ReportGenerator();
     const tickerDataRepository = new KnexAssetRepository(database);
     const setInitialBalanceUseCase = new SetInitialBalanceUseCase(
       knexPositionRepository,
@@ -54,7 +52,6 @@ describe('Application contracts integration', () => {
       knexPositionRepository,
       brokerRepository,
       tickerDataRepository,
-      reportGenerator,
     );
 
     const broker = Broker.create({
