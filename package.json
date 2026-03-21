@@ -8,6 +8,7 @@
     "dev": "electron-forge start",
     "prestart": "npm run postinstall",
     "start": "electron-forge start",
+    "start:debug": "npm start -- -- --remote-debugging-port=9222",
     "postinstall": "electron-rebuild -f -w better-sqlite3",
     "pretest": "npm rebuild better-sqlite3",
     "package": "electron-forge package",
