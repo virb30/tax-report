@@ -132,12 +132,12 @@ export function registerDependencies(db: Knex) {
     reportController: asClass(ReportController).singleton(),
     
     // IPC
-    ipcControllers: asFunction((c: AppCradle) => [
-      c.brokersController,
-      c.appController,
-      c.importController,
-      c.portfolioController,
-      c.reportController,
+    ipcControllers: asFunction(() => [
+      container.resolve('brokersController'),
+      container.resolve('appController'),
+      container.resolve('importController'),
+      container.resolve('portfolioController'),
+      container.resolve('reportController'),
     ]).singleton(),
     ipcRegistry: asClass(IpcRegistry).singleton(),
   });
