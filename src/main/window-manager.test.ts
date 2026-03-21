@@ -3,15 +3,15 @@ import path from 'node:path';
 import { WindowManager } from './window-manager';
 
 type WindowStub = {
-  loadURL: jest.Mock<() => Promise<void>>;
-  loadFile: jest.Mock<() => Promise<void>>;
+  loadURL: jest.Mock<(url: string) => Promise<void>>;
+  loadFile: jest.Mock<(filePath: string) => Promise<void>>;
 };
 
 class FakeBrowserWindow {
   static lastOptions: unknown;
   static instance: WindowStub = {
-    loadURL: jest.fn().mockResolvedValue(undefined),
-    loadFile: jest.fn().mockResolvedValue(undefined),
+    loadURL: jest.fn<any>().mockResolvedValue(undefined),
+    loadFile: jest.fn<any>().mockResolvedValue(undefined),
   };
 
   constructor(options: unknown) {

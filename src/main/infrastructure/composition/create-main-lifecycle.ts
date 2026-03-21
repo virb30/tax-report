@@ -29,6 +29,7 @@ export type CreateMainLifecycleDependencies = {
   mainHandlersDependencies: MainHandlersDependencies;
   platform: NodeJS.Platform;
   createMainWindow: () => void;
+  onReady?: () => void | Promise<void>;
 };
 
 export function createMainLifecycle(
@@ -42,5 +43,6 @@ export function createMainLifecycle(
     browserWindow: dependencies.browserWindow,
     createMainWindow: dependencies.createMainWindow,
     platform: dependencies.platform,
+    onReady: dependencies.onReady,
   });
 }

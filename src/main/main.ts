@@ -1,31 +1,8 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { createMainLifecycle } from './infrastructure/composition/create-main-lifecycle';
 import { createAndInitializeDatabase } from './database/database';
-import { KnexBrokerRepository } from './infrastructure/repositories/knex-broker.repository';
-import { RecalculatePositionUseCase } from './application/use-cases/recalculate-position/recalculate-position.use-case';
-import { MigrateYearUseCase } from './application/use-cases/migrate-year/migrate-year.use-case';
-import { ImportTransactionsUseCase } from './application/use-cases/import-transactions/import-transactions-use-case';
-import { PreviewImportUseCase } from './application/use-cases/preview-import/preview-import-use-case';
-import { TaxApportioner } from './domain/ingestion/tax-apportioner.service';
-import { CsvXlsxTransactionParser } from './infrastructure/parsers/csv-xlsx-transaction.parser';
-import { SheetjsSpreadsheetFileReader } from './infrastructure/adapters/file-readers/sheetjs.spreadsheet.file-reader';
-import { CsvXlsxConsolidatedPositionParser } from './infrastructure/parsers/csv-xlsx-consolidated-position.parser';
-import { ImportConsolidatedPositionUseCase } from './application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
-import { DeletePositionUseCase } from './application/use-cases/delete-position/delete-position.use-case';
-import { SetInitialBalanceUseCase } from './application/use-cases/set-initial-balance/set-initial-balance.use-case';
-import { ListPositionsUseCase } from './application/use-cases/list-positions/list-positions-use-case';
-import { KnexPositionRepository } from './infrastructure/repositories/knex-position.repository';
-import { KnexTransactionRepository } from './infrastructure/repositories/knex-transaction.repository';
-import { KnexAssetRepository } from './infrastructure/repositories/knex-asset.repository';
-import { GenerateAssetsReportUseCase } from './application/use-cases/generate-asset-report/generate-assets-report.use-case';
-import { ReportGenerator } from './domain/tax-reporting/report-generator.service';
 import { WindowManager } from './window-manager';
-import { CreateBrokerUseCase } from './application/use-cases/create-broker/create-broker.use-case';
-import { ListBrokersUseCase } from './application/use-cases/list-brokers/list-brokers.use-case';
-import { UpdateBrokerUseCase } from './application/use-cases/update-broker/update-broker.use-case';
-import { ToggleActiveBrokerUseCase } from './application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
-import { MemoryQueueAdapter } from './infrastructure/events/memory-queue.adapter';
-import { RecalculatePositionHandler } from './infrastructure/handlers/recalculate-position.handler';
+import { AppCradle, container, registerDependencies } from './infrastructure/container';
 
 const handlersDependenciesPromise = createMainHandlersDependencies();
 const windowManager = new WindowManager();
@@ -49,175 +26,71 @@ const lifecycle = createMainLifecycle({
       }
       return { filePath: result.filePaths[0] ?? null };
     },
-    previewImportTransactions: async (input) => {
+    previewImportTransactions: async (input: unknown) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.previewImportUseCase.execute(input);
+      return dependencies.previewImportUseCase.execute(input as Parameters<typeof dependencies.previewImportUseCase.execute>[0]);
     },
-    confirmImportTransactions: async (input) => {
+    confirmImportTransactions: async (input: unknown) => {
       const dependencies = await handlersDependenciesPromise;
-      const result = await dependencies.importTransactionsUseCase.execute(input);
+      const result = await dependencies.importTransactionsUseCase.execute(input as Parameters<typeof dependencies.importTransactionsUseCase.execute>[0]);
       return {
         importedCount: result.importedCount,
         recalculatedTickers: result.recalculatedTickers,
       };
     },
-    setInitialBalance: async (input) => {
+    setInitialBalance: async (input: unknown) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.setInitialBalanceUseCase.execute(input);
+      return dependencies.setInitialBalanceUseCase.execute(input as Parameters<typeof dependencies.setInitialBalanceUseCase.execute>[0]);
     },
-    listPositions: async (input) => {
+    listPositions: async (input: unknown) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.listPositionsUseCase.execute(input);
+      return dependencies.listPositionsUseCase.execute(input as Parameters<typeof dependencies.listPositionsUseCase.execute>[0]);
     },
-    generateAssetsReport: async (input) => {
+    generateAssetsReport: async (input: unknown) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.generateAssetsReportUseCase.execute(input);
+      return dependencies.generateAssetsReportUseCase.execute(input as Parameters<typeof dependencies.generateAssetsReportUseCase.execute>[0]);
     },
-    listBrokers: async (input) => {
+    recalculatePosition: async (input: unknown) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.listBrokersUseCase.execute(input);
+      return dependencies.recalculatePositionUseCase.execute(input as Parameters<typeof dependencies.recalculatePositionUseCase.execute>[0]);
     },
-    createBroker: async (input) => {
+    migrateYear: async (input: unknown) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.createBrokerUseCase.execute(input);
+      return dependencies.migrateYearUseCase.execute(input as Parameters<typeof dependencies.migrateYearUseCase.execute>[0]);
     },
-    updateBroker: async (input) => {
+    previewConsolidatedPosition: async (input: unknown) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.updateBrokerUseCase.execute(input);
+      return dependencies.importConsolidatedPositionUseCase.preview(input as Parameters<typeof dependencies.importConsolidatedPositionUseCase.preview>[0]);
     },
-    toggleBrokerActive: async (input) => {
+    importConsolidatedPosition: async (input: unknown) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.toggleActiveBrokerUseCase.execute(input);
+      return dependencies.importConsolidatedPositionUseCase.execute(input as Parameters<typeof dependencies.importConsolidatedPositionUseCase.execute>[0]);
     },
-    recalculatePosition: async (input) => {
+    deletePosition: async (input: unknown) => {
       const dependencies = await handlersDependenciesPromise;
-      return dependencies.recalculatePositionUseCase.execute(input);
-    },
-    migrateYear: async (input) => {
-      const dependencies = await handlersDependenciesPromise;
-      return dependencies.migrateYearUseCase.execute(input);
-    },
-    previewConsolidatedPosition: async (input) => {
-      const dependencies = await handlersDependenciesPromise;
-      return dependencies.importConsolidatedPositionUseCase.preview(input);
-    },
-    importConsolidatedPosition: async (input) => {
-      const dependencies = await handlersDependenciesPromise;
-      return dependencies.importConsolidatedPositionUseCase.execute(input);
-    },
-    deletePosition: async (input) => {
-      const dependencies = await handlersDependenciesPromise;
-      return dependencies.deletePositionUseCase.execute(input);
+      return dependencies.deletePositionUseCase.execute(input as Parameters<typeof dependencies.deletePositionUseCase.execute>[0]);
     },
   },
   platform: process.platform,
   createMainWindow: () => {
     windowManager.createMainWindow();
   },
+  onReady: async () => {
+    const container = await handlersDependenciesPromise;
+    container.brokersController.register(ipcMain);
+  },
 });
 
 lifecycle.register();
 
-type MainHandlersRuntimeDependencies = {
-  importTransactionsUseCase: ImportTransactionsUseCase;
-  previewImportUseCase: PreviewImportUseCase;
-  setInitialBalanceUseCase: SetInitialBalanceUseCase;
-  listPositionsUseCase: ListPositionsUseCase;
-  generateAssetsReportUseCase: GenerateAssetsReportUseCase;
-  toggleActiveBrokerUseCase: ToggleActiveBrokerUseCase;
-  createBrokerUseCase: CreateBrokerUseCase;
-  updateBrokerUseCase: UpdateBrokerUseCase;
-  listBrokersUseCase: ListBrokersUseCase;
-  recalculatePositionUseCase: RecalculatePositionUseCase;
-  migrateYearUseCase: MigrateYearUseCase;
-  importConsolidatedPositionUseCase: ImportConsolidatedPositionUseCase;
-  deletePositionUseCase: DeletePositionUseCase;
-};
+type MainHandlersRuntimeDependencies = AppCradle;
 
 async function createMainHandlersDependencies(): Promise<MainHandlersRuntimeDependencies> {
   await app.whenReady();
   const userDataPath = app.getPath('userData');
   const { database } = await createAndInitializeDatabase(userDataPath);
-  const brokerRepository = new KnexBrokerRepository(database);
-  const createBrokerUseCase = new CreateBrokerUseCase(brokerRepository);
-  const updateBrokerUseCase = new UpdateBrokerUseCase(brokerRepository);
-  const listBrokersUseCase = new ListBrokersUseCase(brokerRepository);
-  const toggleActiveBrokerUseCase = new ToggleActiveBrokerUseCase(brokerRepository);
-  const knexPositionRepository = new KnexPositionRepository(database);
-  const knexTransactionRepository = new KnexTransactionRepository(database);
-  const recalculatePositionUseCase = new RecalculatePositionUseCase(
-    knexPositionRepository,
-    knexTransactionRepository,
-  );
-  const queue = new MemoryQueueAdapter();
-  new RecalculatePositionHandler(
-    queue,
-    recalculatePositionUseCase,
-  );
-  const taxApportioner = new TaxApportioner();
-  const spreadsheetFileReader = new SheetjsSpreadsheetFileReader();
-  const csvXlsxTransactionParser = new CsvXlsxTransactionParser(
-    spreadsheetFileReader,
-    brokerRepository,
-  );
-  const importTransactionsUseCase = new ImportTransactionsUseCase(
-    csvXlsxTransactionParser,
-    taxApportioner,
-    knexTransactionRepository,
-    queue,
-  );
-  const previewImportUseCase = new PreviewImportUseCase(
-    csvXlsxTransactionParser,
-    taxApportioner,
-  );
-
-  const setInitialBalanceUseCase = new SetInitialBalanceUseCase(
-    knexPositionRepository,
-    knexTransactionRepository,
-  );
-  const listPositionsUseCase = new ListPositionsUseCase(
-    knexPositionRepository,
-    brokerRepository,
-  );
-
-  const migrateYearUseCase = new MigrateYearUseCase(
-    knexPositionRepository,
-    knexTransactionRepository,
-  );
-
-  const consolidatedPositionParser = new CsvXlsxConsolidatedPositionParser();
-  const importConsolidatedPositionUseCase = new ImportConsolidatedPositionUseCase(
-    consolidatedPositionParser,
-    brokerRepository,
-    knexTransactionRepository,
-    queue,
-  );
-
-  const deletePositionUseCase = new DeletePositionUseCase(
-    knexPositionRepository,
-    knexTransactionRepository,
-  );
-
-  const tickerDataRepository = new KnexAssetRepository(database);
-  const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
-    knexPositionRepository,
-    brokerRepository,
-    tickerDataRepository,
-  );
-
-  return {
-    importTransactionsUseCase,
-    previewImportUseCase,
-    setInitialBalanceUseCase,
-    listPositionsUseCase,
-    generateAssetsReportUseCase,
-    toggleActiveBrokerUseCase,
-    createBrokerUseCase,
-    updateBrokerUseCase,
-    listBrokersUseCase,
-    recalculatePositionUseCase,
-    migrateYearUseCase,
-    importConsolidatedPositionUseCase,
-    deletePositionUseCase,
-  };
+  
+  registerDependencies(database);
+  
+  return container.cradle;
 }

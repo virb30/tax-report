@@ -8,53 +8,40 @@ import {
 describe('registerMainHandlers', () => {
   function createDependencies() {
     return {
-      checkHealth: jest.fn().mockReturnValue({ status: 'ok' }),
-      importSelectFile: jest.fn().mockResolvedValue({ filePath: null }),
-      previewImportTransactions: jest.fn().mockResolvedValue({
+      checkHealth: jest.fn<any>().mockReturnValue({ status: 'ok' }),
+      importSelectFile: jest.fn<any>().mockResolvedValue({ filePath: null }),
+      previewImportTransactions: jest.fn<any>().mockResolvedValue({
         batches: [],
         transactionsPreview: [],
       }),
-      confirmImportTransactions: jest.fn().mockResolvedValue({
+      confirmImportTransactions: jest.fn<any>().mockResolvedValue({
         importedCount: 2,
         recalculatedTickers: ['PETR4'],
       }),
-      setInitialBalance: jest.fn().mockResolvedValue({
+      setInitialBalance: jest.fn<any>().mockResolvedValue({
         ticker: 'PETR4',
         brokerId: 'broker-xp',
         quantity: 10,
         averagePrice: 20,
       }),
-      listPositions: jest.fn().mockResolvedValue({
+      listPositions: jest.fn<any>().mockResolvedValue({
         items: [],
       }),
-      generateAssetsReport: jest.fn().mockResolvedValue({
+      generateAssetsReport: jest.fn<any>().mockResolvedValue({
         referenceDate: '2025-12-31',
         items: [],
       }),
-      listBrokers: jest.fn().mockResolvedValue({ items: [] }),
-      createBroker: jest.fn().mockResolvedValue({
-        success: true,
-        broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST', active: true },
-      }),
-      updateBroker: jest.fn().mockResolvedValue({
-        success: true,
-        broker: { id: 'broker-1', name: 'Updated', cnpj: '00.000.000/0001-00', code: 'TEST', active: true },
-      }),
-      toggleBrokerActive: jest.fn().mockResolvedValue({
-        success: true,
-        broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST', active: false },
-      }),
-      recalculatePosition: jest.fn().mockResolvedValue(undefined),
-      migrateYear: jest.fn().mockResolvedValue({
+      recalculatePosition: jest.fn<any>().mockResolvedValue(undefined),
+      migrateYear: jest.fn<any>().mockResolvedValue({
         migratedPositionsCount: 2,
         createdTransactionsCount: 4,
       }),
-      previewConsolidatedPosition: jest.fn().mockResolvedValue({ rows: [] }),
-      importConsolidatedPosition: jest.fn().mockResolvedValue({
+      previewConsolidatedPosition: jest.fn<any>().mockResolvedValue({ rows: [] }),
+      importConsolidatedPosition: jest.fn<any>().mockResolvedValue({
         importedCount: 2,
         recalculatedTickers: ['PETR4'],
       }),
-      deletePosition: jest.fn().mockResolvedValue({ deleted: true }),
+      deletePosition: jest.fn<any>().mockResolvedValue({ deleted: true }),
     };
   }
 
@@ -77,12 +64,8 @@ describe('registerMainHandlers', () => {
       'portfolio:import-consolidated-position',
       'portfolio:delete-position',
       'report:assets-annual',
-      'brokers:list',
-      'brokers:create',
-      'brokers:update',
-      'brokers:toggle-active',
     ]);
-    expect(handle).toHaveBeenCalledTimes(16);
+    expect(handle).toHaveBeenCalledTimes(12);
     expect(handle).toHaveBeenCalledWith('app:health-check', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('import:preview-transactions', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('import:confirm-transactions', expect.any(Function));
@@ -91,8 +74,6 @@ describe('registerMainHandlers', () => {
     expect(handle).toHaveBeenCalledWith('portfolio:recalculate', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('portfolio:migrate-year', expect.any(Function));
     expect(handle).toHaveBeenCalledWith('report:assets-annual', expect.any(Function));
-    expect(handle).toHaveBeenCalledWith('brokers:list', expect.any(Function));
-    expect(handle).toHaveBeenCalledWith('brokers:create', expect.any(Function));
   });
 
   it('delegates payload handling to dependencies', async () => {

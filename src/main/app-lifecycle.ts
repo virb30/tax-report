@@ -15,6 +15,7 @@ type AppLifecycleDependencies = {
   browserWindow: BrowserWindowLike;
   createMainWindow: () => void;
   platform: NodeJS.Platform;
+  onReady?: () => void | Promise<void>;
 };
 
 export class AppLifecycle {
@@ -25,7 +26,10 @@ export class AppLifecycle {
 
     void app
       .whenReady()
-      .then(() => {
+      .then(async () => {
+        if (this.dependencies.onReady) {
+          await this.dependencies.onReady();
+        }
         this.dependencies.createMainWindow();
 
         app.on('activate', () => {

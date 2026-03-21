@@ -19,7 +19,7 @@ describe('createMainLifecycle', () => {
           averagePrice: 10,
         }),
       listPositions: () => Promise.resolve({ items: [] }),
-      generateAssetsReport: () =>
+      generateAssetsReport: (): Promise<any> =>
         Promise.resolve({
         referenceDate: '2025-12-31',
         items: [
@@ -35,28 +35,15 @@ describe('createMainLifecycle', () => {
           },
         ],
         }),
-      listBrokers: () => Promise.resolve({ items: [] }),
-      createBroker: () =>
-        Promise.resolve({
-          success: true,
-          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST', active: true },
-        }),
-      updateBroker: () =>
-        Promise.resolve({
-          success: true,
-          broker: { id: 'broker-1', name: 'Updated', cnpj: '00.000.000/0001-00', code: 'TEST', active: true },
-        }),
-      toggleBrokerActive: () =>
-        Promise.resolve({
-          success: true,
-          broker: { id: 'broker-1', name: 'Test', cnpj: '00.000.000/0001-00', code: 'TEST', active: false },
-        }),
-      recalculatePosition: () => Promise.resolve(),
-      migrateYear: () =>
+      recalculatePosition: (): Promise<any> => Promise.resolve(),
+      migrateYear: (): Promise<any> =>
         Promise.resolve({
           migratedPositionsCount: 0,
           createdTransactionsCount: 0,
         }),
+      previewConsolidatedPosition: (): Promise<any> => Promise.resolve({ rows: [] }),
+      importConsolidatedPosition: (): Promise<any> => Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
+      deletePosition: (): Promise<any> => Promise.resolve({ deleted: true }),
     };
   }
 
@@ -94,8 +81,6 @@ describe('createMainLifecycle', () => {
     expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:recalculate', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('portfolio:migrate-year', expect.any(Function));
     expect(ipcHandleMock).toHaveBeenCalledWith('report:assets-annual', expect.any(Function));
-    expect(ipcHandleMock).toHaveBeenCalledWith('brokers:list', expect.any(Function));
-    expect(ipcHandleMock).toHaveBeenCalledWith('brokers:create', expect.any(Function));
   });
 
   it('delegates main window creation to injected dependency', async () => {

@@ -4,6 +4,7 @@ import os from 'node:os';
 import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import type { Knex } from 'knex';
 import { AssetType } from '../../../shared/types/domain';
+import { BrokersController } from '../controllers/brokers.controller';
 import { createDatabaseConnection, initializeDatabase } from '../../database/database';
 import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance.use-case';
 import { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
@@ -132,31 +133,6 @@ describe('IPC handlers integration', () => {
       recalculatePosition: (input) => recalculatePositionUseCase.execute(input),
       migrateYear: (input) => migrateYearUseCase.execute(input),
       generateAssetsReport: (input) => generateAssetsReportUseCase.execute(input),
-      listBrokers: () => Promise.resolve({ items: [] }),
-      createBroker: () =>
-        Promise.resolve({
-          id: 'broker-1',
-          name: 'Test',
-          cnpj: '00.000.000/0001-00',
-          code: 'TEST',
-          active: true,
-        }),
-      updateBroker: () =>
-        Promise.resolve({
-          id: 'broker-1',
-          name: 'Updated',
-          cnpj: '00.000.000/0001-00',
-          code: 'TEST',
-          active: true,
-        }),
-      toggleBrokerActive: () =>
-        Promise.resolve({
-          id: 'broker-1',
-          name: 'Test',
-          cnpj: '00.000.000/0001-00',
-          code: 'TEST',
-          active: false,
-        }),
       previewConsolidatedPosition: () => Promise.resolve({ rows: [] }),
       importConsolidatedPosition: () =>
         Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
@@ -252,10 +228,6 @@ describe('IPC handlers integration', () => {
         Promise.resolve({ migratedPositionsCount: 0, createdTransactionsCount: 0 }),
       generateAssetsReport: () =>
         Promise.resolve({ referenceDate: '2025-12-31', items: [] }),
-      listBrokers: (input) => listBrokersUseCase.execute(input),
-      createBroker: (input) => createBrokerUseCase.execute(input),
-      updateBroker: (input) => updateBrokerUseCase.execute(input),
-      toggleBrokerActive: (input) => toggleActiveBrokerUseCase.execute(input),
       previewConsolidatedPosition: () => Promise.resolve({ rows: [] }),
       importConsolidatedPosition: () =>
         Promise.resolve({ importedCount: 0, recalculatedTickers: [] }),
@@ -263,6 +235,15 @@ describe('IPC handlers integration', () => {
     };
 
     registerMainHandlers(ipcMain, dependencies);
+
+    // Register BrokersController
+    const brokersController = new BrokersController(
+      listBrokersUseCase,
+      createBrokerUseCase,
+      updateBrokerUseCase,
+      toggleActiveBrokerUseCase,
+    );
+    brokersController.register(ipcMain as any);
 
     const listHandler = handlers.get('brokers:list');
     const createHandler = handlers.get('brokers:create');

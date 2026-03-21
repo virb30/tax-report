@@ -35,7 +35,7 @@ function createBrokerMock(id: string) {
     cnpj: '00.000.000/0001-00',
     code: 'XP',
     active: true,
-  };
+  } as any;
 }
 
 describe('CsvXlsxTransactionParser', () => {

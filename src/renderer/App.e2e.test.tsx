@@ -100,10 +100,10 @@ describe('App critical UI flows (E2E)', () => {
       .fn<ElectronApi['generateAssetsReport']>()
       .mockResolvedValue(assetsReportResult);
 
-    const listBrokers = jest.fn().mockResolvedValue({
-      items: [{ id: 'broker-xp', name: 'XP Investimentos', cnpj: '02.332.886/0001-04' }],
+    const listBrokers = jest.fn<any>().mockResolvedValue({
+      items: [{ id: 'broker-xp', name: 'XP Investimentos', cnpj: '02.332.886/0001-04', code: 'XP', active: true }],
     });
-    const createBroker = jest.fn().mockResolvedValue({ success: true });
+    const createBroker = jest.fn<any>().mockResolvedValue({ success: true, broker: { id: 'new', name: 'New', cnpj: '00', code: 'NEW', active: true } });
 
     window.electronApi = {
       appName: 'tax-report',
