@@ -22,9 +22,11 @@ describe('ReportGenerator', () => {
   });
 
   describe('getRevenueClassification', () => {
-    it('returns 03/01 for stock and bdr', () => {
+    it('returns 03/01 for stock', () => {
       expect(getRevenueClassification(AssetType.Stock)).toEqual({ group: '03', code: '01' });
-      expect(getRevenueClassification(AssetType.Bdr)).toEqual({ group: '03', code: '01' });
+    });
+    it('returns 04/04 for bdr', () => {
+      expect(getRevenueClassification(AssetType.Bdr)).toEqual({ group: '04', code: '04' });
     });
     it('returns 07/03 for fii', () => {
       expect(getRevenueClassification(AssetType.Fii)).toEqual({ group: '07', code: '03' });
@@ -47,11 +49,12 @@ describe('ReportGenerator', () => {
         assetType: AssetType.Stock,
         issuerCnpj: '33.000.167/0001-01',
         brokerName: 'XP Investimentos',
+        brokerCnpj: '02.332.886/0001-04',
         averagePrice: 35.2,
         totalCost: 3520,
       });
       expect(text).toBe(
-        '100 ações PETR4. CNPJ: 33.000.167/0001-01. Corretora: XP Investimentos. Custo médio: R$ 35,20. Custo total: R$ 3.520,00.',
+        '100 ações PETR4. CNPJ: 33.000.167/0001-01. Corretora: XP Investimentos (CNPJ: 02.332.886/0001-04). Custo médio: R$ 35,20. Custo total: R$ 3.520,00.',
       );
     });
     it('builds correct format for fii with cotas and N/A when issuer not registered', () => {
@@ -61,11 +64,12 @@ describe('ReportGenerator', () => {
         assetType: AssetType.Fii,
         issuerCnpj: 'N/A',
         brokerName: 'XP Investimentos',
+        brokerCnpj: '02.332.886/0001-04',
         averagePrice: 150,
         totalCost: 1500,
       });
       expect(text).toBe(
-        '10 cotas HGLG11. CNPJ: N/A. Corretora: XP Investimentos. Custo médio: R$ 150,00. Custo total: R$ 1.500,00.',
+        '10 cotas HGLG11. CNPJ: N/A. Corretora: XP Investimentos (CNPJ: 02.332.886/0001-04). Custo médio: R$ 150,00. Custo total: R$ 1.500,00.',
       );
     });
   });
@@ -117,7 +121,7 @@ describe('ReportGenerator', () => {
             quantity: 100,
             totalCost: 3520,
             description:
-              '100 ações PETR4. CNPJ: 33.000.167/0001-01. Corretora: XP Investimentos. Custo médio: R$ 35,20. Custo total: R$ 3.520,00.',
+              '100 ações PETR4. CNPJ: 33.000.167/0001-01. Corretora: XP Investimentos (CNPJ: 02.332.886/0001-04). Custo médio: R$ 35,20. Custo total: R$ 3.520,00.',
           },
         ],
       });

@@ -8,6 +8,7 @@ import { Broker } from '../portfolio/entities/broker.entity';
 const STOCK_CLASSIFICATION = { group: '03', code: '01' } as const;
 const FII_CLASSIFICATION = { group: '07', code: '03' } as const;
 const ETF_CLASSIFICATION = { group: '07', code: '09' } as const;
+const BDR_CLASSIFICATION = { group: '04', code: '04' } as const;
 
 
 
@@ -26,8 +27,11 @@ function getAssetUnitLabel(assetType: AssetType): string {
 }
 
 export function getRevenueClassification(assetType: AssetType): { group: string; code: string } {
-  if (assetType === AssetType.Stock || assetType === AssetType.Bdr) {
+  if (assetType === AssetType.Stock) {
     return STOCK_CLASSIFICATION;
+  }
+  if (assetType === AssetType.Bdr) {
+    return BDR_CLASSIFICATION;
   }
   if (assetType === AssetType.Fii) {
     return FII_CLASSIFICATION;
@@ -44,6 +48,7 @@ export function buildDiscriminationText(input: {
   assetType: AssetType;
   issuerCnpj: string;
   brokerName: string;
+  brokerCnpj: string;
   averagePrice: number;
   totalCost: number;
 }): string {
@@ -51,7 +56,7 @@ export function buildDiscriminationText(input: {
   const avgFormatted = formatBrl(input.averagePrice);
   const totalFormatted = formatBrl(input.totalCost);
 
-  return `${input.quantity} ${unitLabel} ${input.ticker}. CNPJ: ${input.issuerCnpj}. Corretora: ${input.brokerName}. Custo médio: R$ ${avgFormatted}. Custo total: R$ ${totalFormatted}.`;
+  return `${input.quantity} ${unitLabel} ${input.ticker}. CNPJ: ${input.issuerCnpj}. Corretora: ${input.brokerName} (CNPJ: ${input.brokerCnpj}). Custo médio: R$ ${avgFormatted}. Custo total: R$ ${totalFormatted}.`;
 }
 
 export class ReportGenerator {
@@ -90,6 +95,7 @@ export class ReportGenerator {
             assetType: position.assetType,
             issuerCnpj,
             brokerName,
+            brokerCnpj,
             averagePrice: position.averagePrice,
             totalCost: allocTotalCost,
           });
