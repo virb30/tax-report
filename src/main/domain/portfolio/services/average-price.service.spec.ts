@@ -61,7 +61,7 @@ describe('AveragePriceService', () => {
   });
 
   describe('calculateAfterBonus', () => {
-    it('dilutes average price when bonus increases quantity', () => {
+    it('dilutes average price when bonus has no cost (unitCost = 0)', () => {
       const service = new AveragePriceService();
       const bonusQuantity = 50;
 
@@ -72,9 +72,24 @@ describe('AveragePriceService', () => {
         totalQuantity: 100,
         averagePrice: 10,
         brokerBreakdown: [{ brokerId, quantity: 100 }],
-      }), bonusQuantity);
+      }), bonusQuantity, 0);
 
       const expectedAveragePrice = Money.from(1000).divideBy(150).toNumber();
+      expect(averagePrice).toBe(expectedAveragePrice);
+    });
+
+    it('increases average price when bonus carries a unit cost', () => {
+      const service = new AveragePriceService();
+      const averagePrice = service.calculateAfterBonus(AssetPosition.create({
+        ticker: 'ITSA4',
+        assetType: AssetType.Stock,
+        year: 2020,
+        totalQuantity: 100,
+        averagePrice: 10,
+        brokerBreakdown: [{ brokerId, quantity: 100 }],
+      }), 50, 5);
+
+      const expectedAveragePrice = Money.from(1250).divideBy(150).toNumber();
       expect(averagePrice).toBe(expectedAveragePrice);
     });
 
@@ -90,7 +105,7 @@ describe('AveragePriceService', () => {
           totalQuantity: 10,
           averagePrice: 10,
           brokerBreakdown: [{ brokerId, quantity: 10 }],
-        }), bonusQuantity),
+        }), bonusQuantity, 0),
       ).toThrow('Bonus quantity must be greater than zero.');
     });
   });

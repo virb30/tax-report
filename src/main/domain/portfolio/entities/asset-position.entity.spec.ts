@@ -113,7 +113,7 @@ describe('AssetPosition', () => {
     expect(position.brokerBreakdown).toEqual([{ brokerId: brokerId2, quantity: 10 }]);
   });
 
-  it('applyBonus dilutes average price', () => {
+  it('applyBonus dilutes average price when unitCost is zero', () => {
     const brokerId = Uuid.create();
     const position = AssetPosition.restore({
       ticker: 'ITSA4',
@@ -124,10 +124,34 @@ describe('AssetPosition', () => {
       brokerBreakdown: [{ brokerId, quantity: 100 }],
     });
 
-    position.applyBonus({ quantity: 50, brokerId });
+    position.applyBonus({ quantity: 50, unitCost: 0, brokerId });
 
     expect(position.totalQuantity).toBe(150);
     expect(position.averagePrice).toBeCloseTo(1000 / 150, 2);
+    expect(position.brokerBreakdown).toEqual([{ brokerId, quantity: 150 }]);
+  });
+
+  it('applyBonus adds cost to total when unitCost is greater than zero', () => {
+    const brokerId = Uuid.create();
+    const position = AssetPosition.restore({
+      ticker: 'ITSA4',
+      assetType: AssetType.Stock,
+      year: 2025,
+      totalQuantity: 100,
+      averagePrice: 10,
+      brokerBreakdown: [{ brokerId, quantity: 100 }],
+    });
+
+    // total cost before: 100 * 10 = R$1000
+    // bonus cost: 50 * 5 = R$250
+    // new total cost: R$1250 over 150 shares
+    // Money.toNumber() rounds to 2 decimal places: 1250/150 = 8.33
+    position.applyBonus({ quantity: 50, unitCost: 5, brokerId });
+
+    const expectedAveragePrice = Number((1250 / 150).toFixed(2)); // 8.33
+    expect(position.totalQuantity).toBe(150);
+    expect(position.averagePrice).toBe(expectedAveragePrice);
+    expect(position.totalCost).toBeCloseTo(expectedAveragePrice * 150, 2);
     expect(position.brokerBreakdown).toEqual([{ brokerId, quantity: 150 }]);
   });
 
@@ -233,5 +257,138 @@ describe('AssetPosition', () => {
         brokerBreakdown: [{ brokerId, quantity: 1 }, { brokerId: Uuid.create(), quantity: 1 }],
       }),
     ).toThrow(`Broker breakdown sum (2) must equal total quantity (1).`);
+  });
+
+  describe('applyTransferOut', () => {
+    it('removes quantity from source broker without changing averagePrice', () => {
+      const brokerId = Uuid.create();
+      const position = AssetPosition.restore({
+        ticker: 'PETR4',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: 100,
+        averagePrice: 20,
+        brokerBreakdown: [{ brokerId, quantity: 100 }],
+      });
+
+      position.applyTransferOut({ quantity: 100, brokerId });
+
+      expect(position.totalQuantity).toBe(0);
+      expect(position.averagePrice).toBe(20);
+      expect(position.brokerBreakdown).toEqual([]);
+    });
+
+    it('removes partial quantity from source broker', () => {
+      const brokerId = Uuid.create();
+      const brokerId2 = Uuid.create();
+      const position = AssetPosition.restore({
+        ticker: 'VALE3',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: 100,
+        averagePrice: 50,
+        brokerBreakdown: [{ brokerId, quantity: 60 }, { brokerId: brokerId2, quantity: 40 }],
+      });
+
+      position.applyTransferOut({ quantity: 40, brokerId });
+
+      expect(position.totalQuantity).toBe(60);
+      expect(position.averagePrice).toBe(50);
+      const alloc = position.brokerBreakdown.find((b) => b.brokerId.value === brokerId.value);
+      expect(alloc?.quantity).toBe(20);
+    });
+
+    it('throws when quantity is zero', () => {
+      const brokerId = Uuid.create();
+      const position = AssetPosition.restore({
+        ticker: 'MGLU3',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: 10,
+        averagePrice: 5,
+        brokerBreakdown: [{ brokerId, quantity: 10 }],
+      });
+
+      expect(() => position.applyTransferOut({ quantity: 0, brokerId })).toThrow(
+        'Transfer quantity must be greater than zero.',
+      );
+    });
+
+    it('throws when transferring more than broker holds', () => {
+      const brokerId = Uuid.create();
+      const position = AssetPosition.restore({
+        ticker: 'WEGE3',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: 10,
+        averagePrice: 40,
+        brokerBreakdown: [{ brokerId, quantity: 10 }],
+      });
+
+      expect(() => position.applyTransferOut({ quantity: 20, brokerId })).toThrow(
+        'Cannot sell more than current quantity allocated to this broker.',
+      );
+    });
+  });
+
+  describe('applyTransferIn', () => {
+    it('adds quantity to destination broker without changing averagePrice', () => {
+      const brokerId = Uuid.create();
+      const position = AssetPosition.restore({
+        ticker: 'BBAS3',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: 0,
+        averagePrice: 30,
+        brokerBreakdown: [],
+      });
+
+      position.applyTransferIn({ quantity: 50, brokerId });
+
+      expect(position.totalQuantity).toBe(50);
+      expect(position.averagePrice).toBe(30);
+      expect(position.brokerBreakdown).toEqual([{ brokerId, quantity: 50 }]);
+    });
+
+    it('throws when quantity is zero', () => {
+      const brokerId = Uuid.create();
+      const position = AssetPosition.restore({
+        ticker: 'BBAS3',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: 0,
+        averagePrice: 30,
+        brokerBreakdown: [],
+      });
+
+      expect(() => position.applyTransferIn({ quantity: 0, brokerId })).toThrow(
+        'Transfer quantity must be greater than zero.',
+      );
+    });
+  });
+
+  describe('full transfer round-trip (TransferOut + TransferIn)', () => {
+    it('preserves totalQuantity, averagePrice and totalCost after complete transfer', () => {
+      const fromBrokerId = Uuid.create();
+      const toBrokerId = Uuid.create();
+      const position = AssetPosition.restore({
+        ticker: 'ITSA4',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: 100,
+        averagePrice: 20,
+        brokerBreakdown: [{ brokerId: fromBrokerId, quantity: 100 }],
+      });
+
+      const initialTotalCost = position.totalCost;
+
+      position.applyTransferOut({ quantity: 100, brokerId: fromBrokerId });
+      position.applyTransferIn({ quantity: 100, brokerId: toBrokerId });
+
+      expect(position.totalQuantity).toBe(100);
+      expect(position.averagePrice).toBe(20);
+      expect(position.totalCost).toBeCloseTo(initialTotalCost, 5);
+      expect(position.brokerBreakdown).toEqual([{ brokerId: toBrokerId, quantity: 100 }]);
+    });
   });
 });

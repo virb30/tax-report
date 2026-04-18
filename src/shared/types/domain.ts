@@ -14,6 +14,10 @@ export enum TransactionType {
   Buy = 'buy',
   Sell = 'sell',
   Bonus = 'bonus',
+  Split = 'split',
+  ReverseSplit = 'reverse_split',
+  TransferIn = 'transfer_in',
+  TransferOut = 'transfer_out',
   InitialBalance = 'initial_balance',
 }
 

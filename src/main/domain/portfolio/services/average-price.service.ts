@@ -28,19 +28,25 @@ export class AveragePriceService {
     return nextTotalCost.divideBy(nextQuantity.toNumber()).toNumber();
   }
 
-  calculateAfterBonus(position: AssetPosition, bonusQty: number): number {
+  calculateAfterBonus(
+    position: AssetPosition,
+    bonusQty: number,
+    unitCost: number,
+  ): number {
     const bonusQuantity = Quantity.from(bonusQty);
     if (bonusQuantity.isZero()) {
       throw new Error('Bonus quantity must be greater than zero.');
     }
 
     const currentTotalCost = Money.from(position.totalCost);
+    const bonusCost = Money.from(unitCost).multiplyBy(bonusQuantity.toNumber());
+    const nextTotalCost = currentTotalCost.add(bonusCost);
     const nextQuantity = Quantity.from(position.totalQuantity).add(bonusQuantity);
 
     if (nextQuantity.isZero()) {
       throw new Error('Total quantity after bonus must be greater than zero.');
     }
 
-    return currentTotalCost.divideBy(nextQuantity.toNumber()).toNumber();
+    return nextTotalCost.divideBy(nextQuantity.toNumber()).toNumber();
   }
 }

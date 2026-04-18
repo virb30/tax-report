@@ -46,7 +46,13 @@ interface ApplyBuyInput extends ApplyOperationInput {
 
 interface ApplySellInput extends ApplyOperationInput {}
 
-interface ApplyBonusInput extends ApplyOperationInput {}
+interface ApplyBonusInput extends ApplyOperationInput {
+  unitCost: number;
+}
+
+interface ApplyTransferOutInput extends ApplyOperationInput {}
+
+interface ApplyTransferInInput extends ApplyOperationInput {}
 
 interface ApplyInitialBalanceInput extends ApplyOperationInput {
   averagePrice: number;
@@ -127,12 +133,36 @@ export class AssetPosition {
     }
 
     const nextQuantity = this._totalQuantity + input.quantity;
-    const nextAveragePrice = this.averagePriceService.calculateAfterBonus(this, input.quantity);
+    const nextAveragePrice = this.averagePriceService.calculateAfterBonus(
+      this,
+      input.quantity,
+      input.unitCost,
+    );
 
     this.incrementBrokerQuantity(input.brokerId, input.quantity);
 
     this._totalQuantity = nextQuantity;
     this._averagePrice = nextAveragePrice;
+    this.validate();
+  }
+
+  applyTransferOut(input: ApplyTransferOutInput): void {
+    if (input.quantity <= 0) {
+      throw new Error('Transfer quantity must be greater than zero.');
+    }
+
+    this.decrementBrokerQuantity(input.brokerId, input.quantity);
+    this._totalQuantity = this._totalQuantity - input.quantity;
+    this.validate();
+  }
+
+  applyTransferIn(input: ApplyTransferInInput): void {
+    if (input.quantity <= 0) {
+      throw new Error('Transfer quantity must be greater than zero.');
+    }
+
+    this.incrementBrokerQuantity(input.brokerId, input.quantity);
+    this._totalQuantity = this._totalQuantity + input.quantity;
     this.validate();
   }
 
