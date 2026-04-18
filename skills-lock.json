@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "skills": {
+    "adversarial-review": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "a05ccb3817538f95e4bc1e9a9a934e5b5259abb657448ed10cd0d44c480f1a36"
+    },
+    "architectural-analysis": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "e5a40757c654006e281b630c400103516ae303a2bddb0cb8e41a14cdd1f61990"
+    },
+    "context7": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "74462007e7013b4c4eea818b3a5bd50cfa8641f4c12135877fc9f082249d984d"
+    },
+    "crafting-effective-readmes": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "cb11facecbb4a15f7ca6cfac2e740ac66798676c246c057879a71babb27c9a4f"
+    },
+    "electron-dev": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "9389d1cc3aa88d8e6c58fd4ef75660bc772bf91ad27f163f0134be59e0509d49"
+    },
+    "frontend-design": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "ae29cdc94f3612bff3e237d104cb3484a28865e20a054c98e7adf718efbc66d6"
+    },
+    "interface-design": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "4d5fe1dacfebc0c1b3837b061405150ed2e4971c096543afc46c23161c5a4f7a"
+    },
+    "qa-execution": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "c6b6e4a3f33c5af810016fb43b30fddbf99327d8554c6755673aa2c88c332963"
+    },
+    "react": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "1ffae4c32fefe9cb9d4afe3dd2e9816f8797e33136fa7c245ce2bbf58f5d48bd"
+    },
+    "receiving-code-review": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "ec2f7fa6231674a505e48a619ff1a0d17fc6a68f2d0d51a48a7d908c0c8cfad3"
+    },
+    "refactoring-analysis": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "1c02ed04284aea525dcc605a24268240dc9cdb386073fa009b377672437d2777"
+    },
+    "shadcn": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "c850f7fcf3d694cb910737b995b6b062faa82b96b3620f290920b8fdc74e30b1"
+    },
+    "skill-best-practices": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "8ec13fa8b863613950c311b17920e66397cc6a8bc56a7c1ad978f8c920757444"
+    },
+    "tailwindcss": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "237ce8bb98942a2c889aa38c9183d2060a10dfe512ba1f8b3667d7de132c7fb1"
+    },
+    "tauri-v2": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "a333d119fa97f6a4c72d7f5a0e7c44c1c614254b8d67383f83ff23ac1af2afb0"
+    },
+    "test-antipatterns": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "b49ebd1b8859e76f4d7ec134867f68dc7dc7b7d4946f3a0b735ec9109a00de2b"
+    },
+    "typescript-advanced": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "d2b006fcd69540c18e08b9668551f4ff652dae06dfcb8280af830b95b50c147b"
+    },
+    "verification-before-completion": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "d70f1880573d5c55507a4eca2e567fb8274e1870e4796b956fc1acb893638cb0"
+    },
+    "vitest": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "0efd9cf8c56aada060d418d009cfe621a7915d0c73a958fe611985bc0c2fa4b8"
+    }
+  }
+}

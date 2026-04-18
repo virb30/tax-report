@@ -1,5 +1,7 @@
+type AppLifecycleEvent = 'activate' | 'window-all-closed';
+
 type AppLike = {
-  on: (event: string, listener: () => void) => void;
+  on: (event: AppLifecycleEvent, listener: () => void) => void;
   whenReady: () => Promise<void>;
   quit: () => void;
 };
@@ -13,6 +15,7 @@ type AppLifecycleDependencies = {
   browserWindow: BrowserWindowLike;
   createMainWindow: () => void;
   platform: NodeJS.Platform;
+  onReady?: () => void | Promise<void>;
 };
 
 export class AppLifecycle {
@@ -23,7 +26,10 @@ export class AppLifecycle {
 
     void app
       .whenReady()
-      .then(() => {
+      .then(async () => {
+        if (this.dependencies.onReady) {
+          await this.dependencies.onReady();
+        }
         this.dependencies.createMainWindow();
 
         app.on('activate', () => {
@@ -33,7 +39,9 @@ export class AppLifecycle {
           }
         });
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        // Keep startup failures visible instead of exiting silently.
+        console.error('[main] Failed to initialize application lifecycle:', error);
         app.quit();
       });
 

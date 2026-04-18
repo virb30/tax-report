@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "playwright-electron": {
+      "command": "node",
+      "args": [
+        "./scripts/electron-playwright-mcp/dist/index.js"
+      ]
+    }
+  }
+}

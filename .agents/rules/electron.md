@@ -1,0 +1,38 @@
+---
+trigger: model_decision
+description: Regras especificas de arquitetura Electron e separacao main/renderer
+globs: src/{main,renderer,shared}/**/*
+---
+
+# Electron Rules
+
+Estas regras definem o que e especifico de arquitetura Electron.
+
+## Tecnologias Principais
+
+- Linguagem principal: TypeScript.
+- Framework principal: Electron.
+- Frontend: React.
+- Use `npm` para gerenciamento de dependencias e execucao de scripts.
+- Instale `@types/*` quando necessario para manter tipagem correta.
+
+## Estrutura de Diretorios
+
+Use a separacao entre processo principal e processo de renderizacao:
+
+```text
+src/
+  main/        # backend (main process)
+  renderer/    # frontend (renderer process)
+  shared/      # contratos e tipos compartilhados
+```
+
+## Onde Reside o Codigo
+
+- Todo codigo de backend com acesso a Node.js e sistema de arquivos deve ficar em `src/main/`.
+- Todo codigo de interface (Chromium) deve ficar em `src/renderer/`.
+
+## Comunicacao entre Processos
+
+- A comunicacao entre backend e frontend deve ocorrer via IPC.
+- Use `preload.ts` como ponte segura para expor funcionalidades ao renderer.

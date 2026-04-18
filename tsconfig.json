@@ -4,6 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,
+    "jsx": "react-jsx",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -11,22 +12,9 @@
     "isolatedModules": true,
     "types": ["node"],
     "baseUrl": ".",
-    "paths": {
-      "@renderer/*": ["src/renderer/*"],
-      "@main/*": ["src/main/*"],
-      "@shared/*": ["src/shared/*"]
-    }
   },
   "include": [
-    "src/**/*",
-    "forge.config.ts",
-    "vite.config.ts",
-    "vite.main.config.ts",
-    "vite.preload.config.ts",
-    "vite.renderer.config.ts",
-    "tailwind.config.ts",
-    "postcss.config.cjs",
-    "jest.config.ts"
+    "src/**/*"
   ],
   "exclude": ["node_modules", "out", ".vite"]
 }

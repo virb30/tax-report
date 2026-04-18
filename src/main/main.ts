@@ -1,15 +1,26 @@
-import { app, BrowserWindow } from 'electron';
-import { AppLifecycle } from './app-lifecycle';
+import { app, BrowserWindow, ipcMain } from 'electron';
+import { createMainLifecycle } from './infrastructure/composition/create-main-lifecycle';
+import { createAndInitializeDatabase } from './database/database';
 import { WindowManager } from './window-manager';
+import { AppCradle, container, registerDependencies } from './infrastructure/container';
 
-const lifecycle = new AppLifecycle({
+const windowManager = new WindowManager();
+
+const lifecycle = createMainLifecycle({
   app,
   browserWindow: BrowserWindow,
+  ipcMain,
+  platform: process.platform,
   createMainWindow: () => {
-    const windowManager = new WindowManager();
     windowManager.createMainWindow();
   },
-  platform: process.platform,
+  onReady: async () => {
+    const userDataPath = app.getPath('userData');
+    const { database } = await createAndInitializeDatabase(userDataPath);
+    registerDependencies(database);
+    
+    container.cradle.ipcRegistry.registerAll(ipcMain);
+  },
 });
 
 lifecycle.register();

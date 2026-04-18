@@ -9,9 +9,9 @@ type AppStub = {
 
 function createAppStub(): AppStub {
   return {
-    on: jest.fn(),
-    whenReady: jest.fn().mockResolvedValue(undefined),
-    quit: jest.fn(),
+    on: jest.fn<any>(),
+    whenReady: jest.fn<any>().mockResolvedValue(undefined as never),
+    quit: jest.fn<any>(),
   };
 }
 
@@ -47,7 +47,7 @@ describe('AppLifecycle', () => {
     lifecycle.register();
     await Promise.resolve();
 
-    const activateHandler = app.on.mock.calls.find((call) => call[0] === 'activate')?.[1];
+    const activateHandler = app.on.mock.calls.find((call) => call[0] === 'activate')?.[1] as (() => void) | undefined;
     if (!activateHandler) {
       throw new Error('Activate handler not registered.');
     }
@@ -71,7 +71,7 @@ describe('AppLifecycle', () => {
     lifecycle.register();
     await Promise.resolve();
 
-    const activateHandler = app.on.mock.calls.find((call) => call[0] === 'activate')?.[1];
+    const activateHandler = app.on.mock.calls.find((call) => call[0] === 'activate')?.[1] as (() => void) | undefined;
     if (!activateHandler) {
       throw new Error('Activate handler not registered.');
     }
@@ -93,7 +93,7 @@ describe('AppLifecycle', () => {
 
     lifecycle.register();
 
-    const closeHandler = app.on.mock.calls.find((call) => call[0] === 'window-all-closed')?.[1];
+    const closeHandler = app.on.mock.calls.find((call) => call[0] === 'window-all-closed')?.[1] as (() => void) | undefined;
     if (!closeHandler) {
       throw new Error('window-all-closed handler not registered.');
     }
@@ -115,7 +115,7 @@ describe('AppLifecycle', () => {
 
     lifecycle.register();
 
-    const closeHandler = app.on.mock.calls.find((call) => call[0] === 'window-all-closed')?.[1];
+    const closeHandler = app.on.mock.calls.find((call) => call[0] === 'window-all-closed')?.[1] as (() => void) | undefined;
     if (!closeHandler) {
       throw new Error('window-all-closed handler not registered.');
     }
