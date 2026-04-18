@@ -63,12 +63,14 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
       const operationalCost = this.hasColumn(row, 'Taxas Totais')
         ? this.parseOptionalNumber(row['Taxas Totais'], 0)
         : 0;
+
       const operation = {
         ticker: String(row.Ticker).trim(),
         operationType: this.parseOperationType(row.Tipo),
         quantity: this.parseNumber(row.Quantidade, 'Quantidade'),
-        unitPrice: this.parseNumber(row['Preco Unitario'], 'Preco Unitario'),
+        unitPrice: this.parseOptionalNumber(row['Preco Unitario'], 0),
       };
+
       const groupKey = `${rowTradeDate}::${rowBroker}`;
       const existingBatch = batchesByDateAndBroker.get(groupKey);
       if (!existingBatch) {
@@ -175,11 +177,53 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
     if (normalizedValue === 'venda') {
       return OperationType.Sell;
     }
-    throw new Error('Invalid operation type. Expected Compra/Venda.');
+    if (normalizedValue === 'bonificacao' || normalizedValue === 'bonus') {
+      return OperationType.Bonus;
+    }
+    if (normalizedValue === 'desdobramento' || normalizedValue === 'split') {
+      return OperationType.Split;
+    }
+    if (
+      normalizedValue === 'agrupamento' ||
+      normalizedValue === 'grupamento' ||
+      normalizedValue === 'reverse split'
+    ) {
+      return OperationType.ReverseSplit;
+    }
+    if (
+      normalizedValue === 'transferencia entrada' ||
+      normalizedValue === 'transferencia de entrada' ||
+      normalizedValue === 'transferencia'
+    ) {
+      return OperationType.TransferIn;
+    }
+    if (normalizedValue === 'transferencia saida' || normalizedValue === 'transferencia de saida') {
+      return OperationType.TransferOut;
+    }
+    throw new Error(
+      `Tipo de operação inválido: "${value}". Esperado Compra, Venda, Bonificacao, Desdobramento, Grupamento ou Transferencia.`,
+    );
   }
 
   private mapOperationTypeToTransactionType(operationType: OperationType): TransactionType {
-    return operationType === OperationType.Buy ? TransactionType.Buy : TransactionType.Sell;
+    switch (operationType) {
+      case OperationType.Buy:
+        return TransactionType.Buy;
+      case OperationType.Sell:
+        return TransactionType.Sell;
+      case OperationType.Bonus:
+        return TransactionType.Bonus;
+      case OperationType.Split:
+        return TransactionType.Split;
+      case OperationType.ReverseSplit:
+        return TransactionType.ReverseSplit;
+      case OperationType.TransferIn:
+        return TransactionType.TransferIn;
+      case OperationType.TransferOut:
+        return TransactionType.TransferOut;
+      default:
+        return TransactionType.Buy;
+    }
   }
 
   private extractUniqueBrokerCodes(rows: SpreadsheetRow[]): Set<string> {

@@ -4,4 +4,4 @@
 
 - [x] 1.0 Atualização dos Contratos, Bonificação e Transferência de Custódia
 - [x] 2.0 Suporte para Operações Matemáticas (Desdobramento e Grupamento)
-- [ ] 3.0 Tratativa de Alertas e Regras de Importação
+- [x] 3.0 Tratativa de Alertas e Regras de Importação

@@ -1,3 +1,4 @@
+import type { TransactionType } from '../types/domain';
 import type { ParsedTransactionBatch } from './import-transactions.contract';
 
 export type PreviewImportTransactionsCommand = {
@@ -7,16 +8,23 @@ export type PreviewImportTransactionsCommand = {
 export type PreviewTransactionItem = {
   date: string;
   ticker: string;
-  type: 'buy' | 'sell';
+  type: TransactionType;
   quantity: number;
   unitPrice: number;
   fees: number;
   brokerId: string;
 };
 
+export type PreviewImportWarning = {
+  row: number;
+  message: string;
+  type: 'BONUS_MISSING_COST' | string;
+};
+
 export type PreviewImportTransactionsResult = {
   batches: ParsedTransactionBatch[];
   transactionsPreview: PreviewTransactionItem[];
+  warnings?: PreviewImportWarning[];
 };
 
 export type ConfirmImportTransactionsCommand = {
