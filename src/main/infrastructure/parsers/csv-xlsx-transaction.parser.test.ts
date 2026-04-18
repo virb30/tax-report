@@ -7,6 +7,7 @@ import * as XLSX from 'xlsx';
 import { SheetjsSpreadsheetFileReader } from '../adapters/file-readers/sheetjs.spreadsheet.file-reader';
 import { CsvXlsxTransactionParser } from './csv-xlsx-transaction.parser';
 import type { BrokerRepository } from '../../application/repositories/broker.repository';
+import { TransactionType } from '../../../shared/types/domain';
 
 async function createTempCsvFile(fileName: string, content: string): Promise<string> {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'tx-parser-test-'));
@@ -190,5 +191,62 @@ describe('CsvXlsxTransactionParser', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]?.tradeDate).toBe('2025-01-15');
+  });
+
+  it('parses new operation types: Bonificação, Split, Grupamento, Transferencia', async () => {
+    const brokerRepo = mock<BrokerRepository>();
+    brokerRepo.findAllByCodes.mockResolvedValue([createBrokerMock('broker-xp')]);
+
+    const filePath = await createTempXlsxFile('events.xlsx', [
+      {
+        Data: '2025-04-01',
+        Tipo: 'Bonificacao',
+        Ticker: 'PETR4',
+        Quantidade: 1,
+        'Preco Unitario': 15,
+        Corretora: 'XP',
+      },
+      {
+        Data: '2025-04-02',
+        Tipo: 'Split',
+        Ticker: 'PETR4',
+        Quantidade: 10,
+        'Preco Unitario': '',
+        Corretora: 'XP',
+      },
+      {
+        Data: '2025-04-03',
+        Tipo: 'Agrupamento',
+        Ticker: 'VALE3',
+        Quantidade: 10,
+        'Preco Unitario': 0,
+        Corretora: 'XP',
+      },
+      {
+        Data: '2025-04-04',
+        Tipo: 'Transferencia Entrada',
+        Ticker: 'ITSA4',
+        Quantidade: 100,
+        'Preco Unitario': 10,
+        Corretora: 'XP',
+      },
+    ]);
+    createdDirs.push(path.dirname(filePath));
+
+    const parser = new CsvXlsxTransactionParser(new SheetjsSpreadsheetFileReader(), brokerRepo);
+    const result = await parser.parse(filePath);
+
+    expect(result).toHaveLength(4);
+    expect(result[0]?.operations[0]?.type).toBe(TransactionType.Bonus);
+    expect(result[0]?.operations[0]?.unitPrice).toBe(15);
+
+    expect(result[1]?.operations[0]?.type).toBe(TransactionType.Split);
+    expect(result[1]?.operations[0]?.unitPrice).toBe(0);
+
+    expect(result[2]?.operations[0]?.type).toBe(TransactionType.ReverseSplit);
+    expect(result[2]?.operations[0]?.unitPrice).toBe(0);
+
+    expect(result[3]?.operations[0]?.type).toBe(TransactionType.TransferIn);
+    expect(result[3]?.operations[0]?.unitPrice).toBe(10);
   });
 });

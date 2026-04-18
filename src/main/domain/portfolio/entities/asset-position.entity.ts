@@ -46,10 +46,24 @@ interface ApplyBuyInput extends ApplyOperationInput {
 
 interface ApplySellInput extends ApplyOperationInput {}
 
-interface ApplyBonusInput extends ApplyOperationInput {}
+interface ApplyBonusInput extends ApplyOperationInput {
+  unitCost: number;
+}
+
+interface ApplyTransferOutInput extends ApplyOperationInput {}
+
+interface ApplyTransferInInput extends ApplyOperationInput {}
 
 interface ApplyInitialBalanceInput extends ApplyOperationInput {
   averagePrice: number;
+}
+
+interface ApplySplitInput {
+  ratio: number;
+}
+
+interface ApplyReverseSplitInput {
+  ratio: number;
 }
 
 export const MIN_SUPPORTED_YEAR = 2000;
@@ -127,12 +141,36 @@ export class AssetPosition {
     }
 
     const nextQuantity = this._totalQuantity + input.quantity;
-    const nextAveragePrice = this.averagePriceService.calculateAfterBonus(this, input.quantity);
+    const nextAveragePrice = this.averagePriceService.calculateAfterBonus(
+      this,
+      input.quantity,
+      input.unitCost,
+    );
 
     this.incrementBrokerQuantity(input.brokerId, input.quantity);
 
     this._totalQuantity = nextQuantity;
     this._averagePrice = nextAveragePrice;
+    this.validate();
+  }
+
+  applyTransferOut(input: ApplyTransferOutInput): void {
+    if (input.quantity <= 0) {
+      throw new Error('Transfer quantity must be greater than zero.');
+    }
+
+    this.decrementBrokerQuantity(input.brokerId, input.quantity);
+    this._totalQuantity = this._totalQuantity - input.quantity;
+    this.validate();
+  }
+
+  applyTransferIn(input: ApplyTransferInInput): void {
+    if (input.quantity <= 0) {
+      throw new Error('Transfer quantity must be greater than zero.');
+    }
+
+    this.incrementBrokerQuantity(input.brokerId, input.quantity);
+    this._totalQuantity = this._totalQuantity + input.quantity;
     this.validate();
   }
 
@@ -148,6 +186,56 @@ export class AssetPosition {
     this._averagePrice = input.averagePrice;
     this._totalQuantity = this.calculateTotalQuantity();
 
+    this.validate();
+  }
+
+  applySplit(input: ApplySplitInput): void {
+    if (input.ratio <= 0) {
+      throw new Error('Split ratio must be greater than zero.');
+    }
+
+    for (const [brokerId, quantity] of this._brokerBreakdown.entries()) {
+      const nextBrokerQty = Math.floor(quantity * input.ratio);
+      if (nextBrokerQty > 0) {
+        this._brokerBreakdown.set(brokerId, nextBrokerQty);
+      } else {
+        this._brokerBreakdown.delete(brokerId);
+      }
+    }
+
+    const nextTotalQuantity = this.calculateTotalQuantity();
+    const nextAveragePrice = this.averagePriceService.calculateAfterQuantityChange(
+      this,
+      nextTotalQuantity,
+    );
+
+    this._totalQuantity = nextTotalQuantity;
+    this._averagePrice = nextAveragePrice;
+    this.validate();
+  }
+
+  applyReverseSplit(input: ApplyReverseSplitInput): void {
+    if (input.ratio <= 0) {
+      throw new Error('Reverse Split ratio must be greater than zero.');
+    }
+
+    for (const [brokerId, quantity] of this._brokerBreakdown.entries()) {
+      const nextBrokerQty = Math.floor(quantity / input.ratio);
+      if (nextBrokerQty > 0) {
+        this._brokerBreakdown.set(brokerId, nextBrokerQty);
+      } else {
+        this._brokerBreakdown.delete(brokerId);
+      }
+    }
+
+    const nextTotalQuantity = this.calculateTotalQuantity();
+    const nextAveragePrice = this.averagePriceService.calculateAfterQuantityChange(
+      this,
+      nextTotalQuantity,
+    );
+
+    this._totalQuantity = nextTotalQuantity;
+    this._averagePrice = nextAveragePrice;
     this.validate();
   }
 

@@ -14,9 +14,9 @@ Implementar suporte transacional passivo para escalar quantidades através de de
 
 ## Subtarefas
 
-- [ ] 2.1 Implementar `applySplit` em `AssetPosition` que multiplique condicionalmente a quantidade embasado no ratio alocado.
-- [ ] 2.2 Implementar `applyReverseSplit` em `AssetPosition` processando o corte e arredondamento `Math.floor`.
-- [ ] 2.3 Adequar `PositionCalculatorService` (e demais ramificações dos serviços atrelados) provendo total compatibilidade e fluxo.
+- [x] 2.1 Implementar `applySplit` em `AssetPosition` que multiplique condicionalmente a quantidade embasado no ratio alocado.
+- [x] 2.2 Implementar `applyReverseSplit` em `AssetPosition` processando o corte e arredondamento `Math.floor`.
+- [x] 2.3 Adequar `PositionCalculatorService` (e demais ramificações dos serviços atrelados) provendo total compatibilidade e fluxo.
 
 ## Detalhes de Implementação
 
@@ -29,8 +29,8 @@ Implementar suporte transacional passivo para escalar quantidades através de de
 
 ## Testes da Tarefa
 
-- [ ] Testes de unidade em mock da Entidade medindo os desdobramentos lógicos garantido proteção do custo contábil do usuário.
-- [ ] Testes da integridade de frações usando assert de agrupamentos que causem dízimas periódicas contornadas via `Math.floor`.
+- [x] Testes de unidade em mock da Entidade medindo os desdobramentos lógicos garantido proteção do custo contábil do usuário.
+- [x] Testes da integridade de frações usando assert de agrupamentos que causem dízimas periódicas contornadas via `Math.floor`.
 
 <critical>SEMPRE CRIE E EXECUTE OS TESTES DA TAREFA ANTES DE CONSIDERÁ-LA FINALIZADA</critical>
 

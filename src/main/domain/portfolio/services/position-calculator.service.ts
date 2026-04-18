@@ -38,7 +38,23 @@ export class PositionCalculatorService {
           position.applySell({ quantity: tx.quantity, brokerId: tx.brokerId });
           break;
         case TransactionType.Bonus:
-          position.applyBonus({ quantity: tx.quantity, brokerId: tx.brokerId });
+          position.applyBonus({
+            quantity: tx.quantity,
+            unitCost: tx.unitPrice,
+            brokerId: tx.brokerId,
+          });
+          break;
+        case TransactionType.TransferOut:
+          position.applyTransferOut({ quantity: tx.quantity, brokerId: tx.brokerId });
+          break;
+        case TransactionType.TransferIn:
+          position.applyTransferIn({ quantity: tx.quantity, brokerId: tx.brokerId });
+          break;
+        case TransactionType.Split:
+          position.applySplit({ ratio: tx.quantity });
+          break;
+        case TransactionType.ReverseSplit:
+          position.applyReverseSplit({ ratio: tx.quantity });
           break;
         case TransactionType.InitialBalance:
           position.applyInitialBalance({
