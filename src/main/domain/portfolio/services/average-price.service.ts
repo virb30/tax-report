@@ -49,4 +49,14 @@ export class AveragePriceService {
 
     return nextTotalCost.divideBy(nextQuantity.toNumber()).toNumber();
   }
+
+  calculateAfterQuantityChange(position: AssetPosition, nextFreq: number): number {
+    const nextQuantity = Quantity.from(nextFreq);
+    if (nextQuantity.isZero()) {
+      return 0;
+    }
+
+    const currentTotalCost = Money.from(position.totalCost);
+    return currentTotalCost.divideBy(nextQuantity.toNumber()).toNumber();
+  }
 }

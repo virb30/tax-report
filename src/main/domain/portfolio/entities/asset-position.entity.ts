@@ -58,6 +58,14 @@ interface ApplyInitialBalanceInput extends ApplyOperationInput {
   averagePrice: number;
 }
 
+interface ApplySplitInput {
+  ratio: number;
+}
+
+interface ApplyReverseSplitInput {
+  ratio: number;
+}
+
 export const MIN_SUPPORTED_YEAR = 2000;
 
 export class AssetPosition {
@@ -178,6 +186,56 @@ export class AssetPosition {
     this._averagePrice = input.averagePrice;
     this._totalQuantity = this.calculateTotalQuantity();
 
+    this.validate();
+  }
+
+  applySplit(input: ApplySplitInput): void {
+    if (input.ratio <= 0) {
+      throw new Error('Split ratio must be greater than zero.');
+    }
+
+    for (const [brokerId, quantity] of this._brokerBreakdown.entries()) {
+      const nextBrokerQty = Math.floor(quantity * input.ratio);
+      if (nextBrokerQty > 0) {
+        this._brokerBreakdown.set(brokerId, nextBrokerQty);
+      } else {
+        this._brokerBreakdown.delete(brokerId);
+      }
+    }
+
+    const nextTotalQuantity = this.calculateTotalQuantity();
+    const nextAveragePrice = this.averagePriceService.calculateAfterQuantityChange(
+      this,
+      nextTotalQuantity,
+    );
+
+    this._totalQuantity = nextTotalQuantity;
+    this._averagePrice = nextAveragePrice;
+    this.validate();
+  }
+
+  applyReverseSplit(input: ApplyReverseSplitInput): void {
+    if (input.ratio <= 0) {
+      throw new Error('Reverse Split ratio must be greater than zero.');
+    }
+
+    for (const [brokerId, quantity] of this._brokerBreakdown.entries()) {
+      const nextBrokerQty = Math.floor(quantity / input.ratio);
+      if (nextBrokerQty > 0) {
+        this._brokerBreakdown.set(brokerId, nextBrokerQty);
+      } else {
+        this._brokerBreakdown.delete(brokerId);
+      }
+    }
+
+    const nextTotalQuantity = this.calculateTotalQuantity();
+    const nextAveragePrice = this.averagePriceService.calculateAfterQuantityChange(
+      this,
+      nextTotalQuantity,
+    );
+
+    this._totalQuantity = nextTotalQuantity;
+    this._averagePrice = nextAveragePrice;
     this.validate();
   }
 

@@ -142,13 +142,9 @@ describe('AssetPosition', () => {
       brokerBreakdown: [{ brokerId, quantity: 100 }],
     });
 
-    // total cost before: 100 * 10 = R$1000
-    // bonus cost: 50 * 5 = R$250
-    // new total cost: R$1250 over 150 shares
-    // Money.toNumber() rounds to 2 decimal places: 1250/150 = 8.33
     position.applyBonus({ quantity: 50, unitCost: 5, brokerId });
 
-    const expectedAveragePrice = Number((1250 / 150).toFixed(2)); // 8.33
+    const expectedAveragePrice = Number((1250 / 150).toFixed(2));
     expect(position.totalQuantity).toBe(150);
     expect(position.averagePrice).toBe(expectedAveragePrice);
     expect(position.totalCost).toBeCloseTo(expectedAveragePrice * 150, 2);
@@ -389,6 +385,109 @@ describe('AssetPosition', () => {
       expect(position.averagePrice).toBe(20);
       expect(position.totalCost).toBeCloseTo(initialTotalCost, 5);
       expect(position.brokerBreakdown).toEqual([{ brokerId: toBrokerId, quantity: 100 }]);
+    });
+  });
+
+  describe('applySplit', () => {
+    it('increases quantity and reduces average price while keeping total cost constant', () => {
+      const brokerId = Uuid.create();
+      const position = AssetPosition.restore({
+        ticker: 'AAPL34',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: 10,
+        averagePrice: 100,
+        brokerBreakdown: [{ brokerId, quantity: 10 }],
+      });
+
+      position.applySplit({ ratio: 4 });
+
+      expect(position.totalQuantity).toBe(40);
+      expect(position.averagePrice).toBe(25);
+      expect(position.totalCost).toBe(1000);
+      expect(position.brokerBreakdown).toEqual([{ brokerId, quantity: 40 }]);
+    });
+
+    it('applies split to multiple brokers and rounds down if necessary', () => {
+      const brokerId1 = Uuid.create();
+      const brokerId2 = Uuid.create();
+      const position = AssetPosition.restore({
+        ticker: 'MSFT34',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: 15,
+        averagePrice: 200,
+        brokerBreakdown: [
+          { brokerId: brokerId1, quantity: 10 },
+          { brokerId: brokerId2, quantity: 5 },
+        ],
+      });
+
+      position.applySplit({ ratio: 1.5 });
+
+      expect(position.totalQuantity).toBe(22);
+      expect(position.averagePrice).toBeCloseTo(3000 / 22, 2);
+    });
+  });
+
+  describe('applyReverseSplit', () => {
+    it('decreases quantity and increases average price while keeping total cost constant', () => {
+      const brokerId = Uuid.create();
+      const position = AssetPosition.restore({
+        ticker: 'GOGL34',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: 100,
+        averagePrice: 10,
+        brokerBreakdown: [{ brokerId, quantity: 100 }],
+      });
+
+      // Total Cost = 1000
+      position.applyReverseSplit({ ratio: 10 }); // 10:1 reverse split
+
+      expect(position.totalQuantity).toBe(10);
+      expect(position.averagePrice).toBe(100);
+      expect(position.totalCost).toBe(1000);
+      expect(position.brokerBreakdown).toEqual([{ brokerId, quantity: 10 }]);
+    });
+
+    it('applies reverse split with rounding floor per broker (B3 rule)', () => {
+      const brokerId1 = Uuid.create();
+      const brokerId2 = Uuid.create();
+      const position = AssetPosition.restore({
+        ticker: 'MGLU3',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: 109,
+        averagePrice: 10,
+        brokerBreakdown: [
+          { brokerId: brokerId1, quantity: 55 },
+          { brokerId: brokerId2, quantity: 54 },
+        ],
+      });
+
+      position.applyReverseSplit({ ratio: 10 });
+      expect(position.totalQuantity).toBe(10);
+      expect(position.averagePrice).toBe(109);
+      expect(position.totalCost).toBe(1090);
+    });
+
+    it('sets average price to 0 if all shares are lost due to rounding', () => {
+      const brokerId = Uuid.create();
+      const position = AssetPosition.restore({
+        ticker: 'OIBR3',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: 5,
+        averagePrice: 1,
+        brokerBreakdown: [{ brokerId, quantity: 5 }],
+      });
+
+      position.applyReverseSplit({ ratio: 10 });
+
+      expect(position.totalQuantity).toBe(0);
+      expect(position.averagePrice).toBe(0);
+      expect(position.brokerBreakdown).toEqual([]);
     });
   });
 });

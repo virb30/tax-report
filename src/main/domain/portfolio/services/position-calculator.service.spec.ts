@@ -11,7 +11,7 @@ const brokerId = Uuid.create();
 describe('PositionCalculator', () => {
   const calculator = new PositionCalculatorService();
 
-  it('calcula posições a partir de transações', () => {
+  it('calculates positions from transactions', () => {
     const transactions = [
       Transaction.create({
         type: TransactionType.InitialBalance,
@@ -53,7 +53,7 @@ describe('PositionCalculator', () => {
     expect(positions[0].year).toBe(2024);
   });
 
-  it('usa posições base para preservar assetType', () => {
+  it('uses base positions to preserve assetType', () => {
     const basePosition = AssetPosition.create({
       ticker: 'HGLG11',
       assetType: AssetType.Fii,
@@ -79,7 +79,7 @@ describe('PositionCalculator', () => {
     expect(positions[0].totalQuantity).toBe(10);
   });
 
-  it('retorna múltiplas posições para múltiplos tickers', () => {
+  it('returns multiple positions for multiple tickers', () => {
     const transactions = [
       Transaction.create({
         type: TransactionType.InitialBalance,
@@ -110,5 +110,45 @@ describe('PositionCalculator', () => {
     const vale = positions.find((p) => p.ticker === 'VALE3');
     expect(petr?.totalQuantity).toBe(100);
     expect(vale?.totalQuantity).toBe(50);
+  });
+
+  it('processes Split and ReverseSplit', () => {
+    const transactions = [
+      Transaction.create({
+        type: TransactionType.InitialBalance,
+        date: '2024-01-01',
+        ticker: 'PETR4',
+        quantity: 10,
+        unitPrice: 100,
+        fees: 0,
+        brokerId,
+        sourceType: SourceType.Manual,
+      }),
+      Transaction.create({
+        type: TransactionType.Split,
+        date: '2024-02-01',
+        ticker: 'PETR4',
+        quantity: 4, // 1:4 split
+        unitPrice: 0,
+        fees: 0,
+        brokerId,
+        sourceType: SourceType.Manual,
+      }),
+      Transaction.create({
+        type: TransactionType.ReverseSplit,
+        date: '2024-03-01',
+        ticker: 'PETR4',
+        quantity: 10, // 10:1 reverse split
+        unitPrice: 0,
+        fees: 0,
+        brokerId,
+        sourceType: SourceType.Manual,
+      }),
+    ];
+
+    const positions = calculator.compute(transactions, [], 2024);
+
+    expect(positions[0].totalQuantity).toBe(4);
+    expect(positions[0].averagePrice).toBe(250);
   });
 });
