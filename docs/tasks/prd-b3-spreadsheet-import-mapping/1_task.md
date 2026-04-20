@@ -16,11 +16,11 @@ Criar a interface e a implementação da classe responsável pelo mapeamento das
 
 ## Subtarefas
 
-- [ ] 1.1 Criar a interface `SpreadsheetTransactionMapper` em contexto de domínio ou infrastrutura propício, e a entidade de retorno como `B3TransactionMappingResult`.
-- [ ] 1.2 Implementar a classe `B3SpreadsheetTransactionMapper` garantindo a limpeza das strings e processamento _case-insensitive_.
-- [ ] 1.3 Adicionar a rotina que avaliza e lança erro ao tentar mapear uma "Bonificação em ativos" com preço unitário/valor total nulo ou zerado.
-- [ ] 1.4 Configurar a devolução de `shouldIgnore: true` para predições e fluxos de descarte informados.
-- [ ] 1.5 Criar e configurar o arquivo de teste unitário (`b3-spreadsheet-transaction.mapper.test.ts`) isolado da classe do mapper com 100% de coverage nela.
+- [x] 1.1 Criar a interface `SpreadsheetTransactionMapper` em contexto de domínio ou infrastrutura propício, e a entidade de retorno como `B3TransactionMappingResult`.
+- [x] 1.2 Implementar a classe `B3SpreadsheetTransactionMapper` garantindo a limpeza das strings e processamento _case-insensitive_.
+- [x] 1.3 Adicionar a rotina que avaliza e lança erro ao tentar mapear uma "Bonificação em ativos" com preço unitário/valor total nulo ou zerado.
+- [x] 1.4 Configurar a devolução de `shouldIgnore: true` para predições e fluxos de descarte informados.
+- [x] 1.5 Criar e configurar o arquivo de teste unitário (`b3-spreadsheet-transaction.mapper.test.ts`) isolado da classe do mapper com 100% de coverage nela.
 
 ## Detalhes de Implementação
 

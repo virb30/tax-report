@@ -66,7 +66,8 @@ describe('CsvXlsxTransactionParser', () => {
     const filePath = await createTempXlsxFile('ops.xlsx', [
       {
         Data: '2025-04-01',
-        Tipo: 'Compra',
+        'Entrada/Saída': 'Crédito',
+        Movimentação: 'Transferência - Liquidação',
         Ticker: 'PETR4',
         Quantidade: 10,
         'Preco Unitario': 20,
@@ -97,7 +98,8 @@ describe('CsvXlsxTransactionParser', () => {
     const filePath = await createTempXlsxFile('ops.xlsx', [
       {
         Data: '2025-04-01',
-        Tipo: 'Compra',
+        'Entrada/Saída': 'Crédito',
+        Movimentação: 'Transferência - Liquidação',
         Ticker: 'PETR4',
         Quantidade: 10,
         'Preco Unitario': 20,
@@ -122,8 +124,8 @@ describe('CsvXlsxTransactionParser', () => {
     brokerRepo.findAllByCodes.mockResolvedValue([]);
 
     const filePath = await createTempXlsxFile('ops.xlsx', [
-      { Data: '2025-04-01', Tipo: 'Compra', Ticker: 'PETR4', Quantidade: 10, 'Preco Unitario': 20, Corretora: 'XP' },
-      { Data: '2025-04-01', Tipo: 'Venda', Ticker: 'VALE3', Quantidade: 5, 'Preco Unitario': 40, Corretora: 'YY' },
+      { Data: '2025-04-01', 'Entrada/Saída': 'Crédito', Movimentação: 'Transferência - Liquidação', Ticker: 'PETR4', Quantidade: 10, 'Preco Unitario': 20, Corretora: 'XP' },
+      { Data: '2025-04-01', 'Entrada/Saída': 'Débito', Movimentação: 'Transferência - Liquidação', Ticker: 'VALE3', Quantidade: 5, 'Preco Unitario': 40, Corretora: 'YY' },
     ]);
     createdDirs.push(path.dirname(filePath));
 
@@ -148,8 +150,8 @@ describe('CsvXlsxTransactionParser', () => {
     const filePath = await createTempCsvFile(
       'ops.csv',
       [
-        'Data;Tipo;Ticker;Quantidade;Preco Unitario;Taxas Totais;Corretora',
-        '2025-04-01;Compra;PETR4;10;20;1;XP',
+        'Data;Entrada/Saída;Movimentação;Ticker;Quantidade;Preco Unitario;Taxas Totais;Corretora',
+        '2025-04-01;Crédito;Transferência - Liquidação;PETR4;10;20;1;XP',
       ].join('\n'),
     );
     createdDirs.push(path.dirname(filePath));
@@ -174,7 +176,8 @@ describe('CsvXlsxTransactionParser', () => {
     const filePath = await createTempXlsxFile('ops.xlsx', [
       {
         Data: 45672,
-        Tipo: 'Compra',
+        'Entrada/Saída': 'Crédito',
+        Movimentação: 'Transferência - Liquidação',
         Ticker: 'PETR4',
         Quantidade: 10,
         'Preco Unitario': 20,
@@ -200,7 +203,8 @@ describe('CsvXlsxTransactionParser', () => {
     const filePath = await createTempXlsxFile('events.xlsx', [
       {
         Data: '2025-04-01',
-        Tipo: 'Bonificacao',
+        'Entrada/Saída': 'Crédito',
+        Movimentação: 'Bonificação em ativos',
         Ticker: 'PETR4',
         Quantidade: 1,
         'Preco Unitario': 15,
@@ -208,7 +212,8 @@ describe('CsvXlsxTransactionParser', () => {
       },
       {
         Data: '2025-04-02',
-        Tipo: 'Split',
+        'Entrada/Saída': 'Crédito',
+        Movimentação: 'Split',
         Ticker: 'PETR4',
         Quantidade: 10,
         'Preco Unitario': '',
@@ -216,7 +221,8 @@ describe('CsvXlsxTransactionParser', () => {
       },
       {
         Data: '2025-04-03',
-        Tipo: 'Agrupamento',
+        'Entrada/Saída': 'Débito',
+        Movimentação: 'Agrupamento',
         Ticker: 'VALE3',
         Quantidade: 10,
         'Preco Unitario': 0,
@@ -224,7 +230,8 @@ describe('CsvXlsxTransactionParser', () => {
       },
       {
         Data: '2025-04-04',
-        Tipo: 'Transferencia Entrada',
+        'Entrada/Saída': 'Crédito',
+        Movimentação: 'Transferência',
         Ticker: 'ITSA4',
         Quantidade: 100,
         'Preco Unitario': 10,

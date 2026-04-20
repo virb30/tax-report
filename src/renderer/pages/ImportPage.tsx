@@ -5,13 +5,27 @@ import { buildErrorMessage } from '../errors/build-error-message';
 
 const SPREADSHEET_MODEL_COLUMNS = [
   { name: 'Data', type: 'texto (YYYY-MM-DD)', required: true },
-  { name: 'Tipo', type: 'texto (Compra/Venda)', required: true },
+  { name: 'Entrada/Saída', type: 'texto (Crédito/Débito)', required: true },
+  { name: 'Movimentação', type: 'texto', required: true },
   { name: 'Ticker', type: 'texto', required: true },
   { name: 'Quantidade', type: 'número', required: true },
   { name: 'Preço Unitário', type: 'número', required: true },
   { name: 'Taxas Totais', type: 'número', required: false },
   { name: 'Corretora', type: 'texto (código, ex: XP, CLEAR)', required: true },
 ] as const;
+
+function formatTransactionType(type: string): string {
+  const map: Record<string, string> = {
+    buy: 'Compra',
+    sell: 'Venda',
+    bonus: 'Bonificação',
+    split: 'Desdobramento',
+    reverse_split: 'Grupamento',
+    transfer_in: 'Transf. Entrada',
+    transfer_out: 'Transf. Saída',
+  };
+  return map[type] ?? type;
+}
 
 export function ImportPage(): JSX.Element {
   const [filePath, setFilePath] = useState('');
@@ -125,7 +139,8 @@ export function ImportPage(): JSX.Element {
                   <td className="px-3 py-2">{col.required ? 'Sim' : 'Não'}</td>
                   <td className="px-3 py-2 text-slate-600">
                     {col.name === 'Data' && 'Data do pregão'}
-                    {col.name === 'Tipo' && 'Compra ou Venda'}
+                    {col.name === 'Entrada/Saída' && 'Direção do fluxo financeiro (Crédito ou Débito)'}
+                    {col.name === 'Movimentação' && 'Tipo oficial da B3 (ex: Transferência - Liquidação, Bonificação em ativos)'}
                     {col.name === 'Ticker' && 'Código do ativo (ex: PETR4)'}
                     {col.name === 'Quantidade' && 'Quantidade negociada'}
                     {col.name === 'Preço Unitário' && 'Preço por unidade'}
@@ -213,7 +228,7 @@ export function ImportPage(): JSX.Element {
                 {previewTransactions.map((tx, index) => (
                   <tr key={`${tx.date}-${tx.ticker}-${index}`} className="border-t">
                     <td className="px-3 py-2">{tx.date}</td>
-                    <td className="px-3 py-2">{tx.type}</td>
+                    <td className="px-3 py-2">{formatTransactionType(tx.type)}</td>
                     <td className="px-3 py-2">{tx.ticker}</td>
                     <td className="px-3 py-2">{tx.quantity}</td>
                     <td className="px-3 py-2">{tx.unitPrice}</td>

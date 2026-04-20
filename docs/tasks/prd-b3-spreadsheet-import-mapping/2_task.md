@@ -14,9 +14,9 @@ Esta etapa se concentra em adaptar todas as fixtures, mocks e arquivos vitrines 
 
 ## Subtarefas
 
-- [ ] 2.1 Identificar os arquivos `.csv` e `.xlsx` injetados nas suítes de teste (geralmente sob um utils/ test asset folder).
-- [ ] 2.2 Substituir a coluna "Tipo" nos arquivos físicos por "Entrada/Saída" e "Movimentação", criando inputs que simulem corretamente entradas e debítos conforme planilhas da B3 reais.
-- [ ] 2.3 Atualizar as _fixtures_ e mocks manuais em arrays/objetos (nos `describe` de unit/integration test) contidos em arquivos como o `csv-xlsx-transaction.parser.test.ts` com as chaves "entrada/saída" e "movimentação".
+- [x] 2.1 Identificar os arquivos `.csv` e `.xlsx` injetados nas suítes de teste (geralmente sob um utils/ test asset folder).
+- [x] 2.2 Substituir a coluna "Tipo" nos arquivos físicos por "Entrada/Saída" e "Movimentação", criando inputs que simulem corretamente entradas e debítos conforme planilhas da B3 reais.
+- [x] 2.3 Atualizar as _fixtures_ e mocks manuais em arrays/objetos (nos `describe` de unit/integration test) contidos em arquivos como o `csv-xlsx-transaction.parser.test.ts` com as chaves "entrada/saída" e "movimentação".
 
 ## Detalhes de Implementação
 

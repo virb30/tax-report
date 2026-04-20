@@ -15,11 +15,11 @@ Integrar o `B3SpreadsheetTransactionMapper` no interior do componente `CsvXlsxTr
 
 ## Subtarefas
 
-- [ ] 3.1 Alterar a constante local `REQUIRED_COLUMNS` no parseador para requisitar ["Entrada/Saída", "Movimentação"] ao invés de ["Tipo", ...].
-- [ ] 3.2 Fornecer localmente via instancia ou Injeção de dependência o `B3SpreadsheetTransactionMapper` e extrair sua função na iteração de validação/casting da data row.
-- [ ] 3.3 Construir a tratativa em if sobre a flag `shouldIgnore` e permitir a linha ser completamente silenciada no log _output_ (utilizando `continue` ou early retorno map filter). E retransmitir Erros do Bonus adequadamente se ocorridos.
-- [ ] 3.4 Expurgar métrodos como `parseOperationType` e análogos privados obsoletos.
-- [ ] 3.5 Executar cobertura de Testes para o `CsvXlsxTransactionParser` com todas flags _green/passing_. E verificar execuções e2e de importação (com os mocks gerados da etapa 2.0).
+- [x] 3.1 Alterar a constante local `REQUIRED_COLUMNS` no parseador para requisitar ["Entrada/Saída", "Movimentação"] ao invés de ["Tipo", ...].
+- [x] 3.2 Fornecer localmente via instancia ou Injeção de dependência o `B3SpreadsheetTransactionMapper` e extrair sua função na iteração de validação/casting da data row.
+- [x] 3.3 Construir a tratativa em if sobre a flag `shouldIgnore` e permitir a linha ser completamente silenciada no log _output_ (utilizando `continue` ou early retorno map filter). E retransmitir Erros do Bonus adequadamente se ocorridos.
+- [x] 3.4 Expurgar métrodos como `parseOperationType` e análogos privados obsoletos.
+- [x] 3.5 Executar cobertura de Testes para o `CsvXlsxTransactionParser` com todas flags _green/passing_. E verificar execuções e2e de importação (com os mocks gerados da etapa 2.0).
 
 ## Detalhes de Implementação
 

@@ -5,9 +5,9 @@ import type {
   ParsedTransactionOperation,
 } from '../../../shared/contracts/import-transactions.contract';
 import type { ImportTransactionsParser } from '../../application/interfaces/transactions.parser.interface';
-import type { SpreadsheetFileReader } from '../../application/interfaces/spreadsheet.file-reader';
-import type { SpreadsheetRow } from '../../application/interfaces/spreadsheet.file-reader';
+import type { SpreadsheetFileReader, SpreadsheetRow } from '../../application/interfaces/spreadsheet.file-reader';
 import type { BrokerRepository } from '../../application/repositories/broker.repository';
+import { B3SpreadsheetTransactionMapper } from './b3-spreadsheet-transaction.mapper';
 
 type GroupedRawBatch = {
   tradeDate: string;
@@ -24,12 +24,15 @@ type GroupedRawBatch = {
 export class CsvXlsxTransactionParser implements ImportTransactionsParser {
   private static readonly REQUIRED_COLUMNS = [
     'Data',
-    'Tipo',
+    'Entrada/Saída',
+    'Movimentação',
     'Ticker',
     'Quantidade',
     'Preco Unitario',
     'Corretora',
   ] as const;
+
+  private readonly mapper = new B3SpreadsheetTransactionMapper();
 
   constructor(
     private readonly fileReader: SpreadsheetFileReader,
@@ -60,13 +63,24 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
         throw new Error('Invalid template: Data and Corretora are required.');
       }
 
+      const operationType = this.mapper.mapRowType(
+        String(row['Entrada/Saída']).trim(),
+        String(row['Movimentação']).trim()
+      );
+
+      if (!operationType) {
+        continue;
+      }
+
+      this.mapper.validateRowIntegrity(row as Record<string, unknown>, operationType);
+
       const operationalCost = this.hasColumn(row, 'Taxas Totais')
         ? this.parseOptionalNumber(row['Taxas Totais'], 0)
         : 0;
 
       const operation = {
         ticker: String(row.Ticker).trim(),
-        operationType: this.parseOperationType(row.Tipo),
+        operationType: operationType,
         quantity: this.parseNumber(row.Quantidade, 'Quantidade'),
         unitPrice: this.parseOptionalNumber(row['Preco Unitario'], 0),
       };
@@ -115,7 +129,7 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
   }
 
   private normalizeHeader(value: string): string {
-    return value
+    return String(value)
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .trim()
@@ -138,7 +152,7 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
         return requiredColumn;
       }
     }
-    return value.trim();
+    return String(value).trim();
   }
 
   private normalizeRowHeaders(row: SpreadsheetRow): SpreadsheetRow {
@@ -167,42 +181,6 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
       return defaultValue;
     }
     return this.parseNumber(value, 'optional');
-  }
-
-  private parseOperationType(value: unknown): OperationType {
-    const normalizedValue = this.normalizeHeader(String(value));
-    if (normalizedValue === 'compra') {
-      return OperationType.Buy;
-    }
-    if (normalizedValue === 'venda') {
-      return OperationType.Sell;
-    }
-    if (normalizedValue === 'bonificacao' || normalizedValue === 'bonus') {
-      return OperationType.Bonus;
-    }
-    if (normalizedValue === 'desdobramento' || normalizedValue === 'split') {
-      return OperationType.Split;
-    }
-    if (
-      normalizedValue === 'agrupamento' ||
-      normalizedValue === 'grupamento' ||
-      normalizedValue === 'reverse split'
-    ) {
-      return OperationType.ReverseSplit;
-    }
-    if (
-      normalizedValue === 'transferencia entrada' ||
-      normalizedValue === 'transferencia de entrada' ||
-      normalizedValue === 'transferencia'
-    ) {
-      return OperationType.TransferIn;
-    }
-    if (normalizedValue === 'transferencia saida' || normalizedValue === 'transferencia de saida') {
-      return OperationType.TransferOut;
-    }
-    throw new Error(
-      `Tipo de operação inválido: "${value}". Esperado Compra, Venda, Bonificacao, Desdobramento, Grupamento ou Transferencia.`,
-    );
   }
 
   private mapOperationTypeToTransactionType(operationType: OperationType): TransactionType {

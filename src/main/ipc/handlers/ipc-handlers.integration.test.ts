@@ -125,8 +125,8 @@ describe('IPC handlers integration', () => {
     await fs.writeFile(
       csvPath,
       [
-        'Data;Tipo;Ticker;Quantidade;Preco Unitario;Taxas Totais;Corretora',
-        '2025-03-10;Compra;PETR4;10;20;1;XP',
+        'Data;Entrada/Saída;Movimentação;Ticker;Quantidade;Preco Unitario;Taxas Totais;Corretora',
+        '2025-03-10;Crédito;Transferência - Liquidação;PETR4;10;20;1;XP',
       ].join('\n'),
       'utf-8',
     );
