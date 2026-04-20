@@ -11,10 +11,20 @@
       "sourceType": "github",
       "computedHash": "e5a40757c654006e281b630c400103516ae303a2bddb0cb8e41a14cdd1f61990"
     },
+    "brainstorming": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "7de51459d56568d88784fdc94f7d27b9f0c2ee15dd562bac6d0e5f72e22a61b1"
+    },
     "context7": {
       "source": "pedronauck/skills",
       "sourceType": "github",
       "computedHash": "74462007e7013b4c4eea818b3a5bd50cfa8641f4c12135877fc9f082249d984d"
+    },
+    "council": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "a71ff9d4b802e7a660b507a71f1fc14016232ddf20e0f97c1c597a7f377f56fe"
     },
     "crafting-effective-readmes": {
       "source": "pedronauck/skills",
