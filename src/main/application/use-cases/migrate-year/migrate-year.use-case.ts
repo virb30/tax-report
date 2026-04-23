@@ -2,12 +2,11 @@ import { TransactionType } from '../../../../shared/types/domain';
 import { SourceType } from '../../../../shared/types/domain';
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
-import { MigrateYearOutput } from './migrate-year.output';
-import { MigrateYearInput } from './migrate-year.input';
+import type { MigrateYearOutput } from './migrate-year.output';
+import type { MigrateYearInput } from './migrate-year.input';
 import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
 import { PositionCalculatorService } from '../../../domain/portfolio/services/position-calculator.service';
-
-
+import { assertSupportedYear } from '../../../../shared/utils/year';
 
 export class MigrateYearUseCase {
   constructor(
@@ -51,7 +50,6 @@ export class MigrateYearUseCase {
       });
     });
 
-
     const positionCalculator = new PositionCalculatorService();
     const positionsAtYearEnd = positionCalculator.compute(
       [...existingTargetYearTransactions, ...targetInitialBalanceTransactions],
@@ -83,12 +81,8 @@ export class MigrateYearUseCase {
   }
 
   private validateInput(input: MigrateYearInput): void {
-    if (!Number.isInteger(input.sourceYear) || input.sourceYear < 2000 || input.sourceYear > 2100) {
-      throw new Error('Ano de origem inválido.');
-    }
-    if (!Number.isInteger(input.targetYear) || input.targetYear < 2000 || input.targetYear > 2100) {
-      throw new Error('Ano de destino inválido.');
-    }
+    assertSupportedYear(input.sourceYear, { invalidTypeMessage: 'Ano de origem inválido.' });
+    assertSupportedYear(input.targetYear, { invalidTypeMessage: 'Ano de destino inválido.' });
     if (input.targetYear !== input.sourceYear + 1) {
       throw new Error('O ano de destino deve ser exatamente o ano de origem + 1.');
     }

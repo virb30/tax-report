@@ -1,4 +1,5 @@
 import type { AssetType } from '../../../../shared/types/domain';
+import { YEAR_RANGE } from '../../../../shared/utils/year';
 import { Uuid } from '../../shared/uuid.vo';
 import { AveragePriceService } from '../services/average-price.service';
 
@@ -14,7 +15,7 @@ export interface AssetPositionProps {
   averagePrice: number;
   brokerBreakdown: BrokerAllocation[];
   year: number;
-};
+}
 
 interface RestoreAssetPositionProps {
   ticker: string;
@@ -66,7 +67,7 @@ interface ApplyReverseSplitInput {
   ratio: number;
 }
 
-export const MIN_SUPPORTED_YEAR = 2000;
+export const MIN_SUPPORTED_YEAR = YEAR_RANGE.min;
 
 export class AssetPosition {
   private readonly averagePriceService: AveragePriceService;
@@ -248,7 +249,10 @@ export class AssetPosition {
   }
 
   get brokerBreakdown(): BrokerAllocation[] {
-    return Array.from(this._brokerBreakdown.entries()).map(([brokerId, quantity]) => ({ brokerId: Uuid.from(brokerId), quantity }));
+    return Array.from(this._brokerBreakdown.entries()).map(([brokerId, quantity]) => ({
+      brokerId: Uuid.from(brokerId),
+      quantity,
+    }));
   }
 
   get year(): number {
@@ -308,9 +312,7 @@ export class AssetPosition {
     const brokerQty = this._brokerBreakdown.get(brokerId.value) ?? 0;
 
     if (quantity > brokerQty) {
-      throw new Error(
-        'Cannot sell more than current quantity allocated to this broker.',
-      );
+      throw new Error('Cannot sell more than current quantity allocated to this broker.');
     }
 
     const newBrokerQty = brokerQty - quantity;

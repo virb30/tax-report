@@ -7,6 +7,7 @@ import { Uuid } from '../../../domain/shared/uuid.vo';
 import type { SetInitialBalanceOutput } from './set-initial-balance.output';
 import type { SetInitialBalanceInput } from './set-initial-balance.input';
 import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
+import { assertSupportedYear } from '../../../../shared/utils/year';
 
 export class SetInitialBalanceUseCase {
   constructor(
@@ -17,10 +18,7 @@ export class SetInitialBalanceUseCase {
   async execute(input: SetInitialBalanceInput): Promise<SetInitialBalanceOutput> {
     this.validate(input);
 
-    let position = await this.positionRepository.findByTickerAndYear(
-      input.ticker,
-      input.year,
-    );
+    let position = await this.positionRepository.findByTickerAndYear(input.ticker, input.year);
 
     if (!position) {
       position = AssetPosition.create({
@@ -63,9 +61,7 @@ export class SetInitialBalanceUseCase {
     if (!input.ticker || input.ticker.trim().length === 0) {
       throw new Error('Ticker é obrigatório.');
     }
-    if (typeof input.year !== 'number' || !Number.isInteger(input.year) || input.year < 2000 || input.year > 2100) {
-      throw new Error('Ano inválido.');
-    }
+    assertSupportedYear(input.year, { invalidTypeMessage: 'Ano inválido.' });
     if (!input.brokerId || input.brokerId.trim().length === 0) {
       throw new Error('Corretora é obrigatória.');
     }

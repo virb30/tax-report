@@ -5,7 +5,10 @@ import type {
   ParsedTransactionOperation,
 } from '../../../shared/contracts/import-transactions.contract';
 import type { ImportTransactionsParser } from '../../application/interfaces/transactions.parser.interface';
-import type { SpreadsheetFileReader, SpreadsheetRow } from '../../application/interfaces/spreadsheet.file-reader';
+import type {
+  SpreadsheetFileReader,
+  SpreadsheetRow,
+} from '../../application/interfaces/spreadsheet.file-reader';
 import type { BrokerRepository } from '../../application/repositories/broker.repository';
 import { B3SpreadsheetTransactionMapper } from './b3-spreadsheet-transaction.mapper';
 
@@ -20,6 +23,13 @@ type GroupedRawBatch = {
     unitPrice: number;
   }>;
 };
+
+type NormalizedTransactionRow = SpreadsheetRow;
+
+type ResolvedBrokerMap = Map<
+  string,
+  Awaited<ReturnType<BrokerRepository['findAllByCodes']>>[number]
+>;
 
 export class CsvXlsxTransactionParser implements ImportTransactionsParser {
   private static readonly REQUIRED_COLUMNS = [
@@ -40,74 +50,73 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
   ) {}
 
   async parse(filePath: string): Promise<ParsedTransactionBatch[]> {
-    const rawDto = await this.fileReader.read(filePath);
-    const rows = rawDto.rows;
+    const normalizedRows = await this.loadNormalizedRows(filePath);
+    const brokersMap = await this.resolveBrokerMap(normalizedRows);
+    const groupedBatches = this.groupRowsIntoBatches(normalizedRows);
 
-    if (rows.length === 0) {
+    return this.toParsedBatches(groupedBatches, brokersMap);
+  }
+
+  private async loadNormalizedRows(filePath: string): Promise<NormalizedTransactionRow[]> {
+    const rawDto = await this.fileReader.read(filePath);
+
+    if (rawDto.rows.length === 0) {
       throw new Error('Input file has no operation rows.');
     }
 
-    const normalizedRows = rows.map((row) => this.normalizeRowHeaders(row));
+    const normalizedRows = rawDto.rows.map((row) => this.normalizeRowHeaders(row));
     this.validateRequiredColumns(normalizedRows[0]!);
 
-    const uniqueBrokerCodes = this.extractUniqueBrokerCodes(normalizedRows);
+    return normalizedRows;
+  }
+
+  private async resolveBrokerMap(rows: NormalizedTransactionRow[]): Promise<ResolvedBrokerMap> {
+    const uniqueBrokerCodes = this.extractUniqueBrokerCodes(rows);
     const brokersMap = await this.fetchBrokersByCodes(uniqueBrokerCodes);
     this.validateAllBrokersExist(uniqueBrokerCodes, brokersMap);
+    return brokersMap;
+  }
 
+  private groupRowsIntoBatches(rows: NormalizedTransactionRow[]): GroupedRawBatch[] {
     const batchesByDateAndBroker = new Map<string, GroupedRawBatch>();
 
-    for (const row of normalizedRows) {
-      const rowTradeDate = this.toDateString(row.Data);
-      const rowBroker = String(row.Corretora).trim();
-      if (!rowTradeDate || rowTradeDate === 'undefined' || !rowBroker || rowBroker === 'undefined') {
-        throw new Error('Invalid template: Data and Corretora are required.');
-      }
+    for (const row of rows) {
+      const groupableRow = this.toGroupableRow(row);
 
-      const operationType = this.mapper.mapRowType(
-        String(row['Entrada/Saída']).trim(),
-        String(row['Movimentação']).trim()
-      );
-
-      if (!operationType) {
+      if (!groupableRow) {
         continue;
       }
 
-      this.mapper.validateRowIntegrity(row as Record<string, unknown>, operationType);
-
-      const operationalCost = this.hasColumn(row, 'Taxas Totais')
-        ? this.parseOptionalNumber(row['Taxas Totais'], 0)
-        : 0;
-
-      const operation = {
-        ticker: String(row.Ticker).trim(),
-        operationType: operationType,
-        quantity: this.parseNumber(row.Quantidade, 'Quantidade'),
-        unitPrice: this.parseOptionalNumber(row['Preco Unitario'], 0),
-      };
-
-      const groupKey = `${rowTradeDate}::${rowBroker}`;
+      const { tradeDate, broker, operationalCost, operation } = groupableRow;
+      const groupKey = `${tradeDate}::${broker}`;
       const existingBatch = batchesByDateAndBroker.get(groupKey);
+
       if (!existingBatch) {
         batchesByDateAndBroker.set(groupKey, {
-          tradeDate: rowTradeDate,
-          broker: rowBroker,
+          tradeDate,
+          broker,
           totalOperationalCosts: operationalCost,
           operations: [operation],
         });
         continue;
       }
+
       existingBatch.totalOperationalCosts += operationalCost;
       existingBatch.operations.push(operation);
     }
 
-    const sortedBatches = [...batchesByDateAndBroker.values()].sort(
-      (a, b) =>
-        a.tradeDate.localeCompare(b.tradeDate) ||
-        a.broker.localeCompare(b.broker),
+    return [...batchesByDateAndBroker.values()].sort(
+      (a, b) => a.tradeDate.localeCompare(b.tradeDate) || a.broker.localeCompare(b.broker),
     );
+  }
 
+  private toParsedBatches(
+    groupedBatches: GroupedRawBatch[],
+    brokersMap: ResolvedBrokerMap,
+  ): ParsedTransactionBatch[] {
     const batches: ParsedTransactionBatch[] = [];
-    for (const batch of sortedBatches) {
+
+    for (const batch of groupedBatches) {
       const broker = brokersMap.get(batch.broker.trim().toUpperCase())!;
 
       const operations: ParsedTransactionOperation[] = batch.operations.map((op) => ({
@@ -126,6 +135,45 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
     }
 
     return batches;
+  }
+
+  private toGroupableRow(row: NormalizedTransactionRow): {
+    tradeDate: string;
+    broker: string;
+    operationalCost: number;
+    operation: GroupedRawBatch['operations'][number];
+  } | null {
+    const tradeDate = this.toDateString(row.Data);
+    const broker = String(row.Corretora).trim();
+
+    if (!tradeDate || tradeDate === 'undefined' || !broker || broker === 'undefined') {
+      throw new Error('Invalid template: Data and Corretora are required.');
+    }
+
+    const operationType = this.mapper.mapRowType(
+      String(row['Entrada/Saída']).trim(),
+      String(row['Movimentação']).trim(),
+    );
+
+    if (!operationType) {
+      return null;
+    }
+
+    this.mapper.validateRowIntegrity(row as Record<string, unknown>, operationType);
+
+    return {
+      tradeDate,
+      broker,
+      operationalCost: this.hasColumn(row, 'Taxas Totais')
+        ? this.parseOptionalNumber(row['Taxas Totais'], 0)
+        : 0,
+      operation: {
+        ticker: String(row.Ticker).trim(),
+        operationType,
+        quantity: this.parseNumber(row.Quantidade, 'Quantidade'),
+        unitPrice: this.parseOptionalNumber(row['Preco Unitario'], 0),
+      },
+    };
   }
 
   private normalizeHeader(value: string): string {

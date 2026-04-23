@@ -1,16 +1,26 @@
 import { AssetType } from '../../../shared/types/domain';
-import { AssetPosition } from '../portfolio/entities/asset-position.entity';
+import type { AssetPosition } from '../portfolio/entities/asset-position.entity';
 import type { ReportItemOutput } from './report-generator.output';
 
-import { Asset } from '../portfolio/entities/asset.entity';
-import { Broker } from '../portfolio/entities/broker.entity';
+import type { Asset } from '../portfolio/entities/asset.entity';
+import type { Broker } from '../portfolio/entities/broker.entity';
 
 const STOCK_CLASSIFICATION = { group: '03', code: '01' } as const;
 const FII_CLASSIFICATION = { group: '07', code: '03' } as const;
 const ETF_CLASSIFICATION = { group: '07', code: '09' } as const;
 const BDR_CLASSIFICATION = { group: '04', code: '04' } as const;
-
-
+const ASSET_UNIT_LABELS: Record<AssetType, string> = {
+  [AssetType.Stock]: 'ações',
+  [AssetType.Fii]: 'cotas',
+  [AssetType.Etf]: 'cotas',
+  [AssetType.Bdr]: 'ações',
+};
+const REVENUE_CLASSIFICATIONS: Record<AssetType, { group: string; code: string }> = {
+  [AssetType.Stock]: STOCK_CLASSIFICATION,
+  [AssetType.Fii]: FII_CLASSIFICATION,
+  [AssetType.Etf]: ETF_CLASSIFICATION,
+  [AssetType.Bdr]: BDR_CLASSIFICATION,
+};
 
 export function formatBrl(value: number): string {
   return value.toLocaleString('pt-BR', {
@@ -20,25 +30,16 @@ export function formatBrl(value: number): string {
 }
 
 function getAssetUnitLabel(assetType: AssetType): string {
-  if (assetType === AssetType.Stock || assetType === AssetType.Bdr) {
-    return 'ações';
-  }
-  return 'cotas';
+  return ASSET_UNIT_LABELS[assetType] ?? 'cotas';
 }
 
 export function getRevenueClassification(assetType: AssetType): { group: string; code: string } {
-  if (assetType === AssetType.Stock) {
-    return STOCK_CLASSIFICATION;
+  const classification = REVENUE_CLASSIFICATIONS[assetType];
+
+  if (classification) {
+    return classification;
   }
-  if (assetType === AssetType.Bdr) {
-    return BDR_CLASSIFICATION;
-  }
-  if (assetType === AssetType.Fii) {
-    return FII_CLASSIFICATION;
-  }
-  if (assetType === AssetType.Etf) {
-    return ETF_CLASSIFICATION;
-  }
+
   throw new Error(`Unsupported asset type for report: ${assetType as string}`);
 }
 

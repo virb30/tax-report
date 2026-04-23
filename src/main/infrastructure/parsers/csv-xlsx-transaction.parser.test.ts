@@ -49,18 +49,14 @@ describe('CsvXlsxTransactionParser', () => {
   });
 
   afterEach(async () => {
-    await Promise.all(
-      createdDirs.map((d) => fs.rm(d, { recursive: true, force: true })),
-    );
+    await Promise.all(createdDirs.map((d) => fs.rm(d, { recursive: true, force: true })));
     createdDirs.length = 0;
   });
 
   it('parses xlsx and resolves broker by code to brokerId', async () => {
     const brokerRepo = mock<BrokerRepository>();
     brokerRepo.findAllByCodes.mockImplementation((codes) =>
-      Promise.resolve(
-        codes.includes('XP') ? [createBrokerMock('broker-xp')] : [],
-      ),
+      Promise.resolve(codes.includes('XP') ? [createBrokerMock('broker-xp')] : []),
     );
 
     const filePath = await createTempXlsxFile('ops.xlsx', [
@@ -77,10 +73,7 @@ describe('CsvXlsxTransactionParser', () => {
     ]);
     createdDirs.push(path.dirname(filePath));
 
-    const parser = new CsvXlsxTransactionParser(
-      new SheetjsSpreadsheetFileReader(),
-      brokerRepo,
-    );
+    const parser = new CsvXlsxTransactionParser(new SheetjsSpreadsheetFileReader(), brokerRepo);
     const result = await parser.parse(filePath);
 
     expect(result).toHaveLength(1);
@@ -109,10 +102,7 @@ describe('CsvXlsxTransactionParser', () => {
     ]);
     createdDirs.push(path.dirname(filePath));
 
-    const parser = new CsvXlsxTransactionParser(
-      new SheetjsSpreadsheetFileReader(),
-      brokerRepo,
-    );
+    const parser = new CsvXlsxTransactionParser(new SheetjsSpreadsheetFileReader(), brokerRepo);
 
     await expect(parser.parse(filePath)).rejects.toThrow(
       'Corretoras nao encontradas: INVALIDO. Cadastre-as em Corretoras antes de importar.',
@@ -124,27 +114,72 @@ describe('CsvXlsxTransactionParser', () => {
     brokerRepo.findAllByCodes.mockResolvedValue([]);
 
     const filePath = await createTempXlsxFile('ops.xlsx', [
-      { Data: '2025-04-01', 'Entrada/Saída': 'Crédito', Movimentação: 'Transferência - Liquidação', Ticker: 'PETR4', Quantidade: 10, 'Preco Unitario': 20, Corretora: 'XP' },
-      { Data: '2025-04-01', 'Entrada/Saída': 'Débito', Movimentação: 'Transferência - Liquidação', Ticker: 'VALE3', Quantidade: 5, 'Preco Unitario': 40, Corretora: 'YY' },
+      {
+        Data: '2025-04-01',
+        'Entrada/Saída': 'Crédito',
+        Movimentação: 'Transferência - Liquidação',
+        Ticker: 'PETR4',
+        Quantidade: 10,
+        'Preco Unitario': 20,
+        Corretora: 'XP',
+      },
+      {
+        Data: '2025-04-01',
+        'Entrada/Saída': 'Débito',
+        Movimentação: 'Transferência - Liquidação',
+        Ticker: 'VALE3',
+        Quantidade: 5,
+        'Preco Unitario': 40,
+        Corretora: 'YY',
+      },
     ]);
     createdDirs.push(path.dirname(filePath));
 
-    const parser = new CsvXlsxTransactionParser(
-      new SheetjsSpreadsheetFileReader(),
-      brokerRepo,
-    );
+    const parser = new CsvXlsxTransactionParser(new SheetjsSpreadsheetFileReader(), brokerRepo);
 
     await expect(parser.parse(filePath)).rejects.toThrow(
       'Corretoras nao encontradas: XP, YY. Cadastre-as em Corretoras antes de importar.',
     );
   });
 
+  it('loads unique broker codes once before mapping rows', async () => {
+    const brokerRepo = mock<BrokerRepository>();
+    brokerRepo.findAllByCodes.mockResolvedValue([createBrokerMock('broker-xp')]);
+
+    const filePath = await createTempXlsxFile('ops.xlsx', [
+      {
+        Data: '2025-04-01',
+        'Entrada/Saída': 'Crédito',
+        Movimentação: 'Transferência - Liquidação',
+        Ticker: 'PETR4',
+        Quantidade: 10,
+        'Preco Unitario': 20,
+        Corretora: 'XP',
+      },
+      {
+        Data: '2025-04-02',
+        'Entrada/Saída': 'Crédito',
+        Movimentação: 'Transferência - Liquidação',
+        Ticker: 'VALE3',
+        Quantidade: 5,
+        'Preco Unitario': 40,
+        Corretora: 'xp',
+      },
+    ]);
+    createdDirs.push(path.dirname(filePath));
+
+    const parser = new CsvXlsxTransactionParser(new SheetjsSpreadsheetFileReader(), brokerRepo);
+
+    await parser.parse(filePath);
+
+    expect(brokerRepo.findAllByCodes).toHaveBeenCalledTimes(1);
+    expect(brokerRepo.findAllByCodes).toHaveBeenCalledWith(['XP']);
+  });
+
   it('parses csv and handles date format', async () => {
     const brokerRepo = mock<BrokerRepository>();
     brokerRepo.findAllByCodes.mockImplementation((codes) =>
-      Promise.resolve(
-        codes.includes('XP') ? [createBrokerMock('broker-xp')] : [],
-      ),
+      Promise.resolve(codes.includes('XP') ? [createBrokerMock('broker-xp')] : []),
     );
 
     const filePath = await createTempCsvFile(
@@ -156,10 +191,7 @@ describe('CsvXlsxTransactionParser', () => {
     );
     createdDirs.push(path.dirname(filePath));
 
-    const parser = new CsvXlsxTransactionParser(
-      new SheetjsSpreadsheetFileReader(),
-      brokerRepo,
-    );
+    const parser = new CsvXlsxTransactionParser(new SheetjsSpreadsheetFileReader(), brokerRepo);
     const result = await parser.parse(filePath);
 
     expect(result).toHaveLength(1);
@@ -186,10 +218,7 @@ describe('CsvXlsxTransactionParser', () => {
     ]);
     createdDirs.push(path.dirname(filePath));
 
-    const parser = new CsvXlsxTransactionParser(
-      new SheetjsSpreadsheetFileReader(),
-      brokerRepo,
-    );
+    const parser = new CsvXlsxTransactionParser(new SheetjsSpreadsheetFileReader(), brokerRepo);
     const result = await parser.parse(filePath);
 
     expect(result).toHaveLength(1);

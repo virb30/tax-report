@@ -1,27 +1,34 @@
 import { z } from 'zod';
-import { IpcController } from './ipc-controller.interface';
-import { CreateBrokerUseCase } from '../../application/use-cases/create-broker/create-broker.use-case';
-import { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
-import { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
-import { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
+import type { IpcController } from './ipc-controller.interface';
+import type { CreateBrokerUseCase } from '../../application/use-cases/create-broker/create-broker.use-case';
+import type { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
+import type { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
+import type { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
+import { buildIpcErrorMessage, registerValidatedHandler } from './ipc-handler.utils';
 
-const listBrokersSchema = z.object({
-  activeOnly: z.boolean().optional(),
-}).optional().catch(undefined);
+const listBrokersSchema = z
+  .object({
+    activeOnly: z.boolean().optional(),
+  })
+  .optional()
+  .catch(undefined);
 
-const createBrokerSchema = z.object({
-  name: z.string({ message: 'Invalid name for create broker.' }),
-  cnpj: z.string({ message: 'Invalid CNPJ for create broker.' }),
-  code: z.string().optional(),
-  codigo: z.string().optional(),
-}).refine(data => data.code !== undefined || data.codigo !== undefined, {
-  message: 'Invalid code for create broker.',
-  path: ['code']
-}).transform(data => ({
-  name: data.name,
-  cnpj: data.cnpj,
-  code: (data.code ?? data.codigo) as string,
-}));
+const createBrokerSchema = z
+  .object({
+    name: z.string({ message: 'Invalid name for create broker.' }),
+    cnpj: z.string({ message: 'Invalid CNPJ for create broker.' }),
+    code: z.string().optional(),
+    codigo: z.string().optional(),
+  })
+  .refine((data) => data.code !== undefined || data.codigo !== undefined, {
+    message: 'Invalid code for create broker.',
+    path: ['code'],
+  })
+  .transform((data) => ({
+    name: data.name,
+    cnpj: data.cnpj,
+    code: (data.code ?? data.codigo) as string,
+  }));
 
 const updateBrokerSchema = z.object({
   id: z.string().trim().min(1, 'Invalid id for update broker.'),
@@ -43,67 +50,64 @@ export class BrokersController implements IpcController {
   ) {}
 
   register(ipcMain: Electron.IpcMain): string[] {
-    const channels = [
-      'brokers:list',
-      'brokers:create',
-      'brokers:update',
-      'brokers:toggle-active',
-    ];
+    const channels = ['brokers:list', 'brokers:create', 'brokers:update', 'brokers:toggle-active'];
 
-    ipcMain.handle('brokers:list', async (_event, input?: unknown) => {
-      const payload = listBrokersSchema.parse(input);
-      return this.listBrokersUseCase.execute(payload);
+    registerValidatedHandler(ipcMain, {
+      channel: 'brokers:list',
+      schema: listBrokersSchema,
+      requireObjectInput: false,
+      execute: (payload) => this.listBrokersUseCase.execute(payload),
     });
 
-    ipcMain.handle('brokers:create', async (_event, input: unknown) => {
-      try {
-        const payload = createBrokerSchema.parse(input);
+    registerValidatedHandler(ipcMain, {
+      channel: 'brokers:create',
+      schema: createBrokerSchema,
+      payloadErrorMessage: 'Invalid payload for create broker.',
+      execute: async (payload) => {
         const broker = await this.createBrokerUseCase.execute(payload);
-        return { success: true, broker };
-      } catch (error: unknown) {
+        return { success: true as const, broker };
+      },
+      onError: (error) => {
         console.error(error);
-        if (error instanceof z.ZodError) {
-          return { success: false, error: error.issues[0].message };
-        }
-        if (error instanceof Error) {
-          return { success: false, error: error.message };
-        }
-        return { success: false, error: 'Erro ao criar corretora.' };
-      }
+        return {
+          success: false as const,
+          error: buildIpcErrorMessage(error, 'Erro ao criar corretora.'),
+        };
+      },
     });
 
-    ipcMain.handle('brokers:update', async (_event, input: unknown) => {
-      try {
-        const payload = updateBrokerSchema.parse(input);
+    registerValidatedHandler(ipcMain, {
+      channel: 'brokers:update',
+      schema: updateBrokerSchema,
+      payloadErrorMessage: 'Invalid payload for update broker.',
+      execute: async (payload) => {
         const broker = await this.updateBrokerUseCase.execute(payload);
-        return { success: true, broker };
-      } catch (error: unknown) {
+        return { success: true as const, broker };
+      },
+      onError: (error) => {
         console.error(error);
-        if (error instanceof z.ZodError) {
-          return { success: false, error: error.issues[0].message };
-        }
-        if (error instanceof Error) {
-          return { success: false, error: error.message };
-        }
-        return { success: false, error: 'Erro ao atualizar corretora.' };
-      }
+        return {
+          success: false as const,
+          error: buildIpcErrorMessage(error, 'Erro ao atualizar corretora.'),
+        };
+      },
     });
 
-    ipcMain.handle('brokers:toggle-active', async (_event, input: unknown) => {
-      try {
-        const payload = toggleActiveBrokerSchema.parse(input);
+    registerValidatedHandler(ipcMain, {
+      channel: 'brokers:toggle-active',
+      schema: toggleActiveBrokerSchema,
+      payloadErrorMessage: 'Invalid payload for toggle broker active.',
+      execute: async (payload) => {
         const broker = await this.toggleActiveBrokerUseCase.execute(payload);
-        return { success: true, broker };
-      } catch (error: unknown) {
+        return { success: true as const, broker };
+      },
+      onError: (error) => {
         console.error(error);
-        if (error instanceof z.ZodError) {
-          return { success: false, error: error.issues[0].message };
-        }
-        if (error instanceof Error) {
-          return { success: false, error: error.message };
-        }
-        return { success: false, error: 'Erro ao ativar/desativar corretora.' };
-      }
+        return {
+          success: false as const,
+          error: buildIpcErrorMessage(error, 'Erro ao ativar/desativar corretora.'),
+        };
+      },
     });
 
     return channels;

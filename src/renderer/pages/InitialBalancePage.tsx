@@ -5,8 +5,10 @@ import type { ListPositionsResult } from '../../shared/contracts/list-positions.
 import { buildErrorMessage } from '../errors/build-error-message';
 import { listActiveBrokers } from '../services/api/list-brokers';
 import type { Broker } from '../types/broker.types';
+import { buildYearOptions, getDefaultBaseYear } from '../../shared/utils/year';
 
-const defaultBaseYear = new Date().getFullYear() - 1;
+const defaultBaseYear = getDefaultBaseYear();
+const yearOptions = buildYearOptions(defaultBaseYear);
 
 export function InitialBalancePage(): JSX.Element {
   const [year, setYear] = useState(defaultBaseYear);
@@ -100,7 +102,8 @@ export function InitialBalancePage(): JSX.Element {
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-xl font-semibold text-slate-800">Saldo inicial</h2>
       <p className="mt-2 text-sm text-slate-600">
-        Informe o saldo inicial de ativos já existentes na carteira (ex.: posições de anos anteriores).
+        Informe o saldo inicial de ativos já existentes na carteira (ex.: posições de anos
+        anteriores).
       </p>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -111,7 +114,7 @@ export function InitialBalancePage(): JSX.Element {
             value={year}
             onChange={(event) => setYear(Number(event.target.value))}
           >
-            {Array.from({ length: 15 }, (_, i) => defaultBaseYear - 5 + i).map((y) => (
+            {yearOptions.map((y) => (
               <option key={y} value={y}>
                 {y}
               </option>
@@ -208,9 +211,7 @@ export function InitialBalancePage(): JSX.Element {
       ) : null}
 
       <div className="mt-6">
-        <h3 className="text-base font-semibold text-slate-800">
-          Posições em 31/12/{year}
-        </h3>
+        <h3 className="text-base font-semibold text-slate-800">Posições em 31/12/{year}</h3>
         {isLoading ? (
           <p className="mt-2 text-sm text-slate-600">Carregando...</p>
         ) : (

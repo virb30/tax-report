@@ -2,9 +2,10 @@ import { useState } from 'react';
 import type { JSX } from 'react';
 import type { ConsolidatedPositionPreviewRow } from '../../shared/contracts/import-consolidated-position.contract';
 import { buildErrorMessage } from '../errors/build-error-message';
+import { buildYearOptions, getDefaultBaseYear } from '../../shared/utils/year';
 
-const defaultBaseYear = new Date().getFullYear() - 1;
-const yearOptions = Array.from({ length: 15 }, (_, i) => defaultBaseYear - 5 + i);
+const defaultBaseYear = getDefaultBaseYear();
+const yearOptions = buildYearOptions(defaultBaseYear);
 
 type ImportConsolidatedPositionModalProps = {
   isOpen: boolean;
@@ -106,8 +107,8 @@ export function ImportConsolidatedPositionModal({
           Importar posição consolidada
         </h2>
         <p className="mt-2 text-sm text-slate-600">
-          Selecione uma planilha (CSV/XLSX) com colunas Ticker, Quantidade, Preço Médio e
-          Corretora (código). O ano é informado abaixo.
+          Selecione uma planilha (CSV/XLSX) com colunas Ticker, Quantidade, Preço Médio e Corretora
+          (código). O ano é informado abaixo.
         </p>
 
         <div className="mt-4 flex flex-col gap-3">

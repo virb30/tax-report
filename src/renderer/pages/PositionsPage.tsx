@@ -1,11 +1,16 @@
 import { Fragment, useEffect, useState } from 'react';
 import type { JSX } from 'react';
-import type { ListPositionsResult, PositionListItem } from '../../shared/contracts/list-positions.contract';
+import type {
+  ListPositionsResult,
+  PositionListItem,
+} from '../../shared/contracts/list-positions.contract';
 import { buildErrorMessage } from '../errors/build-error-message';
 import { MigrateYearModal } from '../components/MigrateYearModal';
 import { ImportConsolidatedPositionModal } from './ImportConsolidatedPositionModal';
+import { buildYearOptions, getDefaultBaseYear } from '../../shared/utils/year';
 
-const defaultBaseYear = new Date().getFullYear() - 1;
+const defaultBaseYear = getDefaultBaseYear();
+const yearOptions = buildYearOptions(defaultBaseYear);
 
 export function PositionsPage(): JSX.Element {
   const [baseYear, setBaseYear] = useState(defaultBaseYear);
@@ -111,7 +116,7 @@ export function PositionsPage(): JSX.Element {
               value={baseYear}
               onChange={(event) => setBaseYear(Number(event.target.value))}
             >
-              {Array.from({ length: 15 }, (_, i) => defaultBaseYear - 5 + i).map((y) => (
+              {yearOptions.map((y) => (
                 <option key={y} value={y}>
                   {y}
                 </option>
