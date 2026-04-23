@@ -8,6 +8,9 @@ import { SheetjsSpreadsheetFileReader } from '../adapters/file-readers/sheetjs.s
 import { CsvXlsxTransactionParser } from './csv-xlsx-transaction.parser';
 import type { BrokerRepository } from '../../application/repositories/broker.repository';
 import { TransactionType } from '../../../shared/types/domain';
+import { Broker } from '../../domain/portfolio/entities/broker.entity';
+import { Cnpj } from '../../domain/shared/cnpj.vo';
+import { Uuid } from '../../domain/shared/uuid.vo';
 
 async function createTempCsvFile(fileName: string, content: string): Promise<string> {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'tx-parser-test-'));
@@ -29,14 +32,14 @@ async function createTempXlsxFile(
   return filePath;
 }
 
-function createBrokerMock(id: string) {
-  return {
-    id: { value: id },
-    name: 'XP Investimentos',
-    cnpj: '00.000.000/0001-00',
-    code: 'XP',
+function createBroker(code = 'XP'): Broker {
+  return Broker.restore({
+    id: Uuid.create(),
+    name: `${code} Investimentos`,
+    cnpj: new Cnpj('00.000.000/0001-00'),
+    code,
     active: true,
-  } as any;
+  });
 }
 
 describe('CsvXlsxTransactionParser', () => {
@@ -55,8 +58,9 @@ describe('CsvXlsxTransactionParser', () => {
 
   it('parses xlsx and resolves broker by code to brokerId', async () => {
     const brokerRepo = mock<BrokerRepository>();
+    const broker = createBroker();
     brokerRepo.findAllByCodes.mockImplementation((codes) =>
-      Promise.resolve(codes.includes('XP') ? [createBrokerMock('broker-xp')] : []),
+      Promise.resolve(codes.includes('XP') ? [broker] : []),
     );
 
     const filePath = await createTempXlsxFile('ops.xlsx', [
@@ -77,7 +81,7 @@ describe('CsvXlsxTransactionParser', () => {
     const result = await parser.parse(filePath);
 
     expect(result).toHaveLength(1);
-    expect(result[0]?.brokerId).toBe('broker-xp');
+    expect(result[0]?.brokerId).toBe(broker.id.value);
     expect(result[0]?.tradeDate).toBe('2025-04-01');
     expect(result[0]?.operations).toHaveLength(1);
     expect(result[0]?.operations[0]?.ticker).toBe('PETR4');
@@ -144,7 +148,7 @@ describe('CsvXlsxTransactionParser', () => {
 
   it('loads unique broker codes once before mapping rows', async () => {
     const brokerRepo = mock<BrokerRepository>();
-    brokerRepo.findAllByCodes.mockResolvedValue([createBrokerMock('broker-xp')]);
+    brokerRepo.findAllByCodes.mockResolvedValue([createBroker()]);
 
     const filePath = await createTempXlsxFile('ops.xlsx', [
       {
@@ -178,8 +182,9 @@ describe('CsvXlsxTransactionParser', () => {
 
   it('parses csv and handles date format', async () => {
     const brokerRepo = mock<BrokerRepository>();
+    const broker = createBroker();
     brokerRepo.findAllByCodes.mockImplementation((codes) =>
-      Promise.resolve(codes.includes('XP') ? [createBrokerMock('broker-xp')] : []),
+      Promise.resolve(codes.includes('XP') ? [broker] : []),
     );
 
     const filePath = await createTempCsvFile(
@@ -195,14 +200,14 @@ describe('CsvXlsxTransactionParser', () => {
     const result = await parser.parse(filePath);
 
     expect(result).toHaveLength(1);
-    expect(result[0]?.brokerId).toBe('broker-xp');
+    expect(result[0]?.brokerId).toBe(broker.id.value);
     expect(result[0]?.tradeDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(result[0]?.operations[0]?.ticker).toBe('PETR4');
   });
 
   it('correctly parses Excel serial date without timezone issues', async () => {
     const brokerRepo = mock<BrokerRepository>();
-    brokerRepo.findAllByCodes.mockResolvedValue([createBrokerMock('broker-xp')]);
+    brokerRepo.findAllByCodes.mockResolvedValue([createBroker()]);
 
     // 45672 corresponds to 2025-01-15 in Excel
     const filePath = await createTempXlsxFile('ops.xlsx', [
@@ -227,7 +232,7 @@ describe('CsvXlsxTransactionParser', () => {
 
   it('parses new operation types: Bonificação, Split, Grupamento, Transferencia', async () => {
     const brokerRepo = mock<BrokerRepository>();
-    brokerRepo.findAllByCodes.mockResolvedValue([createBrokerMock('broker-xp')]);
+    brokerRepo.findAllByCodes.mockResolvedValue([createBroker()]);
 
     const filePath = await createTempXlsxFile('events.xlsx', [
       {

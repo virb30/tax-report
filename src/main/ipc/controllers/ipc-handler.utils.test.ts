@@ -46,7 +46,7 @@ describe('ipc-handler utils', () => {
       channel: 'portfolio:list-positions',
       schema: z.object({ baseYear: z.number().int() }),
       payloadErrorMessage: 'Payload inválido.',
-      execute: async (payload) => ({ receivedYear: payload.baseYear }),
+      execute: (payload) => ({ receivedYear: payload.baseYear }),
     });
 
     const handler = handlerMap.get('portfolio:list-positions');
@@ -68,7 +68,7 @@ describe('ipc-handler utils', () => {
       channel: 'brokers:create',
       schema: z.object({ name: z.string().min(1, 'Nome inválido.') }),
       payloadErrorMessage: 'Payload inválido.',
-      execute: async () => ({ success: true as const }),
+      execute: () => ({ success: true as const }),
       onError: (error) => ({
         success: false as const,
         error: buildIpcErrorMessage(error, 'Erro ao criar corretora.'),

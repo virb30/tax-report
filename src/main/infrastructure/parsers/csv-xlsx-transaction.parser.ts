@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx';
 import { OperationType, TransactionType } from '../../../shared/types/domain';
 import type {
   ParsedTransactionBatch,
@@ -65,7 +64,7 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
     }
 
     const normalizedRows = rawDto.rows.map((row) => this.normalizeRowHeaders(row));
-    this.validateRequiredColumns(normalizedRows[0]!);
+    this.validateRequiredColumns(normalizedRows[0]);
 
     return normalizedRows;
   }
@@ -159,7 +158,7 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
       return null;
     }
 
-    this.mapper.validateRowIntegrity(row as Record<string, unknown>, operationType);
+    this.mapper.validateRowIntegrity(row, operationType);
 
     return {
       tradeDate,
@@ -309,7 +308,7 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
 
     const num = Number(str);
     if (!Number.isNaN(num) && num > 0 && num < 1000000) {
-      return XLSX.SSF.format('yyyy-mm-dd', Math.round(num));
+      return this.formatExcelSerialDate(Math.round(num));
     }
 
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -318,5 +317,12 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
     }
 
     throw new Error(`Formato de data inválido: "${str}". Esperado YYYY-MM-DD ou data do Excel.`);
+  }
+
+  private formatExcelSerialDate(serialDate: number): string {
+    const excelEpochUtc = Date.UTC(1899, 11, 30);
+    const millisecondsPerDay = 24 * 60 * 60 * 1000;
+    const date = new Date(excelEpochUtc + serialDate * millisecondsPerDay);
+    return date.toISOString().slice(0, 10);
   }
 }

@@ -2,8 +2,11 @@ import globals from 'globals';
 import tsParser from '@typescript-eslint/parser';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import jestPlugin from 'eslint-plugin-jest';
+import { defineConfig } from "eslint/config";
+import { join } from 'path';
 
-export default [
+
+export default defineConfig([
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
@@ -43,6 +46,6 @@ export default [
     },
   },
   {
-    ignores: ['out/**', '.vite/**', 'coverage/**'],
+    ignores: ['scripts/**', 'out/**', '.vite/**', 'coverage/**'],
   }
-];
+]);

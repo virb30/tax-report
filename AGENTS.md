@@ -31,6 +31,8 @@ Use TypeScript throughout. Prettier enforces single quotes, semicolons, trailing
 
 Follow existing naming patterns: domain objects use suffixes like `.entity.ts`, `.vo.ts`, and `.service.ts`; use cases use `*.use-case.ts`; IPC contracts use `*.contract.ts`; repositories use `*.repository.ts`.
 
+Avoid using "utils" pattern in backend `src/main/**/*.ts`. Try to express the utility as part of a class or a function inside a relevant module.
+
 ## Testing Guidelines
 
 Jest with `ts-jest` is the primary test runner. Global coverage thresholds are `80%` for branches, functions, lines, and statements. Coverage is collected from `src/main/**/*.ts` and `src/preload.ts`, excluding `src/main/main.ts`.

@@ -14,7 +14,7 @@ import type { Queue } from '../../events/queue.interface';
 import { ConsolidatedPositionImportedEvent } from '../../../domain/events/consolidated-position-imported.event';
 import { assertSupportedYear } from '../../../../shared/utils/year';
 import type { ConsolidatedPositionRow } from '../../interfaces/consolidated-position-parser.port';
-import { Broker } from '../../../domain/portfolio/entities/broker.entity';
+import type { Broker } from '../../../domain/portfolio/entities/broker.entity';
 
 type ResolvedRow = {
   ticker: string;
