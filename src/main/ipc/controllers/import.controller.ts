@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import { dialog } from 'electron';
-import type { IpcController } from './ipc-controller.interface';
+import type { IpcController, IpcMainHandleRegistry } from './ipc-controller.interface';
 import type { PreviewImportUseCase } from '../../application/use-cases/preview-import/preview-import-use-case';
 import type { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions/import-transactions-use-case';
 import { registerValidatedHandler } from './ipc-handler.utils';
+import { IMPORT_IPC_CHANNELS } from '../../../shared/ipc/ipc-channels';
 
 const previewImportTransactionsSchema = z.object({
   filePath: z
@@ -25,14 +26,10 @@ export class ImportController implements IpcController {
     private readonly importTransactionsUseCase: ImportTransactionsUseCase,
   ) {}
 
-  register(ipcMain: Electron.IpcMain): string[] {
-    const channels = [
-      'import:select-file',
-      'import:preview-transactions',
-      'import:confirm-transactions',
-    ];
+  register(ipcMain: IpcMainHandleRegistry): string[] {
+    const channels = Object.values(IMPORT_IPC_CHANNELS);
 
-    ipcMain.handle('import:select-file', async () => {
+    ipcMain.handle(IMPORT_IPC_CHANNELS.selectFile, async () => {
       const result = await dialog.showOpenDialog({
         properties: ['openFile'],
         filters: [
@@ -47,14 +44,14 @@ export class ImportController implements IpcController {
     });
 
     registerValidatedHandler(ipcMain, {
-      channel: 'import:preview-transactions',
+      channel: IMPORT_IPC_CHANNELS.previewTransactions,
       schema: previewImportTransactionsSchema,
       payloadErrorMessage: 'Invalid payload for preview import transactions.',
       execute: (payload) => this.previewImportUseCase.execute(payload),
     });
 
     registerValidatedHandler(ipcMain, {
-      channel: 'import:confirm-transactions',
+      channel: IMPORT_IPC_CHANNELS.confirmTransactions,
       schema: confirmImportTransactionsSchema,
       payloadErrorMessage: 'Invalid payload for confirm import transactions.',
       execute: async (payload) => {

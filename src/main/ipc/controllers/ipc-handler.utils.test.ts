@@ -5,8 +5,16 @@ import {
   parseIpcPayload,
   registerValidatedHandler,
 } from './ipc-handler.utils';
+import type { IpcMainHandleRegistry } from './ipc-controller.interface';
+
+type RegisteredHandler = (
+  event: Electron.IpcMainInvokeEvent,
+  input: unknown,
+) => Promise<unknown>;
 
 describe('ipc-handler utils', () => {
+  const ipcEvent = {} as Electron.IpcMainInvokeEvent;
+
   it('parses object payloads and returns first zod issue message', () => {
     const schema = z.object({
       baseYear: z.number().int('Ano inválido.'),
@@ -32,17 +40,28 @@ describe('ipc-handler utils', () => {
     expect(parseIpcPayload(schema, undefined, { requireObjectInput: false })).toBeUndefined();
   });
 
+  it('preserves non-zod errors raised while parsing payloads', () => {
+    const schema = z.object({ value: z.string() }).transform(() => {
+      throw new TypeError('Falha inesperada.');
+    });
+
+    expect(() => parseIpcPayload(schema, { value: 'payload' })).toThrow('Falha inesperada.');
+  });
+
+  it('formats generic errors and unknown values with the right message', () => {
+    expect(buildIpcErrorMessage(new Error('Falha explícita.'))).toBe('Falha explícita.');
+    expect(buildIpcErrorMessage('erro-desconhecido', 'Fallback padrão.')).toBe('Fallback padrão.');
+  });
+
   it('registers a handler that executes parsed payloads', async () => {
-    const handlerMap = new Map<string, (_event: unknown, input: unknown) => Promise<unknown>>();
-    const ipcMain = {
-      handle: jest.fn(
-        (channel: string, handler: (_event: unknown, input: unknown) => Promise<unknown>) => {
-          handlerMap.set(channel, handler);
-        },
-      ),
+    const handlerMap = new Map<string, RegisteredHandler>();
+    const ipcMain: IpcMainHandleRegistry = {
+      handle: jest.fn((channel: string, handler: RegisteredHandler) => {
+        handlerMap.set(channel, handler);
+      }),
     };
 
-    registerValidatedHandler(ipcMain as unknown as Electron.IpcMain, {
+    registerValidatedHandler(ipcMain, {
       channel: 'portfolio:list-positions',
       schema: z.object({ baseYear: z.number().int() }),
       payloadErrorMessage: 'Payload inválido.',
@@ -51,20 +70,18 @@ describe('ipc-handler utils', () => {
 
     const handler = handlerMap.get('portfolio:list-positions');
     expect(handler).toBeDefined();
-    await expect(handler?.({}, { baseYear: 2025 })).resolves.toEqual({ receivedYear: 2025 });
+    await expect(handler?.(ipcEvent, { baseYear: 2025 })).resolves.toEqual({ receivedYear: 2025 });
   });
 
   it('lets callers convert handler errors into controller-specific results', async () => {
-    const handlerMap = new Map<string, (_event: unknown, input: unknown) => Promise<unknown>>();
-    const ipcMain = {
-      handle: jest.fn(
-        (channel: string, handler: (_event: unknown, input: unknown) => Promise<unknown>) => {
-          handlerMap.set(channel, handler);
-        },
-      ),
+    const handlerMap = new Map<string, RegisteredHandler>();
+    const ipcMain: IpcMainHandleRegistry = {
+      handle: jest.fn((channel: string, handler: RegisteredHandler) => {
+        handlerMap.set(channel, handler);
+      }),
     };
 
-    registerValidatedHandler(ipcMain as unknown as Electron.IpcMain, {
+    registerValidatedHandler(ipcMain, {
       channel: 'brokers:create',
       schema: z.object({ name: z.string().min(1, 'Nome inválido.') }),
       payloadErrorMessage: 'Payload inválido.',
@@ -76,9 +93,28 @@ describe('ipc-handler utils', () => {
     });
 
     const handler = handlerMap.get('brokers:create');
-    await expect(handler?.({}, { name: '' })).resolves.toEqual({
+    await expect(handler?.(ipcEvent, { name: '' })).resolves.toEqual({
       success: false,
       error: 'Nome inválido.',
     });
+  });
+
+  it('rethrows errors when the controller does not provide an onError mapper', async () => {
+    const handlerMap = new Map<string, RegisteredHandler>();
+    const ipcMain: IpcMainHandleRegistry = {
+      handle: jest.fn((channel: string, handler: RegisteredHandler) => {
+        handlerMap.set(channel, handler);
+      }),
+    };
+
+    registerValidatedHandler(ipcMain, {
+      channel: 'portfolio:set-initial-balance',
+      schema: z.object({ ticker: z.string().min(1) }),
+      execute: () => Promise.reject(new Error('Falha sem fallback.')),
+    });
+
+    const handler = handlerMap.get('portfolio:set-initial-balance');
+
+    await expect(handler?.(ipcEvent, { ticker: 'PETR4' })).rejects.toThrow('Falha sem fallback.');
   });
 });

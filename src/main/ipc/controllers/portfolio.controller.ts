@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { IpcController } from './ipc-controller.interface';
+import type { IpcController, IpcMainHandleRegistry } from './ipc-controller.interface';
 import type { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance.use-case';
 import type { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
 import type { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
@@ -8,6 +8,7 @@ import type { ImportConsolidatedPositionUseCase } from '../../application/use-ca
 import type { DeletePositionUseCase } from '../../application/use-cases/delete-position/delete-position.use-case';
 import type { AssetType } from '../../../shared/types/domain';
 import { registerValidatedHandler } from './ipc-handler.utils';
+import { PORTFOLIO_IPC_CHANNELS } from '../../../shared/ipc/ipc-channels';
 
 const listPositionsSchema = z.object({
   baseYear: z
@@ -97,61 +98,53 @@ export class PortfolioController implements IpcController {
     private readonly deletePositionUseCase: DeletePositionUseCase,
   ) {}
 
-  register(ipcMain: Electron.IpcMain): string[] {
-    const channels = [
-      'portfolio:set-initial-balance',
-      'portfolio:list-positions',
-      'portfolio:recalculate',
-      'portfolio:migrate-year',
-      'portfolio:preview-consolidated-position',
-      'portfolio:import-consolidated-position',
-      'portfolio:delete-position',
-    ];
+  register(ipcMain: IpcMainHandleRegistry): string[] {
+    const channels = Object.values(PORTFOLIO_IPC_CHANNELS);
 
     registerValidatedHandler(ipcMain, {
-      channel: 'portfolio:set-initial-balance',
+      channel: PORTFOLIO_IPC_CHANNELS.setInitialBalance,
       schema: setInitialBalanceSchema,
       payloadErrorMessage: 'Invalid payload for initial balance.',
       execute: (payload) => this.setInitialBalanceUseCase.execute(payload),
     });
 
     registerValidatedHandler(ipcMain, {
-      channel: 'portfolio:list-positions',
+      channel: PORTFOLIO_IPC_CHANNELS.listPositions,
       schema: listPositionsSchema,
       payloadErrorMessage: 'Invalid payload for list positions.',
       execute: (payload) => this.listPositionsUseCase.execute(payload),
     });
 
     registerValidatedHandler(ipcMain, {
-      channel: 'portfolio:recalculate',
+      channel: PORTFOLIO_IPC_CHANNELS.recalculate,
       schema: recalculatePositionSchema,
       payloadErrorMessage: 'Invalid payload for recalculate position.',
       execute: (payload) => this.recalculatePositionUseCase.execute(payload),
     });
 
     registerValidatedHandler(ipcMain, {
-      channel: 'portfolio:migrate-year',
+      channel: PORTFOLIO_IPC_CHANNELS.migrateYear,
       schema: migrateYearSchema,
       payloadErrorMessage: 'Invalid payload for migrate year.',
       execute: (payload) => this.migrateYearUseCase.execute(payload),
     });
 
     registerValidatedHandler(ipcMain, {
-      channel: 'portfolio:preview-consolidated-position',
+      channel: PORTFOLIO_IPC_CHANNELS.previewConsolidatedPosition,
       schema: previewConsolidatedPositionSchema,
       payloadErrorMessage: 'Invalid payload for preview consolidated position.',
       execute: (payload) => this.importConsolidatedPositionUseCase.preview(payload),
     });
 
     registerValidatedHandler(ipcMain, {
-      channel: 'portfolio:import-consolidated-position',
+      channel: PORTFOLIO_IPC_CHANNELS.importConsolidatedPosition,
       schema: importConsolidatedPositionSchema,
       payloadErrorMessage: 'Invalid payload for import consolidated position.',
       execute: (payload) => this.importConsolidatedPositionUseCase.execute(payload),
     });
 
     registerValidatedHandler(ipcMain, {
-      channel: 'portfolio:delete-position',
+      channel: PORTFOLIO_IPC_CHANNELS.deletePosition,
       schema: deletePositionSchema,
       payloadErrorMessage: 'Invalid payload for delete position.',
       execute: (payload) => this.deletePositionUseCase.execute(payload),

@@ -1,10 +1,11 @@
 import { z } from 'zod';
-import type { IpcController } from './ipc-controller.interface';
+import type { IpcController, IpcMainHandleRegistry } from './ipc-controller.interface';
 import type { CreateBrokerUseCase } from '../../application/use-cases/create-broker/create-broker.use-case';
 import type { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
 import type { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
 import type { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
 import { buildIpcErrorMessage, registerValidatedHandler } from './ipc-handler.utils';
+import { BROKERS_IPC_CHANNELS } from '../../../shared/ipc/ipc-channels';
 
 const listBrokersSchema = z
   .object({
@@ -49,18 +50,18 @@ export class BrokersController implements IpcController {
     private readonly toggleActiveBrokerUseCase: ToggleActiveBrokerUseCase,
   ) {}
 
-  register(ipcMain: Electron.IpcMain): string[] {
-    const channels = ['brokers:list', 'brokers:create', 'brokers:update', 'brokers:toggle-active'];
+  register(ipcMain: IpcMainHandleRegistry): string[] {
+    const channels = Object.values(BROKERS_IPC_CHANNELS);
 
     registerValidatedHandler(ipcMain, {
-      channel: 'brokers:list',
+      channel: BROKERS_IPC_CHANNELS.list,
       schema: listBrokersSchema,
       requireObjectInput: false,
       execute: (payload) => this.listBrokersUseCase.execute(payload),
     });
 
     registerValidatedHandler(ipcMain, {
-      channel: 'brokers:create',
+      channel: BROKERS_IPC_CHANNELS.create,
       schema: createBrokerSchema,
       payloadErrorMessage: 'Invalid payload for create broker.',
       execute: async (payload) => {
@@ -77,7 +78,7 @@ export class BrokersController implements IpcController {
     });
 
     registerValidatedHandler(ipcMain, {
-      channel: 'brokers:update',
+      channel: BROKERS_IPC_CHANNELS.update,
       schema: updateBrokerSchema,
       payloadErrorMessage: 'Invalid payload for update broker.',
       execute: async (payload) => {
@@ -94,7 +95,7 @@ export class BrokersController implements IpcController {
     });
 
     registerValidatedHandler(ipcMain, {
-      channel: 'brokers:toggle-active',
+      channel: BROKERS_IPC_CHANNELS.toggleActive,
       schema: toggleActiveBrokerSchema,
       payloadErrorMessage: 'Invalid payload for toggle broker active.',
       execute: async (payload) => {

@@ -48,7 +48,7 @@ export function parseIpcPayload<T>(
 }
 
 export function registerValidatedHandler<TInput, TSuccessOutput, TErrorOutput = TSuccessOutput>(
-  ipcMain: Electron.IpcMain,
+  ipcMain: Pick<Electron.IpcMain, 'handle'>,
   config: ValidatedHandlerConfig<TInput, TSuccessOutput, TErrorOutput>,
 ): void {
   ipcMain.handle(config.channel, async (_event, input: unknown) => {

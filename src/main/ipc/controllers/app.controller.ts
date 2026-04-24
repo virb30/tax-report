@@ -1,12 +1,13 @@
-import { IpcController } from './ipc-controller.interface';
+import type { IpcController, IpcMainHandleRegistry } from './ipc-controller.interface';
+import { APP_IPC_CHANNELS } from '../../../shared/ipc/ipc-channels';
 
 export class AppController implements IpcController {
   constructor() {}
 
-  register(ipcMain: Electron.IpcMain): string[] {
-    const channels = ['app:health-check'];
+  register(ipcMain: IpcMainHandleRegistry): string[] {
+    const channels = Object.values(APP_IPC_CHANNELS);
 
-    ipcMain.handle('app:health-check', async () => {
+    ipcMain.handle(APP_IPC_CHANNELS.healthCheck, () => {
       return { status: 'ok' };
     });
 

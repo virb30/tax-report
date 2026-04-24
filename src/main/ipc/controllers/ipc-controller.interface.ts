@@ -1,3 +1,5 @@
+export type IpcMainHandleRegistry = Pick<Electron.IpcMain, 'handle'>;
+
 export interface IpcController {
-  register(ipcMain: Electron.IpcMain): string[];
+  register(ipcMain: IpcMainHandleRegistry): string[];
 }

@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import type { IpcController } from './ipc-controller.interface';
+import type { IpcController, IpcMainHandleRegistry } from './ipc-controller.interface';
 import type { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-asset-report/generate-assets-report.use-case';
 import { registerValidatedHandler } from './ipc-handler.utils';
+import { REPORT_IPC_CHANNELS } from '../../../shared/ipc/ipc-channels';
 
 const generateAssetsReportSchema = z.object({
   baseYear: z
@@ -12,11 +13,11 @@ const generateAssetsReportSchema = z.object({
 export class ReportController implements IpcController {
   constructor(private readonly generateAssetsReportUseCase: GenerateAssetsReportUseCase) {}
 
-  register(ipcMain: Electron.IpcMain): string[] {
-    const channels = ['report:assets-annual'];
+  register(ipcMain: IpcMainHandleRegistry): string[] {
+    const channels = Object.values(REPORT_IPC_CHANNELS);
 
     registerValidatedHandler(ipcMain, {
-      channel: 'report:assets-annual',
+      channel: REPORT_IPC_CHANNELS.assetsAnnual,
       schema: generateAssetsReportSchema,
       payloadErrorMessage: 'Invalid payload for assets report.',
       execute: (payload) => this.generateAssetsReportUseCase.execute(payload),

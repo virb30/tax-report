@@ -34,12 +34,21 @@ import { RecalculatePositionHandler } from '../../infrastructure/handlers/recalc
 import { ImportConsolidatedPositionUseCase } from '../../application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
 import { DeletePositionUseCase } from '../../application/use-cases/delete-position/delete-position.use-case';
 import { CsvXlsxConsolidatedPositionParser } from '../../infrastructure/parsers/csv-xlsx-consolidated-position.parser';
+import {
+  APP_IPC_CHANNELS,
+  BROKERS_IPC_CHANNELS,
+  IMPORT_IPC_CHANNELS,
+  PORTFOLIO_IPC_CHANNELS,
+  REPORT_IPC_CHANNELS,
+} from '../../../shared/ipc/ipc-channels';
 
-type IpcHandler = (_event: unknown, ...args: unknown[]) => unknown;
+type IpcHandler = (_event: Electron.IpcMainInvokeEvent, ...args: unknown[]) => unknown;
+type IpcMainHandleRegistry = Pick<Electron.IpcMain, 'handle'>;
 
 describe('IPC handlers integration', () => {
   let database: Knex;
   let temporaryDirectory: string;
+  const ipcEvent = {} as Electron.IpcMainInvokeEvent;
 
   beforeEach(async () => {
     temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'tax-report-ipc-'));
@@ -69,10 +78,7 @@ describe('IPC handlers integration', () => {
       knexTransactionRepository,
     );
     const queue = new MemoryQueueAdapter();
-    const recalculatePositionHandler = new RecalculatePositionHandler(
-      queue,
-      recalculatePositionUseCase,
-    );
+    new RecalculatePositionHandler(queue, recalculatePositionUseCase);
     const migrateYearUseCase = new MigrateYearUseCase(
       knexPositionRepository,
       knexTransactionRepository,
@@ -132,7 +138,7 @@ describe('IPC handlers integration', () => {
     );
 
     const handlers = new Map<string, IpcHandler>();
-    const ipcMain = {
+    const ipcMain: IpcMainHandleRegistry = {
       handle: (channel: string, listener: IpcHandler) => {
         handlers.set(channel, listener);
       },
@@ -150,17 +156,17 @@ describe('IPC handlers integration', () => {
     );
     const reportController = new ReportController(generateAssetsReportUseCase);
 
-    appController.register(ipcMain as any);
-    importController.register(ipcMain as any);
-    portfolioController.register(ipcMain as any);
-    reportController.register(ipcMain as any);
+    appController.register(ipcMain);
+    importController.register(ipcMain);
+    portfolioController.register(ipcMain);
+    reportController.register(ipcMain);
 
-    const healthHandler = handlers.get('app:health-check');
-    const previewHandler = handlers.get('import:preview-transactions');
-    const confirmHandler = handlers.get('import:confirm-transactions');
-    const setInitialBalanceHandler = handlers.get('portfolio:set-initial-balance');
-    const listPositionsHandler = handlers.get('portfolio:list-positions');
-    const reportHandler = handlers.get('report:assets-annual');
+    const healthHandler = handlers.get(APP_IPC_CHANNELS.healthCheck);
+    const previewHandler = handlers.get(IMPORT_IPC_CHANNELS.previewTransactions);
+    const confirmHandler = handlers.get(IMPORT_IPC_CHANNELS.confirmTransactions);
+    const setInitialBalanceHandler = handlers.get(PORTFOLIO_IPC_CHANNELS.setInitialBalance);
+    const listPositionsHandler = handlers.get(PORTFOLIO_IPC_CHANNELS.listPositions);
+    const reportHandler = handlers.get(REPORT_IPC_CHANNELS.assetsAnnual);
 
     if (
       !healthHandler ||
@@ -173,16 +179,16 @@ describe('IPC handlers integration', () => {
       throw new Error('Some IPC handlers are missing.');
     }
 
-    expect(await healthHandler({})).toEqual({ status: 'ok' });
+    expect(await healthHandler(ipcEvent)).toEqual({ status: 'ok' });
 
-    const previewResult = (await previewHandler({}, {
+    const previewResult = (await previewHandler(ipcEvent, {
       filePath: csvPath,
     })) as { transactionsPreview: Array<{ ticker: string }>; batches: Array<{ brokerId: string }> };
     expect(previewResult.transactionsPreview).toHaveLength(1);
     expect(previewResult.batches).toHaveLength(1);
     expect(previewResult.batches[0]?.brokerId).toBeDefined();
 
-    const importResult = (await confirmHandler({}, {
+    const importResult = (await confirmHandler(ipcEvent, {
       filePath: csvPath,
     })) as { importedCount: number; recalculatedTickers: string[] };
     expect(importResult).toEqual({
@@ -190,7 +196,7 @@ describe('IPC handlers integration', () => {
       recalculatedTickers: ['PETR4'],
     });
 
-    await setInitialBalanceHandler({}, {
+    await setInitialBalanceHandler(ipcEvent, {
       ticker: 'IVVB11',
       brokerId: xpBroker.id.value,
       assetType: AssetType.Etf,
@@ -199,14 +205,14 @@ describe('IPC handlers integration', () => {
       year: 2025,
     });
 
-    const positionsResult = (await listPositionsHandler({}, { baseYear: 2025 })) as {
+    const positionsResult = (await listPositionsHandler(ipcEvent, { baseYear: 2025 })) as {
       items: Array<{ ticker: string }>;
     };
     expect(positionsResult.items.map((item) => item.ticker)).toEqual(
       expect.arrayContaining(['IVVB11']),
     );
 
-    const reportResult = (await reportHandler({}, { baseYear: 2025 })) as {
+    const reportResult = (await reportHandler(ipcEvent, { baseYear: 2025 })) as {
       referenceDate: string;
       items: Array<{ ticker: string }>;
     };
@@ -222,7 +228,7 @@ describe('IPC handlers integration', () => {
     const toggleActiveBrokerUseCase = new ToggleActiveBrokerUseCase(brokerRepository);
 
     const handlers = new Map<string, IpcHandler>();
-    const ipcMain = {
+    const ipcMain: IpcMainHandleRegistry = {
       handle: (channel: string, listener: IpcHandler) => {
         handlers.set(channel, listener);
       },
@@ -234,22 +240,22 @@ describe('IPC handlers integration', () => {
       updateBrokerUseCase,
       toggleActiveBrokerUseCase,
     );
-    brokersController.register(ipcMain as any);
+    brokersController.register(ipcMain);
 
-    const listHandler = handlers.get('brokers:list');
-    const createHandler = handlers.get('brokers:create');
-    const updateHandler = handlers.get('brokers:update');
-    const toggleHandler = handlers.get('brokers:toggle-active');
+    const listHandler = handlers.get(BROKERS_IPC_CHANNELS.list);
+    const createHandler = handlers.get(BROKERS_IPC_CHANNELS.create);
+    const updateHandler = handlers.get(BROKERS_IPC_CHANNELS.update);
+    const toggleHandler = handlers.get(BROKERS_IPC_CHANNELS.toggleActive);
 
     if (!listHandler || !createHandler || !updateHandler || !toggleHandler) {
       throw new Error('Broker IPC handlers not registered.');
     }
 
-    const initialList = (await listHandler({})) as { items: Array<{ id: string }> };
+    const initialList = (await listHandler(ipcEvent)) as { items: Array<{ id: string }> };
     expect(initialList.items.length).toBeGreaterThanOrEqual(0);
 
     const createResult = (await createHandler(
-      {},
+      ipcEvent,
       { name: 'Test Broker', code: 'TESTBRK', cnpj: '12.345.678/0001-90' },
     )) as { success: boolean; broker?: { id: string; name: string } };
     expect(createResult.success).toBe(true);
@@ -259,24 +265,26 @@ describe('IPC handlers integration', () => {
     expect(brokerId).toBeDefined();
 
     const updateResult = (await updateHandler(
-      {},
+      ipcEvent,
       { id: brokerId!, name: 'Test Broker Updated' },
     )) as { success: boolean; broker?: { name: string } };
     expect(updateResult.success).toBe(true);
     expect(updateResult.broker?.name).toBe('Test Broker Updated');
 
-    const toggleResult = (await toggleHandler({}, { id: brokerId! })) as {
+    const toggleResult = (await toggleHandler(ipcEvent, { id: brokerId! })) as {
       success: boolean;
       broker?: { active: boolean };
     };
     expect(toggleResult.success).toBe(true);
     expect(toggleResult.broker?.active).toBe(false);
 
-    const listAll = (await listHandler({})) as { items: Array<{ id: string; active: boolean }> };
+    const listAll = (await listHandler(ipcEvent)) as {
+      items: Array<{ id: string; active: boolean }>;
+    };
     const createdBroker = listAll.items.find((b) => b.id === brokerId);
     expect(createdBroker?.active).toBe(false);
 
-    const listActiveOnly = (await listHandler({}, { activeOnly: true })) as {
+    const listActiveOnly = (await listHandler(ipcEvent, { activeOnly: true })) as {
       items: Array<{ id: string }>;
     };
     const inActiveList = listActiveOnly.items.find((b) => b.id === brokerId);
