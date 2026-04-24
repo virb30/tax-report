@@ -1,17 +1,33 @@
 import type { Config } from 'jest';
 
-const config: Config = {
+const sharedProjectConfig = {
   preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src'],
   moduleNameMapper: {
     '^@shared/(.*)$': '<rootDir>/src/shared/$1',
     '^@main/(.*)$': '<rootDir>/src/main/$1',
   },
   transform: {
-    '^.+\\.(t|j)sx?$': 'ts-jest', 
+    '^.+\\.(t|j)sx?$': 'ts-jest',
   },
   transformIgnorePatterns: ['/node_modules/(?!uuid/)'],
+} satisfies Partial<Config>;
+
+const config: Config = {
+  projects: [
+    {
+      ...sharedProjectConfig,
+      displayName: 'main',
+      testEnvironment: 'node',
+      roots: ['<rootDir>/src'],
+      testPathIgnorePatterns: ['<rootDir>/src/renderer/'],
+    },
+    {
+      ...sharedProjectConfig,
+      displayName: 'renderer',
+      testEnvironment: 'jsdom',
+      roots: ['<rootDir>/src/renderer'],
+    },
+  ],
   collectCoverage: true,
   collectCoverageFrom: ['src/main/**/*.ts', '!src/main/main.ts', 'src/preload.ts'],
   coveragePathIgnorePatterns: ['/node_modules/', '\\.d\\.ts$'],

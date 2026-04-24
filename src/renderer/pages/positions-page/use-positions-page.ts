@@ -1,0 +1,133 @@
+import { useEffect, useState } from 'react';
+import type {
+  ListPositionsResult,
+  PositionListItem,
+} from '../../../shared/contracts/list-positions.contract';
+import { buildYearOptions, getDefaultBaseYear } from '../../../shared/utils/year';
+import { buildErrorMessage } from '../../errors/build-error-message';
+
+const defaultBaseYear = getDefaultBaseYear();
+
+export function usePositionsPage() {
+  const [baseYear, setBaseYear] = useState(defaultBaseYear);
+  const [positions, setPositions] = useState<PositionListItem[]>([]);
+  const [expandedTickers, setExpandedTickers] = useState<Set<string>>(new Set());
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [recalculatingTicker, setRecalculatingTicker] = useState<string | null>(null);
+  const [recalculatingAll, setRecalculatingAll] = useState(false);
+  const [migrateModalOpen, setMigrateModalOpen] = useState(false);
+  const [importConsolidatedModalOpen, setImportConsolidatedModalOpen] = useState(false);
+  const [deletingTicker, setDeletingTicker] = useState<string | null>(null);
+
+  useEffect(() => {
+    void loadPositions();
+  }, [baseYear]);
+
+  async function loadPositions(): Promise<void> {
+    setIsLoading(true);
+    setErrorMessage('');
+    try {
+      const result: ListPositionsResult = await window.electronApi.listPositions({ baseYear });
+      setPositions(result.items);
+    } catch (error: unknown) {
+      setErrorMessage(buildErrorMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function recalculatePosition(ticker: string): Promise<void> {
+    setRecalculatingTicker(ticker);
+    setErrorMessage('');
+    try {
+      await window.electronApi.recalculatePosition({ ticker, year: baseYear });
+      await loadPositions();
+    } catch (error: unknown) {
+      setErrorMessage(buildErrorMessage(error));
+    } finally {
+      setRecalculatingTicker(null);
+    }
+  }
+
+  async function recalculateAllPositions(): Promise<void> {
+    setRecalculatingAll(true);
+    setErrorMessage('');
+    try {
+      for (const position of positions) {
+        await window.electronApi.recalculatePosition({ ticker: position.ticker, year: baseYear });
+      }
+      await loadPositions();
+    } catch (error: unknown) {
+      setErrorMessage(buildErrorMessage(error));
+    } finally {
+      setRecalculatingAll(false);
+    }
+  }
+
+  async function deletePosition(ticker: string): Promise<void> {
+    if (!window.confirm(`Excluir o ativo ${ticker} da posição de ${baseYear}?`)) {
+      return;
+    }
+
+    setDeletingTicker(ticker);
+    setErrorMessage('');
+    try {
+      const result = await window.electronApi.deletePosition({ ticker, year: baseYear });
+      if (result.deleted) {
+        await loadPositions();
+      }
+    } catch (error: unknown) {
+      setErrorMessage(buildErrorMessage(error));
+    } finally {
+      setDeletingTicker(null);
+    }
+  }
+
+  function toggleExpand(ticker: string): void {
+    setExpandedTickers((currentExpandedTickers) => {
+      const nextExpandedTickers = new Set(currentExpandedTickers);
+      if (nextExpandedTickers.has(ticker)) {
+        nextExpandedTickers.delete(ticker);
+      } else {
+        nextExpandedTickers.add(ticker);
+      }
+      return nextExpandedTickers;
+    });
+  }
+
+  function handleMigrateSuccess(targetYear?: number): void {
+    setMigrateModalOpen(false);
+    if (targetYear != null) {
+      setBaseYear(targetYear);
+      return;
+    }
+
+    void loadPositions();
+  }
+
+  return {
+    baseYear,
+    deletingTicker,
+    deletePosition,
+    errorMessage,
+    expandedTickers,
+    importConsolidatedModalOpen,
+    isLoading,
+    migrateModalOpen,
+    openImportConsolidatedModal: () => setImportConsolidatedModalOpen(true),
+    openMigrateModal: () => setMigrateModalOpen(true),
+    positions,
+    recalculateAllPositions,
+    recalculatePosition,
+    recalculatingAll,
+    recalculatingTicker,
+    refreshPositions: () => void loadPositions(),
+    setBaseYear,
+    setImportConsolidatedModalOpen,
+    setMigrateModalOpen,
+    toggleExpand,
+    yearOptions: buildYearOptions(defaultBaseYear),
+    handleMigrateSuccess,
+  };
+}
