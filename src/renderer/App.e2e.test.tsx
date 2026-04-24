@@ -6,7 +6,7 @@ import '@testing-library/jest-dom';
 import { describe, it, jest } from '@jest/globals';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AssetType } from '../shared/types/domain';
+import { AssetType, TransactionType } from '../shared/types/domain';
 import type { ElectronApi } from '../shared/types/electron-api';
 import type { GenerateAssetsReportResult } from '../shared/contracts/assets-report.contract';
 import type { SetInitialBalanceResult } from '../shared/contracts/initial-balance.contract';
@@ -27,7 +27,7 @@ describe('App critical UI flows (E2E)', () => {
           {
             date: '2025-03-10',
             ticker: 'PETR4',
-            type: 'buy',
+            type: TransactionType.Buy,
             quantity: 10,
             unitPrice: 20,
             fees: 1,

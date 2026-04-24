@@ -1,4 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
+import { ELECTRON_API_CHANNELS, REGISTERED_IPC_CHANNELS } from './shared/ipc/ipc-channels';
 
 const exposeInMainWorld = jest.fn();
 const invoke = jest.fn();
@@ -41,13 +42,13 @@ describe('preload', () => {
     await electronApi.listPositions({ baseYear: 2025 });
     await electronApi.generateAssetsReport({ baseYear: 2025 });
 
-    expect(invoke).toHaveBeenNthCalledWith(1, 'import:preview-transactions', {
+    expect(invoke).toHaveBeenNthCalledWith(1, ELECTRON_API_CHANNELS.previewImportTransactions, {
       filePath: '/tmp/operations.csv',
     });
-    expect(invoke).toHaveBeenNthCalledWith(2, 'import:confirm-transactions', {
+    expect(invoke).toHaveBeenNthCalledWith(2, ELECTRON_API_CHANNELS.confirmImportTransactions, {
       filePath: '/tmp/operations.csv',
     });
-    expect(invoke).toHaveBeenNthCalledWith(3, 'portfolio:set-initial-balance', {
+    expect(invoke).toHaveBeenNthCalledWith(3, ELECTRON_API_CHANNELS.setInitialBalance, {
       ticker: 'IVVB11',
       brokerId: 'broker-xp',
       assetType: AssetType.Etf,
@@ -55,8 +56,12 @@ describe('preload', () => {
       averagePrice: 300,
       year: 2025,
     });
-    expect(invoke).toHaveBeenNthCalledWith(4, 'portfolio:list-positions', { baseYear: 2025 });
-    expect(invoke).toHaveBeenNthCalledWith(5, 'report:assets-annual', { baseYear: 2025 });
+    expect(invoke).toHaveBeenNthCalledWith(4, ELECTRON_API_CHANNELS.listPositions, {
+      baseYear: 2025,
+    });
+    expect(invoke).toHaveBeenNthCalledWith(5, ELECTRON_API_CHANNELS.generateAssetsReport, {
+      baseYear: 2025,
+    });
   });
 
   it('does not expose generic IPC surface to renderer', () => {
@@ -81,5 +86,11 @@ describe('preload', () => {
     ]);
     expect('invoke' in (electronApi as unknown as Record<string, unknown>)).toBe(false);
     expect('ipcRenderer' in (electronApi as unknown as Record<string, unknown>)).toBe(false);
+  });
+
+  it('keeps exposed preload channels aligned with registered main-process channels', () => {
+    expect(
+      Object.values(ELECTRON_API_CHANNELS).every((channel) => REGISTERED_IPC_CHANNELS.includes(channel)),
+    ).toBe(true);
   });
 });

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import type { JSX } from 'react';
 import { buildErrorMessage } from '../errors/build-error-message';
+import { assertSupportedYear, buildYearOptions, getDefaultBaseYear } from '../../shared/utils/year';
 
-const currentYear = new Date().getFullYear();
-const defaultBaseYear = currentYear - 1;
+const defaultBaseYear = getDefaultBaseYear();
+const yearOptions = buildYearOptions(defaultBaseYear);
 
 type MigrateYearModalProps = {
   isOpen: boolean;
@@ -26,7 +27,9 @@ export function MigrateYearModal({
 
   async function handleMigrate(): Promise<void> {
     const year = Number(sourceYear);
-    if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+    try {
+      assertSupportedYear(year, { invalidTypeMessage: 'Ano de origem inválido.' });
+    } catch {
       setErrorMessage('Ano de origem inválido.');
       return;
     }
@@ -66,9 +69,6 @@ export function MigrateYearModal({
   if (!isOpen) {
     return <></>;
   }
-
-  const yearOptions = Array.from({ length: 15 }, (_, i) => defaultBaseYear - 5 + i);
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"

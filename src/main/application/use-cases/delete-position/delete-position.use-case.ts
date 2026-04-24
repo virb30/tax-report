@@ -1,7 +1,8 @@
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
-import { DeletePositionInput } from './delete-position.input';
-import { DeletePositionOutput } from './delete-position.output';
+import type { DeletePositionInput } from './delete-position.input';
+import type { DeletePositionOutput } from './delete-position.output';
+import { assertSupportedYear } from '../../../../shared/utils/year';
 
 export class DeletePositionUseCase {
   constructor(
@@ -12,19 +13,13 @@ export class DeletePositionUseCase {
   async execute(input: DeletePositionInput): Promise<DeletePositionOutput> {
     this.validate(input);
 
-    const position = await this.positionRepository.findByTickerAndYear(
-      input.ticker,
-      input.year,
-    );
+    const position = await this.positionRepository.findByTickerAndYear(input.ticker, input.year);
 
     if (!position) {
       return { deleted: false };
     }
 
-    await this.transactionRepository.deleteByTickerAndYear(
-      input.ticker,
-      input.year,
-    );
+    await this.transactionRepository.deleteByTickerAndYear(input.ticker, input.year);
     await this.positionRepository.delete(input.ticker, input.year);
 
     return { deleted: true };
@@ -34,11 +29,9 @@ export class DeletePositionUseCase {
     if (typeof input.ticker !== 'string' || input.ticker.trim().length === 0) {
       throw new Error('Ticker inválido.');
     }
-    if (typeof input.year !== 'number' || !Number.isInteger(input.year)) {
-      throw new Error('Ano inválido.');
-    }
-    if (input.year < 2000 || input.year > 2100) {
-      throw new Error('Ano deve estar entre 2000 e 2100.');
-    }
+    assertSupportedYear(input.year, {
+      invalidTypeMessage: 'Ano inválido.',
+      outOfRangeMessage: 'Ano deve estar entre 2000 e 2100.',
+    });
   }
 }

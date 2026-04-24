@@ -1,6 +1,8 @@
 import type { AssetType } from '../../../../shared/types/domain';
-import { Uuid } from '../../shared/uuid.vo';
+import { YEAR_RANGE } from '../../../../shared/utils/year';
+import type { Uuid } from '../../shared/uuid.vo';
 import { AveragePriceService } from '../services/average-price.service';
+import { PositionBrokerAllocation } from './position-broker-allocation';
 
 export type BrokerAllocation = {
   brokerId: Uuid;
@@ -14,7 +16,7 @@ export interface AssetPositionProps {
   averagePrice: number;
   brokerBreakdown: BrokerAllocation[];
   year: number;
-};
+}
 
 interface RestoreAssetPositionProps {
   ticker: string;
@@ -44,15 +46,15 @@ interface ApplyBuyInput extends ApplyOperationInput {
   fees?: number;
 }
 
-interface ApplySellInput extends ApplyOperationInput {}
+type ApplySellInput = ApplyOperationInput;
 
 interface ApplyBonusInput extends ApplyOperationInput {
   unitCost: number;
 }
 
-interface ApplyTransferOutInput extends ApplyOperationInput {}
+type ApplyTransferOutInput = ApplyOperationInput;
 
-interface ApplyTransferInInput extends ApplyOperationInput {}
+type ApplyTransferInInput = ApplyOperationInput;
 
 interface ApplyInitialBalanceInput extends ApplyOperationInput {
   averagePrice: number;
@@ -66,22 +68,20 @@ interface ApplyReverseSplitInput {
   ratio: number;
 }
 
-export const MIN_SUPPORTED_YEAR = 2000;
+export const MIN_SUPPORTED_YEAR = YEAR_RANGE.min;
 
 export class AssetPosition {
   private readonly averagePriceService: AveragePriceService;
   private _totalQuantity: number;
   private _averagePrice: number;
-  private _brokerBreakdown: Map<string, number>;
+  private readonly brokerBreakdownState: PositionBrokerAllocation;
   private _year: number;
 
   private constructor(private readonly props: AssetPositionProps) {
     this.averagePriceService = new AveragePriceService();
     this._totalQuantity = props.totalQuantity;
     this._averagePrice = props.averagePrice;
-    this._brokerBreakdown = new Map(
-      props.brokerBreakdown.map((a) => [a.brokerId.value, a.quantity]),
-    );
+    this.brokerBreakdownState = new PositionBrokerAllocation(props.brokerBreakdown);
     this._year = props.year;
     this.validate();
   }
@@ -102,9 +102,7 @@ export class AssetPosition {
   }
 
   applyBuy(input: ApplyBuyInput): void {
-    if (input.quantity <= 0) {
-      throw new Error('Buy quantity must be greater than zero.');
-    }
+    this.assertPositiveQuantity(input.quantity, 'Buy quantity must be greater than zero.');
 
     const nextQuantity = this._totalQuantity + input.quantity;
     const nextAveragePrice = this.averagePriceService.calculateAfterBuy(this, {
@@ -113,32 +111,22 @@ export class AssetPosition {
       operationalCosts: input.fees ?? 0,
     });
 
-    this.incrementBrokerQuantity(input.brokerId, input.quantity);
-
-    this._totalQuantity = nextQuantity;
-    this._averagePrice = nextAveragePrice;
-    this.validate();
+    this.brokerBreakdownState.increment(input.brokerId, input.quantity);
+    this.commitQuantityAndAveragePrice(nextQuantity, nextAveragePrice);
   }
 
   applySell(input: ApplySellInput): void {
-    if (input.quantity <= 0) {
-      throw new Error('Sell quantity must be greater than zero.');
-    }
+    this.assertPositiveQuantity(input.quantity, 'Sell quantity must be greater than zero.');
     if (this._totalQuantity === 0) {
       throw new Error('Cannot sell asset without an open position.');
     }
 
-    this.decrementBrokerQuantity(input.brokerId, input.quantity);
-    const nextQuantity = this.totalQuantity - input.quantity;
-
-    this._totalQuantity = nextQuantity;
-    this.validate();
+    this.brokerBreakdownState.decrement(input.brokerId, input.quantity);
+    this.commitQuantityAndAveragePrice(this.totalQuantity - input.quantity, this._averagePrice);
   }
 
   applyBonus(input: ApplyBonusInput): void {
-    if (input.quantity <= 0) {
-      throw new Error('Bonus quantity must be greater than zero.');
-    }
+    this.assertPositiveQuantity(input.quantity, 'Bonus quantity must be greater than zero.');
 
     const nextQuantity = this._totalQuantity + input.quantity;
     const nextAveragePrice = this.averagePriceService.calculateAfterBonus(
@@ -147,46 +135,35 @@ export class AssetPosition {
       input.unitCost,
     );
 
-    this.incrementBrokerQuantity(input.brokerId, input.quantity);
-
-    this._totalQuantity = nextQuantity;
-    this._averagePrice = nextAveragePrice;
-    this.validate();
+    this.brokerBreakdownState.increment(input.brokerId, input.quantity);
+    this.commitQuantityAndAveragePrice(nextQuantity, nextAveragePrice);
   }
 
   applyTransferOut(input: ApplyTransferOutInput): void {
-    if (input.quantity <= 0) {
-      throw new Error('Transfer quantity must be greater than zero.');
-    }
+    this.assertPositiveQuantity(input.quantity, 'Transfer quantity must be greater than zero.');
 
-    this.decrementBrokerQuantity(input.brokerId, input.quantity);
-    this._totalQuantity = this._totalQuantity - input.quantity;
-    this.validate();
+    this.brokerBreakdownState.decrement(input.brokerId, input.quantity);
+    this.commitQuantityAndAveragePrice(this._totalQuantity - input.quantity, this._averagePrice);
   }
 
   applyTransferIn(input: ApplyTransferInInput): void {
-    if (input.quantity <= 0) {
-      throw new Error('Transfer quantity must be greater than zero.');
-    }
+    this.assertPositiveQuantity(input.quantity, 'Transfer quantity must be greater than zero.');
 
-    this.incrementBrokerQuantity(input.brokerId, input.quantity);
-    this._totalQuantity = this._totalQuantity + input.quantity;
-    this.validate();
+    this.brokerBreakdownState.increment(input.brokerId, input.quantity);
+    this.commitQuantityAndAveragePrice(this._totalQuantity + input.quantity, this._averagePrice);
   }
 
   applyInitialBalance(input: ApplyInitialBalanceInput): void {
-    if (input.quantity <= 0) {
-      throw new Error('Initial balance quantity must be greater than zero.');
-    }
+    this.assertPositiveQuantity(
+      input.quantity,
+      'Initial balance quantity must be greater than zero.',
+    );
     if (input.averagePrice <= 0) {
       throw new Error('Initial balance average price must be greater than zero.');
     }
 
-    this.setBrokerQuantity(input.brokerId, input.quantity);
-    this._averagePrice = input.averagePrice;
-    this._totalQuantity = this.calculateTotalQuantity();
-
-    this.validate();
+    this.brokerBreakdownState.set(input.brokerId, input.quantity);
+    this.commitQuantityAndAveragePrice(this.calculateTotalQuantity(), input.averagePrice);
   }
 
   applySplit(input: ApplySplitInput): void {
@@ -194,24 +171,7 @@ export class AssetPosition {
       throw new Error('Split ratio must be greater than zero.');
     }
 
-    for (const [brokerId, quantity] of this._brokerBreakdown.entries()) {
-      const nextBrokerQty = Math.floor(quantity * input.ratio);
-      if (nextBrokerQty > 0) {
-        this._brokerBreakdown.set(brokerId, nextBrokerQty);
-      } else {
-        this._brokerBreakdown.delete(brokerId);
-      }
-    }
-
-    const nextTotalQuantity = this.calculateTotalQuantity();
-    const nextAveragePrice = this.averagePriceService.calculateAfterQuantityChange(
-      this,
-      nextTotalQuantity,
-    );
-
-    this._totalQuantity = nextTotalQuantity;
-    this._averagePrice = nextAveragePrice;
-    this.validate();
+    this.applyCorporateAction((quantity) => quantity * input.ratio);
   }
 
   applyReverseSplit(input: ApplyReverseSplitInput): void {
@@ -219,24 +179,7 @@ export class AssetPosition {
       throw new Error('Reverse Split ratio must be greater than zero.');
     }
 
-    for (const [brokerId, quantity] of this._brokerBreakdown.entries()) {
-      const nextBrokerQty = Math.floor(quantity / input.ratio);
-      if (nextBrokerQty > 0) {
-        this._brokerBreakdown.set(brokerId, nextBrokerQty);
-      } else {
-        this._brokerBreakdown.delete(brokerId);
-      }
-    }
-
-    const nextTotalQuantity = this.calculateTotalQuantity();
-    const nextAveragePrice = this.averagePriceService.calculateAfterQuantityChange(
-      this,
-      nextTotalQuantity,
-    );
-
-    this._totalQuantity = nextTotalQuantity;
-    this._averagePrice = nextAveragePrice;
-    this.validate();
+    this.applyCorporateAction((quantity) => quantity / input.ratio);
   }
 
   get totalQuantity(): number {
@@ -248,7 +191,7 @@ export class AssetPosition {
   }
 
   get brokerBreakdown(): BrokerAllocation[] {
-    return Array.from(this._brokerBreakdown.entries()).map(([brokerId, quantity]) => ({ brokerId: Uuid.from(brokerId), quantity }));
+    return this.brokerBreakdownState.toArray();
   }
 
   get year(): number {
@@ -280,10 +223,7 @@ export class AssetPosition {
       throw new Error(`Year must be greater than or equal to ${MIN_SUPPORTED_YEAR}.`);
     }
 
-    const breakdownSum = Array.from(this._brokerBreakdown.values()).reduce(
-      (acc, qty) => acc + qty,
-      0,
-    );
+    const breakdownSum = this.brokerBreakdownState.total();
     if (Math.abs(breakdownSum - this._totalQuantity) > 1e-9) {
       throw new Error(
         `Broker breakdown sum (${breakdownSum}) must equal total quantity (${this._totalQuantity}).`,
@@ -292,32 +232,28 @@ export class AssetPosition {
   }
 
   private calculateTotalQuantity(): number {
-    return Array.from(this._brokerBreakdown.values()).reduce((acc, quantity) => acc + quantity, 0);
+    return this.brokerBreakdownState.total();
   }
 
-  private setBrokerQuantity(brokerId: Uuid, quantity: number): void {
-    this._brokerBreakdown.set(brokerId.value, quantity);
+  private applyCorporateAction(transform: (quantity: number) => number): void {
+    this.brokerBreakdownState.applyRatio(transform);
+    const nextTotalQuantity = this.calculateTotalQuantity();
+    const nextAveragePrice = this.averagePriceService.calculateAfterQuantityChange(
+      this,
+      nextTotalQuantity,
+    );
+    this.commitQuantityAndAveragePrice(nextTotalQuantity, nextAveragePrice);
   }
 
-  private incrementBrokerQuantity(brokerId: Uuid, quantity: number): void {
-    const currentBrokerQty = this._brokerBreakdown.get(brokerId.value) ?? 0;
-    this._brokerBreakdown.set(brokerId.value, currentBrokerQty + quantity);
+  private commitQuantityAndAveragePrice(totalQuantity: number, averagePrice: number): void {
+    this._totalQuantity = totalQuantity;
+    this._averagePrice = averagePrice;
+    this.validate();
   }
 
-  private decrementBrokerQuantity(brokerId: Uuid, quantity: number): void {
-    const brokerQty = this._brokerBreakdown.get(brokerId.value) ?? 0;
-
-    if (quantity > brokerQty) {
-      throw new Error(
-        'Cannot sell more than current quantity allocated to this broker.',
-      );
-    }
-
-    const newBrokerQty = brokerQty - quantity;
-    if (newBrokerQty > 0) {
-      this._brokerBreakdown.set(brokerId.value, newBrokerQty);
-    } else {
-      this._brokerBreakdown.delete(brokerId.value);
+  private assertPositiveQuantity(quantity: number, errorMessage: string): void {
+    if (quantity <= 0) {
+      throw new Error(errorMessage);
     }
   }
 }

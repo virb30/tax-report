@@ -20,38 +20,39 @@ import type {
   ConfirmImportTransactionsCommand,
   PreviewImportTransactionsCommand,
 } from './shared/contracts/preview-import.contract';
+import { ELECTRON_API_CHANNELS } from './shared/ipc/ipc-channels';
 
 export const electronApi: ElectronApi = {
   appName: 'tax-report',
-  importSelectFile: () => ipcRenderer.invoke('import:select-file'),
+  importSelectFile: () => ipcRenderer.invoke(ELECTRON_API_CHANNELS.importSelectFile),
   previewImportTransactions: (input: PreviewImportTransactionsCommand) =>
-    ipcRenderer.invoke('import:preview-transactions', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.previewImportTransactions, input),
   confirmImportTransactions: (input: ConfirmImportTransactionsCommand) =>
-    ipcRenderer.invoke('import:confirm-transactions', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.confirmImportTransactions, input),
   setInitialBalance: (input: SetInitialBalanceCommand) =>
-    ipcRenderer.invoke('portfolio:set-initial-balance', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.setInitialBalance, input),
   listPositions: (input: ListPositionsQuery) =>
-    ipcRenderer.invoke('portfolio:list-positions', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.listPositions, input),
   generateAssetsReport: (input: GenerateAssetsReportQuery) =>
-    ipcRenderer.invoke('report:assets-annual', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.generateAssetsReport, input),
   listBrokers: (input?: ListBrokersQuery) =>
-    ipcRenderer.invoke('brokers:list', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.listBrokers, input),
   createBroker: (input: CreateBrokerCommand) =>
-    ipcRenderer.invoke('brokers:create', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.createBroker, input),
   updateBroker: (input: UpdateBrokerCommand) =>
-    ipcRenderer.invoke('brokers:update', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.updateBroker, input),
   toggleBrokerActive: (input: ToggleBrokerActiveCommand) =>
-    ipcRenderer.invoke('brokers:toggle-active', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.toggleBrokerActive, input),
   recalculatePosition: (input: RecalculatePositionCommand) =>
-    ipcRenderer.invoke('portfolio:recalculate', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.recalculatePosition, input),
   migrateYear: (input: MigrateYearCommand) =>
-    ipcRenderer.invoke('portfolio:migrate-year', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.migrateYear, input),
   previewConsolidatedPosition: (input: PreviewConsolidatedPositionCommand) =>
-    ipcRenderer.invoke('portfolio:preview-consolidated-position', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.previewConsolidatedPosition, input),
   importConsolidatedPosition: (input: ImportConsolidatedPositionCommand) =>
-    ipcRenderer.invoke('portfolio:import-consolidated-position', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.importConsolidatedPosition, input),
   deletePosition: (input: DeletePositionCommand) =>
-    ipcRenderer.invoke('portfolio:delete-position', input),
+    ipcRenderer.invoke(ELECTRON_API_CHANNELS.deletePosition, input),
 };
 
 contextBridge.exposeInMainWorld('electronApi', electronApi);

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { mock } from 'jest-mock-extended';
 import { ImportConsolidatedPositionUseCase } from './import-consolidated-position-use-case';
@@ -38,25 +37,14 @@ describe('ImportConsolidatedPositionUseCase', () => {
       active: true,
     });
 
-    brokerRepo.findByCode.mockImplementation((code) =>
-      Promise.resolve(
-        code === 'XP'
-          ? xpBroker
-          : code === 'CLEAR'
-            ? clearBroker
-            : null,
-      ),
+    brokerRepo.findAllByCodes.mockImplementation((codes) =>
+      Promise.resolve([xpBroker, clearBroker].filter((broker) => codes.includes(broker.code))),
     );
     transactionRepo.saveMany.mockResolvedValue(undefined);
     transactionRepo.deleteInitialBalanceByTickerAndYear.mockResolvedValue(undefined);
     queue.publish.mockResolvedValue(undefined);
 
-    useCase = new ImportConsolidatedPositionUseCase(
-      parser,
-      brokerRepo,
-      transactionRepo,
-      queue,
-    );
+    useCase = new ImportConsolidatedPositionUseCase(parser, brokerRepo, transactionRepo, queue);
   });
 
   it('imports and upserts positions for multiple tickers', async () => {
@@ -73,21 +61,24 @@ describe('ImportConsolidatedPositionUseCase', () => {
     expect(result.importedCount).toBe(2);
     expect(result.recalculatedTickers).toContain('PETR4');
     expect(result.recalculatedTickers).toContain('VALE3');
-    expect(transactionRepo.deleteInitialBalanceByTickerAndYear).toHaveBeenCalledWith(
-      'PETR4',
-      2024,
-    );
-    expect(transactionRepo.deleteInitialBalanceByTickerAndYear).toHaveBeenCalledWith(
-      'VALE3',
-      2024,
-    );
+    expect(transactionRepo.deleteInitialBalanceByTickerAndYear).toHaveBeenCalledWith('PETR4', 2024);
+    expect(transactionRepo.deleteInitialBalanceByTickerAndYear).toHaveBeenCalledWith('VALE3', 2024);
     expect(transactionRepo.saveMany).toHaveBeenCalledTimes(2);
     expect(queue.publish).toHaveBeenCalledWith(
-      expect.objectContaining({ name: ConsolidatedPositionImportedEvent.name, ticker: 'PETR4', year: 2024 }),
+      expect.objectContaining({
+        name: ConsolidatedPositionImportedEvent.name,
+        ticker: 'PETR4',
+        year: 2024,
+      }),
     );
     expect(queue.publish).toHaveBeenCalledWith(
-      expect.objectContaining({ name: ConsolidatedPositionImportedEvent.name, ticker: 'VALE3', year: 2024 }),
+      expect.objectContaining({
+        name: ConsolidatedPositionImportedEvent.name,
+        ticker: 'VALE3',
+        year: 2024,
+      }),
     );
+    expect(brokerRepo.findAllByCodes).toHaveBeenCalledWith(['XP', 'CLEAR']);
   });
 
   it('groups same ticker+broker and keeps last row (upsert)', async () => {
@@ -148,9 +139,9 @@ describe('ImportConsolidatedPositionUseCase', () => {
       { ticker: 'PETR4', quantity: 100, averagePrice: 25.5, brokerCode: 'INVALID' },
     ]);
 
-    await expect(
-      useCase.execute({ filePath: '/path/to/file.csv', year: 2024 }),
-    ).rejects.toThrow(/Corretora com codigo 'INVALID' nao encontrada/);
+    await expect(useCase.execute({ filePath: '/path/to/file.csv', year: 2024 })).rejects.toThrow(
+      /Corretora com codigo 'INVALID' nao encontrada/,
+    );
 
     expect(transactionRepo.saveMany).not.toHaveBeenCalled();
   });
@@ -158,17 +149,17 @@ describe('ImportConsolidatedPositionUseCase', () => {
   it('throws when year is invalid', async () => {
     parser.parse.mockResolvedValue([]);
 
-    await expect(
-      useCase.execute({ filePath: '/path/to/file.csv', year: 1999 }),
-    ).rejects.toThrow(/Ano/);
+    await expect(useCase.execute({ filePath: '/path/to/file.csv', year: 1999 })).rejects.toThrow(
+      /Ano/,
+    );
 
-    await expect(
-      useCase.execute({ filePath: '/path/to/file.csv', year: 2101 }),
-    ).rejects.toThrow(/Ano/);
+    await expect(useCase.execute({ filePath: '/path/to/file.csv', year: 2101 })).rejects.toThrow(
+      /Ano/,
+    );
 
-    await expect(
-      useCase.execute({ filePath: '/path/to/file.csv', year: 2024.5 }),
-    ).rejects.toThrow(/Ano/);
+    await expect(useCase.execute({ filePath: '/path/to/file.csv', year: 2024.5 })).rejects.toThrow(
+      /Ano/,
+    );
   });
 
   it('returns preview without resolving brokers', async () => {
@@ -185,6 +176,22 @@ describe('ImportConsolidatedPositionUseCase', () => {
       averagePrice: 25.5,
       brokerCode: 'XP',
     });
-    expect(brokerRepo.findByCode).not.toHaveBeenCalled();
+    expect(brokerRepo.findAllByCodes).not.toHaveBeenCalled();
+  });
+
+  it('resolves brokers in bulk once for repeated broker codes', async () => {
+    parser.parse.mockResolvedValue([
+      { ticker: 'PETR4', quantity: 100, averagePrice: 25, brokerCode: 'XP' },
+      { ticker: 'VALE3', quantity: 50, averagePrice: 24, brokerCode: 'xp' },
+      { ticker: 'ITSA4', quantity: 30, averagePrice: 10, brokerCode: 'CLEAR' },
+    ]);
+
+    await useCase.execute({
+      filePath: '/path/to/file.csv',
+      year: 2024,
+    });
+
+    expect(brokerRepo.findAllByCodes).toHaveBeenCalledTimes(1);
+    expect(brokerRepo.findAllByCodes).toHaveBeenCalledWith(['XP', 'CLEAR']);
   });
 });

@@ -1,8 +1,12 @@
 import globals from 'globals';
 import tsParser from '@typescript-eslint/parser';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
+import jestPlugin from 'eslint-plugin-jest';
+import { defineConfig } from "eslint/config";
+import { join } from 'path';
 
-export default [
+
+export default defineConfig([
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
@@ -19,16 +23,6 @@ export default [
     plugins: {
       '@typescript-eslint': tsPlugin,
     },
-    overrides: [
-      {
-        files: ['**/*.test.ts', '**/*.spec.ts'],
-        plugins: ['jest'],
-        rules: {
-          '@typescript-eslint/unbound-method': 'off',
-          'jest/unbound-method': 'error',
-        },
-      },
-    ],
     rules: {
       ...tsPlugin.configs.recommended.rules,
       ...tsPlugin.configs['recommended-type-checked'].rules,
@@ -42,6 +36,16 @@ export default [
     },
   },
   {
-    ignores: ['out/**', '.vite/**', 'coverage/**'],
+    files: ['**/*.test.ts', '**/*.spec.ts'],
+    plugins: { 
+      jest: jestPlugin 
+    },
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
+      'jest/unbound-method': 'error',
+    },
+  },
+  {
+    ignores: ['scripts/**', 'out/**', '.vite/**', 'coverage/**'],
   }
-];
+]);

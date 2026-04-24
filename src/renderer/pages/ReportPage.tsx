@@ -7,6 +7,7 @@ import type {
   GenerateAssetsReportResult,
 } from '../../shared/contracts/assets-report.contract';
 import { buildErrorMessage } from '../errors/build-error-message';
+import { buildYearOptions, getDefaultBaseYear } from '../../shared/utils/year';
 
 function formatBrl(value: number): string {
   return value.toLocaleString('pt-BR', {
@@ -63,7 +64,12 @@ function flattenToRows(items: AssetsReportItem[]): TableRow[] {
 }
 
 export function ReportPage(): JSX.Element {
-  const defaultBaseYear = new Date().getFullYear() - 1;
+  const defaultBaseYear = getDefaultBaseYear();
+  const yearOptions = buildYearOptions(defaultBaseYear, {
+    yearsBefore: 9,
+    yearsAfter: 0,
+    descending: true,
+  });
   const [baseYear, setBaseYear] = useState(String(defaultBaseYear));
   const [report, setReport] = useState<GenerateAssetsReportResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -120,7 +126,7 @@ export function ReportPage(): JSX.Element {
             value={baseYear}
             onChange={(event) => setBaseYear(event.target.value)}
           >
-            {Array.from({ length: 10 }, (_, i) => defaultBaseYear - i).map((year) => (
+            {yearOptions.map((year) => (
               <option key={year} value={String(year)}>
                 {year}
               </option>

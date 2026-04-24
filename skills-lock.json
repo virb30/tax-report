@@ -11,10 +11,20 @@
       "sourceType": "github",
       "computedHash": "e5a40757c654006e281b630c400103516ae303a2bddb0cb8e41a14cdd1f61990"
     },
+    "brainstorming": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "7de51459d56568d88784fdc94f7d27b9f0c2ee15dd562bac6d0e5f72e22a61b1"
+    },
     "context7": {
       "source": "pedronauck/skills",
       "sourceType": "github",
       "computedHash": "74462007e7013b4c4eea818b3a5bd50cfa8641f4c12135877fc9f082249d984d"
+    },
+    "council": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "a71ff9d4b802e7a660b507a71f1fc14016232ddf20e0f97c1c597a7f377f56fe"
     },
     "crafting-effective-readmes": {
       "source": "pedronauck/skills",
@@ -26,6 +36,11 @@
       "sourceType": "github",
       "computedHash": "9389d1cc3aa88d8e6c58fd4ef75660bc772bf91ad27f163f0134be59e0509d49"
     },
+    "executing-plans": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "6bf17ecd2e0f099a72281b1533ebbdba3fb118b62029d7fd66d2fc111a9df79d"
+    },
     "frontend-design": {
       "source": "pedronauck/skills",
       "sourceType": "github",
@@ -35,6 +50,11 @@
       "source": "pedronauck/skills",
       "sourceType": "github",
       "computedHash": "4d5fe1dacfebc0c1b3837b061405150ed2e4971c096543afc46c23161c5a4f7a"
+    },
+    "lesson-learned": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "58e2a4062f3f113177658ef822dfc52ca10997a41b71098a6ae809b8f5ab316c"
     },
     "qa-execution": {
       "source": "pedronauck/skills",
@@ -56,10 +76,20 @@
       "sourceType": "github",
       "computedHash": "1c02ed04284aea525dcc605a24268240dc9cdb386073fa009b377672437d2777"
     },
+    "requirements-clarity": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "a23371d1cd5d8cfdd62af76ce0cd462095d35dfd612587ed30528b4a54105771"
+    },
     "shadcn": {
       "source": "pedronauck/skills",
       "sourceType": "github",
       "computedHash": "c850f7fcf3d694cb910737b995b6b062faa82b96b3620f290920b8fdc74e30b1"
+    },
+    "ship-learn-next": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "computedHash": "4df93407ee5223f5905178f134839dd0e100a5ddaba88c0e6a408dacb468d942"
     },
     "skill-best-practices": {
       "source": "pedronauck/skills",
