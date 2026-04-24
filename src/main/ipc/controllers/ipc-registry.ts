@@ -1,5 +1,5 @@
-import { IpcMain } from 'electron';
-import { IpcController } from './ipc-controller.interface';
+import type { IpcMain } from 'electron';
+import type { IpcController } from './ipc-controller.interface';
 
 export class IpcRegistry {
   constructor(private readonly ipcControllers: IpcController[]) {}

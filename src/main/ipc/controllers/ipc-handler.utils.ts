@@ -1,14 +1,5 @@
 import { z } from 'zod';
 
-type ValidatedHandlerConfig<TInput, TSuccessOutput, TErrorOutput = TSuccessOutput> = {
-  channel: string;
-  schema: z.ZodType<TInput>;
-  execute: (payload: TInput) => Promise<TSuccessOutput> | TSuccessOutput;
-  payloadErrorMessage?: string;
-  requireObjectInput?: boolean;
-  onError?: (error: unknown) => TErrorOutput;
-};
-
 export function buildIpcErrorMessage(
   error: unknown,
   fallbackMessage = 'Erro ao processar a requisição.',
@@ -45,26 +36,4 @@ export function parseIpcPayload<T>(
 
     throw error;
   }
-}
-
-export function registerValidatedHandler<TInput, TSuccessOutput, TErrorOutput = TSuccessOutput>(
-  ipcMain: Pick<Electron.IpcMain, 'handle'>,
-  config: ValidatedHandlerConfig<TInput, TSuccessOutput, TErrorOutput>,
-): void {
-  ipcMain.handle(config.channel, async (_event, input: unknown) => {
-    try {
-      const payload = parseIpcPayload(config.schema, input, {
-        payloadErrorMessage: config.payloadErrorMessage,
-        requireObjectInput: config.requireObjectInput,
-      });
-
-      return await config.execute(payload);
-    } catch (error) {
-      if (config.onError) {
-        return config.onError(error);
-      }
-
-      throw error;
-    }
-  });
 }

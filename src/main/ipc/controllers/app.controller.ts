@@ -1,16 +1,14 @@
 import type { IpcController, IpcMainHandleRegistry } from './ipc-controller.interface';
-import { APP_IPC_CHANNELS } from '../../../shared/ipc/ipc-channels';
+import { bindIpcContract } from '../binding/bind-ipc-contract';
+import { createAppIpcHandlers } from '../handlers/app/app-ipc-handlers';
+import { appIpcContracts, healthCheckContract } from '../../../shared/ipc/contracts/app';
 
 export class AppController implements IpcController {
-  constructor() {}
-
   register(ipcMain: IpcMainHandleRegistry): string[] {
-    const channels = Object.values(APP_IPC_CHANNELS);
+    const handlers = createAppIpcHandlers();
 
-    ipcMain.handle(APP_IPC_CHANNELS.healthCheck, () => {
-      return { status: 'ok' };
-    });
+    bindIpcContract(ipcMain, healthCheckContract, handlers.healthCheck);
 
-    return channels;
+    return appIpcContracts.map((contract) => contract.channel);
   }
 }
