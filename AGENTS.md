@@ -33,6 +33,17 @@ Follow existing naming patterns: domain objects use suffixes like `.entity.ts`, 
 
 Avoid using "utils" pattern in backend `src/main/**/*.ts`. Try to express the utility as part of a class or a function inside a relevant module.
 
+## Implementation Architecture Rules
+
+Before adding behavior to an existing page, entity, parser, controller, or IPC boundary, identify the responsibility being changed and keep it named in the code. Do not let orchestration, state, validation, transport details, and presentation grow together in the same module.
+
+- For React pages, keep pages as composition roots. Move async workflows, IPC calls, submit handlers, modal state, and derived page state into a focused `use...` hook; move forms, tables, and modals into named components.
+- Watch page hooks for becoming the next god module. If a hook accumulates many independent state groups, public commands, or effects, split commands, queries, or form state into smaller page-local modules.
+- For domain entities, extract a class only when a cohesive sub-rule has its own data and operations, such as allocation, calculation, or normalization state. Avoid extracting merely to reduce line count.
+- For parsers and import flows, express multi-step work as named phases such as load, normalize, resolve, group, validate, and serialize. If a phase grows its own policy, move it behind a named module and test it directly.
+- For IPC, preload, HTTP-like, CLI, queue, or other technical boundaries, keep channel names, payload parsing, validation, and error semantics in one shared, tested contract instead of repeating string literals or ad hoc validation in controllers.
+- When extracting a responsibility, add focused tests for the new module or contract before relying only on broader integration coverage.
+
 ## Testing Guidelines
 
 Jest with `ts-jest` is the primary test runner. Global coverage thresholds are `80%` for branches, functions, lines, and statements. Coverage is collected from `src/main/**/*.ts` and `src/preload.ts`, excluding `src/main/main.ts`.
