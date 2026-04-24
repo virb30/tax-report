@@ -4,8 +4,8 @@ import type {
   IpcContractInput,
   IpcContractOutput,
 } from '../../../shared/ipc/contract-types';
-import { parseIpcPayload } from '../controllers/ipc-handler.utils';
-import type { IpcMainHandleRegistry } from '../controllers/ipc-controller.interface';
+import type { IpcMainHandleRegistry } from '../registry/ipc-registrar';
+import { parseIpcPayload } from './ipc-payload';
 
 type BoundIpcContract = IpcContractDefinition<z.ZodType, unknown>;
 

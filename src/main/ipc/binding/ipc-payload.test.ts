@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 import { z } from 'zod';
-import { buildIpcErrorMessage, parseIpcPayload } from './ipc-handler.utils';
+import { buildIpcErrorMessage, parseIpcPayload } from './ipc-payload';
 
-describe('ipc-handler utils', () => {
+describe('ipc payload helpers', () => {
   it('parses object payloads and returns first zod issue message', () => {
     const schema = z.object({
       baseYear: z.number().int('Ano inválido.'),

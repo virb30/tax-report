@@ -3,7 +3,7 @@ import { mock, mockReset } from 'jest-mock-extended';
 import type { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions/import-transactions-use-case';
 import type { PreviewImportUseCase } from '../../application/use-cases/preview-import/preview-import-use-case';
 import { IMPORT_IPC_CHANNELS } from '../../../shared/ipc/ipc-channels';
-import type { IpcMainHandleRegistry } from './ipc-controller.interface';
+import type { IpcMainHandleRegistry } from '../registry/ipc-registrar';
 
 const showOpenDialog = jest
   .fn<(options: Electron.OpenDialogOptions) => Promise<Electron.OpenDialogReturnValue>>();

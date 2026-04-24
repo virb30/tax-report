@@ -1,4 +1,4 @@
-import type { IpcController, IpcMainHandleRegistry } from './ipc-controller.interface';
+import type { IpcMainHandleRegistry, IpcRegistrar } from '../registry/ipc-registrar';
 import type { PreviewImportUseCase } from '../../application/use-cases/preview-import/preview-import-use-case';
 import type { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions/import-transactions-use-case';
 import { bindIpcContract } from '../binding/bind-ipc-contract';
@@ -10,7 +10,7 @@ import {
   previewImportTransactionsContract,
 } from '../../../shared/ipc/contracts/import';
 
-export class ImportController implements IpcController {
+export class ImportController implements IpcRegistrar {
   constructor(
     private readonly previewImportUseCase: PreviewImportUseCase,
     private readonly importTransactionsUseCase: ImportTransactionsUseCase,

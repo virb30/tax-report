@@ -30,8 +30,8 @@ import { AppController } from '../../ipc/controllers/app.controller';
 import { ImportController } from '../../ipc/controllers/import.controller';
 import { PortfolioController } from '../../ipc/controllers/portfolio.controller';
 import { ReportController } from '../../ipc/controllers/report.controller';
-import { IpcRegistry } from '../../ipc/controllers/ipc-registry';
-import { IpcController } from '../../ipc/controllers/ipc-controller.interface';
+import { IpcRegistry } from '../../ipc/registry/ipc-registry';
+import type { IpcRegistrar } from '../../ipc/registry/ipc-registrar';
 
 export interface AppCradle {
   database: Knex;
@@ -66,7 +66,7 @@ export interface AppCradle {
   portfolioController: PortfolioController;
   reportController: ReportController;
 
-  ipcControllers: IpcController[];
+  ipcRegistrars: IpcRegistrar[];
   ipcRegistry: IpcRegistry;
 }
 
@@ -132,7 +132,7 @@ export function registerDependencies(db: Knex) {
     reportController: asClass(ReportController).singleton(),
     
     // IPC
-    ipcControllers: asFunction(() => [
+    ipcRegistrars: asFunction(() => [
       container.resolve('brokersController'),
       container.resolve('appController'),
       container.resolve('importController'),

@@ -1,4 +1,4 @@
-import type { IpcController, IpcMainHandleRegistry } from './ipc-controller.interface';
+import type { IpcMainHandleRegistry, IpcRegistrar } from '../registry/ipc-registrar';
 import type { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance.use-case';
 import type { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
 import type { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
@@ -18,7 +18,7 @@ import {
   setInitialBalanceContract,
 } from '../../../shared/ipc/contracts/portfolio';
 
-export class PortfolioController implements IpcController {
+export class PortfolioController implements IpcRegistrar {
   constructor(
     private readonly setInitialBalanceUseCase: SetInitialBalanceUseCase,
     private readonly listPositionsUseCase: ListPositionsUseCase,

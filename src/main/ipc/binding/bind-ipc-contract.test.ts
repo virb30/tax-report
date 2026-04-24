@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { z } from 'zod';
 import { defineIpcContract } from '../../../shared/ipc/define-ipc-contract';
-import type { IpcMainHandleRegistry } from '../controllers/ipc-controller.interface';
+import type { IpcMainHandleRegistry } from '../registry/ipc-registrar';
 import { bindIpcContract } from './bind-ipc-contract';
 import { toIpcFailureResult } from './ipc-error-mapper';
 

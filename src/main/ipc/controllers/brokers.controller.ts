@@ -1,4 +1,4 @@
-import type { IpcController, IpcMainHandleRegistry } from './ipc-controller.interface';
+import type { IpcMainHandleRegistry, IpcRegistrar } from '../registry/ipc-registrar';
 import type { CreateBrokerUseCase } from '../../application/use-cases/create-broker/create-broker.use-case';
 import type { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
 import type { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
@@ -14,7 +14,7 @@ import {
   updateBrokerContract,
 } from '../../../shared/ipc/contracts/brokers';
 
-export class BrokersController implements IpcController {
+export class BrokersController implements IpcRegistrar {
   constructor(
     private readonly listBrokersUseCase: ListBrokersUseCase,
     private readonly createBrokerUseCase: CreateBrokerUseCase,

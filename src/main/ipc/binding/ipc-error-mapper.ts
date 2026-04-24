@@ -1,4 +1,4 @@
-import { buildIpcErrorMessage } from '../controllers/ipc-handler.utils';
+import { buildIpcErrorMessage } from './ipc-payload';
 
 export type IpcFailureResult = {
   success: false;

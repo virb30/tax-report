@@ -138,3 +138,51 @@ Phase 5 main-process context migration is complete for the currently registered 
 ## 2026-04-24 IPC Cleanup Next Step
 
 Continue cleanup by evaluating whether `parseIpcPayload` and `buildIpcErrorMessage` should move from `src/main/ipc/controllers/ipc-handler.utils.ts` into the `binding/` layer now that controllers no longer own generic IPC validation.
+
+## 2026-04-24 Binding Helper Move Checkpoint
+
+- Resumed from the recorded next step: move generic IPC validation/error helpers out of `controllers/` and into the `binding/` layer if safe.
+- Next before implementation: run `npm run lint` again to capture this batch's baseline and ensure the final error count does not increase.
+
+## 2026-04-24 Binding Helper Move Progress
+
+- Ran `npm run lint` before implementation and captured the batch baseline: 98 errors.
+- Moved generic IPC payload/error helpers from `src/main/ipc/controllers/ipc-handler.utils.ts` to `src/main/ipc/binding/ipc-payload.ts`.
+- Moved the corresponding helper tests to `src/main/ipc/binding/ipc-payload.test.ts`.
+- Updated `bind-ipc-contract.ts` and `ipc-error-mapper.ts` to depend on the binding-layer helper.
+- Removed the obsolete controller-layer utility file and test.
+
+## 2026-04-24 Binding Helper Move Verification
+
+- `npx tsc --noEmit`: passed.
+- Focused binding/handler tests without coverage: passed, 3 suites and 11 tests.
+- `npm test`: passed, 56 suites and 257 tests, with global branch coverage at 80.33%.
+- `npm run lint`: still fails on pre-existing issues, unchanged from the 98-error baseline.
+
+## 2026-04-24 Binding Helper Move Next Step
+
+Review whether `src/main/ipc/controllers/ipc-registry.ts` should remain controller-oriented or move toward a contract registry/composition module now that controllers are thin binders around contract handlers.
+
+## 2026-04-24 IPC Registry Move Checkpoint
+
+- Resumed from the recorded next step: review whether `src/main/ipc/controllers/ipc-registry.ts` should remain controller-oriented.
+- Ran `npm run lint` before implementation and captured the batch baseline: 98 errors.
+
+## 2026-04-24 IPC Registry Move Progress
+
+- Moved IPC registration composition out of `src/main/ipc/controllers/` and into `src/main/ipc/registry/`.
+- Replaced the controller-named registration interface with `IpcRegistrar`, keeping the existing `register(ipcMain)` contract stable.
+- Updated controllers, binder tests, and the Awilix container to depend on the registry-layer registration types.
+- Narrowed `IpcRegistry.registerAll` to require only the `handle` capability used by IPC registrars.
+- Added focused coverage for `IpcRegistry.registerAll`.
+
+## 2026-04-24 IPC Registry Move Verification
+
+- `npx tsc --noEmit`: passed.
+- Focused IPC registry/binder/controller/container tests without coverage: passed, 5 suites and 16 tests.
+- `npm test`: passed, 57 suites and 258 tests, with global branch coverage at 80.33%.
+- `npm run lint`: still fails on pre-existing issues, but improved from the 98-error baseline to 97 errors.
+
+## 2026-04-24 IPC Registry Move Next Step
+
+Continue cleanup by reviewing remaining controller classes. They are now thin contract binders; decide whether to keep them as context composition roots or rename/move them to a main-process IPC composition layer in a follow-up batch.

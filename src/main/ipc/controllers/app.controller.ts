@@ -1,9 +1,9 @@
-import type { IpcController, IpcMainHandleRegistry } from './ipc-controller.interface';
+import type { IpcMainHandleRegistry, IpcRegistrar } from '../registry/ipc-registrar';
 import { bindIpcContract } from '../binding/bind-ipc-contract';
 import { createAppIpcHandlers } from '../handlers/app/app-ipc-handlers';
 import { appIpcContracts, healthCheckContract } from '../../../shared/ipc/contracts/app';
 
-export class AppController implements IpcController {
+export class AppController implements IpcRegistrar {
   register(ipcMain: IpcMainHandleRegistry): string[] {
     const handlers = createAppIpcHandlers();
 

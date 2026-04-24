@@ -5,7 +5,7 @@ import type { ListBrokersUseCase } from '../../application/use-cases/list-broker
 import type { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
 import type { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
 import { BROKERS_IPC_CHANNELS } from '../../../shared/ipc/ipc-channels';
-import type { IpcMainHandleRegistry } from './ipc-controller.interface';
+import type { IpcMainHandleRegistry } from '../registry/ipc-registrar';
 import { BrokersController } from './brokers.controller';
 
 type IpcHandler = (_event: Electron.IpcMainInvokeEvent, input?: unknown) => Promise<unknown>;
