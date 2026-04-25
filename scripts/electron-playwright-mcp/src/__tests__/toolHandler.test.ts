@@ -1,6 +1,5 @@
 import { handleToolCall, getConsoleLogs, getScreenshots, registerConsoleMessage } from '../toolHandler.js';
 import { Browser, Page, chromium, firefox, webkit } from 'playwright';
-import { jest } from '@jest/globals';
 
 // Mock the Playwright browser and page
 jest.mock('playwright', () => {

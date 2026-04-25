@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from '@jest/globals';
+
 import { z } from 'zod';
 import { defineIpcContract } from '../../../shared/ipc/define-ipc-contract';
 import type { IpcMainHandleRegistry } from '../registry/ipc-registrar';

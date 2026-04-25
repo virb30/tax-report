@@ -1,8 +1,8 @@
 import { Cnpj } from '../../../domain/shared/cnpj.vo';
 import { Uuid } from '../../../domain/shared/uuid.vo';
-import { BrokerRepository } from "../../repositories/broker.repository";
-import { UpdateBrokerInput } from "./update-broker.input";
-import { UpdateBrokerOutput } from "./update-broker.output";
+import type { BrokerRepository } from "../../repositories/broker.repository";
+import type { UpdateBrokerInput } from "./update-broker.input";
+import type { UpdateBrokerOutput } from "./update-broker.output";
 
 
 export class UpdateBrokerUseCase {

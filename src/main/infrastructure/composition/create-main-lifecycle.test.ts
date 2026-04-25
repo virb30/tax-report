@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { jest } from '@jest/globals';
 import { createMainLifecycle, type CreateMainLifecycleDependencies } from './create-main-lifecycle';
 
 describe('createMainLifecycle', () => {

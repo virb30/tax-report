@@ -1,7 +1,6 @@
 import { VisibleTextTool, VisibleHtmlTool } from '../../../tools/browser/visiblePage.js';
 import { ToolContext } from '../../../tools/common/types.js';
 import { Page, Browser, ElementHandle } from 'playwright';
-import { jest } from '@jest/globals';
 
 // Mock the Page object
 const mockEvaluate = jest.fn() as jest.MockedFunction<(pageFunction: Function | string, arg?: any) => Promise<any>>;

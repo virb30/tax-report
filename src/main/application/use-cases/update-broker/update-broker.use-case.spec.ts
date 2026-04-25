@@ -1,6 +1,6 @@
-import { describe, expect, it, jest } from '@jest/globals';
+
 import { mock, mockReset } from 'jest-mock-extended';
-import { BrokerRepository } from '../../repositories/broker.repository';
+import type { BrokerRepository } from '../../repositories/broker.repository';
 import { UpdateBrokerUseCase } from './update-broker.use-case';
 import { Uuid } from '../../../domain/shared/uuid.vo';
 import { Broker } from '../../../domain/portfolio/entities/broker.entity';

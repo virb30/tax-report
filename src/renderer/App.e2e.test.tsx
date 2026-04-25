@@ -1,9 +1,5 @@
-/**
- * @jest-environment jsdom
- */
-
 import '@testing-library/jest-dom';
-import { describe, it, jest } from '@jest/globals';
+
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AssetType, TransactionType } from '../shared/types/domain';
@@ -12,16 +8,19 @@ import type { GenerateAssetsReportResult } from '../shared/contracts/assets-repo
 import type { SetInitialBalanceResult } from '../shared/contracts/initial-balance.contract';
 import type { ListPositionsResult } from '../shared/contracts/list-positions.contract';
 import { App } from './App';
+import mock, { mockReset } from 'jest-mock-extended/lib/Mock';
 
 describe('App critical UI flows (E2E)', () => {
-  it('runs import, manual base and annual report flows through UI', async () => {
-    const importSelectFile = jest
-      .fn<ElectronApi['importSelectFile']>()
-      .mockResolvedValue({ filePath: '/tmp/ops.csv' });
+  const electronApi = mock<ElectronApi>();
 
-    const previewImportTransactions = jest
-      .fn<ElectronApi['previewImportTransactions']>()
-      .mockResolvedValue({
+  beforeEach(() => {
+    mockReset(electronApi);
+  });
+
+  it('runs import, manual base and annual report flows through UI', async () => {
+    electronApi.importSelectFile.mockResolvedValue({ filePath: '/tmp/ops.csv' });
+
+    electronApi.previewImportTransactions.mockResolvedValue({
         batches: [],
         transactionsPreview: [
           {
@@ -36,9 +35,7 @@ describe('App critical UI flows (E2E)', () => {
         ],
       });
 
-    const confirmImportTransactions = jest
-      .fn<ElectronApi['confirmImportTransactions']>()
-      .mockResolvedValue({ importedCount: 1, recalculatedTickers: ['PETR4'] });
+    electronApi.confirmImportTransactions.mockResolvedValue({ importedCount: 1, recalculatedTickers: ['PETR4'] });
 
     const setInitialBalanceResult: SetInitialBalanceResult = {
       ticker: 'IVVB11',
@@ -46,9 +43,7 @@ describe('App critical UI flows (E2E)', () => {
       quantity: 2,
       averagePrice: 300,
     };
-    const setInitialBalance = jest
-      .fn<ElectronApi['setInitialBalance']>()
-      .mockResolvedValue(setInitialBalanceResult);
+    electronApi.setInitialBalance.mockResolvedValue(setInitialBalanceResult);
 
     const emptyPositionsResult: ListPositionsResult = {
       items: [],
@@ -67,8 +62,8 @@ describe('App critical UI flows (E2E)', () => {
         },
       ],
     };
-    const listPositions = jest
-      .fn<ElectronApi['listPositions']>()
+    electronApi
+      .listPositions
       .mockResolvedValueOnce(emptyPositionsResult)
       .mockResolvedValueOnce(filledPositionsResult);
 
@@ -96,37 +91,21 @@ describe('App critical UI flows (E2E)', () => {
         },
       ],
     };
-    const generateAssetsReport = jest
-      .fn<ElectronApi['generateAssetsReport']>()
-      .mockResolvedValue(assetsReportResult);
+    electronApi.generateAssetsReport.mockResolvedValue(assetsReportResult);
 
-    const listBrokers = jest.fn<any>().mockResolvedValue({
+    electronApi.listBrokers.mockResolvedValue({
       items: [{ id: 'broker-xp', name: 'XP Investimentos', cnpj: '02.332.886/0001-04', code: 'XP', active: true }],
     });
-    const createBroker = jest.fn<any>().mockResolvedValue({ success: true, broker: { id: 'new', name: 'New', cnpj: '00', code: 'NEW', active: true } });
+    electronApi.createBroker.mockResolvedValue({ success: true, broker: { id: 'new', name: 'New', cnpj: '00', code: 'NEW', active: true } });
 
     window.electronApi = {
+      ...electronApi,
       appName: 'tax-report',
-      importSelectFile,
-      previewImportTransactions,
-      confirmImportTransactions,
-      setInitialBalance,
-      listPositions,
-      generateAssetsReport,
-      listBrokers,
-      createBroker,
-      updateBroker: jest.fn<ElectronApi['updateBroker']>(),
-      toggleBrokerActive: jest.fn<ElectronApi['toggleBrokerActive']>(),
-      recalculatePosition: jest.fn<ElectronApi['recalculatePosition']>(),
-      migrateYear: jest.fn<ElectronApi['migrateYear']>(),
-      previewConsolidatedPosition: jest.fn<ElectronApi['previewConsolidatedPosition']>(),
-      importConsolidatedPosition: jest.fn<ElectronApi['importConsolidatedPosition']>(),
-      deletePosition: jest.fn<ElectronApi['deletePosition']>(),
-    };
+    } satisfies ElectronApi;
 
     Object.defineProperty(navigator, 'clipboard', {
       value: {
-        writeText: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
+        writeText: jest.fn().mockResolvedValue(undefined),
       },
       configurable: true,
     });
@@ -174,10 +153,10 @@ describe('App critical UI flows (E2E)', () => {
       expect(screen.getByText(/copiado com sucesso/)).toBeInTheDocument();
     });
 
-    expect(importSelectFile).toHaveBeenCalledTimes(1);
-    expect(previewImportTransactions).toHaveBeenCalledWith({ filePath: '/tmp/ops.csv' });
-    expect(confirmImportTransactions).toHaveBeenCalledWith({ filePath: '/tmp/ops.csv' });
-    expect(setInitialBalance).toHaveBeenCalledTimes(1);
-    expect(generateAssetsReport).toHaveBeenCalledWith({ baseYear: 2025 });
+    expect(electronApi.importSelectFile).toHaveBeenCalledTimes(1);
+    expect(electronApi.previewImportTransactions).toHaveBeenCalledWith({ filePath: '/tmp/ops.csv' });
+    expect(electronApi.confirmImportTransactions).toHaveBeenCalledWith({ filePath: '/tmp/ops.csv' });
+    expect(electronApi.setInitialBalance).toHaveBeenCalledTimes(1);
+    expect(electronApi.generateAssetsReport).toHaveBeenCalledWith({ baseYear: 2025 });
   });
 });

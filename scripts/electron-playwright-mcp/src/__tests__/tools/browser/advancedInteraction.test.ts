@@ -1,7 +1,6 @@
 import { DragTool, PressKeyTool } from '../../../tools/browser/interaction.js';
 import { ToolContext } from '../../../tools/common/types.js';
 import { Page, Browser, ElementHandle } from 'playwright';
-import { jest } from '@jest/globals';
 
 // Mock page functions
 const mockWaitForSelector = jest.fn();

@@ -1,5 +1,4 @@
-import { describe, expect, it, jest } from '@jest/globals';
-import type { Queue } from '../../application/events/queue.interface';
+
 import type { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
 import { RecalculatePositionHandler } from './recalculate-position.handler';
 import { ConsolidatedPositionImportedEvent } from '../../domain/events/consolidated-position-imported.event';

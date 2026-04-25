@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+
 import { mock, mockReset } from 'jest-mock-extended';
 import { ListBrokersUseCase } from './list-brokers.use-case';
 import { Broker } from '../../../domain/portfolio/entities/broker.entity';

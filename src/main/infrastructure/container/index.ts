@@ -1,5 +1,5 @@
 import { asClass, asValue, asFunction, createContainer, InjectionMode } from 'awilix';
-import { Knex } from 'knex';
+import type { Knex } from 'knex';
 import { KnexBrokerRepository } from '../repositories/knex-broker.repository';
 import { KnexPositionRepository } from '../repositories/knex-position.repository';
 import { KnexTransactionRepository } from '../repositories/knex-transaction.repository';

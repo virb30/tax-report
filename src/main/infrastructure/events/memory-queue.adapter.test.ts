@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { MemoryQueueAdapter } from './memory-queue.adapter';
-import { DomainEvent } from '../../domain/events/domain-event.interface';
+import type { DomainEvent } from '../../domain/events/domain-event.interface';
 
 class SomeEvent implements DomainEvent {
   public readonly name = SomeEvent.name;

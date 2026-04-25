@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+
 import { mock, mockReset } from 'jest-mock-extended';
 import { AssetType, TransactionType } from '../../../../shared/types/domain';
 import { SourceType } from '../../../../shared/types/domain';
@@ -40,8 +40,9 @@ describe('MigrateYearUseCase', () => {
       }),
     ]);
     transactionRepository.findByPeriod.mockImplementation(async (input: { startDate: string; endDate: string }) => {
+      return new Promise((resolve) => {
         if (input.endDate === '2024-12-31') {
-          return [
+          return resolve([
             Transaction.create({
               date: '2024-01-15',
               type: TransactionType.InitialBalance,
@@ -52,13 +53,14 @@ describe('MigrateYearUseCase', () => {
               brokerId,
               sourceType: SourceType.Manual,
             }),
-          ];
+          ]);
         }
         if (input.startDate === '2025-01-01' && input.endDate === '2025-12-31') {
-          return [];
+          return resolve([]);
         }
-        return [];
+        return resolve([]);
       });
+    });
 
     const result = await useCase.execute({ sourceYear: 2024, targetYear: 2025 });
 
@@ -72,21 +74,23 @@ describe('MigrateYearUseCase', () => {
     const targetYear = 2025;
     transactionRepository.findByPeriod.mockImplementation(
       async (input: { startDate: string; endDate: string }) => {
-        if (input.startDate === '2025-01-01' && input.endDate === '2025-12-31') {
-          return [
-            Transaction.create({
-              date: `${targetYear}-01-01`,
-              type: TransactionType.InitialBalance,
-              ticker: 'PETR4',
-              quantity: 50,
-              unitPrice: 22,
-              fees: 0,
-              brokerId: Uuid.create(),
-              sourceType: SourceType.Manual,
-            }),
-          ];
-        }
-        return [];
+        return new Promise((resolve) => {
+          if (input.startDate === '2025-01-01' && input.endDate === '2025-12-31') {
+            return resolve([
+              Transaction.create({
+                date: `${targetYear}-01-01`,
+                type: TransactionType.InitialBalance,
+                ticker: 'PETR4',
+                quantity: 50,
+                unitPrice: 22,
+                fees: 0,
+                brokerId: Uuid.create(),
+                sourceType: SourceType.Manual,
+              }),
+            ]);
+          }
+          return resolve([]);
+        });
       },
     );
 

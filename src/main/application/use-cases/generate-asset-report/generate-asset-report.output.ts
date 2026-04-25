@@ -1,4 +1,4 @@
-import { AssetType } from "../../../../shared/types/domain";
+import type { AssetType } from "../../../../shared/types/domain";
 
 export interface RevenueClassification {
   group: string;

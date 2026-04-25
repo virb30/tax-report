@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+
 import { AveragePriceService } from './average-price.service';
 import { AssetType } from '../../../../shared/types/domain';
 import { AssetPosition } from '../entities/asset-position.entity';

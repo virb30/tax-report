@@ -1,4 +1,4 @@
-import { Asset } from "../../domain/portfolio/entities/asset.entity";
+import type { Asset } from "../../domain/portfolio/entities/asset.entity";
 
 export interface AssetRepository {
   findByTickersList(tickers: string[]): Promise<Asset[]>;

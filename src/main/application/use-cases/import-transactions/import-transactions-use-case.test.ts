@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from '@jest/globals';
+
 import { TransactionType } from '../../../../shared/types/domain';
 import { ImportTransactionsUseCase } from './import-transactions-use-case';
 import type { ImportTransactionsParser } from '../../interfaces/transactions.parser.interface';
@@ -96,8 +96,9 @@ describe('ImportTransactionsUseCase', () => {
 
     let existingRefs = new Set<string>();
     mockTransactionRepo.findExistingExternalRefs.mockImplementation(async (refs: string[]) => {
-      const result = new Set(refs.filter((r) => existingRefs.has(r)));
-      return result;
+      return new Promise((resolve) => {
+        resolve(new Set(refs.filter((r) => existingRefs.has(r))));
+      });
     });
 
     const useCase = new ImportTransactionsUseCase(

@@ -1,8 +1,8 @@
-import { appIpcContracts } from './app';
-import { brokerIpcContracts } from './brokers';
-import { importIpcContracts } from './import';
-import { portfolioIpcContracts } from './portfolio';
-import { reportIpcContracts } from './report';
+import { appIpcContracts } from './app/contracts';
+import { brokerIpcContracts } from './brokers/contracts';
+import { importIpcContracts } from './import/contracts';
+import { portfolioIpcContracts } from './portfolio/contracts';
+import { reportIpcContracts } from './report/contracts';
 import type { IpcContractDefinition } from '../contract-types';
 import type { z } from 'zod';
 
@@ -19,7 +19,7 @@ function isRendererExposedContract(
   return contract.exposeToRenderer && contract.api !== undefined;
 }
 
-export const ipcContracts = [
+export const ipcContracts: readonly IpcContractDefinition<z.ZodType, unknown, string, string>[] = [
   ...appIpcContracts,
   ...importIpcContracts,
   ...portfolioIpcContracts,

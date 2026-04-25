@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from '@jest/globals';
+
 import { mock } from 'jest-mock-extended';
 import { DeletePositionUseCase } from './delete-position.use-case';
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';

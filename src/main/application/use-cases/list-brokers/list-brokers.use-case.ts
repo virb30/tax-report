@@ -1,7 +1,7 @@
-import { Broker } from "../../../domain/portfolio/entities/broker.entity";
-import { BrokerRepository } from "../../repositories/broker.repository";
-import { ListBrokersInput } from "./list-brokers.input";
-import { BrokerOutput, ListBrokersOutput } from "./list-brokers.output";
+import type { Broker } from "../../../domain/portfolio/entities/broker.entity";
+import type { BrokerRepository } from "../../repositories/broker.repository";
+import type { ListBrokersInput } from "./list-brokers.input";
+import type { BrokerOutput, ListBrokersOutput } from "./list-brokers.output";
 
 export class ListBrokersUseCase {
 
@@ -11,16 +11,16 @@ export class ListBrokersUseCase {
     const brokers = query?.activeOnly
       ? await this.brokerRepository.findAllActive()
       : await this.brokerRepository.findAll();
-    return { items: brokers.map(this.toOutput) };
+    return { items: this.toOutput(brokers) };
   }
 
-  private toOutput(broker: Broker): BrokerOutput {
-    return {
+  private toOutput(brokers: Broker[]): BrokerOutput[] {
+    return brokers.map((broker) => ({
       id: broker.id.value,
       name: broker.name,
       cnpj: broker.cnpj.value,
       code: broker.code,
       active: broker.isActive(),
-    };
+    }));
   }
 }

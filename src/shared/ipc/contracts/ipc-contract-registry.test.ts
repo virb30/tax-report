@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+
 import { ELECTRON_API_CHANNELS, REGISTERED_IPC_CHANNELS } from '../ipc-channels';
 import { ipcContracts, rendererExposedIpcContracts } from './ipc-contract-registry';
 

@@ -2,7 +2,7 @@ import type { Knex } from 'knex';
 import type { TransactionRepository } from '../../application/repositories/transaction.repository';
 import { Transaction } from '../../domain/portfolio/entities/transaction.entity';
 import { Uuid } from '../../domain/shared/uuid.vo';
-import { SourceType, TransactionType } from '../../../shared/types/domain';
+import type { SourceType, TransactionType } from '../../../shared/types/domain';
 
 type TransactionRow = {
   id: string;

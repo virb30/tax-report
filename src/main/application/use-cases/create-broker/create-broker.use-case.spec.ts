@@ -1,5 +1,5 @@
-import { describe, expect, it, jest } from '@jest/globals';
-import { BrokerRepository } from '../../repositories/broker.repository';
+
+import type { BrokerRepository } from '../../repositories/broker.repository';
 import { mock, mockReset } from 'jest-mock-extended';
 import { CreateBrokerUseCase } from './create-broker.use-case';
 import { Cnpj } from '../../../domain/shared/cnpj.vo';

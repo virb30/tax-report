@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
+
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -28,7 +28,7 @@ describe('SheetjsSpreadsheetFileReader', () => {
   });
 
   it('reads xlsx file and returns rows', async () => {
-    const directory = createdDirs[0]!;
+    const directory = createdDirs[0];
     const filePath = path.join(directory, 'test.xlsx');
 
     const workbook = XLSX.utils.book_new();
@@ -69,7 +69,7 @@ describe('SheetjsSpreadsheetFileReader', () => {
   });
 
   it('returns empty rows for empty xlsx', async () => {
-    const directory = createdDirs[0]!;
+    const directory = createdDirs[0];
     const filePath = path.join(directory, 'empty.xlsx');
 
     const workbook = XLSX.utils.book_new();
@@ -95,7 +95,7 @@ describe('SheetjsSpreadsheetFileReader', () => {
   });
 
   it('accepts uppercase extension .XLSX', async () => {
-    const directory = createdDirs[0]!;
+    const directory = createdDirs[0];
     const filePath = path.join(directory, 'test.XLSX');
 
     const workbook = XLSX.utils.book_new();

@@ -1,6 +1,5 @@
 import { ConsoleLogsTool } from '../../../tools/browser/console.js';
 import { ToolContext } from '../../../tools/common/types.js';
-import { jest } from '@jest/globals';
 
 // Mock the server
 const mockServer = {
