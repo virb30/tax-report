@@ -1,8 +1,8 @@
 import { Broker } from '../../../domain/portfolio/entities/broker.entity';
 import { Cnpj } from '../../../domain/shared/cnpj.vo';
 import type { BrokerRepository } from '../../repositories/broker.repository';
-import { CreateBrokerInput } from './create-broker.input';
-import { CreateBrokerOutput } from './create-broker.output';
+import type { CreateBrokerInput } from './create-broker.input';
+import type { CreateBrokerOutput } from './create-broker.output';
 
 export class CreateBrokerUseCase {
   constructor(private readonly brokerRepository: BrokerRepository) {}

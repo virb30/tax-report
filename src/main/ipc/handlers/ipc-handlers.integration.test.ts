@@ -1,14 +1,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
+
 import type { Knex } from 'knex';
 import { AssetType } from '../../../shared/types/domain';
-import { BrokersController } from '../controllers/brokers.controller';
-import { AppController } from '../controllers/app.controller';
-import { ImportController } from '../controllers/import.controller';
-import { PortfolioController } from '../controllers/portfolio.controller';
-import { ReportController } from '../controllers/report.controller';
+import { BrokersIpcRegistrar } from '../registrars/brokers-ipc-registrar';
+import { AppIpcRegistrar } from '../registrars/app-ipc-registrar';
+import { ImportIpcRegistrar } from '../registrars/import-ipc-registrar';
+import { PortfolioIpcRegistrar } from '../registrars/portfolio-ipc-registrar';
+import { ReportIpcRegistrar } from '../registrars/report-ipc-registrar';
 import { createDatabaseConnection, initializeDatabase } from '../../database/database';
 import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance.use-case';
 import { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
@@ -35,12 +35,21 @@ import { ImportConsolidatedPositionUseCase } from '../../application/use-cases/i
 import { DeletePositionUseCase } from '../../application/use-cases/delete-position/delete-position.use-case';
 import { CsvXlsxConsolidatedPositionParser } from '../../infrastructure/parsers/csv-xlsx-consolidated-position.parser';
 import {
-  APP_IPC_CHANNELS,
-  BROKERS_IPC_CHANNELS,
-  IMPORT_IPC_CHANNELS,
-  PORTFOLIO_IPC_CHANNELS,
-  REPORT_IPC_CHANNELS,
-} from '../../../shared/ipc/ipc-channels';
+  confirmImportTransactionsContract,
+  previewImportTransactionsContract,
+} from '../../../shared/ipc/contracts/import';
+import {
+  listPositionsContract,
+  setInitialBalanceContract,
+} from '../../../shared/ipc/contracts/portfolio';
+import { generateAssetsReportContract } from '../../../shared/ipc/contracts/report';
+import {
+  createBrokerContract,
+  listBrokersContract,
+  toggleBrokerActiveContract,
+  updateBrokerContract,
+} from '../../../shared/ipc/contracts/brokers';
+import { healthCheckContract } from '../../../shared/ipc/contracts/app';
 
 type IpcHandler = (_event: Electron.IpcMainInvokeEvent, ...args: unknown[]) => unknown;
 type IpcMainHandleRegistry = Pick<Electron.IpcMain, 'handle'>;
@@ -69,10 +78,7 @@ describe('IPC handlers integration', () => {
       knexPositionRepository,
       knexTransactionRepository,
     );
-    const listPositionsUseCase = new ListPositionsUseCase(
-      knexPositionRepository,
-      brokerRepository,
-    );
+    const listPositionsUseCase = new ListPositionsUseCase(knexPositionRepository, brokerRepository);
     const recalculatePositionUseCase = new RecalculatePositionUseCase(
       knexPositionRepository,
       knexTransactionRepository,
@@ -90,10 +96,7 @@ describe('IPC handlers integration', () => {
       tickerDataRepository,
     );
     const spreadsheetFileReader = new SheetjsSpreadsheetFileReader();
-    const transactionParser = new CsvXlsxTransactionParser(
-      spreadsheetFileReader,
-      brokerRepository,
-    );
+    const transactionParser = new CsvXlsxTransactionParser(spreadsheetFileReader, brokerRepository);
     const consolidatedPositionParser = new CsvXlsxConsolidatedPositionParser();
     const taxApportioner = new TaxApportioner();
     const previewImportUseCase = new PreviewImportUseCase(transactionParser, taxApportioner);
@@ -144,9 +147,9 @@ describe('IPC handlers integration', () => {
       },
     };
 
-    const appController = new AppController();
-    const importController = new ImportController(previewImportUseCase, importTransactionsUseCase);
-    const portfolioController = new PortfolioController(
+    const appRegistrar = new AppIpcRegistrar();
+    const importRegistrar = new ImportIpcRegistrar(previewImportUseCase, importTransactionsUseCase);
+    const portfolioRegistrar = new PortfolioIpcRegistrar(
       setInitialBalanceUseCase,
       listPositionsUseCase,
       recalculatePositionUseCase,
@@ -154,19 +157,19 @@ describe('IPC handlers integration', () => {
       importConsolidatedPositionUseCase,
       deletePositionUseCase,
     );
-    const reportController = new ReportController(generateAssetsReportUseCase);
+    const reportRegistrar = new ReportIpcRegistrar(generateAssetsReportUseCase);
 
-    appController.register(ipcMain);
-    importController.register(ipcMain);
-    portfolioController.register(ipcMain);
-    reportController.register(ipcMain);
+    appRegistrar.register(ipcMain);
+    importRegistrar.register(ipcMain);
+    portfolioRegistrar.register(ipcMain);
+    reportRegistrar.register(ipcMain);
 
-    const healthHandler = handlers.get(APP_IPC_CHANNELS.healthCheck);
-    const previewHandler = handlers.get(IMPORT_IPC_CHANNELS.previewTransactions);
-    const confirmHandler = handlers.get(IMPORT_IPC_CHANNELS.confirmTransactions);
-    const setInitialBalanceHandler = handlers.get(PORTFOLIO_IPC_CHANNELS.setInitialBalance);
-    const listPositionsHandler = handlers.get(PORTFOLIO_IPC_CHANNELS.listPositions);
-    const reportHandler = handlers.get(REPORT_IPC_CHANNELS.assetsAnnual);
+    const healthHandler = handlers.get(healthCheckContract.channel);
+    const previewHandler = handlers.get(previewImportTransactionsContract.channel);
+    const confirmHandler = handlers.get(confirmImportTransactionsContract.channel);
+    const setInitialBalanceHandler = handlers.get(setInitialBalanceContract.channel);
+    const listPositionsHandler = handlers.get(listPositionsContract.channel);
+    const reportHandler = handlers.get(generateAssetsReportContract.channel);
 
     if (
       !healthHandler ||
@@ -234,18 +237,18 @@ describe('IPC handlers integration', () => {
       },
     };
 
-    const brokersController = new BrokersController(
+    const brokersRegistrar = new BrokersIpcRegistrar(
       listBrokersUseCase,
       createBrokerUseCase,
       updateBrokerUseCase,
       toggleActiveBrokerUseCase,
     );
-    brokersController.register(ipcMain);
+    brokersRegistrar.register(ipcMain);
 
-    const listHandler = handlers.get(BROKERS_IPC_CHANNELS.list);
-    const createHandler = handlers.get(BROKERS_IPC_CHANNELS.create);
-    const updateHandler = handlers.get(BROKERS_IPC_CHANNELS.update);
-    const toggleHandler = handlers.get(BROKERS_IPC_CHANNELS.toggleActive);
+    const listHandler = handlers.get(listBrokersContract.channel);
+    const createHandler = handlers.get(createBrokerContract.channel);
+    const updateHandler = handlers.get(updateBrokerContract.channel);
+    const toggleHandler = handlers.get(toggleBrokerActiveContract.channel);
 
     if (!listHandler || !createHandler || !updateHandler || !toggleHandler) {
       throw new Error('Broker IPC handlers not registered.');
@@ -254,20 +257,21 @@ describe('IPC handlers integration', () => {
     const initialList = (await listHandler(ipcEvent)) as { items: Array<{ id: string }> };
     expect(initialList.items.length).toBeGreaterThanOrEqual(0);
 
-    const createResult = (await createHandler(
-      ipcEvent,
-      { name: 'Test Broker', code: 'TESTBRK', cnpj: '12.345.678/0001-90' },
-    )) as { success: boolean; broker?: { id: string; name: string } };
+    const createResult = (await createHandler(ipcEvent, {
+      name: 'Test Broker',
+      code: 'TESTBRK',
+      cnpj: '12.345.678/0001-90',
+    })) as { success: boolean; broker?: { id: string; name: string } };
     expect(createResult.success).toBe(true);
     expect(createResult.broker?.name).toBe('Test Broker');
 
     const brokerId = createResult.broker?.id;
     expect(brokerId).toBeDefined();
 
-    const updateResult = (await updateHandler(
-      ipcEvent,
-      { id: brokerId!, name: 'Test Broker Updated' },
-    )) as { success: boolean; broker?: { name: string } };
+    const updateResult = (await updateHandler(ipcEvent, {
+      id: brokerId!,
+      name: 'Test Broker Updated',
+    })) as { success: boolean; broker?: { name: string } };
     expect(updateResult.success).toBe(true);
     expect(updateResult.broker?.name).toBe('Test Broker Updated');
 

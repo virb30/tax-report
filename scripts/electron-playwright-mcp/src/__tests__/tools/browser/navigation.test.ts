@@ -1,7 +1,6 @@
 import { NavigationTool } from '../../../tools/browser/navigation.js';
 import { ToolContext } from '../../../tools/common/types.js';
 import { Page, Browser } from 'playwright';
-import { jest } from '@jest/globals';
 
 // Mock the Page object
 const mockGoto = jest.fn();

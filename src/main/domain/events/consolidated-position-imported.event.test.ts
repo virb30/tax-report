@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+
 import { ConsolidatedPositionImportedEvent } from './consolidated-position-imported.event';
 import type { DomainEvent } from './domain-event.interface';
 

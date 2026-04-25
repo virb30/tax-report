@@ -1,7 +1,7 @@
 import { SaveAsPdfTool } from '../../../tools/browser/output.js';
 import { ToolContext } from '../../../tools/common/types.js';
 import { Page, Browser } from 'playwright';
-import { jest } from '@jest/globals';
+
 import * as path from 'path';
 
 // Mock path.resolve to test path handling

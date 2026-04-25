@@ -1,7 +1,6 @@
 import { GetRequestTool, PostRequestTool, PutRequestTool, PatchRequestTool, DeleteRequestTool } from '../../../tools/api/requests.js';
 import { ToolContext } from '../../../tools/common/types.js';
 import { APIRequestContext } from 'playwright';
-import { jest } from '@jest/globals';
 
 // Mock response
 const mockStatus200 = jest.fn().mockReturnValue(200);

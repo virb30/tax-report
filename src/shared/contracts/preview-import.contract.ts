@@ -18,7 +18,7 @@ export type PreviewTransactionItem = {
 export type PreviewImportWarning = {
   row: number;
   message: string;
-  type: 'BONUS_MISSING_COST' | string;
+  type: string;
 };
 
 export type PreviewImportTransactionsResult = {

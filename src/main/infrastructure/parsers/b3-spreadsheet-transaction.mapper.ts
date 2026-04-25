@@ -41,7 +41,7 @@ export class B3SpreadsheetTransactionMapper implements SpreadsheetTransactionMap
 
   validateRowIntegrity(rowRawData: Record<string, unknown>, operationType: OperationType | null): void {
     if (operationType === OperationType.Bonus) {
-      const unitPrice = rowRawData['Preço Unitário'] ?? rowRawData['Preco Unitario'] ?? '';
+      const unitPrice = this.normalizePrice(rowRawData['Preço Unitário'] ?? rowRawData['Preco Unitario'] ?? '');
 
       const recognizedPrice = parseFloat(String(unitPrice).replace(',', '.'));
 
@@ -49,6 +49,13 @@ export class B3SpreadsheetTransactionMapper implements SpreadsheetTransactionMap
         throw new Error('A operação de Bonificação necessita do valor na planilha.');
       }
     }
+  }
+
+  private normalizePrice(price: unknown): string {
+    if (typeof price === 'string' || typeof price === 'number') {
+      return String(price);
+    }
+    return '';
   }
 
   private cleanString(value: unknown): string {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+
 import { Money } from './money.vo';
 
 describe('Money', () => {

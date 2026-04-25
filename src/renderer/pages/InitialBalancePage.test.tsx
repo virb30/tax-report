@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AssetType } from '../../shared/types/domain';
@@ -6,6 +6,8 @@ import type { ListPositionsResult } from '../../shared/contracts/list-positions.
 import type { ElectronApi } from '../../shared/types/electron-api';
 import { InitialBalancePage } from './InitialBalancePage';
 import { listActiveBrokers } from '../services/api/list-brokers';
+import { mockReset } from 'jest-mock-extended';
+import mock, { type MockProxy } from 'jest-mock-extended/lib/Mock';
 
 jest.mock('../services/api/list-brokers', () => ({
   listActiveBrokers: jest.fn(),
@@ -40,36 +42,35 @@ function getButton(name: string): HTMLButtonElement {
   return element;
 }
 
-function createElectronApiMock(): ElectronApi {
+function createElectronApiMock(electronApiBaseMock: MockProxy<ElectronApi>): ElectronApi {
+  mockReset(electronApiBaseMock)
   return {
     appName: 'tax-report',
-    importSelectFile: jest.fn<ElectronApi['importSelectFile']>(),
-    previewImportTransactions: jest.fn<ElectronApi['previewImportTransactions']>(),
-    confirmImportTransactions: jest.fn<ElectronApi['confirmImportTransactions']>(),
-    setInitialBalance: jest.fn<ElectronApi['setInitialBalance']>(),
-    listPositions: jest.fn<ElectronApi['listPositions']>(),
-    generateAssetsReport: jest.fn<ElectronApi['generateAssetsReport']>(),
-    listBrokers: jest.fn<ElectronApi['listBrokers']>(),
-    createBroker: jest.fn<ElectronApi['createBroker']>(),
-    updateBroker: jest.fn<ElectronApi['updateBroker']>(),
-    toggleBrokerActive: jest.fn<ElectronApi['toggleBrokerActive']>(),
-    recalculatePosition: jest.fn<ElectronApi['recalculatePosition']>(),
-    migrateYear: jest.fn<ElectronApi['migrateYear']>(),
-    previewConsolidatedPosition: jest.fn<ElectronApi['previewConsolidatedPosition']>(),
-    importConsolidatedPosition: jest.fn<ElectronApi['importConsolidatedPosition']>(),
-    deletePosition: jest.fn<ElectronApi['deletePosition']>(),
+    importSelectFile: electronApiBaseMock.importSelectFile,
+    previewImportTransactions: electronApiBaseMock.previewImportTransactions,
+    confirmImportTransactions: electronApiBaseMock.confirmImportTransactions,
+    setInitialBalance: electronApiBaseMock.setInitialBalance,
+    listPositions: electronApiBaseMock.listPositions,
+    generateAssetsReport: electronApiBaseMock.generateAssetsReport,
+    listBrokers: electronApiBaseMock.listBrokers,
+    createBroker: electronApiBaseMock.createBroker,
+    updateBroker: electronApiBaseMock.updateBroker,
+    toggleBrokerActive: electronApiBaseMock.toggleBrokerActive,
+    recalculatePosition: electronApiBaseMock.recalculatePosition,
+    migrateYear: electronApiBaseMock.migrateYear,
+    previewConsolidatedPosition: electronApiBaseMock.previewConsolidatedPosition,
+    importConsolidatedPosition: electronApiBaseMock.importConsolidatedPosition,
+    deletePosition: electronApiBaseMock.deletePosition,
   };
 }
 
 describe('InitialBalancePage', () => {
-  let electronApi: ElectronApi;
+  const electronApi = mock<ElectronApi>();
+  let windowElectronApi: ElectronApi;
 
   beforeEach(() => {
-    electronApi = createElectronApiMock();
-    window.electronApi = electronApi;
-    mockedListActiveBrokers.mockReset();
-    jest.mocked(electronApi.listPositions).mockReset();
-    jest.mocked(electronApi.setInitialBalance).mockReset();
+    windowElectronApi = createElectronApiMock(electronApi);
+    window.electronApi = windowElectronApi;
   });
 
   it('loads brokers and positions on mount', async () => {

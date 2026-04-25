@@ -2,7 +2,6 @@ import { ClickTool,ClickAndSwitchTabTool, FillTool, SelectTool, HoverTool, Evalu
 import { NavigationTool } from '../../../tools/browser/navigation.js';
 import { ToolContext } from '../../../tools/common/types.js';
 import { Page, Browser } from 'playwright';
-import { jest } from '@jest/globals';
 
 // Mock page functions
 const mockPageClick = jest.fn().mockImplementation(() => Promise.resolve());

@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+
 import { mock, mockReset } from 'jest-mock-extended';
 import { Broker } from '../../../domain/portfolio/entities/broker.entity';
 import { Cnpj } from '../../../domain/shared/cnpj.vo';

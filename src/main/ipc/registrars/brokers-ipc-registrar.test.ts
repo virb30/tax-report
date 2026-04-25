@@ -1,16 +1,22 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+
 import { mock, mockReset } from 'jest-mock-extended';
 import type { CreateBrokerUseCase } from '../../application/use-cases/create-broker/create-broker.use-case';
 import type { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
 import type { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
 import type { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
-import { BROKERS_IPC_CHANNELS } from '../../../shared/ipc/ipc-channels';
-import type { IpcMainHandleRegistry } from './ipc-controller.interface';
-import { BrokersController } from './brokers.controller';
+import {
+  brokerIpcContracts,
+  createBrokerContract,
+  listBrokersContract,
+  toggleBrokerActiveContract,
+  updateBrokerContract,
+} from '../../../shared/ipc/contracts/brokers';
+import type { IpcMainHandleRegistry } from '../registry/ipc-registrar';
+import { BrokersIpcRegistrar } from './brokers-ipc-registrar';
 
 type IpcHandler = (_event: Electron.IpcMainInvokeEvent, input?: unknown) => Promise<unknown>;
 
-describe('BrokersController', () => {
+describe('BrokersIpcRegistrar', () => {
   const listBrokersUseCase = mock<ListBrokersUseCase>();
   const createBrokerUseCase = mock<CreateBrokerUseCase>();
   const updateBrokerUseCase = mock<UpdateBrokerUseCase>();
@@ -30,7 +36,7 @@ describe('BrokersController', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  function registerController(): Map<string, IpcHandler> {
+  function registerRegistrar(): Map<string, IpcHandler> {
     const handlers = new Map<string, IpcHandler>();
     const ipcMain: IpcMainHandleRegistry = {
       handle: (channel, listener) => {
@@ -38,23 +44,25 @@ describe('BrokersController', () => {
       },
     };
 
-    const controller = new BrokersController(
+    const registrar = new BrokersIpcRegistrar(
       listBrokersUseCase,
       createBrokerUseCase,
       updateBrokerUseCase,
       toggleActiveBrokerUseCase,
     );
 
-    expect(controller.register(ipcMain)).toEqual(Object.values(BROKERS_IPC_CHANNELS));
+    expect(registrar.register(ipcMain)).toEqual(
+      brokerIpcContracts.map((contract) => contract.channel),
+    );
 
     return handlers;
   }
 
   it('lists brokers without requiring a payload object', async () => {
     listBrokersUseCase.execute.mockResolvedValue({ items: [] });
-    const handlers = registerController();
+    const handlers = registerRegistrar();
 
-    const listHandler = handlers.get(BROKERS_IPC_CHANNELS.list);
+    const listHandler = handlers.get(listBrokersContract.channel);
 
     await expect(listHandler?.(ipcEvent)).resolves.toEqual({ items: [] });
     expect(listBrokersUseCase.execute).toHaveBeenCalledWith(undefined);
@@ -68,9 +76,9 @@ describe('BrokersController', () => {
       code: 'XP',
       active: true,
     });
-    const handlers = registerController();
+    const handlers = registerRegistrar();
 
-    const createHandler = handlers.get(BROKERS_IPC_CHANNELS.create);
+    const createHandler = handlers.get(createBrokerContract.channel);
 
     await expect(
       createHandler?.(ipcEvent, {
@@ -97,8 +105,8 @@ describe('BrokersController', () => {
   });
 
   it('converts create validation failures into a safe error payload', async () => {
-    const handlers = registerController();
-    const createHandler = handlers.get(BROKERS_IPC_CHANNELS.create);
+    const handlers = registerRegistrar();
+    const createHandler = handlers.get(createBrokerContract.channel);
 
     await expect(
       createHandler?.(ipcEvent, {
@@ -113,8 +121,8 @@ describe('BrokersController', () => {
 
   it('converts update failures into a safe error payload', async () => {
     updateBrokerUseCase.execute.mockRejectedValue(new Error('Falha ao atualizar.'));
-    const handlers = registerController();
-    const updateHandler = handlers.get(BROKERS_IPC_CHANNELS.update);
+    const handlers = registerRegistrar();
+    const updateHandler = handlers.get(updateBrokerContract.channel);
 
     await expect(
       updateHandler?.(ipcEvent, {
@@ -129,8 +137,8 @@ describe('BrokersController', () => {
 
   it('converts toggle failures into a safe error payload', async () => {
     toggleActiveBrokerUseCase.execute.mockRejectedValue(new Error('Falha ao alternar.'));
-    const handlers = registerController();
-    const toggleHandler = handlers.get(BROKERS_IPC_CHANNELS.toggleActive);
+    const handlers = registerRegistrar();
+    const toggleHandler = handlers.get(toggleBrokerActiveContract.channel);
 
     await expect(toggleHandler?.(ipcEvent, { id: 'broker-1' })).resolves.toEqual({
       success: false,

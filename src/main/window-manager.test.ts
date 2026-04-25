@@ -1,26 +1,13 @@
-import { describe, expect, it, jest } from '@jest/globals';
 import path from 'node:path';
 import { WindowManager } from './window-manager';
-
-type WindowStub = {
-  loadURL: jest.Mock<(url: string) => Promise<void>>;
-  loadFile: jest.Mock<(filePath: string) => Promise<void>>;
-};
-
-class FakeBrowserWindow {
-  static lastOptions: unknown;
-  static instance: WindowStub = {
-    loadURL: jest.fn<any>().mockResolvedValue(undefined),
-    loadFile: jest.fn<any>().mockResolvedValue(undefined),
-  };
-
-  constructor(options: unknown) {
-    FakeBrowserWindow.lastOptions = options;
-    return FakeBrowserWindow.instance;
-  }
-}
+import { BrowserWindowStub } from './__stubs__/browser-window.stub';
 
 describe('WindowManager', () => {
+
+  beforeEach(() => {
+    BrowserWindowStub.clear();
+  });
+
   it('supports constructor default parameters', () => {
     const manager = new WindowManager();
 
@@ -31,11 +18,11 @@ describe('WindowManager', () => {
     process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL = 'http://localhost:5173';
     process.env.MAIN_WINDOW_VITE_NAME = 'main_window';
 
-    const manager = new WindowManager(FakeBrowserWindow as never, '/app/.vite/build');
+    const manager = new WindowManager(BrowserWindowStub as never, '/app/.vite/build');
     manager.createMainWindow();
 
-    expect(FakeBrowserWindow.instance.loadURL).toHaveBeenCalledWith('http://localhost:5173');
-    expect(FakeBrowserWindow.instance.loadFile).not.toHaveBeenCalled();
+    expect(BrowserWindowStub.instance.loadURL).toHaveBeenCalledWith('http://localhost:5173');
+    expect(BrowserWindowStub.instance.loadFile).not.toHaveBeenCalled();
 
     delete process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL;
     delete process.env.MAIN_WINDOW_VITE_NAME;
@@ -45,11 +32,11 @@ describe('WindowManager', () => {
     delete process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL;
     process.env.MAIN_WINDOW_VITE_NAME = 'main_window';
 
-    const manager = new WindowManager(FakeBrowserWindow as never, '/app/.vite/build');
+    const manager = new WindowManager(BrowserWindowStub as never, '/app/.vite/build');
     manager.createMainWindow();
 
     const expectedFilePath = path.join('/app/.vite/build', '../renderer/main_window/index.html');
-    expect(FakeBrowserWindow.instance.loadFile).toHaveBeenCalledWith(expectedFilePath);
+    expect(BrowserWindowStub.instance.loadFile).toHaveBeenCalledWith(expectedFilePath);
 
     delete process.env.MAIN_WINDOW_VITE_NAME;
   });
@@ -58,7 +45,7 @@ describe('WindowManager', () => {
     delete process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL;
     delete process.env.MAIN_WINDOW_VITE_NAME;
 
-    const manager = new WindowManager(FakeBrowserWindow as never, '/app/.vite/build');
+    const manager = new WindowManager(BrowserWindowStub as never, '/app/.vite/build');
 
     expect(() => manager.createMainWindow()).toThrow('MAIN_WINDOW_VITE_NAME is not defined.');
   });

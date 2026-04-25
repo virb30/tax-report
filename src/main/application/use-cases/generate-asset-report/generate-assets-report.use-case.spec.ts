@@ -1,10 +1,9 @@
-import { beforeEach, describe, expect, it } from '@jest/globals';
+
 import { AssetType } from '../../../../shared/types/domain';
 import type { BrokerRepository } from '../../repositories/broker.repository';
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { AssetRepository } from '../../repositories/asset.repository';
 import { GenerateAssetsReportUseCase } from './generate-assets-report.use-case';
-import { ReportGenerator } from '../../../domain/tax-reporting/report-generator.service';
 import { mock, mockReset } from 'jest-mock-extended';
 import { Cnpj } from '../../../domain/shared/cnpj.vo';
 import { Broker } from '../../../domain/portfolio/entities/broker.entity';

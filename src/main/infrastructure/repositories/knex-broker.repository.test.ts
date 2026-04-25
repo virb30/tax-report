@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from '@jest/globals';
+
 import type { Knex } from 'knex';
 import { createDatabaseConnection } from '../../database/database-connection';
 import { initializeDatabase } from '../../database/database';

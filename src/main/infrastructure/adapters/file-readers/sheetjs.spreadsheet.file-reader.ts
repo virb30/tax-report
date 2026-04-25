@@ -21,7 +21,7 @@ export class SheetjsSpreadsheetFileReader implements SpreadsheetFileReader {
     const sheet = workbook.Sheets[firstSheetName];
     const rows = XLSX.utils.sheet_to_json<SpreadsheetRow>(sheet, { defval: '' });
 
-    return { rows };
+    return new Promise((resolve) => resolve({ rows }));
   }
 
   private validateFileExtension(filePath: string): void {

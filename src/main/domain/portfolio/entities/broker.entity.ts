@@ -1,4 +1,4 @@
-import { Cnpj } from "../../shared/cnpj.vo";
+import type { Cnpj } from "../../shared/cnpj.vo";
 import { Uuid } from "../../shared/uuid.vo";
 
 type BrokerProps = {

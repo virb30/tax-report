@@ -1,9 +1,9 @@
-import { BrokerRepository } from '../../repositories/broker.repository';
-import { AssetPositionRepository } from '../../repositories/asset-position.repository';
-import { AssetRepository } from '../../repositories/asset.repository';
+import type { BrokerRepository } from '../../repositories/broker.repository';
+import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
+import type { AssetRepository } from '../../repositories/asset.repository';
 import { ReportGenerator } from '../../../domain/tax-reporting/report-generator.service';
 import type { GenerateAssetReportInput } from './generate-asset-report.input';
-import { GenerateAssetReportOutput } from './generate-asset-report.output';
+import type { GenerateAssetReportOutput } from './generate-asset-report.output';
 
 export class GenerateAssetsReportUseCase {
   constructor(

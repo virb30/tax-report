@@ -1,6 +1,6 @@
 type AppLifecycleEvent = 'activate' | 'window-all-closed';
 
-type AppLike = {
+export type AppLike = {
   on: (event: AppLifecycleEvent, listener: () => void) => void;
   whenReady: () => Promise<void>;
   quit: () => void;

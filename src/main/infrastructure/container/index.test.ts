@@ -1,5 +1,5 @@
+import type { Knex } from 'knex';
 import { registerDependencies, container } from './index';
-import { Knex } from 'knex';
 
 describe('Awilix Container', () => {
   it('should register and resolve all dependencies correctly', () => {
@@ -10,7 +10,7 @@ describe('Awilix Container', () => {
 
     // Verifica se todos os Use Cases e Handlers podem ser resolvidos
     // Isso garante que não esquecemos de injetar alguma dependência no container
-    
+
     expect(container.resolve('createBrokerUseCase')).toBeDefined();
     expect(container.resolve('updateBrokerUseCase')).toBeDefined();
     expect(container.resolve('listBrokersUseCase')).toBeDefined();
@@ -24,8 +24,8 @@ describe('Awilix Container', () => {
     expect(container.resolve('importConsolidatedPositionUseCase')).toBeDefined();
     expect(container.resolve('deletePositionUseCase')).toBeDefined();
     expect(container.resolve('generateAssetsReportUseCase')).toBeDefined();
-    
+
     expect(container.resolve('recalculatePositionHandler')).toBeDefined();
-    expect(container.resolve('brokersController')).toBeDefined();
+    expect(container.resolve('brokersIpcRegistrar')).toBeDefined();
   });
 });

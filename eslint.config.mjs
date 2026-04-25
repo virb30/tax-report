@@ -3,8 +3,6 @@ import tsParser from '@typescript-eslint/parser';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import jestPlugin from 'eslint-plugin-jest';
 import { defineConfig } from "eslint/config";
-import { join } from 'path';
-
 
 export default defineConfig([
   {
@@ -18,6 +16,7 @@ export default defineConfig([
       globals: {
         ...globals.browser,
         ...globals.node,
+        ...globals.jest,
       },
     },
     plugins: {
@@ -36,16 +35,20 @@ export default defineConfig([
     },
   },
   {
-    files: ['**/*.test.ts', '**/*.spec.ts'],
+    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx', '**/*.e2e.test.tsx'],
     plugins: { 
       jest: jestPlugin 
     },
     rules: {
       '@typescript-eslint/unbound-method': 'off',
       'jest/unbound-method': 'error',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
     },
   },
   {
-    ignores: ['scripts/**', 'out/**', '.vite/**', 'coverage/**'],
+    ignores: ['scripts/**', 'out/**', '.vite/**', 'coverage/**', 'src/main/database/migrations/**'],
   }
 ]);

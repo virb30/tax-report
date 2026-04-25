@@ -1,7 +1,7 @@
 import { Uuid } from '../../../domain/shared/uuid.vo';
 import type { BrokerRepository } from '../../repositories/broker.repository';
-import { ToggleActiveBrokerInput } from './toggle-active-broker.input';
-import { ToggleActiveBrokerOutput } from './toggle-active-broker.output';
+import type { ToggleActiveBrokerInput } from './toggle-active-broker.input';
+import type { ToggleActiveBrokerOutput } from './toggle-active-broker.output';
 
 export class ToggleActiveBrokerUseCase {
   constructor(private readonly brokerRepository: BrokerRepository) {}

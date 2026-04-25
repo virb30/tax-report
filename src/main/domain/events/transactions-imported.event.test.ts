@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+
 import { TransactionsImportedEvent } from './transactions-imported.event';
 
 describe('TransactionsImportedEvent', () => {

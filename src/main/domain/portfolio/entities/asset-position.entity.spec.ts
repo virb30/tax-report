@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+
 import { AssetType } from '../../../../shared/types/domain';
 import { AssetPosition, MIN_SUPPORTED_YEAR } from './asset-position.entity';
 import { Uuid } from '../../shared/uuid.vo';

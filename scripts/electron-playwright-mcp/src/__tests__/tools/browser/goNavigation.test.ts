@@ -1,7 +1,6 @@
 import { GoBackTool, GoForwardTool } from '../../../tools/browser/navigation.js';
 import { ToolContext } from '../../../tools/common/types.js';
 import { Page, Browser } from 'playwright';
-import { jest } from '@jest/globals';
 
 // Mock page functions
 const mockGoBack = jest.fn().mockImplementation(() => Promise.resolve());
