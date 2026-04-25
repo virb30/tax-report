@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { ELECTRON_API_CHANNELS } from '../ipc-channels';
+import { ELECTRON_API_CHANNELS, REGISTERED_IPC_CHANNELS } from '../ipc-channels';
 import { ipcContracts, rendererExposedIpcContracts } from './ipc-contract-registry';
 
 function expectUnique(values: string[]): void {
@@ -22,5 +22,18 @@ describe('ipc contract registry', () => {
     expect(new Set(rendererExposedIpcContracts.map((contract) => contract.channel))).toEqual(
       new Set(Object.values(ELECTRON_API_CHANNELS)),
     );
+  });
+
+  it('derives compatibility channel exports from contracts', () => {
+    const electronApiChannels: Record<string, string> = {};
+
+    for (const contract of rendererExposedIpcContracts) {
+      if (contract.api !== undefined) {
+        electronApiChannels[contract.api.name] = contract.channel;
+      }
+    }
+
+    expect(REGISTERED_IPC_CHANNELS).toEqual(ipcContracts.map((contract) => contract.channel));
+    expect(ELECTRON_API_CHANNELS).toEqual(electronApiChannels);
   });
 });

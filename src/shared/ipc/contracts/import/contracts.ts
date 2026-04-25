@@ -4,7 +4,6 @@ import type {
   PreviewImportTransactionsResult,
 } from '../../../contracts/preview-import.contract';
 import { defineIpcContract } from '../../define-ipc-contract';
-import { IMPORT_IPC_CHANNELS } from '../../ipc-channels';
 
 export type ImportSelectFileResult = {
   filePath: string | null;
@@ -28,7 +27,7 @@ export const confirmImportTransactionsSchema = z.object({
 
 export const importSelectFileContract = defineIpcContract<ImportSelectFileResult>()({
   id: 'import.selectFile',
-  channel: IMPORT_IPC_CHANNELS.selectFile,
+  channel: 'import:select-file',
   inputSchema: importSelectFileSchema,
   errorMode: 'throw',
   exposeToRenderer: true,
@@ -39,7 +38,7 @@ export const importSelectFileContract = defineIpcContract<ImportSelectFileResult
 export const previewImportTransactionsContract =
   defineIpcContract<PreviewImportTransactionsResult>()({
     id: 'import.previewTransactions',
-    channel: IMPORT_IPC_CHANNELS.previewTransactions,
+    channel: 'import:preview-transactions',
     inputSchema: previewImportTransactionsSchema,
     errorMode: 'throw',
     exposeToRenderer: true,
@@ -50,7 +49,7 @@ export const previewImportTransactionsContract =
 export const confirmImportTransactionsContract =
   defineIpcContract<ConfirmImportTransactionsResult>()({
     id: 'import.confirmTransactions',
-    channel: IMPORT_IPC_CHANNELS.confirmTransactions,
+    channel: 'import:confirm-transactions',
     inputSchema: confirmImportTransactionsSchema,
     errorMode: 'throw',
     exposeToRenderer: true,

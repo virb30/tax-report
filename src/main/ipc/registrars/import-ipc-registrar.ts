@@ -10,7 +10,7 @@ import {
   previewImportTransactionsContract,
 } from '../../../shared/ipc/contracts/import';
 
-export class ImportController implements IpcRegistrar {
+export class ImportIpcRegistrar implements IpcRegistrar {
   constructor(
     private readonly previewImportUseCase: PreviewImportUseCase,
     private readonly importTransactionsUseCase: ImportTransactionsUseCase,

@@ -2,11 +2,16 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { mock, mockReset } from 'jest-mock-extended';
 import type { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions/import-transactions-use-case';
 import type { PreviewImportUseCase } from '../../application/use-cases/preview-import/preview-import-use-case';
-import { IMPORT_IPC_CHANNELS } from '../../../shared/ipc/ipc-channels';
+import {
+  confirmImportTransactionsContract,
+  importIpcContracts,
+  importSelectFileContract,
+  previewImportTransactionsContract,
+} from '../../../shared/ipc/contracts/import';
 import type { IpcMainHandleRegistry } from '../registry/ipc-registrar';
 
-const showOpenDialog = jest
-  .fn<(options: Electron.OpenDialogOptions) => Promise<Electron.OpenDialogReturnValue>>();
+const showOpenDialog =
+  jest.fn<(options: Electron.OpenDialogOptions) => Promise<Electron.OpenDialogReturnValue>>();
 
 jest.mock('electron', () => ({
   dialog: {
@@ -14,11 +19,11 @@ jest.mock('electron', () => ({
   },
 }));
 
-import { ImportController } from './import.controller';
+import { ImportIpcRegistrar } from './import-ipc-registrar';
 
 type IpcHandler = (_event: Electron.IpcMainInvokeEvent, input?: unknown) => Promise<unknown>;
 
-describe('ImportController', () => {
+describe('ImportIpcRegistrar', () => {
   const previewImportUseCase = mock<PreviewImportUseCase>();
   const importTransactionsUseCase = mock<ImportTransactionsUseCase>();
   const ipcEvent = {} as Electron.IpcMainInvokeEvent;
@@ -29,7 +34,7 @@ describe('ImportController', () => {
     showOpenDialog.mockReset();
   });
 
-  function registerController(): Map<string, IpcHandler> {
+  function registerRegistrar(): Map<string, IpcHandler> {
     const handlers = new Map<string, IpcHandler>();
     const ipcMain: IpcMainHandleRegistry = {
       handle: (channel, listener) => {
@@ -37,9 +42,11 @@ describe('ImportController', () => {
       },
     };
 
-    const controller = new ImportController(previewImportUseCase, importTransactionsUseCase);
+    const registrar = new ImportIpcRegistrar(previewImportUseCase, importTransactionsUseCase);
 
-    expect(controller.register(ipcMain)).toEqual(Object.values(IMPORT_IPC_CHANNELS));
+    expect(registrar.register(ipcMain)).toEqual(
+      importIpcContracts.map((contract) => contract.channel),
+    );
 
     return handlers;
   }
@@ -49,8 +56,8 @@ describe('ImportController', () => {
       canceled: true,
       filePaths: [],
     } as Electron.OpenDialogReturnValue);
-    const handlers = registerController();
-    const selectFileHandler = handlers.get(IMPORT_IPC_CHANNELS.selectFile);
+    const handlers = registerRegistrar();
+    const selectFileHandler = handlers.get(importSelectFileContract.channel);
 
     await expect(selectFileHandler?.(ipcEvent)).resolves.toEqual({ filePath: null });
   });
@@ -60,8 +67,8 @@ describe('ImportController', () => {
       canceled: false,
       filePaths: ['C:/imports/operations.csv', 'C:/imports/ignored.csv'],
     } as Electron.OpenDialogReturnValue);
-    const handlers = registerController();
-    const selectFileHandler = handlers.get(IMPORT_IPC_CHANNELS.selectFile);
+    const handlers = registerRegistrar();
+    const selectFileHandler = handlers.get(importSelectFileContract.channel);
 
     await expect(selectFileHandler?.(ipcEvent)).resolves.toEqual({
       filePath: 'C:/imports/operations.csv',
@@ -73,8 +80,8 @@ describe('ImportController', () => {
       canceled: false,
       filePaths: [],
     } as Electron.OpenDialogReturnValue);
-    const handlers = registerController();
-    const selectFileHandler = handlers.get(IMPORT_IPC_CHANNELS.selectFile);
+    const handlers = registerRegistrar();
+    const selectFileHandler = handlers.get(importSelectFileContract.channel);
 
     await expect(selectFileHandler?.(ipcEvent)).resolves.toEqual({ filePath: null });
   });
@@ -85,8 +92,8 @@ describe('ImportController', () => {
       transactionsPreview: [],
       warnings: undefined,
     });
-    const handlers = registerController();
-    const previewHandler = handlers.get(IMPORT_IPC_CHANNELS.previewTransactions);
+    const handlers = registerRegistrar();
+    const previewHandler = handlers.get(previewImportTransactionsContract.channel);
 
     await expect(
       previewHandler?.(ipcEvent, {
@@ -108,8 +115,8 @@ describe('ImportController', () => {
       importedCount: 2,
       recalculatedTickers: ['PETR4', 'VALE3'],
     });
-    const handlers = registerController();
-    const confirmHandler = handlers.get(IMPORT_IPC_CHANNELS.confirmTransactions);
+    const handlers = registerRegistrar();
+    const confirmHandler = handlers.get(confirmImportTransactionsContract.channel);
 
     await expect(
       confirmHandler?.(ipcEvent, {

@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import type { GenerateAssetsReportResult } from '../../../contracts/assets-report.contract';
 import { defineIpcContract } from '../../define-ipc-contract';
-import { REPORT_IPC_CHANNELS } from '../../ipc-channels';
 
 export const generateAssetsReportSchema = z.object({
   baseYear: z
@@ -11,7 +10,7 @@ export const generateAssetsReportSchema = z.object({
 
 export const generateAssetsReportContract = defineIpcContract<GenerateAssetsReportResult>()({
   id: 'report.generateAssets',
-  channel: REPORT_IPC_CHANNELS.assetsAnnual,
+  channel: 'report:assets-annual',
   inputSchema: generateAssetsReportSchema,
   errorMode: 'throw',
   exposeToRenderer: true,

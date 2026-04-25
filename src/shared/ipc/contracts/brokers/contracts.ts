@@ -6,7 +6,6 @@ import type {
   UpdateBrokerResult,
 } from '../../../contracts/brokers.contract';
 import { defineIpcContract } from '../../define-ipc-contract';
-import { BROKERS_IPC_CHANNELS } from '../../ipc-channels';
 
 export const listBrokersSchema = z
   .object({
@@ -45,7 +44,7 @@ export const toggleActiveBrokerSchema = z.object({
 
 export const listBrokersContract = defineIpcContract<ListBrokersResult>()({
   id: 'brokers.list',
-  channel: BROKERS_IPC_CHANNELS.list,
+  channel: 'brokers:list',
   inputSchema: listBrokersSchema,
   errorMode: 'throw',
   exposeToRenderer: true,
@@ -55,7 +54,7 @@ export const listBrokersContract = defineIpcContract<ListBrokersResult>()({
 
 export const createBrokerContract = defineIpcContract<CreateBrokerResult>()({
   id: 'brokers.create',
-  channel: BROKERS_IPC_CHANNELS.create,
+  channel: 'brokers:create',
   inputSchema: createBrokerSchema,
   errorMode: 'result',
   exposeToRenderer: true,
@@ -65,7 +64,7 @@ export const createBrokerContract = defineIpcContract<CreateBrokerResult>()({
 
 export const updateBrokerContract = defineIpcContract<UpdateBrokerResult>()({
   id: 'brokers.update',
-  channel: BROKERS_IPC_CHANNELS.update,
+  channel: 'brokers:update',
   inputSchema: updateBrokerSchema,
   errorMode: 'result',
   exposeToRenderer: true,
@@ -75,7 +74,7 @@ export const updateBrokerContract = defineIpcContract<UpdateBrokerResult>()({
 
 export const toggleBrokerActiveContract = defineIpcContract<ToggleBrokerActiveResult>()({
   id: 'brokers.toggleActive',
-  channel: BROKERS_IPC_CHANNELS.toggleActive,
+  channel: 'brokers:toggle-active',
   inputSchema: toggleActiveBrokerSchema,
   errorMode: 'result',
   exposeToRenderer: true,

@@ -1,5 +1,14 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { ELECTRON_API_CHANNELS, REGISTERED_IPC_CHANNELS } from './shared/ipc/ipc-channels';
+import {
+  confirmImportTransactionsContract,
+  previewImportTransactionsContract,
+} from './shared/ipc/contracts/import';
+import { listPositionsContract, setInitialBalanceContract } from './shared/ipc/contracts/portfolio';
+import { generateAssetsReportContract } from './shared/ipc/contracts/report';
+import {
+  ipcContracts,
+  rendererExposedIpcContracts,
+} from './shared/ipc/contracts/ipc-contract-registry';
 
 const exposeInMainWorld = jest.fn();
 const invoke = jest.fn();
@@ -42,13 +51,13 @@ describe('preload', () => {
     await electronApi.listPositions({ baseYear: 2025 });
     await electronApi.generateAssetsReport({ baseYear: 2025 });
 
-    expect(invoke).toHaveBeenNthCalledWith(1, ELECTRON_API_CHANNELS.previewImportTransactions, {
+    expect(invoke).toHaveBeenNthCalledWith(1, previewImportTransactionsContract.channel, {
       filePath: '/tmp/operations.csv',
     });
-    expect(invoke).toHaveBeenNthCalledWith(2, ELECTRON_API_CHANNELS.confirmImportTransactions, {
+    expect(invoke).toHaveBeenNthCalledWith(2, confirmImportTransactionsContract.channel, {
       filePath: '/tmp/operations.csv',
     });
-    expect(invoke).toHaveBeenNthCalledWith(3, ELECTRON_API_CHANNELS.setInitialBalance, {
+    expect(invoke).toHaveBeenNthCalledWith(3, setInitialBalanceContract.channel, {
       ticker: 'IVVB11',
       brokerId: 'broker-xp',
       assetType: AssetType.Etf,
@@ -56,10 +65,10 @@ describe('preload', () => {
       averagePrice: 300,
       year: 2025,
     });
-    expect(invoke).toHaveBeenNthCalledWith(4, ELECTRON_API_CHANNELS.listPositions, {
+    expect(invoke).toHaveBeenNthCalledWith(4, listPositionsContract.channel, {
       baseYear: 2025,
     });
-    expect(invoke).toHaveBeenNthCalledWith(5, ELECTRON_API_CHANNELS.generateAssetsReport, {
+    expect(invoke).toHaveBeenNthCalledWith(5, generateAssetsReportContract.channel, {
       baseYear: 2025,
     });
   });
@@ -89,8 +98,10 @@ describe('preload', () => {
   });
 
   it('keeps exposed preload channels aligned with registered main-process channels', () => {
+    const registeredChannels = new Set(ipcContracts.map((contract) => contract.channel));
+
     expect(
-      Object.values(ELECTRON_API_CHANNELS).every((channel) => REGISTERED_IPC_CHANNELS.includes(channel)),
+      rendererExposedIpcContracts.every((contract) => registeredChannels.has(contract.channel)),
     ).toBe(true);
   });
 });

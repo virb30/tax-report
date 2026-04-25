@@ -14,7 +14,7 @@ import {
   updateBrokerContract,
 } from '../../../shared/ipc/contracts/brokers';
 
-export class BrokersController implements IpcRegistrar {
+export class BrokersIpcRegistrar implements IpcRegistrar {
   constructor(
     private readonly listBrokersUseCase: ListBrokersUseCase,
     private readonly createBrokerUseCase: CreateBrokerUseCase,

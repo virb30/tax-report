@@ -186,3 +186,83 @@ Review whether `src/main/ipc/controllers/ipc-registry.ts` should remain controll
 ## 2026-04-24 IPC Registry Move Next Step
 
 Continue cleanup by reviewing remaining controller classes. They are now thin contract binders; decide whether to keep them as context composition roots or rename/move them to a main-process IPC composition layer in a follow-up batch.
+
+## 2026-04-24 IPC Registrar Rename Checkpoint
+
+- Resumed from the recorded next step: review the remaining controller classes now that they only compose contract bindings.
+- Ran `npm run lint` before implementation and captured the batch baseline: 97 errors.
+
+## 2026-04-24 IPC Registrar Rename Progress
+
+- Moved the thin IPC composition classes out of `src/main/ipc/controllers/` and into `src/main/ipc/registrars/`.
+- Renamed controller classes to responsibility-based registrar names:
+  - `AppIpcRegistrar`
+  - `BrokersIpcRegistrar`
+  - `ImportIpcRegistrar`
+  - `PortfolioIpcRegistrar`
+  - `ReportIpcRegistrar`
+- Updated the Awilix container registrations and cradle names from `*Controller` to `*IpcRegistrar`.
+- Updated IPC registrar tests and integration tests to use the new registrar module names.
+- Removed the now-obsolete controller-layer IPC composition surface.
+
+## 2026-04-24 IPC Registrar Rename Verification
+
+- `npx tsc --noEmit`: passed.
+- Focused registrar/registry/container/integration tests without coverage: passed, 5 suites and 14 tests.
+- Focused Prettier check for changed files: passed.
+- `npm test`: passed, 57 suites and 258 tests.
+- `npm run lint`: still fails on pre-existing issues, but improved from the 97-error baseline to 96 errors.
+
+## 2026-04-24 IPC Registrar Rename Next Step
+
+Continue cleanup by reviewing whether `src/shared/ipc/ipc-channels.ts` should remain as a compatibility view over contract channels or be collapsed further now that main registration and preload generation are contract-first.
+
+## 2026-04-24 IPC Channels Compatibility Checkpoint
+
+- Resumed from the recorded next step: review whether `src/shared/ipc/ipc-channels.ts` should remain as a compatibility view over contract channels.
+- Ran `npm run lint` before implementation and captured the batch baseline: 96 errors.
+
+## 2026-04-24 IPC Channels Compatibility Progress
+
+- Inverted the remaining channel ownership so contract definitions now declare their own transport channel strings.
+- Refactored `src/shared/ipc/ipc-channels.ts` into a compatibility view derived from contract channel metadata instead of being the source consumed by contracts.
+- Kept the existing grouped channel exports (`APP_IPC_CHANNELS`, `BROKERS_IPC_CHANNELS`, etc.) stable for tests and compatibility consumers.
+- Added registry coverage that verifies `REGISTERED_IPC_CHANNELS` and `ELECTRON_API_CHANNELS` stay aligned with `ipcContracts` and `rendererExposedIpcContracts`.
+- Confirmed no contract module imports `ipc-channels.ts` anymore.
+
+## 2026-04-24 IPC Channels Compatibility Verification
+
+- `npx tsc --noEmit`: passed.
+- Focused contract/preload/registrar/integration tests without coverage: passed, 6 suites and 24 tests.
+- Focused Prettier check for changed files: passed.
+- `npm test`: passed, 57 suites and 259 tests.
+- `npm run lint`: still fails on pre-existing issues, unchanged from the 96-error baseline.
+
+## 2026-04-24 IPC Channels Compatibility Next Step
+
+Continue cleanup by reviewing remaining uses of compatibility channel exports in tests. Prefer asserting against contract constants directly where doing so improves contract-first clarity without reducing test readability.
+
+## 2026-04-24 IPC Test Channel Cleanup Checkpoint
+
+- Resumed from the recorded next step: review remaining uses of compatibility channel exports in tests.
+- Ran `npm run lint` before implementation and captured the batch baseline: 96 errors.
+
+## 2026-04-24 IPC Test Channel Cleanup Progress
+
+- Replaced registrar tests' direct dependency on grouped compatibility channel exports with contract constants and contract lists.
+- Updated IPC handler integration coverage to retrieve registered handlers by contract channel metadata.
+- Updated preload tests to assert `ipcRenderer.invoke` channel usage against operation contracts instead of `ELECTRON_API_CHANNELS`.
+- Left `ipc-contract-registry.test.ts` as the only test consumer of `ipc-channels.ts`, because that test explicitly validates the compatibility view.
+- Confirmed remaining `IPC_CHANNELS`, `ELECTRON_API_CHANNELS`, and `REGISTERED_IPC_CHANNELS` references are limited to `ipc-channels.ts` and its compatibility test.
+
+## 2026-04-24 IPC Test Channel Cleanup Verification
+
+- `npx tsc --noEmit`: passed.
+- Focused preload/registrar/integration/compatibility tests without coverage: passed, 5 suites and 21 tests.
+- Focused Prettier check for changed tests: passed.
+- `npm test`: passed, 57 suites and 259 tests.
+- `npm run lint`: still fails on pre-existing issues, unchanged from the 96-error baseline.
+
+## 2026-04-24 IPC Test Channel Cleanup Next Step
+
+Review whether `src/shared/ipc/ipc-channels.ts` still needs all grouped compatibility exports, or whether only `ELECTRON_API_CHANNELS` / `REGISTERED_IPC_CHANNELS` should remain temporarily for external compatibility.

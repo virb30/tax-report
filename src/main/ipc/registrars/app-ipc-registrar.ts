@@ -3,7 +3,7 @@ import { bindIpcContract } from '../binding/bind-ipc-contract';
 import { createAppIpcHandlers } from '../handlers/app/app-ipc-handlers';
 import { appIpcContracts, healthCheckContract } from '../../../shared/ipc/contracts/app';
 
-export class AppController implements IpcRegistrar {
+export class AppIpcRegistrar implements IpcRegistrar {
   register(ipcMain: IpcMainHandleRegistry): string[] {
     const handlers = createAppIpcHandlers();
 

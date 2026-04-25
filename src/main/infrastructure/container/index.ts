@@ -25,11 +25,11 @@ import { ImportConsolidatedPositionUseCase } from '../../application/use-cases/i
 import { DeletePositionUseCase } from '../../application/use-cases/delete-position/delete-position.use-case';
 import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-asset-report/generate-assets-report.use-case';
 
-import { BrokersController } from '../../ipc/controllers/brokers.controller';
-import { AppController } from '../../ipc/controllers/app.controller';
-import { ImportController } from '../../ipc/controllers/import.controller';
-import { PortfolioController } from '../../ipc/controllers/portfolio.controller';
-import { ReportController } from '../../ipc/controllers/report.controller';
+import { BrokersIpcRegistrar } from '../../ipc/registrars/brokers-ipc-registrar';
+import { AppIpcRegistrar } from '../../ipc/registrars/app-ipc-registrar';
+import { ImportIpcRegistrar } from '../../ipc/registrars/import-ipc-registrar';
+import { PortfolioIpcRegistrar } from '../../ipc/registrars/portfolio-ipc-registrar';
+import { ReportIpcRegistrar } from '../../ipc/registrars/report-ipc-registrar';
 import { IpcRegistry } from '../../ipc/registry/ipc-registry';
 import type { IpcRegistrar } from '../../ipc/registry/ipc-registrar';
 
@@ -59,12 +59,12 @@ export interface AppCradle {
   importConsolidatedPositionUseCase: ImportConsolidatedPositionUseCase;
   deletePositionUseCase: DeletePositionUseCase;
   generateAssetsReportUseCase: GenerateAssetsReportUseCase;
-  
-  brokersController: BrokersController;
-  appController: AppController;
-  importController: ImportController;
-  portfolioController: PortfolioController;
-  reportController: ReportController;
+
+  brokersIpcRegistrar: BrokersIpcRegistrar;
+  appIpcRegistrar: AppIpcRegistrar;
+  importIpcRegistrar: ImportIpcRegistrar;
+  portfolioIpcRegistrar: PortfolioIpcRegistrar;
+  reportIpcRegistrar: ReportIpcRegistrar;
 
   ipcRegistrars: IpcRegistrar[];
   ipcRegistry: IpcRegistry;
@@ -84,16 +84,21 @@ export function registerDependencies(db: Knex) {
     queue: asClass(MemoryQueueAdapter).singleton(),
     taxApportioner: asClass(TaxApportioner).singleton(),
     spreadsheetFileReader: asClass(SheetjsSpreadsheetFileReader).singleton(),
-    transactionParser: asClass(CsvXlsxTransactionParser).inject(() => ({
-      fileReader: container.resolve('spreadsheetFileReader'),
-    })).singleton(),
+    transactionParser: asClass(CsvXlsxTransactionParser)
+      .inject(() => ({
+        fileReader: container.resolve('spreadsheetFileReader'),
+      }))
+      .singleton(),
     consolidatedPositionParser: asClass(CsvXlsxConsolidatedPositionParser).singleton(),
-    
+
     // Handlers
-    recalculatePositionHandler: asFunction(() => new RecalculatePositionHandler(
-      container.resolve('queue'),
-      container.resolve('recalculatePositionUseCase')
-    )).singleton(),
+    recalculatePositionHandler: asFunction(
+      () =>
+        new RecalculatePositionHandler(
+          container.resolve('queue'),
+          container.resolve('recalculatePositionUseCase'),
+        ),
+    ).singleton(),
 
     // Use Cases
     createBrokerUseCase: asClass(CreateBrokerUseCase).singleton(),
@@ -101,43 +106,53 @@ export function registerDependencies(db: Knex) {
     listBrokersUseCase: asClass(ListBrokersUseCase).singleton(),
     toggleActiveBrokerUseCase: asClass(ToggleActiveBrokerUseCase).singleton(),
     recalculatePositionUseCase: asClass(RecalculatePositionUseCase).singleton(),
-    importTransactionsUseCase: asFunction(() => new ImportTransactionsUseCase(
-      container.resolve('transactionParser'),
-      container.resolve('taxApportioner'),
-      container.resolve('transactionRepository'),
-      container.resolve('queue')
-    )).singleton(),
-    previewImportUseCase: asClass(PreviewImportUseCase).inject(() => ({
-      parser: container.resolve('transactionParser'),
-    })).singleton(),
+    importTransactionsUseCase: asFunction(
+      () =>
+        new ImportTransactionsUseCase(
+          container.resolve('transactionParser'),
+          container.resolve('taxApportioner'),
+          container.resolve('transactionRepository'),
+          container.resolve('queue'),
+        ),
+    ).singleton(),
+    previewImportUseCase: asClass(PreviewImportUseCase)
+      .inject(() => ({
+        parser: container.resolve('transactionParser'),
+      }))
+      .singleton(),
     setInitialBalanceUseCase: asClass(SetInitialBalanceUseCase).singleton(),
     listPositionsUseCase: asClass(ListPositionsUseCase).singleton(),
     migrateYearUseCase: asClass(MigrateYearUseCase).singleton(),
-    importConsolidatedPositionUseCase: asFunction(() => new ImportConsolidatedPositionUseCase(
-      container.resolve('consolidatedPositionParser'),
-      container.resolve('brokerRepository'),
-      container.resolve('transactionRepository'),
-      container.resolve('queue')
-    )).singleton(),
+    importConsolidatedPositionUseCase: asFunction(
+      () =>
+        new ImportConsolidatedPositionUseCase(
+          container.resolve('consolidatedPositionParser'),
+          container.resolve('brokerRepository'),
+          container.resolve('transactionRepository'),
+          container.resolve('queue'),
+        ),
+    ).singleton(),
     deletePositionUseCase: asClass(DeletePositionUseCase).singleton(),
-    generateAssetsReportUseCase: asClass(GenerateAssetsReportUseCase).inject(() => ({
-      tickerDataRepository: container.resolve('assetRepository'),
-    })).singleton(),
-    
-    // Controllers
-    brokersController: asClass(BrokersController).singleton(),
-    appController: asClass(AppController).singleton(),
-    importController: asClass(ImportController).singleton(),
-    portfolioController: asClass(PortfolioController).singleton(),
-    reportController: asClass(ReportController).singleton(),
-    
+    generateAssetsReportUseCase: asClass(GenerateAssetsReportUseCase)
+      .inject(() => ({
+        tickerDataRepository: container.resolve('assetRepository'),
+      }))
+      .singleton(),
+
+    // IPC registrars
+    brokersIpcRegistrar: asClass(BrokersIpcRegistrar).singleton(),
+    appIpcRegistrar: asClass(AppIpcRegistrar).singleton(),
+    importIpcRegistrar: asClass(ImportIpcRegistrar).singleton(),
+    portfolioIpcRegistrar: asClass(PortfolioIpcRegistrar).singleton(),
+    reportIpcRegistrar: asClass(ReportIpcRegistrar).singleton(),
+
     // IPC
     ipcRegistrars: asFunction(() => [
-      container.resolve('brokersController'),
-      container.resolve('appController'),
-      container.resolve('importController'),
-      container.resolve('portfolioController'),
-      container.resolve('reportController'),
+      container.resolve('brokersIpcRegistrar'),
+      container.resolve('appIpcRegistrar'),
+      container.resolve('importIpcRegistrar'),
+      container.resolve('portfolioIpcRegistrar'),
+      container.resolve('reportIpcRegistrar'),
     ]).singleton(),
     ipcRegistry: asClass(IpcRegistry).singleton(),
   });

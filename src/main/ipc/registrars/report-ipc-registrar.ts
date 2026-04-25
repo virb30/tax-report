@@ -7,7 +7,7 @@ import {
   reportIpcContracts,
 } from '../../../shared/ipc/contracts/report';
 
-export class ReportController implements IpcRegistrar {
+export class ReportIpcRegistrar implements IpcRegistrar {
   constructor(private readonly generateAssetsReportUseCase: GenerateAssetsReportUseCase) {}
 
   register(ipcMain: IpcMainHandleRegistry): string[] {

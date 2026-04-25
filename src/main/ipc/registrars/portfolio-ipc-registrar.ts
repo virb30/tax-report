@@ -18,7 +18,7 @@ import {
   setInitialBalanceContract,
 } from '../../../shared/ipc/contracts/portfolio';
 
-export class PortfolioController implements IpcRegistrar {
+export class PortfolioIpcRegistrar implements IpcRegistrar {
   constructor(
     private readonly setInitialBalanceUseCase: SetInitialBalanceUseCase,
     private readonly listPositionsUseCase: ListPositionsUseCase,

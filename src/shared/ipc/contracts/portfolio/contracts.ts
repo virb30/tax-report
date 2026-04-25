@@ -10,7 +10,6 @@ import type { MigrateYearResult } from '../../../contracts/migrate-year.contract
 import type { RecalculatePositionResult } from '../../../contracts/recalculate.contract';
 import type { AssetType } from '../../../types/domain';
 import { defineIpcContract } from '../../define-ipc-contract';
-import { PORTFOLIO_IPC_CHANNELS } from '../../ipc-channels';
 
 export const listPositionsSchema = z.object({
   baseYear: z
@@ -92,7 +91,7 @@ export const deletePositionSchema = z.object({
 
 export const setInitialBalanceContract = defineIpcContract<SetInitialBalanceResult>()({
   id: 'portfolio.setInitialBalance',
-  channel: PORTFOLIO_IPC_CHANNELS.setInitialBalance,
+  channel: 'portfolio:set-initial-balance',
   inputSchema: setInitialBalanceSchema,
   errorMode: 'throw',
   exposeToRenderer: true,
@@ -102,7 +101,7 @@ export const setInitialBalanceContract = defineIpcContract<SetInitialBalanceResu
 
 export const listPositionsContract = defineIpcContract<ListPositionsResult>()({
   id: 'portfolio.listPositions',
-  channel: PORTFOLIO_IPC_CHANNELS.listPositions,
+  channel: 'portfolio:list-positions',
   inputSchema: listPositionsSchema,
   errorMode: 'throw',
   exposeToRenderer: true,
@@ -112,7 +111,7 @@ export const listPositionsContract = defineIpcContract<ListPositionsResult>()({
 
 export const recalculatePositionContract = defineIpcContract<RecalculatePositionResult>()({
   id: 'portfolio.recalculate',
-  channel: PORTFOLIO_IPC_CHANNELS.recalculate,
+  channel: 'portfolio:recalculate',
   inputSchema: recalculatePositionSchema,
   errorMode: 'throw',
   exposeToRenderer: true,
@@ -122,7 +121,7 @@ export const recalculatePositionContract = defineIpcContract<RecalculatePosition
 
 export const migrateYearContract = defineIpcContract<MigrateYearResult>()({
   id: 'portfolio.migrateYear',
-  channel: PORTFOLIO_IPC_CHANNELS.migrateYear,
+  channel: 'portfolio:migrate-year',
   inputSchema: migrateYearSchema,
   errorMode: 'throw',
   exposeToRenderer: true,
@@ -133,7 +132,7 @@ export const migrateYearContract = defineIpcContract<MigrateYearResult>()({
 export const previewConsolidatedPositionContract =
   defineIpcContract<PreviewConsolidatedPositionResult>()({
     id: 'portfolio.previewConsolidatedPosition',
-    channel: PORTFOLIO_IPC_CHANNELS.previewConsolidatedPosition,
+    channel: 'portfolio:preview-consolidated-position',
     inputSchema: previewConsolidatedPositionSchema,
     errorMode: 'throw',
     exposeToRenderer: true,
@@ -144,7 +143,7 @@ export const previewConsolidatedPositionContract =
 export const importConsolidatedPositionContract =
   defineIpcContract<ImportConsolidatedPositionResult>()({
     id: 'portfolio.importConsolidatedPosition',
-    channel: PORTFOLIO_IPC_CHANNELS.importConsolidatedPosition,
+    channel: 'portfolio:import-consolidated-position',
     inputSchema: importConsolidatedPositionSchema,
     errorMode: 'throw',
     exposeToRenderer: true,
@@ -154,7 +153,7 @@ export const importConsolidatedPositionContract =
 
 export const deletePositionContract = defineIpcContract<DeletePositionResult>()({
   id: 'portfolio.deletePosition',
-  channel: PORTFOLIO_IPC_CHANNELS.deletePosition,
+  channel: 'portfolio:delete-position',
   inputSchema: deletePositionSchema,
   errorMode: 'throw',
   exposeToRenderer: true,
