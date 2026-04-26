@@ -32,7 +32,7 @@ Facilitate a multi-advisor roundtable by dispatching archetype subagents, surfac
 
 **Step 3: Dispatch Opening Statements (Parallel)**
 
-1. Dispatch all selected archetype subagents **in a single message with parallel Agent tool calls**. Each archetype subagent lives at `.claude/agents/<archetype-name>.md`.
+1. Dispatch all selected archetype subagents **in a single message with parallel Agent tool calls**. Each archetype subagent lives at `references/archetypes.md`.
 2. Each dispatched agent receives:
    - The confirmed dilemma and constraints from Step 1
    - The roster of other advisors (so they know who they're debating)
@@ -75,7 +75,7 @@ Facilitate a multi-advisor roundtable by dispatching archetype subagents, surfac
 - **Evidence Required**: claims need reasoning or examples, not bare assertions.
 - **Authenticity**: each archetype argues from its genuine priorities — the Security Advocate never dismisses risk for convenience; the Pragmatic Engineer never prioritizes theoretical purity over shipping.
 - **No False Consensus**: disagreement that remains after debate is preserved in synthesis, not smoothed over.
-- **Concession Protocol**: advisors who concede state *what* they concede and *why*; advisors who hold firm state what would change their mind.
+- **Concession Protocol**: advisors who concede state _what_ they concede and _why_; advisors who hold firm state what would change their mind.
 
 If any dispatched archetype violates these protocols (e.g., Security Advocate agrees to ship without controls for convenience), reject the response and re-dispatch with the protocol reminder.
 

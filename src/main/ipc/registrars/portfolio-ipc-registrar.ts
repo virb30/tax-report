@@ -16,7 +16,7 @@ import {
   previewConsolidatedPositionContract,
   recalculatePositionContract,
   setInitialBalanceContract,
-} from '../../../shared/ipc/contracts/portfolio';
+} from '../../../shared/ipc/contracts/portfolio/contracts';
 
 export class PortfolioIpcRegistrar implements IpcRegistrar {
   constructor(
