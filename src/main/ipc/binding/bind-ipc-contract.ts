@@ -5,6 +5,7 @@ import type {
   IpcContractOutput,
 } from '../../../shared/ipc/contract-types';
 import type { IpcMainHandleRegistry } from '../registry/ipc-registrar';
+import { toIpcResultFailure } from './ipc-error-mapper';
 import { parseIpcPayload } from './ipc-payload';
 
 type BoundIpcContract = IpcContractDefinition<z.ZodType, unknown>;
@@ -32,8 +33,10 @@ export function bindIpcContract<TContract extends BoundIpcContract>(
 
       return await handler(payload as IpcContractInput<TContract>);
     } catch (error) {
-      if (contract.errorMode === 'result' && options.onError) {
-        return options.onError(error);
+      if (contract.errorMode === 'result') {
+        return options.onError
+          ? options.onError(error)
+          : (toIpcResultFailure(error) as IpcContractOutput<TContract>);
       }
 
       throw error;

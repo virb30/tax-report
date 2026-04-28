@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { AssetType } from '../../../shared/types/domain';
-import type { ListPositionsResult } from '../../../shared/contracts/list-positions.contract';
+import type { PositionListItem } from '../../../shared/contracts/list-positions.contract';
 import { buildYearOptions, getDefaultBaseYear } from '../../../shared/utils/year';
 import { buildErrorMessage } from '../../errors/build-error-message';
+import { unwrapIpcResult } from '../../ipc/unwrap-ipc-result';
 import { listActiveBrokers } from '../../services/api/list-brokers';
 import type { Broker } from '../../types/broker.types';
 
@@ -21,7 +22,7 @@ export function useInitialBalance() {
   const [quantity, setQuantity] = useState('');
   const [averagePrice, setAveragePrice] = useState('');
   const [brokers, setBrokers] = useState<Broker[]>([]);
-  const [positions, setPositions] = useState<ListPositionsResult['items']>([]);
+  const [positions, setPositions] = useState<PositionListItem[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -49,7 +50,7 @@ export function useInitialBalance() {
     setIsLoading(true);
     try {
       const result = await window.electronApi.listPositions({ baseYear: year });
-      setPositions(result.items);
+      setPositions(unwrapIpcResult(result).items);
     } catch (error: unknown) {
       setErrorMessage(buildErrorMessage(error));
     } finally {
@@ -94,14 +95,16 @@ export function useInitialBalance() {
     }
 
     try {
-      await window.electronApi.setInitialBalance({
-        ticker: ticker.toUpperCase().trim(),
-        brokerId,
-        assetType,
-        quantity: validatedInput.quantity,
-        averagePrice: validatedInput.averagePrice,
-        year,
-      });
+      unwrapIpcResult(
+        await window.electronApi.setInitialBalance({
+          ticker: ticker.toUpperCase().trim(),
+          brokerId,
+          assetType,
+          quantity: validatedInput.quantity,
+          averagePrice: validatedInput.averagePrice,
+          year,
+        }),
+      );
       setFeedbackMessage('Saldo inicial cadastrado com sucesso.');
       setTicker('');
       setQuantity('');

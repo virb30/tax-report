@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
-import type {
-  ListPositionsResult,
-  PositionListItem,
-} from '../../../shared/contracts/list-positions.contract';
+import type { PositionListItem } from '../../../shared/contracts/list-positions.contract';
 import { buildYearOptions, getDefaultBaseYear } from '../../../shared/utils/year';
 import { buildErrorMessage } from '../../errors/build-error-message';
+import { unwrapIpcResult } from '../../ipc/unwrap-ipc-result';
 
 const defaultBaseYear = getDefaultBaseYear();
 
@@ -28,8 +26,8 @@ export function usePositionsPage() {
     setIsLoading(true);
     setErrorMessage('');
     try {
-      const result: ListPositionsResult = await window.electronApi.listPositions({ baseYear });
-      setPositions(result.items);
+      const result = await window.electronApi.listPositions({ baseYear });
+      setPositions(unwrapIpcResult(result).items);
     } catch (error: unknown) {
       setErrorMessage(buildErrorMessage(error));
     } finally {
@@ -41,7 +39,7 @@ export function usePositionsPage() {
     setRecalculatingTicker(ticker);
     setErrorMessage('');
     try {
-      await window.electronApi.recalculatePosition({ ticker, year: baseYear });
+      unwrapIpcResult(await window.electronApi.recalculatePosition({ ticker, year: baseYear }));
       await loadPositions();
     } catch (error: unknown) {
       setErrorMessage(buildErrorMessage(error));
@@ -55,7 +53,9 @@ export function usePositionsPage() {
     setErrorMessage('');
     try {
       for (const position of positions) {
-        await window.electronApi.recalculatePosition({ ticker: position.ticker, year: baseYear });
+        unwrapIpcResult(
+          await window.electronApi.recalculatePosition({ ticker: position.ticker, year: baseYear }),
+        );
       }
       await loadPositions();
     } catch (error: unknown) {
@@ -74,7 +74,7 @@ export function usePositionsPage() {
     setErrorMessage('');
     try {
       const result = await window.electronApi.deletePosition({ ticker, year: baseYear });
-      if (result.deleted) {
+      if (unwrapIpcResult(result).deleted) {
         await loadPositions();
       }
     } catch (error: unknown) {

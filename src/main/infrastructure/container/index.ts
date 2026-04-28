@@ -147,12 +147,18 @@ export function registerDependencies(db: Knex) {
     reportIpcRegistrar: asClass(ReportIpcRegistrar).singleton(),
 
     // IPC
-    ipcRegistrars: asFunction(() => [
-      container.resolve('brokersIpcRegistrar'),
-      container.resolve('appIpcRegistrar'),
-      container.resolve('importIpcRegistrar'),
-      container.resolve('portfolioIpcRegistrar'),
-      container.resolve('reportIpcRegistrar'),
+    ipcRegistrars: asFunction((
+      brokersIpcRegistrar: BrokersIpcRegistrar,
+      appIpcRegistrar: AppIpcRegistrar,
+      importIpcRegistrar: ImportIpcRegistrar,
+      portfolioIpcRegistrar: PortfolioIpcRegistrar,
+      reportIpcRegistrar: ReportIpcRegistrar
+    ) => [
+      brokersIpcRegistrar,
+      appIpcRegistrar,
+      importIpcRegistrar,
+      portfolioIpcRegistrar,
+      reportIpcRegistrar
     ]).singleton(),
     ipcRegistry: asClass(IpcRegistry).singleton(),
   });

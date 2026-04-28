@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ConsolidatedPositionPreviewRow } from '../../../shared/contracts/import-consolidated-position.contract';
 import { buildYearOptions, getDefaultBaseYear } from '../../../shared/utils/year';
 import { buildErrorMessage } from '../../errors/build-error-message';
+import { unwrapIpcResult } from '../../ipc/unwrap-ipc-result';
 
 const defaultBaseYear = getDefaultBaseYear();
 
@@ -39,7 +40,7 @@ export function useImportConsolidatedPositionModal({
         const preview = await window.electronApi.previewConsolidatedPosition({
           filePath: result.filePath,
         });
-        setPreviewRows(preview.rows);
+        setPreviewRows(unwrapIpcResult(preview).rows);
       } catch (error: unknown) {
         setErrorMessage(buildErrorMessage(error));
         setFilePath(null);
@@ -66,8 +67,9 @@ export function useImportConsolidatedPositionModal({
         filePath,
         year,
       });
+      const data = unwrapIpcResult(result);
       setFeedbackMessage(
-        `${result.importedCount} alocação(ões) importada(s). ${result.recalculatedTickers.length} ativo(s) recalculado(s).`,
+        `${data.importedCount} alocação(ões) importada(s). ${data.recalculatedTickers.length} ativo(s) recalculado(s).`,
       );
       onSuccess();
     } catch (error: unknown) {

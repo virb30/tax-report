@@ -209,9 +209,12 @@ describe('IPC handlers integration', () => {
     });
 
     const positionsResult = (await listPositionsHandler(ipcEvent, { baseYear: 2025 })) as {
-      items: Array<{ ticker: string }>;
+      ok: true;
+      data: {
+        items: Array<{ ticker: string }>;
+      };
     };
-    expect(positionsResult.items.map((item) => item.ticker)).toEqual(
+    expect(positionsResult.data.items.map((item) => item.ticker)).toEqual(
       expect.arrayContaining(['IVVB11']),
     );
 

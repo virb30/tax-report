@@ -2,7 +2,7 @@
 
 > Date: 2026-04-24
 > Scope: `src/main`
-> Status: Approved direction from brainstorming
+> Status: Approved direction from brainstorming; updated after architecture council
 
 ## Goal
 
@@ -22,7 +22,8 @@ instead group code by business proximity and dependency.
 3. Keep context as the first navigation axis, then split each context into physical layers.
 4. Keep domain and use-case code independent from technical adapters.
 5. Avoid one-file-per-input/output/use-case ceremony for small operations.
-6. Use explicit module composition instead of a broad dependency injection container if feasible.
+6. Keep Awilix, but register dependencies by module instead of maintaining one broad root
+   registration file that knows every class in the application.
 7. Standardize IPC error responses as `Result`, not mixed throw/result behavior.
 
 ## Target Top-Level Structure
@@ -44,6 +45,7 @@ src/main/
     infrastructure/
       sqlite-repository.ts
       ipc.ts
+    register-portfolio-dependencies.ts
 
   imports/
     domain/
@@ -59,6 +61,7 @@ src/main/
       consolidated-position-parser.ts
       sheetjs-reader.ts
       ipc.ts
+    register-imports-dependencies.ts
 
   tax/
     domain/
@@ -73,6 +76,7 @@ src/main/
     infrastructure/
       sqlite-repository.ts
       ipc.ts
+    register-tax-dependencies.ts
 
   shared/
     database/
@@ -80,12 +84,18 @@ src/main/
     errors.ts
     result.ts
     ipc/
+    register-shared-dependencies.ts
+
+  infrastructure/
+    container/
+      index.ts
 ```
 
-This structure intentionally removes global `domain/`, `application/`, `infrastructure/`,
-and `ipc/` folders. Those layers still exist, but they live inside each business module.
-That keeps the feature easy to find while preserving physical separation between business
-rules, orchestration, and adapters.
+This structure moves business code away from global `domain/`, `application/`,
+`infrastructure`, and `ipc` folders over time. Those layers still exist, but they live inside
+each business module. The global `infrastructure/container` folder may remain as the process
+composition root, but it should delegate registration to module-owned registration functions
+instead of registering every repository, parser, use case, handler, and IPC registrar directly.
 
 The navigation rule is:
 
@@ -134,6 +144,12 @@ It should include:
 
 It should not own portfolio calculation rules. Once data is normalized, it delegates to
 portfolio use cases.
+
+The import flow is local and exists to make data ingestion easier. It does not need a
+capability-token or session-based security model in the first migration. The useful near-term
+controls are reliability-oriented: validate supported extensions, keep parser diagnostics
+structured, avoid leaking internal stack traces to the renderer, and consider a practical file
+size limit for UX/performance if large spreadsheets become a problem.
 
 ### Tax
 
@@ -369,23 +385,41 @@ types, collaborators, and tests.
 
 ## Composition
 
-The current broad DI container adds indirection for a small application. The target should
-prefer explicit composition:
+The current broad DI container adds indirection because the root registration file knows too
+much about every feature. The target is not to remove Awilix immediately. The target is to keep
+Awilix while making dependency ownership modular.
+
+Each module should expose a registration function:
 
 ```ts
-export function createMainServices(db: Knex) {
-  const portfolioRepository = new SqlitePortfolioRepository(db);
-  const portfolio = createPortfolioUseCases({ portfolioRepository });
-  const imports = createImportUseCases({ portfolio, spreadsheetReader });
-  const tax = createTaxUseCases({ portfolio, taxRepository });
-
-  return { portfolio, imports, tax };
+export function registerPortfolioDependencies(container: AwilixContainer<AppCradle>) {
+  container.register({
+    portfolioRepository: asClass(SqlitePortfolioRepository).singleton(),
+    listPositionsUseCase: asClass(ListPositionsUseCase).singleton(),
+    setInitialBalanceUseCase: asClass(SetInitialBalanceUseCase).singleton(),
+  });
 }
 ```
 
-This keeps construction visible and makes feature wiring easier to follow. If a container
-remains, it should be hidden behind explicit module factories rather than used as the main
-architectural surface.
+The root container should stay thin:
+
+```ts
+export function registerDependencies(db: Knex) {
+  container.register({
+    database: asValue(db),
+  });
+
+  registerSharedDependencies(container);
+  registerPortfolioDependencies(container);
+  registerImportsDependencies(container);
+  registerTaxDependencies(container);
+  registerIpcDependencies(container);
+}
+```
+
+This preserves Awilix benefits such as singleton lifecycle, test replacement, and centralized
+Electron process wiring, while making ownership clearer. If the module registration functions
+eventually become simple pass-through ceremony, removing Awilix can be reconsidered later.
 
 ## Testing Strategy
 
@@ -404,15 +438,20 @@ transactions before and after the adjustment date.
 
 ## Migration Notes
 
-This design is intentionally big-bang oriented. If implemented, the migration should still be
-done with strong verification checkpoints:
+This design should be implemented incrementally. Do not perform a full folder reshuffle before
+the new boundaries prove useful. Prefer a strangler-style migration: introduce the target shape
+in the next high-change area, verify behavior, then repeat.
 
 1. Introduce shared `AppError`, `Result`, and IPC binder behavior.
-2. Move portfolio model and projection logic into the new `portfolio/` module.
-3. Represent manual corrections as `ManualPositionAdjustment` entries.
-4. Move import parsing into `imports/` and delegate to portfolio.
-5. Move report generation and future tax assessment into `tax/`.
-6. Replace global DI with explicit composition.
+2. Split the current Awilix registration into module-owned registration functions while keeping
+   the root container.
+3. Move import parsing into `imports/` and delegate to portfolio, keeping local import handling
+   simple and focused on diagnostics/robustness.
+4. Move portfolio model and projection logic into the new `portfolio/` module when touching
+   position, initial-balance, recalculation, or broker workflows.
+5. Represent manual corrections as `ManualPositionAdjustment` entries only after projector
+   semantics and migration behavior are tested.
+6. Move report generation and future tax assessment into `tax/`.
 7. Remove old global layer folders after all references move.
 
 ## Open Product Decision

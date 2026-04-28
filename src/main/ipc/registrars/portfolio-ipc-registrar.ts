@@ -6,6 +6,7 @@ import type { MigrateYearUseCase } from '../../application/use-cases/migrate-yea
 import type { ImportConsolidatedPositionUseCase } from '../../application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
 import type { DeletePositionUseCase } from '../../application/use-cases/delete-position/delete-position.use-case';
 import { bindIpcContract } from '../binding/bind-ipc-contract';
+import { toIpcResultFailure } from '../binding/ipc-error-mapper';
 import { createPortfolioIpcHandlers } from '../handlers/portfolio/portfolio-ipc-handlers';
 import {
   deletePositionContract,
@@ -16,7 +17,7 @@ import {
   previewConsolidatedPositionContract,
   recalculatePositionContract,
   setInitialBalanceContract,
-} from '../../../shared/ipc/contracts/portfolio';
+} from '../../../shared/ipc/contracts/portfolio/contracts';
 
 export class PortfolioIpcRegistrar implements IpcRegistrar {
   constructor(
@@ -38,21 +39,37 @@ export class PortfolioIpcRegistrar implements IpcRegistrar {
       this.deletePositionUseCase,
     );
 
-    bindIpcContract(ipcMain, setInitialBalanceContract, handlers.setInitialBalance);
-    bindIpcContract(ipcMain, listPositionsContract, handlers.listPositions);
-    bindIpcContract(ipcMain, recalculatePositionContract, handlers.recalculatePosition);
-    bindIpcContract(ipcMain, migrateYearContract, handlers.migrateYear);
+    bindIpcContract(ipcMain, setInitialBalanceContract, handlers.setInitialBalance, {
+      onError: toIpcResultFailure,
+    });
+    bindIpcContract(ipcMain, listPositionsContract, handlers.listPositions, {
+      onError: toIpcResultFailure,
+    });
+    bindIpcContract(ipcMain, recalculatePositionContract, handlers.recalculatePosition, {
+      onError: toIpcResultFailure,
+    });
+    bindIpcContract(ipcMain, migrateYearContract, handlers.migrateYear, {
+      onError: toIpcResultFailure,
+    });
     bindIpcContract(
       ipcMain,
       previewConsolidatedPositionContract,
       handlers.previewConsolidatedPosition,
+      {
+        onError: toIpcResultFailure,
+      },
     );
     bindIpcContract(
       ipcMain,
       importConsolidatedPositionContract,
       handlers.importConsolidatedPosition,
+      {
+        onError: toIpcResultFailure,
+      },
     );
-    bindIpcContract(ipcMain, deletePositionContract, handlers.deletePosition);
+    bindIpcContract(ipcMain, deletePositionContract, handlers.deletePosition, {
+      onError: toIpcResultFailure,
+    });
 
     return portfolioIpcContracts.map((contract) => contract.channel);
   }

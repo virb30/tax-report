@@ -8,7 +8,7 @@ import {
   importIpcContracts,
   importSelectFileContract,
   previewImportTransactionsContract,
-} from '../../../shared/ipc/contracts/import';
+} from '../../../shared/ipc/contracts/import/contracts';
 
 export class ImportIpcRegistrar implements IpcRegistrar {
   constructor(
