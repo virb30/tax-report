@@ -1,8 +1,8 @@
 import type {
   ImportConsolidatedPositionCommand,
-  ImportConsolidatedPositionResult,
+  ImportConsolidatedPositionData,
   PreviewConsolidatedPositionCommand,
-  PreviewConsolidatedPositionResult,
+  PreviewConsolidatedPositionData,
 } from '../../../../shared/contracts/import-consolidated-position.contract';
 import { SourceType, TransactionType } from '../../../../shared/types/domain';
 import type { ConsolidatedPositionParserPort } from '../../interfaces/consolidated-position-parser.port';
@@ -33,7 +33,7 @@ export class ImportConsolidatedPositionUseCase {
 
   async preview(
     input: PreviewConsolidatedPositionCommand,
-  ): Promise<PreviewConsolidatedPositionResult> {
+  ): Promise<PreviewConsolidatedPositionData> {
     this.validatePreviewInput(input);
     const rows = await this.parser.parse(input.filePath);
     return {
@@ -46,9 +46,7 @@ export class ImportConsolidatedPositionUseCase {
     };
   }
 
-  async execute(
-    input: ImportConsolidatedPositionCommand,
-  ): Promise<ImportConsolidatedPositionResult> {
+  async execute(input: ImportConsolidatedPositionCommand): Promise<ImportConsolidatedPositionData> {
     this.validateExecuteInput(input);
 
     const rows = await this.parser.parse(input.filePath);

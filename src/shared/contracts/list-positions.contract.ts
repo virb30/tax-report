@@ -1,4 +1,5 @@
 import type { AssetType } from '../types/domain';
+import type { IpcResult } from '../ipc/ipc-result';
 
 export type ListPositionsQuery = {
   /** Posição consolidada em 31/12 deste ano */
@@ -21,6 +22,8 @@ export type PositionListItem = {
   brokerBreakdown: BrokerBreakdownItem[];
 };
 
-export type ListPositionsResult = {
+export type ListPositionsData = {
   items: PositionListItem[];
 };
+
+export type ListPositionsResult = IpcResult<ListPositionsData>;

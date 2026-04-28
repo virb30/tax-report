@@ -1,6 +1,10 @@
-
 import { ELECTRON_API_CHANNELS, REGISTERED_IPC_CHANNELS } from '../ipc-channels';
 import { ipcContracts, rendererExposedIpcContracts } from './ipc-contract-registry';
+import { appIpcContracts } from './app';
+import { brokerIpcContracts } from './brokers';
+import { importIpcContracts } from './import';
+import { portfolioIpcContracts } from './portfolio';
+import { reportIpcContracts } from './report';
 
 function expectUnique(values: string[]): void {
   expect(new Set(values).size).toBe(values.length);
@@ -35,5 +39,73 @@ describe('ipc contract registry', () => {
 
     expect(REGISTERED_IPC_CHANNELS).toEqual(ipcContracts.map((contract) => contract.channel));
     expect(ELECTRON_API_CHANNELS).toEqual(electronApiChannels);
+  });
+
+  it('marks every portfolio contract as result mode', () => {
+    expect(portfolioIpcContracts.map((contract) => contract.errorMode)).toEqual(
+      portfolioIpcContracts.map(() => 'result'),
+    );
+  });
+
+  it('exposes only approved MVP portfolio contracts', () => {
+    expect(
+      portfolioIpcContracts.map((contract) => ({
+        apiName: contract.api?.name,
+        channel: contract.channel,
+        id: contract.id,
+      })),
+    ).toEqual([
+      {
+        apiName: 'setInitialBalance',
+        channel: 'portfolio:set-initial-balance',
+        id: 'portfolio.setInitialBalance',
+      },
+      {
+        apiName: 'listPositions',
+        channel: 'portfolio:list-positions',
+        id: 'portfolio.listPositions',
+      },
+      {
+        apiName: 'recalculatePosition',
+        channel: 'portfolio:recalculate',
+        id: 'portfolio.recalculate',
+      },
+      {
+        apiName: 'migrateYear',
+        channel: 'portfolio:migrate-year',
+        id: 'portfolio.migrateYear',
+      },
+      {
+        apiName: 'previewConsolidatedPosition',
+        channel: 'portfolio:preview-consolidated-position',
+        id: 'portfolio.previewConsolidatedPosition',
+      },
+      {
+        apiName: 'importConsolidatedPosition',
+        channel: 'portfolio:import-consolidated-position',
+        id: 'portfolio.importConsolidatedPosition',
+      },
+      {
+        apiName: 'deletePosition',
+        channel: 'portfolio:delete-position',
+        id: 'portfolio.deletePosition',
+      },
+    ]);
+  });
+
+  it('does not broadly migrate non-portfolio contract groups to result mode', () => {
+    expect(appIpcContracts.map((contract) => contract.errorMode)).toEqual(['throw']);
+    expect(importIpcContracts.map((contract) => contract.errorMode)).toEqual([
+      'throw',
+      'throw',
+      'throw',
+    ]);
+    expect(reportIpcContracts.map((contract) => contract.errorMode)).toEqual(['throw']);
+    expect(brokerIpcContracts.map((contract) => contract.errorMode)).toEqual([
+      'throw',
+      'result',
+      'result',
+      'result',
+    ]);
   });
 });

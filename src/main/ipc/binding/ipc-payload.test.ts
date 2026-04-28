@@ -1,5 +1,5 @@
-
 import { z } from 'zod';
+import { AppError } from '../../../shared/app-error';
 import { buildIpcErrorMessage, parseIpcPayload } from './ipc-payload';
 
 describe('ipc payload helpers', () => {
@@ -15,6 +15,23 @@ describe('ipc payload helpers', () => {
     expect(() =>
       parseIpcPayload(schema, null, { payloadErrorMessage: 'Payload inválido.' }),
     ).toThrow('Payload inválido.');
+  });
+
+  it('raises validation app errors for invalid payloads', () => {
+    const schema = z.object({ value: z.string().min(1, 'Value is required.') });
+
+    expect(() => parseIpcPayload(schema, { value: '' })).toThrow(AppError);
+
+    try {
+      parseIpcPayload(schema, { value: '' });
+      throw new Error('Expected parseIpcPayload to throw.');
+    } catch (error) {
+      expect(error).toMatchObject({
+        code: 'INVALID_PAYLOAD',
+        message: 'Value is required.',
+        kind: 'validation',
+      });
+    }
   });
 
   it('supports optional payloads when object input is not required', () => {

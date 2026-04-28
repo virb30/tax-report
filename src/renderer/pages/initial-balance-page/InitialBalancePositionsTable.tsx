@@ -1,9 +1,9 @@
 import type { JSX } from 'react';
-import type { ListPositionsResult } from '../../../shared/contracts/list-positions.contract';
+import type { PositionListItem } from '../../../shared/contracts/list-positions.contract';
 
 type InitialBalancePositionsTableProps = {
   isLoading: boolean;
-  positions: ListPositionsResult['items'];
+  positions: PositionListItem[];
   year: number;
 };
 

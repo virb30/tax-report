@@ -1,4 +1,3 @@
-
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AssetType } from '../../shared/types/domain';
@@ -43,7 +42,7 @@ function getButton(name: string): HTMLButtonElement {
 }
 
 function createElectronApiMock(electronApiBaseMock: MockProxy<ElectronApi>): ElectronApi {
-  mockReset(electronApiBaseMock)
+  mockReset(electronApiBaseMock);
   return {
     appName: 'tax-report',
     importSelectFile: electronApiBaseMock.importSelectFile,
@@ -75,16 +74,19 @@ describe('InitialBalancePage', () => {
 
   it('loads brokers and positions on mount', async () => {
     const positionsResult: ListPositionsResult = {
-      items: [
-        {
-          ticker: 'PETR4',
-          assetType: AssetType.Stock,
-          totalQuantity: 10,
-          averagePrice: 30,
-          totalCost: 300,
-          brokerBreakdown: [],
-        },
-      ],
+      ok: true,
+      data: {
+        items: [
+          {
+            ticker: 'PETR4',
+            assetType: AssetType.Stock,
+            totalQuantity: 10,
+            averagePrice: 30,
+            totalCost: 300,
+            brokerBreakdown: [],
+          },
+        ],
+      },
     };
 
     mockedListActiveBrokers.mockResolvedValue([
@@ -107,7 +109,7 @@ describe('InitialBalancePage', () => {
     mockedListActiveBrokers.mockResolvedValue([
       { id: 'broker-xp', name: 'XP', cnpj: '00.000.000/0001-00', code: 'XP', active: true },
     ]);
-    jest.mocked(electronApi.listPositions).mockResolvedValue({ items: [] });
+    jest.mocked(electronApi.listPositions).mockResolvedValue({ ok: true, data: { items: [] } });
 
     const user = userEvent.setup();
     render(<InitialBalancePage />);
@@ -136,24 +138,30 @@ describe('InitialBalancePage', () => {
     ]);
     jest
       .mocked(electronApi.listPositions)
-      .mockResolvedValueOnce({ items: [] })
+      .mockResolvedValueOnce({ ok: true, data: { items: [] } })
       .mockResolvedValueOnce({
-        items: [
-          {
-            ticker: 'IVVB11',
-            assetType: AssetType.Etf,
-            totalQuantity: 2,
-            averagePrice: 300,
-            totalCost: 600,
-            brokerBreakdown: [],
-          },
-        ],
+        ok: true,
+        data: {
+          items: [
+            {
+              ticker: 'IVVB11',
+              assetType: AssetType.Etf,
+              totalQuantity: 2,
+              averagePrice: 300,
+              totalCost: 600,
+              brokerBreakdown: [],
+            },
+          ],
+        },
       });
     jest.mocked(electronApi.setInitialBalance).mockResolvedValue({
-      ticker: 'IVVB11',
-      brokerId: 'broker-xp',
-      quantity: 2,
-      averagePrice: 300,
+      ok: true,
+      data: {
+        ticker: 'IVVB11',
+        brokerId: 'broker-xp',
+        quantity: 2,
+        averagePrice: 300,
+      },
     });
 
     const user = userEvent.setup();
@@ -184,5 +192,37 @@ describe('InitialBalancePage', () => {
       expect(screen.getByText('IVVB11')).toBeTruthy();
     });
     expect(getInput('Ticker').value).toBe('');
+  });
+
+  it('displays save failure messages from result envelopes', async () => {
+    mockedListActiveBrokers.mockResolvedValue([
+      { id: 'broker-xp', name: 'XP', cnpj: '00.000.000/0001-00', code: 'XP', active: true },
+    ]);
+    jest.mocked(electronApi.listPositions).mockResolvedValue({ ok: true, data: { items: [] } });
+    jest.mocked(electronApi.setInitialBalance).mockResolvedValue({
+      ok: false,
+      error: {
+        code: 'INITIAL_BALANCE_FAILED',
+        kind: 'business',
+        message: 'Saldo inicial não pôde ser salvo.',
+      },
+    });
+
+    const user = userEvent.setup();
+    render(<InitialBalancePage />);
+
+    await waitFor(() => {
+      expect(getSelect('Corretora').value).toBe('broker-xp');
+    });
+
+    await user.type(getInput('Ticker'), 'PETR4');
+    await user.type(getInput('Quantidade'), '10');
+    await user.type(getInput('Preço médio (R$)'), '30');
+    await user.click(getButton('Salvar saldo inicial'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Saldo inicial não pôde ser salvo.')).toBeTruthy();
+    });
+    expect(screen.queryByText('Saldo inicial cadastrado com sucesso.')).toBeNull();
   });
 });

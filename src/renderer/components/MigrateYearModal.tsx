@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { JSX } from 'react';
 import { buildErrorMessage } from '../errors/build-error-message';
+import { unwrapIpcResult } from '../ipc/unwrap-ipc-result';
 import { assertSupportedYear, buildYearOptions, getDefaultBaseYear } from '../../shared/utils/year';
 
 const defaultBaseYear = getDefaultBaseYear();
@@ -39,10 +40,12 @@ export function MigrateYearModal({
     setFeedbackMessage('');
 
     try {
-      const result = await window.electronApi.migrateYear({
-        sourceYear: year,
-        targetYear: year + 1,
-      });
+      const result = unwrapIpcResult(
+        await window.electronApi.migrateYear({
+          sourceYear: year,
+          targetYear: year + 1,
+        }),
+      );
 
       if (result.message) {
         setFeedbackMessage(result.message);

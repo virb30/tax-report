@@ -55,11 +55,17 @@ describe('ImportConsolidatedPositionModal', () => {
       .mocked(electronApi.importSelectFile)
       .mockResolvedValue({ filePath: 'C:/tmp/positions.csv' });
     jest.mocked(electronApi.previewConsolidatedPosition).mockResolvedValue({
-      rows: [{ ticker: 'PETR4', quantity: 10, averagePrice: 30, brokerCode: 'XP' }],
+      ok: true,
+      data: {
+        rows: [{ ticker: 'PETR4', quantity: 10, averagePrice: 30, brokerCode: 'XP' }],
+      },
     });
     jest.mocked(electronApi.importConsolidatedPosition).mockResolvedValue({
-      importedCount: 1,
-      recalculatedTickers: ['PETR4'],
+      ok: true,
+      data: {
+        importedCount: 1,
+        recalculatedTickers: ['PETR4'],
+      },
     });
 
     const onSuccess = jest.fn();
@@ -89,13 +95,18 @@ describe('ImportConsolidatedPositionModal', () => {
     expect(onSuccess).toHaveBeenCalledTimes(1);
   });
 
-  it('shows preview error and keeps confirmation disabled when preview fails', async () => {
+  it('shows preview error and keeps confirmation disabled when preview result fails', async () => {
     jest
       .mocked(electronApi.importSelectFile)
       .mockResolvedValue({ filePath: 'C:/tmp/positions.csv' });
-    jest
-      .mocked(electronApi.previewConsolidatedPosition)
-      .mockRejectedValue(new Error('Planilha inválida.'));
+    jest.mocked(electronApi.previewConsolidatedPosition).mockResolvedValue({
+      ok: false,
+      error: {
+        code: 'INVALID_CONSOLIDATED_POSITION_FILE',
+        kind: 'validation',
+        message: 'Planilha inválida.',
+      },
+    });
 
     const user = userEvent.setup();
     render(<ImportConsolidatedPositionModal isOpen onClose={jest.fn()} onSuccess={jest.fn()} />);

@@ -15,6 +15,7 @@ import type {
   recalculatePositionContract,
   setInitialBalanceContract,
 } from '../../../../shared/ipc/contracts/portfolio';
+import { ipcSuccess } from '../../../../shared/ipc/ipc-result';
 
 export type PortfolioIpcHandlers = {
   setInitialBalance: IpcContractHandler<typeof setInitialBalanceContract>;
@@ -35,23 +36,27 @@ export function createPortfolioIpcHandlers(
   deletePositionUseCase: DeletePositionUseCase,
 ): PortfolioIpcHandlers {
   return {
-    setInitialBalance: (payload) => setInitialBalanceUseCase.execute(payload),
+    setInitialBalance: async (payload) =>
+      ipcSuccess(await setInitialBalanceUseCase.execute(payload)),
     listPositions: async (payload) => {
       const result = await listPositionsUseCase.execute(payload);
 
-      return {
+      return ipcSuccess({
         items: result.items.map((item) => ({
           ...item,
           assetType: item.assetType as AssetType,
         })),
-      };
+      });
     },
     recalculatePosition: async (payload) => {
       await recalculatePositionUseCase.execute(payload);
+      return ipcSuccess(undefined);
     },
-    migrateYear: (payload) => migrateYearUseCase.execute(payload),
-    previewConsolidatedPosition: (payload) => importConsolidatedPositionUseCase.preview(payload),
-    importConsolidatedPosition: (payload) => importConsolidatedPositionUseCase.execute(payload),
-    deletePosition: (payload) => deletePositionUseCase.execute(payload),
+    migrateYear: async (payload) => ipcSuccess(await migrateYearUseCase.execute(payload)),
+    previewConsolidatedPosition: async (payload) =>
+      ipcSuccess(await importConsolidatedPositionUseCase.preview(payload)),
+    importConsolidatedPosition: async (payload) =>
+      ipcSuccess(await importConsolidatedPositionUseCase.execute(payload)),
+    deletePosition: async (payload) => ipcSuccess(await deletePositionUseCase.execute(payload)),
   };
 }

@@ -1,9 +1,11 @@
+import type { IpcResult } from '../ipc/ipc-result';
+
 export type ImportConsolidatedPositionCommand = {
   filePath: string;
   year: number;
 };
 
-export type ImportConsolidatedPositionResult = {
+export type ImportConsolidatedPositionData = {
   importedCount: number;
   recalculatedTickers: string[];
 };
@@ -19,6 +21,10 @@ export type ConsolidatedPositionPreviewRow = {
   brokerCode: string;
 };
 
-export type PreviewConsolidatedPositionResult = {
+export type PreviewConsolidatedPositionData = {
   rows: ConsolidatedPositionPreviewRow[];
 };
+
+export type ImportConsolidatedPositionResult = IpcResult<ImportConsolidatedPositionData>;
+
+export type PreviewConsolidatedPositionResult = IpcResult<PreviewConsolidatedPositionData>;

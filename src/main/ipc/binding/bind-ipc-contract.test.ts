@@ -1,6 +1,7 @@
-
 import { z } from 'zod';
+import { AppError } from '../../../shared/app-error';
 import { defineIpcContract } from '../../../shared/ipc/define-ipc-contract';
+import type { IpcResult } from '../../../shared/ipc/ipc-result';
 import type { IpcMainHandleRegistry } from '../registry/ipc-registrar';
 import { bindIpcContract } from './bind-ipc-contract';
 import { toIpcFailureResult } from './ipc-error-mapper';
@@ -16,6 +17,8 @@ type ResultContractOutput =
       success: false;
       error: string;
     };
+
+type TypedResultContractOutput = IpcResult<{ value: string }>;
 
 function createIpcRegistry(): {
   ipcMain: IpcMainHandleRegistry;
@@ -68,6 +71,26 @@ describe('bindIpcContract', () => {
     await expect(handlers.get('test:throw')?.(ipcEvent, { value: '' })).rejects.toThrow(
       'Value is required.',
     );
+  });
+
+  it('rejects handler failures for throw-mode contracts', async () => {
+    const contract = defineIpcContract<{ receivedValue: string }>()({
+      id: 'test.throwHandlerFailure',
+      channel: 'test:throw-handler-failure',
+      inputSchema: z.object({ value: z.string() }),
+      errorMode: 'throw',
+      exposeToRenderer: true,
+      api: { name: 'throwingHandlerEcho' },
+    });
+    const { ipcMain, handlers } = createIpcRegistry();
+
+    bindIpcContract(ipcMain, contract, () => {
+      throw new Error('Handler failed.');
+    });
+
+    await expect(
+      handlers.get('test:throw-handler-failure')?.(ipcEvent, { value: 'payload' }),
+    ).rejects.toThrow('Handler failed.');
   });
 
   it('maps handler failures for result-mode contracts', async () => {
@@ -123,6 +146,90 @@ describe('bindIpcContract', () => {
     ).resolves.toEqual({
       success: false,
       error: 'Value is required.',
+    });
+  });
+
+  it('maps validation failures to typed failures for result-mode contracts by default', async () => {
+    const contract = defineIpcContract<TypedResultContractOutput>()({
+      id: 'test.typedResultValidation',
+      channel: 'test:typed-result-validation',
+      inputSchema: z.object({ value: z.string().min(1, 'Value is required.') }),
+      errorMode: 'result',
+      exposeToRenderer: true,
+      api: { name: 'typedResultValidationEcho' },
+    });
+    const { ipcMain, handlers } = createIpcRegistry();
+
+    bindIpcContract(ipcMain, contract, (payload) => ({
+      ok: true as const,
+      data: { value: payload.value },
+    }));
+
+    await expect(
+      handlers.get('test:typed-result-validation')?.(ipcEvent, { value: '' }),
+    ).resolves.toEqual({
+      ok: false,
+      error: {
+        code: 'INVALID_PAYLOAD',
+        message: 'Value is required.',
+        kind: 'validation',
+      },
+    });
+  });
+
+  it('maps known app errors to typed failures preserving error fields', async () => {
+    const details = { ticker: 'PETR4', year: 2025 };
+    const contract = defineIpcContract<TypedResultContractOutput>()({
+      id: 'test.typedResultAppError',
+      channel: 'test:typed-result-app-error',
+      inputSchema: z.object({ value: z.string() }),
+      errorMode: 'result',
+      exposeToRenderer: true,
+      api: { name: 'typedResultAppErrorEcho' },
+    });
+    const { ipcMain, handlers } = createIpcRegistry();
+
+    bindIpcContract(ipcMain, contract, () => {
+      throw new AppError('POSITION_NOT_FOUND', 'Position was not found.', 'not_found', details);
+    });
+
+    await expect(
+      handlers.get('test:typed-result-app-error')?.(ipcEvent, { value: 'payload' }),
+    ).resolves.toEqual({
+      ok: false,
+      error: {
+        code: 'POSITION_NOT_FOUND',
+        message: 'Position was not found.',
+        kind: 'not_found',
+        details,
+      },
+    });
+  });
+
+  it('maps unknown errors to generic unexpected typed failures', async () => {
+    const contract = defineIpcContract<TypedResultContractOutput>()({
+      id: 'test.typedResultUnknownError',
+      channel: 'test:typed-result-unknown-error',
+      inputSchema: z.object({ value: z.string() }),
+      errorMode: 'result',
+      exposeToRenderer: true,
+      api: { name: 'typedResultUnknownErrorEcho' },
+    });
+    const { ipcMain, handlers } = createIpcRegistry();
+
+    bindIpcContract(ipcMain, contract, () => {
+      throw new Error('Database password leaked in stack trace.');
+    });
+
+    await expect(
+      handlers.get('test:typed-result-unknown-error')?.(ipcEvent, { value: 'payload' }),
+    ).resolves.toEqual({
+      ok: false,
+      error: {
+        code: 'UNEXPECTED_ERROR',
+        message: 'Erro inesperado ao processar a requisição.',
+        kind: 'unexpected',
+      },
     });
   });
 });

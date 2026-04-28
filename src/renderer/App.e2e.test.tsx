@@ -21,49 +21,63 @@ describe('App critical UI flows (E2E)', () => {
     electronApi.importSelectFile.mockResolvedValue({ filePath: '/tmp/ops.csv' });
 
     electronApi.previewImportTransactions.mockResolvedValue({
-        batches: [],
-        transactionsPreview: [
-          {
-            date: '2025-03-10',
-            ticker: 'PETR4',
-            type: TransactionType.Buy,
-            quantity: 10,
-            unitPrice: 20,
-            fees: 1,
-            brokerId: 'broker-xp',
-          },
-        ],
-      });
+      batches: [],
+      transactionsPreview: [
+        {
+          date: '2025-03-10',
+          ticker: 'PETR4',
+          type: TransactionType.Buy,
+          quantity: 10,
+          unitPrice: 20,
+          fees: 1,
+          brokerId: 'broker-xp',
+        },
+      ],
+    });
 
-    electronApi.confirmImportTransactions.mockResolvedValue({ importedCount: 1, recalculatedTickers: ['PETR4'] });
+    electronApi.confirmImportTransactions.mockResolvedValue({
+      importedCount: 1,
+      recalculatedTickers: ['PETR4'],
+    });
 
     const setInitialBalanceResult: SetInitialBalanceResult = {
-      ticker: 'IVVB11',
-      brokerId: 'broker-xp',
-      quantity: 2,
-      averagePrice: 300,
+      ok: true,
+      data: {
+        ticker: 'IVVB11',
+        brokerId: 'broker-xp',
+        quantity: 2,
+        averagePrice: 300,
+      },
     };
     electronApi.setInitialBalance.mockResolvedValue(setInitialBalanceResult);
 
     const emptyPositionsResult: ListPositionsResult = {
-      items: [],
+      ok: true,
+      data: { items: [] },
     };
     const filledPositionsResult: ListPositionsResult = {
-      items: [
-        {
-          ticker: 'IVVB11',
-          assetType: AssetType.Etf,
-          totalQuantity: 2,
-          averagePrice: 300,
-          totalCost: 600,
-          brokerBreakdown: [
-            { brokerId: 'broker-xp', brokerName: 'XP', brokerCnpj: '00.000.000/0001-00', quantity: 2 },
-          ],
-        },
-      ],
+      ok: true,
+      data: {
+        items: [
+          {
+            ticker: 'IVVB11',
+            assetType: AssetType.Etf,
+            totalQuantity: 2,
+            averagePrice: 300,
+            totalCost: 600,
+            brokerBreakdown: [
+              {
+                brokerId: 'broker-xp',
+                brokerName: 'XP',
+                brokerCnpj: '00.000.000/0001-00',
+                quantity: 2,
+              },
+            ],
+          },
+        ],
+      },
     };
-    electronApi
-      .listPositions
+    electronApi.listPositions
       .mockResolvedValueOnce(emptyPositionsResult)
       .mockResolvedValueOnce(filledPositionsResult);
 
@@ -94,9 +108,20 @@ describe('App critical UI flows (E2E)', () => {
     electronApi.generateAssetsReport.mockResolvedValue(assetsReportResult);
 
     electronApi.listBrokers.mockResolvedValue({
-      items: [{ id: 'broker-xp', name: 'XP Investimentos', cnpj: '02.332.886/0001-04', code: 'XP', active: true }],
+      items: [
+        {
+          id: 'broker-xp',
+          name: 'XP Investimentos',
+          cnpj: '02.332.886/0001-04',
+          code: 'XP',
+          active: true,
+        },
+      ],
     });
-    electronApi.createBroker.mockResolvedValue({ success: true, broker: { id: 'new', name: 'New', cnpj: '00', code: 'NEW', active: true } });
+    electronApi.createBroker.mockResolvedValue({
+      success: true,
+      broker: { id: 'new', name: 'New', cnpj: '00', code: 'NEW', active: true },
+    });
 
     window.electronApi = {
       ...electronApi,
@@ -154,8 +179,12 @@ describe('App critical UI flows (E2E)', () => {
     });
 
     expect(electronApi.importSelectFile).toHaveBeenCalledTimes(1);
-    expect(electronApi.previewImportTransactions).toHaveBeenCalledWith({ filePath: '/tmp/ops.csv' });
-    expect(electronApi.confirmImportTransactions).toHaveBeenCalledWith({ filePath: '/tmp/ops.csv' });
+    expect(electronApi.previewImportTransactions).toHaveBeenCalledWith({
+      filePath: '/tmp/ops.csv',
+    });
+    expect(electronApi.confirmImportTransactions).toHaveBeenCalledWith({
+      filePath: '/tmp/ops.csv',
+    });
     expect(electronApi.setInitialBalance).toHaveBeenCalledTimes(1);
     expect(electronApi.generateAssetsReport).toHaveBeenCalledWith({ baseYear: 2025 });
   });

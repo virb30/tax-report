@@ -1,4 +1,3 @@
-
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AssetType } from '../../shared/types/domain';
@@ -41,31 +40,34 @@ function createElectronApiMock(electronApiBaseMock: MockProxy<ElectronApi>): Ele
 
 function createPositionsResult(): ListPositionsResult {
   return {
-    items: [
-      {
-        ticker: 'PETR4',
-        assetType: AssetType.Stock,
-        totalQuantity: 10,
-        averagePrice: 30,
-        totalCost: 300,
-        brokerBreakdown: [
-          {
-            brokerId: 'broker-xp',
-            brokerName: 'XP',
-            brokerCnpj: '00.000.000/0001-00',
-            quantity: 10,
-          },
-        ],
-      },
-      {
-        ticker: 'VALE3',
-        assetType: AssetType.Stock,
-        totalQuantity: 5,
-        averagePrice: 60,
-        totalCost: 300,
-        brokerBreakdown: [],
-      },
-    ],
+    ok: true,
+    data: {
+      items: [
+        {
+          ticker: 'PETR4',
+          assetType: AssetType.Stock,
+          totalQuantity: 10,
+          averagePrice: 30,
+          totalCost: 300,
+          brokerBreakdown: [
+            {
+              brokerId: 'broker-xp',
+              brokerName: 'XP',
+              brokerCnpj: '00.000.000/0001-00',
+              quantity: 10,
+            },
+          ],
+        },
+        {
+          ticker: 'VALE3',
+          assetType: AssetType.Stock,
+          totalQuantity: 5,
+          averagePrice: 60,
+          totalCost: 300,
+          brokerBreakdown: [],
+        },
+      ],
+    },
   };
 }
 
@@ -98,12 +100,29 @@ describe('PositionsPage', () => {
     expect(screen.getByText('00.000.000/0001-00')).toBeTruthy();
   });
 
+  it('displays list failure messages from result envelopes', async () => {
+    electronApi.listPositions.mockResolvedValue({
+      ok: false,
+      error: {
+        code: 'LIST_POSITIONS_FAILED',
+        kind: 'business',
+        message: 'Não foi possível carregar as posições.',
+      },
+    });
+
+    render(<PositionsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Não foi possível carregar as posições.')).toBeTruthy();
+    });
+  });
+
   it('recalculates all positions and reloads the list', async () => {
     jest
       .mocked(electronApi.listPositions)
       .mockResolvedValueOnce(createPositionsResult())
       .mockResolvedValueOnce(createPositionsResult());
-    jest.mocked(electronApi.recalculatePosition).mockResolvedValue(undefined);
+    jest.mocked(electronApi.recalculatePosition).mockResolvedValue({ ok: true, data: undefined });
 
     const user = userEvent.setup();
     render(<PositionsPage />);
@@ -129,7 +148,10 @@ describe('PositionsPage', () => {
 
   it('deletes a position after confirmation and reloads the list', async () => {
     const positionsResult = createPositionsResult();
-    const remainingPosition = positionsResult.items[1];
+    if (!positionsResult.ok) {
+      throw new Error('Expected positions fixture to be an ok result.');
+    }
+    const remainingPosition = positionsResult.data.items[1];
     if (remainingPosition == null) {
       throw new Error('Expected a second position in the fixture.');
     }
@@ -138,9 +160,12 @@ describe('PositionsPage', () => {
       .mocked(electronApi.listPositions)
       .mockResolvedValueOnce(positionsResult)
       .mockResolvedValueOnce({
-        items: [remainingPosition],
+        ok: true,
+        data: { items: [remainingPosition] },
       });
-    jest.mocked(electronApi.deletePosition).mockResolvedValue({ deleted: true });
+    jest
+      .mocked(electronApi.deletePosition)
+      .mockResolvedValue({ ok: true, data: { deleted: true } });
 
     const user = userEvent.setup();
     render(<PositionsPage />);
@@ -163,6 +188,32 @@ describe('PositionsPage', () => {
     });
     await waitFor(() => {
       expect(screen.queryByText('PETR4')).toBeNull();
+    });
+  });
+
+  it('displays migration failure messages from result envelopes', async () => {
+    electronApi.listPositions.mockResolvedValue({ ok: true, data: { items: [] } });
+    electronApi.migrateYear.mockResolvedValue({
+      ok: false,
+      error: {
+        code: 'MIGRATION_FAILED',
+        kind: 'business',
+        message: 'Não há posições para migrar.',
+      },
+    });
+
+    const user = userEvent.setup();
+    render(<PositionsPage />);
+
+    await waitFor(() => {
+      expect(electronApi.listPositions).toHaveBeenCalledTimes(1);
+    });
+
+    await user.click(getButton('Migrar posições entre anos'));
+    await user.click(getButton('Migrar posições'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Não há posições para migrar.')).toBeTruthy();
     });
   });
 });
