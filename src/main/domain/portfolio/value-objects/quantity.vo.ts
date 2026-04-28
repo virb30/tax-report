@@ -33,10 +33,6 @@ export class Quantity {
       throw new Error('Quantity must be finite.');
     }
 
-    if (!Number.isInteger(value)) {
-      throw new Error('Quantity must be an integer.');
-    }
-
     if (value < 0) {
       throw new Error('Quantity cannot be negative.');
     }

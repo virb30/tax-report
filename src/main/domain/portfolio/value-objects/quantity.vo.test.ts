@@ -13,7 +13,6 @@ describe('Quantity', () => {
 
   it('throws for invalid quantity values', () => {
     expect(() => Quantity.from(Number.NaN)).toThrow('Quantity must be finite.');
-    expect(() => Quantity.from(1.5)).toThrow('Quantity must be an integer.');
     expect(() => Quantity.from(-1)).toThrow('Quantity cannot be negative.');
   });
 

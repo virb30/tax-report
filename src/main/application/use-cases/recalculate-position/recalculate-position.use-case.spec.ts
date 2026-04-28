@@ -52,6 +52,42 @@ describe('RecalculatePositionUseCase', () => {
     });
   });
 
+  it('does not compound an already persisted calculated position', async () => {
+    const brokerId = Uuid.create();
+    positionRepository.findByTickerAndYear.mockResolvedValue(AssetPosition.create({
+      ticker: 'PETR4',
+      year: 2024,
+      assetType: AssetType.Stock,
+      totalQuantity: 50,
+      averagePrice: 25.1,
+      brokerBreakdown: [{ brokerId, quantity: 50 }],
+    }));
+    transactionRepository.findByTicker.mockResolvedValue([
+      Transaction.create({
+        date: '2024-06-15',
+        type: TransactionType.Buy,
+        ticker: 'PETR4',
+        quantity: 50,
+        unitPrice: 25,
+        fees: 5,
+        brokerId,
+        sourceType: SourceType.Manual,
+      }),
+    ]);
+
+    const result = await useCase.execute({ ticker: 'PETR4', year: 2024 });
+
+    expect(positionRepository.save).toHaveBeenCalledTimes(1);
+    expect(positionRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+      totalQuantity: 50,
+      averagePrice: 25.1,
+    }));
+    expect(result).toEqual({
+      totalQuantity: 50,
+      averagePrice: 25.1,
+    });
+  });
+
   it('recalculates position from mix of Buy, Sell, Bonus and InitialBalance', async () => {
     positionRepository.findByTickerAndYear.mockResolvedValue(AssetPosition.create({
       ticker: 'PETR4',

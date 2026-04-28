@@ -8,8 +8,7 @@ export const createTransactionsMigration = {
       table.text('date').notNullable();
       table
         .text('type')
-        .notNullable()
-        .checkIn(['buy', 'sell', 'bonus', 'initial_balance']);
+        .notNullable();
       table.text('ticker').notNullable();
       table.float('quantity').notNullable();
       table.float('unit_price').notNullable().defaultTo(0);
