@@ -7,6 +7,7 @@ import type { SetInitialBalanceUseCase } from '../../../application/use-cases/se
 import type { IpcContractHandler } from '../../binding/bind-ipc-contract';
 import type { AssetType } from '../../../../shared/types/domain';
 import type {
+  deleteAllPositionsContract,
   deletePositionContract,
   importConsolidatedPositionContract,
   listPositionsContract,
@@ -25,6 +26,7 @@ export type PortfolioIpcHandlers = {
   previewConsolidatedPosition: IpcContractHandler<typeof previewConsolidatedPositionContract>;
   importConsolidatedPosition: IpcContractHandler<typeof importConsolidatedPositionContract>;
   deletePosition: IpcContractHandler<typeof deletePositionContract>;
+  deleteAllPositions: IpcContractHandler<typeof deleteAllPositionsContract>;
 };
 
 export function createPortfolioIpcHandlers(
@@ -58,5 +60,7 @@ export function createPortfolioIpcHandlers(
     importConsolidatedPosition: async (payload) =>
       ipcSuccess(await importConsolidatedPositionUseCase.execute(payload)),
     deletePosition: async (payload) => ipcSuccess(await deletePositionUseCase.execute(payload)),
+    deleteAllPositions: async (payload) =>
+      ipcSuccess(await deletePositionUseCase.executeAll(payload)),
   };
 }

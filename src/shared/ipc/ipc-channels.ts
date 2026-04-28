@@ -10,6 +10,7 @@ import {
   previewImportTransactionsContract,
 } from './contracts/import/contracts';
 import {
+  deleteAllPositionsContract,
   deletePositionContract,
   importConsolidatedPositionContract,
   listPositionsContract,
@@ -39,4 +40,5 @@ export const ELECTRON_API_CHANNELS = {
   previewConsolidatedPosition: previewConsolidatedPositionContract.channel,
   importConsolidatedPosition: importConsolidatedPositionContract.channel,
   deletePosition: deletePositionContract.channel,
+  deleteAllPositions: deleteAllPositionsContract.channel,
 } as const;

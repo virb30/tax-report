@@ -93,6 +93,21 @@ describe('AveragePriceService', () => {
       expect(averagePrice).toBe(expectedAveragePrice);
     });
 
+    it('uses fractional bonus quantity when calculating average price', () => {
+      const service = new AveragePriceService();
+      const averagePrice = service.calculateAfterBonus(AssetPosition.create({
+        ticker: 'ITSA4',
+        assetType: AssetType.Stock,
+        year: 2020,
+        totalQuantity: 10,
+        averagePrice: 10,
+        brokerBreakdown: [{ brokerId, quantity: 10 }],
+      }), 1.5, 11);
+
+      const expectedAveragePrice = Money.from(116.5).divideBy(11.5).toNumber();
+      expect(averagePrice).toBe(expectedAveragePrice);
+    });
+
     it('throws when bonus quantity is zero', () => {
       const service = new AveragePriceService();
       const bonusQuantity = 0;

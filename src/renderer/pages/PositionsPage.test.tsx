@@ -35,6 +35,7 @@ function createElectronApiMock(electronApiBaseMock: MockProxy<ElectronApi>): Ele
     previewConsolidatedPosition: electronApiBaseMock.previewConsolidatedPosition,
     importConsolidatedPosition: electronApiBaseMock.importConsolidatedPosition,
     deletePosition: electronApiBaseMock.deletePosition,
+    deleteAllPositions: electronApiBaseMock.deleteAllPositions,
   };
 }
 
@@ -188,6 +189,36 @@ describe('PositionsPage', () => {
     });
     await waitFor(() => {
       expect(screen.queryByText('PETR4')).toBeNull();
+    });
+  });
+
+  it('deletes all positions for the selected year after confirmation and reloads the list', async () => {
+    jest
+      .mocked(electronApi.listPositions)
+      .mockResolvedValueOnce(createPositionsResult())
+      .mockResolvedValueOnce({ ok: true, data: { items: [] } });
+    jest
+      .mocked(electronApi.deleteAllPositions)
+      .mockResolvedValue({ ok: true, data: { deletedCount: 2 } });
+
+    const user = userEvent.setup();
+    render(<PositionsPage />);
+
+    const deleteAllButton = getButton('Excluir todos');
+    await waitFor(() => {
+      expect(deleteAllButton.disabled).toBe(false);
+    });
+
+    await user.click(deleteAllButton);
+
+    await waitFor(() => {
+      expect(electronApi.deleteAllPositions).toHaveBeenCalledWith({
+        year: expect.any(Number),
+      });
+    });
+    await waitFor(() => {
+      expect(screen.queryByText('PETR4')).toBeNull();
+      expect(screen.queryByText('VALE3')).toBeNull();
     });
   });
 

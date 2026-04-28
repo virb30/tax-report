@@ -14,6 +14,11 @@ export class PositionBrokerAllocation {
     this.quantities.set(brokerId.value, quantity);
   }
 
+  replaceWith(brokerId: Uuid, quantity: number): void {
+    this.quantities.clear();
+    this.set(brokerId, quantity);
+  }
+
   increment(brokerId: Uuid, quantity: number): void {
     const currentBrokerQty = this.quantities.get(brokerId.value) ?? 0;
     this.quantities.set(brokerId.value, currentBrokerQty + quantity);

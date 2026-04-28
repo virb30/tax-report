@@ -79,6 +79,7 @@ describe('preload', () => {
       'appName',
       'confirmImportTransactions',
       'createBroker',
+      'deleteAllPositions',
       'deletePosition',
       'generateAssetsReport',
       'importConsolidatedPosition',

@@ -70,34 +70,92 @@ describe('MigrateYearUseCase', () => {
     expect(positionRepository.saveMany).toHaveBeenCalledTimes(1);
   });
 
-  it('blocks migration when InitialBalance already exists for target year', async () => {
-    const targetYear = 2025;
-    transactionRepository.findByPeriod.mockImplementation(
-      async (input: { startDate: string; endDate: string }) => {
-        return new Promise((resolve) => {
-          if (input.startDate === '2025-01-01' && input.endDate === '2025-12-31') {
-            return resolve([
-              Transaction.create({
-                date: `${targetYear}-01-01`,
-                type: TransactionType.InitialBalance,
-                ticker: 'PETR4',
-                quantity: 50,
-                unitPrice: 22,
-                fees: 0,
-                brokerId: Uuid.create(),
-                sourceType: SourceType.Manual,
-              }),
-            ]);
-          }
-          return resolve([]);
-        });
-      },
-    );
+  it('calculates target year after applying migrated initial balance before existing target operations', async () => {
+    const brokerId = Uuid.create();
+    positionRepository.findAllByYear.mockResolvedValue([
+      AssetPosition.create({
+        ticker: 'PETR4',
+        assetType: AssetType.Stock,
+        year: 2024,
+        totalQuantity: 100,
+        averagePrice: 20,
+        brokerBreakdown: [{ brokerId, quantity: 100 }],
+      }),
+    ]);
+    transactionRepository.findByPeriod.mockResolvedValue([
+      Transaction.create({
+        date: '2025-02-10',
+        type: TransactionType.Sell,
+        ticker: 'PETR4',
+        quantity: 40,
+        unitPrice: 25,
+        fees: 0,
+        brokerId,
+        sourceType: SourceType.Manual,
+      }),
+    ]);
 
-    await expect(useCase.execute({ sourceYear: 2024, targetYear })).rejects.toThrow(
-      `Migração duplicada: já existem transações de Saldo Inicial para o ano ${targetYear}. Remova-as antes de migrar novamente.`,
-    );
-    expect(transactionRepository.saveMany).not.toHaveBeenCalled();
+    const result = await useCase.execute({ sourceYear: 2024, targetYear: 2025 });
+
+    expect(result).toEqual({
+      migratedPositionsCount: 1,
+      createdTransactionsCount: 1,
+    });
+    expect(positionRepository.saveMany).toHaveBeenCalledWith([
+      expect.objectContaining({
+        ticker: 'PETR4',
+        year: 2025,
+        totalQuantity: 60,
+        averagePrice: 20,
+      }),
+    ]);
+  });
+
+  it('migrates only tickers missing initial balance in the target year', async () => {
+    const brokerId = Uuid.create();
+    positionRepository.findAllByYear.mockResolvedValue([
+      AssetPosition.create({
+        ticker: 'PETR4',
+        assetType: AssetType.Stock,
+        year: 2024,
+        totalQuantity: 100,
+        averagePrice: 20,
+        brokerBreakdown: [{ brokerId, quantity: 100 }],
+      }),
+      AssetPosition.create({
+        ticker: 'VALE3',
+        assetType: AssetType.Stock,
+        year: 2024,
+        totalQuantity: 50,
+        averagePrice: 60,
+        brokerBreakdown: [{ brokerId, quantity: 50 }],
+      }),
+    ]);
+    transactionRepository.findByPeriod.mockResolvedValue([
+      Transaction.create({
+        date: '2025-01-01',
+        type: TransactionType.InitialBalance,
+        ticker: 'VALE3',
+        quantity: 50,
+        unitPrice: 60,
+        fees: 0,
+        brokerId,
+        sourceType: SourceType.Manual,
+      }),
+    ]);
+
+    const result = await useCase.execute({ sourceYear: 2024, targetYear: 2025 });
+
+    expect(result).toEqual({
+      migratedPositionsCount: 2,
+      createdTransactionsCount: 1,
+    });
+    expect(transactionRepository.saveMany).toHaveBeenCalledWith([
+      expect.objectContaining({
+        ticker: 'PETR4',
+        type: TransactionType.InitialBalance,
+      }),
+    ]);
   });
 
   it('returns message when no positions to migrate', async () => {

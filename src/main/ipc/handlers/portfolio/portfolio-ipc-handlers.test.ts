@@ -137,6 +137,7 @@ describe('createPortfolioIpcHandlers', () => {
       recalculatedTickers: ['BBAS3'],
     });
     deletePositionUseCase.execute.mockResolvedValue({ deleted: true });
+    deletePositionUseCase.executeAll.mockResolvedValue({ deletedCount: 2 });
     const handlers = createHandlers();
 
     await expect(handlers.migrateYear({ sourceYear: 2024, targetYear: 2025 })).resolves.toEqual({
@@ -158,6 +159,10 @@ describe('createPortfolioIpcHandlers', () => {
     await expect(handlers.deletePosition({ ticker: 'BBAS3', year: 2025 })).resolves.toEqual({
       ok: true,
       data: { deleted: true },
+    });
+    await expect(handlers.deleteAllPositions({ year: 2025 })).resolves.toEqual({
+      ok: true,
+      data: { deletedCount: 2 },
     });
   });
 });

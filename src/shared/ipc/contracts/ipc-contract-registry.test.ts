@@ -90,6 +90,11 @@ describe('ipc contract registry', () => {
         channel: 'portfolio:delete-position',
         id: 'portfolio.deletePosition',
       },
+      {
+        apiName: 'deleteAllPositions',
+        channel: 'portfolio:delete-all-positions',
+        id: 'portfolio.deleteAllPositions',
+      },
     ]);
   });
 

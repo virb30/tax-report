@@ -15,7 +15,9 @@ export class RecalculatePositionUseCase {
   async execute(input: RecalculatePositionInput): Promise<RecalculatePositionOutput> {
     const allTransactions = await this.transactionRepository.findByTicker(input.ticker);
     const yearEnd = `${input.year}-12-31`;
-    const transactions = allTransactions.filter((transaction) => transaction.date <= yearEnd);
+    const transactions = this.orderTransactions(
+      allTransactions.filter((transaction) => transaction.date <= yearEnd),
+    );
 
     const currentPosition = await this.positionRepository.findByTickerAndYear(input.ticker, input.year);
     const basePositions = [this.createRecalculationBasePosition(input, currentPosition)];
@@ -48,6 +50,21 @@ export class RecalculatePositionUseCase {
       ticker: input.ticker,
       assetType: currentPosition?.assetType ?? AssetType.Stock,
       year: input.year,
+    });
+  }
+
+  private orderTransactions(transactions: Awaited<ReturnType<TransactionRepository['findByTicker']>>) {
+    return [...transactions].sort((left, right) => {
+      const dateOrder = left.date.localeCompare(right.date);
+      if (dateOrder !== 0) {
+        return dateOrder;
+      }
+
+      if (left.isInitialBalance() === right.isInitialBalance()) {
+        return 0;
+      }
+
+      return left.isInitialBalance() ? -1 : 1;
     });
   }
 }

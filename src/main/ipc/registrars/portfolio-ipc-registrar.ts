@@ -9,6 +9,7 @@ import { bindIpcContract } from '../binding/bind-ipc-contract';
 import { toIpcResultFailure } from '../binding/ipc-error-mapper';
 import { createPortfolioIpcHandlers } from '../handlers/portfolio/portfolio-ipc-handlers';
 import {
+  deleteAllPositionsContract,
   deletePositionContract,
   importConsolidatedPositionContract,
   listPositionsContract,
@@ -68,6 +69,9 @@ export class PortfolioIpcRegistrar implements IpcRegistrar {
       },
     );
     bindIpcContract(ipcMain, deletePositionContract, handlers.deletePosition, {
+      onError: toIpcResultFailure,
+    });
+    bindIpcContract(ipcMain, deleteAllPositionsContract, handlers.deleteAllPositions, {
       onError: toIpcResultFailure,
     });
 

@@ -177,9 +177,11 @@ export class KnexPositionRepository implements AssetPositionRepository {
     rows: AllocationRow[],
     positionKeys: PositionKey[],
   ): Promise<void> {
-    await trx('position_broker_allocations')
-      .whereIn(['position_ticker', 'position_year'], positionKeys)
-      .delete();
+    for (const [ticker, year] of positionKeys) {
+      await trx('position_broker_allocations')
+        .where({ position_ticker: ticker, position_year: year })
+        .delete();
+    }
 
     if (rows.length === 0) {
       return;

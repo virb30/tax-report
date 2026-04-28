@@ -128,14 +128,17 @@ export class AssetPosition {
   applyBonus(input: ApplyBonusInput): void {
     this.assertPositiveQuantity(input.quantity, 'Bonus quantity must be greater than zero.');
 
-    const nextQuantity = this._totalQuantity + input.quantity;
+    const creditedQuantity = Math.floor(input.quantity);
+    const nextQuantity = this._totalQuantity + creditedQuantity;
     const nextAveragePrice = this.averagePriceService.calculateAfterBonus(
       this,
       input.quantity,
       input.unitCost,
     );
 
-    this.brokerBreakdownState.increment(input.brokerId, input.quantity);
+    if (creditedQuantity > 0) {
+      this.brokerBreakdownState.increment(input.brokerId, creditedQuantity);
+    }
     this.commitQuantityAndAveragePrice(nextQuantity, nextAveragePrice);
   }
 
@@ -162,7 +165,7 @@ export class AssetPosition {
       throw new Error('Initial balance average price must be greater than zero.');
     }
 
-    this.brokerBreakdownState.set(input.brokerId, input.quantity);
+    this.brokerBreakdownState.replaceWith(input.brokerId, input.quantity);
     this.commitQuantityAndAveragePrice(this.calculateTotalQuantity(), input.averagePrice);
   }
 

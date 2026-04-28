@@ -25,15 +25,17 @@ export class MigrateYearUseCase {
       endDate: targetYearEnd,
     });
 
-    if (this.hasInitialBalance(existingTargetYearTransactions)) {
-      throw new Error(
-        `Migração duplicada: já existem transações de Saldo Inicial para o ano ${input.targetYear}. Remova-as antes de migrar novamente.`,
-      );
-    }
+    const tickersWithInitialBalance = this.findTickersWithInitialBalance(
+      existingTargetYearTransactions,
+    );
 
     const sourceYearPositions = await this.positionRepository.findAllByYear(input.sourceYear);
     const targetInitialBalanceTransactions: Transaction[] = [];
     sourceYearPositions.forEach((position) => {
+      if (tickersWithInitialBalance.has(position.ticker)) {
+        return;
+      }
+
       position.brokerBreakdown.forEach((broker) => {
         if (broker.quantity <= 0) return;
         const transaction = Transaction.create({
@@ -51,8 +53,12 @@ export class MigrateYearUseCase {
     });
 
     const positionCalculator = new PositionCalculatorService();
+    const targetYearTransactions = this.orderTargetYearTransactions([
+      ...existingTargetYearTransactions,
+      ...targetInitialBalanceTransactions,
+    ]);
     const positionsAtYearEnd = positionCalculator.compute(
-      [...existingTargetYearTransactions, ...targetInitialBalanceTransactions],
+      targetYearTransactions,
       [],
       input.targetYear,
     );
@@ -76,8 +82,29 @@ export class MigrateYearUseCase {
     };
   }
 
-  private hasInitialBalance(existingTargetYearTransactions: Transaction[]): boolean {
-    return existingTargetYearTransactions.some((transaction) => transaction.isInitialBalance());
+  private findTickersWithInitialBalance(
+    existingTargetYearTransactions: Transaction[],
+  ): Set<string> {
+    return new Set(
+      existingTargetYearTransactions
+        .filter((transaction) => transaction.isInitialBalance())
+        .map((transaction) => transaction.ticker),
+    );
+  }
+
+  private orderTargetYearTransactions(transactions: Transaction[]): Transaction[] {
+    return [...transactions].sort((left, right) => {
+      const dateOrder = left.date.localeCompare(right.date);
+      if (dateOrder !== 0) {
+        return dateOrder;
+      }
+
+      if (left.isInitialBalance() === right.isInitialBalance()) {
+        return 0;
+      }
+
+      return left.isInitialBalance() ? -1 : 1;
+    });
   }
 
   private validateInput(input: MigrateYearInput): void {

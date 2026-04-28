@@ -151,6 +151,24 @@ describe('AssetPosition', () => {
     expect(position.brokerBreakdown).toEqual([{ brokerId, quantity: 150 }]);
   });
 
+  it('applyBonus uses fractional quantity for average price but credits only whole shares', () => {
+    const brokerId = Uuid.create();
+    const position = AssetPosition.restore({
+      ticker: 'ITSA4',
+      assetType: AssetType.Stock,
+      year: 2025,
+      totalQuantity: 10,
+      averagePrice: 10,
+      brokerBreakdown: [{ brokerId, quantity: 10 }],
+    });
+
+    position.applyBonus({ quantity: 1.5, unitCost: 11, brokerId });
+
+    expect(position.totalQuantity).toBe(11);
+    expect(position.averagePrice).toBe(10.13);
+    expect(position.brokerBreakdown).toEqual([{ brokerId, quantity: 11 }]);
+  });
+
   it('applyInitialBalance defines base for new position', () => {
     const brokerId = Uuid.create();
     const position = AssetPosition.create({
@@ -190,6 +208,31 @@ describe('AssetPosition', () => {
     expect(position.totalQuantity).toBe(10);
     expect(position.averagePrice).toBe(30);
     expect(position.brokerBreakdown).toEqual([{ brokerId, quantity: 10 }]);
+  });
+
+  it('applyInitialBalance clears allocations from other brokers', () => {
+    const oldBrokerId = Uuid.create();
+    const initialBalanceBrokerId = Uuid.create();
+    const position = AssetPosition.create({
+      ticker: 'PETR4',
+      assetType: AssetType.Stock,
+      year: 2025,
+      totalQuantity: 1,
+      averagePrice: 20,
+      brokerBreakdown: [{ brokerId: oldBrokerId, quantity: 1 }],
+    });
+
+    position.applyInitialBalance({
+      quantity: 6,
+      averagePrice: 20,
+      brokerId: initialBalanceBrokerId,
+    });
+
+    expect(position.totalQuantity).toBe(6);
+    expect(position.averagePrice).toBe(20);
+    expect(position.brokerBreakdown).toEqual([
+      { brokerId: initialBalanceBrokerId, quantity: 6 },
+    ]);
   });
 
   it('throws when selling more than broker allocation', () => {

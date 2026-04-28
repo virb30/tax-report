@@ -143,6 +143,102 @@ describe('RecalculatePositionUseCase', () => {
     });
   });
 
+  it('ignores previous-year transactions when target year has an initial balance', async () => {
+    const nuBrokerId = Uuid.create();
+    const xpBrokerId = Uuid.create();
+    transactionRepository.findByTicker.mockResolvedValue([
+      Transaction.create({
+        date: '2024-01-01',
+        type: TransactionType.InitialBalance,
+        ticker: 'PETR4',
+        quantity: 1,
+        unitPrice: 20,
+        fees: 0,
+        brokerId: nuBrokerId,
+        sourceType: SourceType.Manual,
+      }),
+      ...Array.from({ length: 5 }, (_, index) =>
+        Transaction.create({
+          date: `2024-02-${String(index + 1).padStart(2, '0')}`,
+          type: TransactionType.Buy,
+          ticker: 'PETR4',
+          quantity: 1,
+          unitPrice: 20,
+          fees: 0,
+          brokerId: nuBrokerId,
+          sourceType: SourceType.Manual,
+        }),
+      ),
+      Transaction.create({
+        date: '2024-03-01',
+        type: TransactionType.TransferIn,
+        ticker: 'PETR4',
+        quantity: 6,
+        unitPrice: 0,
+        fees: 0,
+        brokerId: xpBrokerId,
+        sourceType: SourceType.Manual,
+      }),
+      Transaction.create({
+        date: '2024-03-01',
+        type: TransactionType.TransferOut,
+        ticker: 'PETR4',
+        quantity: 6,
+        unitPrice: 0,
+        fees: 0,
+        brokerId: nuBrokerId,
+        sourceType: SourceType.Manual,
+      }),
+      Transaction.create({
+        date: '2024-04-01',
+        type: TransactionType.Sell,
+        ticker: 'PETR4',
+        quantity: 1,
+        unitPrice: 30,
+        fees: 0,
+        brokerId: xpBrokerId,
+        sourceType: SourceType.Manual,
+      }),
+      Transaction.create({
+        date: '2024-05-01',
+        type: TransactionType.Buy,
+        ticker: 'PETR4',
+        quantity: 1,
+        unitPrice: 25,
+        fees: 0,
+        brokerId: xpBrokerId,
+        sourceType: SourceType.Manual,
+      }),
+      Transaction.create({
+        date: '2024-06-01',
+        type: TransactionType.Buy,
+        ticker: 'PETR4',
+        quantity: 1,
+        unitPrice: 25,
+        fees: 0,
+        brokerId: xpBrokerId,
+        sourceType: SourceType.Manual,
+      }),
+      Transaction.create({
+        date: '2023-10-10',
+        type: TransactionType.Buy,
+        ticker: 'PETR4',
+        quantity: 1,
+        unitPrice: 20,
+        fees: 0,
+        brokerId: Uuid.create(),
+        sourceType: SourceType.Manual,
+      }),
+    ]);
+
+    await useCase.execute({ ticker: 'PETR4', year: 2024 });
+
+    expect(positionRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+      totalQuantity: 7,
+      brokerBreakdown: [{ brokerId: xpBrokerId, quantity: 7 }],
+    }));
+  });
+
   it('uses existing position assetType when recalculating', async () => {
     const brokerId = Uuid.create();
     positionRepository.findByTickerAndYear.mockResolvedValue(AssetPosition.create({

@@ -42,6 +42,36 @@ describe('DeletePositionUseCase', () => {
     expect(positionRepo.delete).toHaveBeenCalledWith('PETR4', 2024);
   });
 
+  it('deletes all positions and linked transactions for a year', async () => {
+    const brokerId = Uuid.create();
+    positionRepo.findAllByYear.mockResolvedValue([
+      AssetPosition.restore({
+        ticker: 'PETR4',
+        assetType: AssetType.Stock,
+        year: 2024,
+        totalQuantity: 100,
+        averagePrice: 25,
+        brokerBreakdown: [{ brokerId, quantity: 100 }],
+      }),
+      AssetPosition.restore({
+        ticker: 'VALE3',
+        assetType: AssetType.Stock,
+        year: 2024,
+        totalQuantity: 10,
+        averagePrice: 60,
+        brokerBreakdown: [{ brokerId, quantity: 10 }],
+      }),
+    ]);
+
+    const result = await useCase.executeAll({ year: 2024 });
+
+    expect(result).toEqual({ deletedCount: 2 });
+    expect(transactionRepo.deleteByTickerAndYear).toHaveBeenCalledWith('PETR4', 2024);
+    expect(transactionRepo.deleteByTickerAndYear).toHaveBeenCalledWith('VALE3', 2024);
+    expect(positionRepo.delete).toHaveBeenCalledWith('PETR4', 2024);
+    expect(positionRepo.delete).toHaveBeenCalledWith('VALE3', 2024);
+  });
+
   it('returns deleted false when position does not exist', async () => {
     positionRepo.findByTickerAndYear.mockResolvedValue(null);
 

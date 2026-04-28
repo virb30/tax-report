@@ -29,6 +29,8 @@ import type {
   PreviewConsolidatedPositionResult,
 } from '../contracts/import-consolidated-position.contract';
 import type {
+  DeleteAllPositionsCommand,
+  DeleteAllPositionsResult,
   DeletePositionCommand,
   DeletePositionResult,
 } from '../contracts/delete-position.contract';
@@ -64,4 +66,5 @@ export type ElectronApi = {
     input: ImportConsolidatedPositionCommand,
   ) => Promise<ImportConsolidatedPositionResult>;
   deletePosition: (input: DeletePositionCommand) => Promise<DeletePositionResult>;
+  deleteAllPositions: (input: DeleteAllPositionsCommand) => Promise<DeleteAllPositionsResult>;
 };

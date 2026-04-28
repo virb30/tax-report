@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import type { DeletePositionResult } from '../../../contracts/delete-position.contract';
+import type {
+  DeleteAllPositionsResult,
+  DeletePositionResult,
+} from '../../../contracts/delete-position.contract';
 import type {
   ImportConsolidatedPositionResult,
   PreviewConsolidatedPositionResult,
@@ -89,6 +92,12 @@ export const deletePositionSchema = z.object({
     .int('Invalid year for delete position.'),
 });
 
+export const deleteAllPositionsSchema = z.object({
+  year: z
+    .number({ message: 'Invalid year for delete all positions.' })
+    .int('Invalid year for delete all positions.'),
+});
+
 export const setInitialBalanceContract = defineIpcContract<SetInitialBalanceResult>()({
   id: 'portfolio.setInitialBalance',
   channel: 'portfolio:set-initial-balance',
@@ -161,6 +170,16 @@ export const deletePositionContract = defineIpcContract<DeletePositionResult>()(
   payloadErrorMessage: 'Invalid payload for delete position.',
 });
 
+export const deleteAllPositionsContract = defineIpcContract<DeleteAllPositionsResult>()({
+  id: 'portfolio.deleteAllPositions',
+  channel: 'portfolio:delete-all-positions',
+  inputSchema: deleteAllPositionsSchema,
+  errorMode: 'result',
+  exposeToRenderer: true,
+  api: { name: 'deleteAllPositions' },
+  payloadErrorMessage: 'Invalid payload for delete all positions.',
+});
+
 export const portfolioIpcContracts = [
   setInitialBalanceContract,
   listPositionsContract,
@@ -169,4 +188,5 @@ export const portfolioIpcContracts = [
   previewConsolidatedPositionContract,
   importConsolidatedPositionContract,
   deletePositionContract,
+  deleteAllPositionsContract,
 ] as const;
