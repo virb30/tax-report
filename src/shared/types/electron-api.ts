@@ -1,4 +1,10 @@
 import type {
+  ListAssetsQuery,
+  ListAssetsResult,
+  UpdateAssetCommand,
+  UpdateAssetResult,
+} from '../contracts/assets.contract';
+import type {
   GenerateAssetsReportQuery,
   GenerateAssetsReportResult,
 } from '../contracts/assets-report.contract';
@@ -53,6 +59,8 @@ export type ElectronApi = {
   setInitialBalance: (input: SetInitialBalanceCommand) => Promise<SetInitialBalanceResult>;
   listPositions: (input: ListPositionsQuery) => Promise<ListPositionsResult>;
   generateAssetsReport: (input: GenerateAssetsReportQuery) => Promise<GenerateAssetsReportResult>;
+  listAssets: (input?: ListAssetsQuery) => Promise<ListAssetsResult>;
+  updateAsset: (input: UpdateAssetCommand) => Promise<UpdateAssetResult>;
   listBrokers: (input?: ListBrokersQuery) => Promise<ListBrokersResult>;
   createBroker: (input: CreateBrokerCommand) => Promise<CreateBrokerResult>;
   updateBroker: (input: UpdateBrokerCommand) => Promise<UpdateBrokerResult>;

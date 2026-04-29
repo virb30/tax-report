@@ -1,7 +1,9 @@
-import { OperationType, TransactionType } from '../../../shared/types/domain';
+import { OperationType, TransactionType, UnsupportedImportReason } from '../../../shared/types/domain';
 import type {
   ParsedTransactionBatch,
+  ParsedTransactionFile,
   ParsedTransactionOperation,
+  UnsupportedParsedTransactionRow,
 } from '../../../shared/contracts/import-transactions.contract';
 import type { ImportTransactionsParser } from '../../application/interfaces/transactions.parser.interface';
 import type {
@@ -10,6 +12,7 @@ import type {
 } from '../../application/interfaces/spreadsheet.file-reader';
 import type { BrokerRepository } from '../../application/repositories/broker.repository';
 import { B3SpreadsheetTransactionMapper } from './b3-spreadsheet-transaction.mapper';
+import { UnsupportedImportClassifier } from '../../domain/ingestion/unsupported-import-classifier.service';
 
 type GroupedRawBatch = {
   tradeDate: string;
@@ -20,7 +23,21 @@ type GroupedRawBatch = {
     operationType: OperationType;
     quantity: number;
     unitPrice: number;
+    sourceAssetType: ParsedTransactionOperation['sourceAssetType'];
+    sourceAssetTypeLabel: ParsedTransactionOperation['sourceAssetTypeLabel'];
   }>;
+};
+
+type UnsupportedRawRow = {
+  row: number;
+  date: string;
+  broker: string;
+  ticker: string;
+  quantity: number;
+  unitPrice: number;
+  sourceAssetType: ParsedTransactionOperation['sourceAssetType'];
+  sourceAssetTypeLabel: ParsedTransactionOperation['sourceAssetTypeLabel'];
+  unsupportedReason: UnsupportedImportReason.UnsupportedEvent;
 };
 
 type NormalizedTransactionRow = SpreadsheetRow;
@@ -42,18 +59,22 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
   ] as const;
 
   private readonly mapper = new B3SpreadsheetTransactionMapper();
+  private readonly classifier = new UnsupportedImportClassifier();
 
   constructor(
     private readonly fileReader: SpreadsheetFileReader,
     private readonly brokerRepository: BrokerRepository,
   ) {}
 
-  async parse(filePath: string): Promise<ParsedTransactionBatch[]> {
+  async parse(filePath: string): Promise<ParsedTransactionFile> {
     const normalizedRows = await this.loadNormalizedRows(filePath);
     const brokersMap = await this.resolveBrokerMap(normalizedRows);
-    const groupedBatches = this.groupRowsIntoBatches(normalizedRows);
+    const { groupedBatches, unsupportedRows } = this.groupRowsIntoBatches(normalizedRows);
 
-    return this.toParsedBatches(groupedBatches, brokersMap);
+    return {
+      batches: this.toParsedBatches(groupedBatches, brokersMap),
+      unsupportedRows: this.toUnsupportedRows(unsupportedRows, brokersMap),
+    };
   }
 
   private async loadNormalizedRows(filePath: string): Promise<NormalizedTransactionRow[]> {
@@ -76,13 +97,22 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
     return brokersMap;
   }
 
-  private groupRowsIntoBatches(rows: NormalizedTransactionRow[]): GroupedRawBatch[] {
+  private groupRowsIntoBatches(rows: NormalizedTransactionRow[]): {
+    groupedBatches: GroupedRawBatch[];
+    unsupportedRows: UnsupportedRawRow[];
+  } {
     const batchesByDateAndBroker = new Map<string, GroupedRawBatch>();
+    const unsupportedRows: UnsupportedRawRow[] = [];
 
-    for (const row of rows) {
-      const groupableRow = this.toGroupableRow(row);
+    for (const [index, row] of rows.entries()) {
+      const groupableRow = this.toGroupableRow(row, index + 1);
 
       if (!groupableRow) {
+        continue;
+      }
+
+      if ('unsupportedReason' in groupableRow) {
+        unsupportedRows.push(groupableRow);
         continue;
       }
 
@@ -104,9 +134,12 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
       existingBatch.operations.push(operation);
     }
 
-    return [...batchesByDateAndBroker.values()].sort(
-      (a, b) => a.tradeDate.localeCompare(b.tradeDate) || a.broker.localeCompare(b.broker),
-    );
+    return {
+      groupedBatches: [...batchesByDateAndBroker.values()].sort(
+        (a, b) => a.tradeDate.localeCompare(b.tradeDate) || a.broker.localeCompare(b.broker),
+      ),
+      unsupportedRows,
+    };
   }
 
   private toParsedBatches(
@@ -123,6 +156,8 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
         type: this.mapOperationTypeToTransactionType(op.operationType),
         quantity: op.quantity,
         unitPrice: op.unitPrice,
+        sourceAssetType: op.sourceAssetType,
+        sourceAssetTypeLabel: op.sourceAssetTypeLabel,
       }));
 
       batches.push({
@@ -136,12 +171,29 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
     return batches;
   }
 
-  private toGroupableRow(row: NormalizedTransactionRow): {
+  private toUnsupportedRows(
+    rows: UnsupportedRawRow[],
+    brokersMap: ResolvedBrokerMap,
+  ): UnsupportedParsedTransactionRow[] {
+    return rows.map((row) => ({
+      row: row.row,
+      date: row.date,
+      ticker: row.ticker,
+      quantity: row.quantity,
+      unitPrice: row.unitPrice,
+      brokerId: brokersMap.get(row.broker.trim().toUpperCase())!.id.value,
+      sourceAssetType: row.sourceAssetType,
+      sourceAssetTypeLabel: row.sourceAssetTypeLabel,
+      unsupportedReason: row.unsupportedReason,
+    }));
+  }
+
+  private toGroupableRow(row: NormalizedTransactionRow, rowNumber: number): {
     tradeDate: string;
     broker: string;
     operationalCost: number;
     operation: GroupedRawBatch['operations'][number];
-  } | null {
+  } | UnsupportedRawRow | null {
     const tradeDate = this.toDateString(row.Data);
     const broker = String(row.Corretora).trim();
 
@@ -153,9 +205,21 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
       String(row['Entrada/Saída']).trim(),
       String(row['Movimentação']).trim(),
     );
+    const sourceAssetTypeLabel = this.toOptionalString(row['Tipo Ativo']);
+    const sourceAssetType = this.classifier.normalizeAssetType(sourceAssetTypeLabel);
 
     if (!operationType) {
-      return null;
+      return {
+        row: rowNumber,
+        date: tradeDate,
+        broker,
+        ticker: String(row.Ticker).trim(),
+        quantity: this.parseNumber(row.Quantidade, 'Quantidade'),
+        unitPrice: this.parseOptionalNumber(row['Preco Unitario'], 0),
+        sourceAssetType,
+        sourceAssetTypeLabel,
+        unsupportedReason: UnsupportedImportReason.UnsupportedEvent,
+      };
     }
 
     this.mapper.validateRowIntegrity(row, operationType);
@@ -171,6 +235,8 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
         operationType,
         quantity: this.parseNumber(row.Quantidade, 'Quantidade'),
         unitPrice: this.parseOptionalNumber(row['Preco Unitario'], 0),
+        sourceAssetType,
+        sourceAssetTypeLabel,
       },
     };
   }
@@ -228,6 +294,18 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
       return defaultValue;
     }
     return this.parseNumber(value, 'optional');
+  }
+
+  private toOptionalString(value: unknown): string | null {
+    if (typeof value !== 'string' && typeof value !== 'number') {
+      return null;
+    }
+
+    const normalized = String(value).trim();
+    if (!normalized || normalized === 'undefined') {
+      return null;
+    }
+    return normalized;
   }
 
   private mapOperationTypeToTransactionType(operationType: OperationType): TransactionType {

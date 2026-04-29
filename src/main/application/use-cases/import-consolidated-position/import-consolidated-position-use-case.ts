@@ -6,6 +6,7 @@ import type {
 } from '../../../../shared/contracts/import-consolidated-position.contract';
 import { SourceType, TransactionType } from '../../../../shared/types/domain';
 import type { ConsolidatedPositionParserPort } from '../../interfaces/consolidated-position-parser.port';
+import type { AssetRepository } from '../../repositories/asset.repository';
 import type { BrokerRepository } from '../../repositories/broker.repository';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
 import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
@@ -15,6 +16,7 @@ import { ConsolidatedPositionImportedEvent } from '../../../domain/events/consol
 import { assertSupportedYear } from '../../../../shared/utils/year';
 import type { ConsolidatedPositionRow } from '../../interfaces/consolidated-position-parser.port';
 import type { Broker } from '../../../domain/portfolio/entities/broker.entity';
+import { ImportPreviewReviewResolver } from '../../../domain/ingestion/import-preview-review-resolver.service';
 
 type ResolvedRow = {
   ticker: string;
@@ -26,9 +28,11 @@ type ResolvedRow = {
 export class ImportConsolidatedPositionUseCase {
   constructor(
     private readonly parser: ConsolidatedPositionParserPort,
+    private readonly assetRepository: AssetRepository,
     private readonly brokerRepository: BrokerRepository,
     private readonly transactionRepository: TransactionRepository,
     private readonly queue: Queue,
+    private readonly reviewResolver: ImportPreviewReviewResolver = new ImportPreviewReviewResolver(),
   ) {}
 
   async preview(
@@ -36,13 +40,35 @@ export class ImportConsolidatedPositionUseCase {
   ): Promise<PreviewConsolidatedPositionData> {
     this.validatePreviewInput(input);
     const rows = await this.parser.parse(input.filePath);
+    const assetCatalogMap = await this.loadAssetCatalogMap(rows);
+    const summary = {
+      supportedRows: 0,
+      pendingRows: 0,
+      unsupportedRows: 0,
+    };
+
+    const previewRows = rows.map((row) => {
+      const previewRow = {
+        ticker: row.ticker,
+        quantity: row.quantity,
+        averagePrice: row.averagePrice,
+        brokerCode: row.brokerCode,
+        sourceAssetType: row.sourceAssetType,
+        ...this.reviewResolver.resolve({
+          fileAssetType: row.sourceAssetType,
+          fileAssetTypeLabel: row.sourceAssetTypeLabel,
+          catalogAssetType: assetCatalogMap.get(row.ticker)?.assetType ?? null,
+          hasSupportedEvent: true,
+        }),
+      };
+
+      this.updateSummary(summary, previewRow);
+      return previewRow;
+    });
+
     return {
-      rows: rows.map((r) => ({
-        ticker: r.ticker,
-        quantity: r.quantity,
-        averagePrice: r.averagePrice,
-        brokerCode: r.brokerCode,
-      })),
+      rows: previewRows,
+      summary,
     };
   }
 
@@ -140,5 +166,28 @@ export class ImportConsolidatedPositionUseCase {
     }
 
     return [...map.values()];
+  }
+
+  private async loadAssetCatalogMap(
+    rows: ConsolidatedPositionRow[],
+  ): Promise<Map<string, NonNullable<Awaited<ReturnType<AssetRepository['findByTickersList']>>[number]>>> {
+    const tickers = [...new Set(rows.map((row) => row.ticker))];
+    const assets = await this.assetRepository.findByTickersList(tickers);
+    return new Map(assets.map((asset) => [asset.ticker, asset]));
+  }
+
+  private updateSummary(
+    summary: PreviewConsolidatedPositionData['summary'],
+    row: PreviewConsolidatedPositionData['rows'][number],
+  ): void {
+    if (row.unsupportedReason) {
+      summary.unsupportedRows += 1;
+      return;
+    }
+
+    summary.supportedRows += 1;
+    if (row.needsReview) {
+      summary.pendingRows += 1;
+    }
   }
 }

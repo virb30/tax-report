@@ -149,6 +149,7 @@ describe('Application contracts integration', () => {
     const knexPositionRepository = new KnexPositionRepository(database);
     const knexTransactionRepository = new KnexTransactionRepository(database);
     const brokerRepository = new KnexBrokerRepository(database);
+    const tickerDataRepository = new KnexAssetRepository(database);
     const recalculatePositionUseCase = new RecalculatePositionUseCase(
       knexPositionRepository,
       knexTransactionRepository,
@@ -158,6 +159,7 @@ describe('Application contracts integration', () => {
     const consolidatedParser = new CsvXlsxConsolidatedPositionParser();
     const importConsolidatedUseCase = new ImportConsolidatedPositionUseCase(
       consolidatedParser,
+      tickerDataRepository,
       brokerRepository,
       knexTransactionRepository,
       queue,

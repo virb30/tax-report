@@ -1,4 +1,3 @@
-
 import { AssetType } from '../../../../shared/types/domain';
 import type { BrokerRepository } from '../../repositories/broker.repository';
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
@@ -9,7 +8,6 @@ import { Cnpj } from '../../../domain/shared/cnpj.vo';
 import { Broker } from '../../../domain/portfolio/entities/broker.entity';
 import { AssetPosition } from '../../../domain/portfolio/entities/asset-position.entity';
 import { Asset } from '../../../domain/portfolio/entities/asset.entity';
-
 
 describe('GenerateAssetsReportUseCase', () => {
   const positionRepository = mock<AssetPositionRepository>();
@@ -25,13 +23,16 @@ describe('GenerateAssetsReportUseCase', () => {
     broker = Broker.create({ name: 'TEST', cnpj: new Cnpj('02.332.886/0001-04'), code: 'TST' });
     positionRepository.findAllByYear.mockResolvedValue([]);
     positionRepository.save.mockResolvedValue(undefined);
-    brokerRepository.findAll.mockResolvedValue([
-      broker,
-    ]);
+    brokerRepository.findAll.mockResolvedValue([broker]);
+    assetRepository.findByTicker.mockResolvedValue(null);
     assetRepository.findByTickersList.mockResolvedValue([]);
     assetRepository.findAll.mockResolvedValue([]);
     assetRepository.save.mockResolvedValue(undefined);
-    useCase = new GenerateAssetsReportUseCase(positionRepository, brokerRepository, assetRepository);
+    useCase = new GenerateAssetsReportUseCase(
+      positionRepository,
+      brokerRepository,
+      assetRepository,
+    );
   });
 
   it('generates annual report with persisted positions', async () => {
@@ -70,7 +71,11 @@ describe('GenerateAssetsReportUseCase', () => {
       }),
     ]);
     assetRepository.findByTickersList.mockResolvedValue([
-      Asset.create({ ticker: 'PETR4', issuerCnpj: new Cnpj('33.000.167/0001-01'), name: 'Petrobras' }),
+      Asset.create({
+        ticker: 'PETR4',
+        issuerCnpj: new Cnpj('33.000.167/0001-01'),
+        name: 'Petrobras',
+      }),
     ]);
     const result = await useCase.execute({ baseYear: 2025 });
 
@@ -93,16 +98,17 @@ describe('GenerateAssetsReportUseCase', () => {
     });
   });
 
-
   it('excludes positions zeroed by sells', async () => {
-    positionRepository.findAllByYear.mockResolvedValue([AssetPosition.create({
-      ticker: 'ABEV3',
-      year: 2025,
-      assetType: AssetType.Stock,
-      totalQuantity: 0,
-      averagePrice: 8,
-      brokerBreakdown: [],
-    })]);
+    positionRepository.findAllByYear.mockResolvedValue([
+      AssetPosition.create({
+        ticker: 'ABEV3',
+        year: 2025,
+        assetType: AssetType.Stock,
+        totalQuantity: 0,
+        averagePrice: 8,
+        brokerBreakdown: [],
+      }),
+    ]);
 
     const result = await useCase.execute({ baseYear: 2025 });
 
@@ -110,32 +116,39 @@ describe('GenerateAssetsReportUseCase', () => {
   });
 
   it('uses existing position for assetType when available', async () => {
-    positionRepository.findAllByYear.mockResolvedValue([AssetPosition.create({
-      ticker: 'VALE3',
-      assetType: AssetType.Stock,
-      year: 2025,
-      totalQuantity: 1,
-      averagePrice: 10,
-      brokerBreakdown: [{ brokerId: broker.id, quantity: 1 }],
-    })]);
+    positionRepository.findAllByYear.mockResolvedValue([
+      AssetPosition.create({
+        ticker: 'VALE3',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: 1,
+        averagePrice: 10,
+        brokerBreakdown: [{ brokerId: broker.id, quantity: 1 }],
+      }),
+    ]);
 
     const result = await useCase.execute({ baseYear: 2025 });
 
     expect(result.items.find((i) => i.ticker === 'VALE3')?.assetType).toBe(AssetType.Stock);
   });
 
-
   it('uses issuer CNPJ from ticker_data when available', async () => {
-    positionRepository.findAllByYear.mockResolvedValue([AssetPosition.create({
-      ticker: 'PETR4',
-      year: 2025,
-      assetType: AssetType.Stock,
-      totalQuantity: 10,
-      averagePrice: 20,
-      brokerBreakdown: [{ brokerId: broker.id, quantity: 10 }],
-    })]);
+    positionRepository.findAllByYear.mockResolvedValue([
+      AssetPosition.create({
+        ticker: 'PETR4',
+        year: 2025,
+        assetType: AssetType.Stock,
+        totalQuantity: 10,
+        averagePrice: 20,
+        brokerBreakdown: [{ brokerId: broker.id, quantity: 10 }],
+      }),
+    ]);
     assetRepository.findByTickersList.mockResolvedValue([
-      Asset.create({ ticker: 'PETR4', issuerCnpj: new Cnpj('33.000.167/0001-01'), name: 'Petrobras' }),
+      Asset.create({
+        ticker: 'PETR4',
+        issuerCnpj: new Cnpj('33.000.167/0001-01'),
+        name: 'Petrobras',
+      }),
     ]);
 
     const result = await useCase.execute({ baseYear: 2025 });
@@ -145,19 +158,25 @@ describe('GenerateAssetsReportUseCase', () => {
   });
 
   it('handles multi-broker position with correct allocations', async () => {
-    const broker2 = Broker.create({ name: 'TEST2', cnpj: new Cnpj('02.332.886/0001-04'), code: 'TST2' });
-    positionRepository.findAllByYear.mockResolvedValue([AssetPosition.create({
-      ticker: 'PETR4',
-      year: 2025,
-      assetType: AssetType.Stock,
-      totalQuantity: 150,
-      averagePrice: 35.2,
-      brokerBreakdown: [{ brokerId: broker.id, quantity: 100 }, { brokerId: broker2.id, quantity: 50 }],
-    })]);
-    brokerRepository.findAll.mockResolvedValue([
-      broker,
-      broker2,
+    const broker2 = Broker.create({
+      name: 'TEST2',
+      cnpj: new Cnpj('02.332.886/0001-04'),
+      code: 'TST2',
+    });
+    positionRepository.findAllByYear.mockResolvedValue([
+      AssetPosition.create({
+        ticker: 'PETR4',
+        year: 2025,
+        assetType: AssetType.Stock,
+        totalQuantity: 150,
+        averagePrice: 35.2,
+        brokerBreakdown: [
+          { brokerId: broker.id, quantity: 100 },
+          { brokerId: broker2.id, quantity: 50 },
+        ],
+      }),
     ]);
+    brokerRepository.findAll.mockResolvedValue([broker, broker2]);
 
     const result = await useCase.execute({ baseYear: 2025 });
 

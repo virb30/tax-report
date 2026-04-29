@@ -32,6 +32,23 @@ export enum SourceType {
   Manual = 'manual',
 }
 
+export enum AssetTypeSource {
+  File = 'file',
+  Manual = 'manual',
+}
+
+export enum AssetResolutionStatus {
+  ResolvedFromFile = 'resolved_from_file',
+  ResolvedFromCatalog = 'resolved_from_catalog',
+  ManualOverride = 'manual_override',
+  Unresolved = 'unresolved',
+}
+
+export enum UnsupportedImportReason {
+  UnsupportedAssetType = 'unsupported_asset_type',
+  UnsupportedEvent = 'unsupported_event',
+}
+
 export type Asset = {
   id: number;
   ticker: string;

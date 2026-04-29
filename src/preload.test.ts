@@ -1,4 +1,4 @@
-
+import { listAssetsContract, updateAssetContract } from './shared/ipc/contracts/assets';
 import {
   confirmImportTransactionsContract,
   previewImportTransactionsContract,
@@ -50,6 +50,12 @@ describe('preload', () => {
     });
     await electronApi.listPositions({ baseYear: 2025 });
     await electronApi.generateAssetsReport({ baseYear: 2025 });
+    await electronApi.listAssets({ pendingOnly: true });
+    await electronApi.updateAsset({
+      ticker: 'IVVB11',
+      assetType: AssetType.Etf,
+      name: 'iShares Core S&P 500',
+    });
 
     expect(invoke).toHaveBeenNthCalledWith(1, previewImportTransactionsContract.channel, {
       filePath: '/tmp/operations.csv',
@@ -71,6 +77,14 @@ describe('preload', () => {
     expect(invoke).toHaveBeenNthCalledWith(5, generateAssetsReportContract.channel, {
       baseYear: 2025,
     });
+    expect(invoke).toHaveBeenNthCalledWith(6, listAssetsContract.channel, {
+      pendingOnly: true,
+    });
+    expect(invoke).toHaveBeenNthCalledWith(7, updateAssetContract.channel, {
+      ticker: 'IVVB11',
+      assetType: AssetType.Etf,
+      name: 'iShares Core S&P 500',
+    });
   });
 
   it('does not expose generic IPC surface to renderer', () => {
@@ -84,6 +98,7 @@ describe('preload', () => {
       'generateAssetsReport',
       'importConsolidatedPosition',
       'importSelectFile',
+      'listAssets',
       'listBrokers',
       'listPositions',
       'migrateYear',
@@ -92,6 +107,7 @@ describe('preload', () => {
       'recalculatePosition',
       'setInitialBalance',
       'toggleBrokerActive',
+      'updateAsset',
       'updateBroker',
     ]);
     expect('invoke' in (electronApi as unknown as Record<string, unknown>)).toBe(false);

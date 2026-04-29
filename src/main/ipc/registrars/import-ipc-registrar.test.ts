@@ -90,6 +90,11 @@ describe('ImportIpcRegistrar', () => {
     previewImportUseCase.execute.mockResolvedValue({
       batches: [],
       transactionsPreview: [],
+      summary: {
+        supportedRows: 0,
+        pendingRows: 0,
+        unsupportedRows: 0,
+      },
       warnings: undefined,
     });
     const handlers = registerRegistrar();
@@ -102,6 +107,11 @@ describe('ImportIpcRegistrar', () => {
     ).resolves.toEqual({
       batches: [],
       transactionsPreview: [],
+      summary: {
+        supportedRows: 0,
+        pendingRows: 0,
+        unsupportedRows: 0,
+      },
       warnings: undefined,
     });
 

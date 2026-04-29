@@ -21,7 +21,8 @@ export class ImportTransactionsUseCase {
   ) {}
 
   async execute(input: ImportTransactionsCommand): Promise<ImportTransactionsResult> {
-    const batches = await this.parser.parse(input.filePath);
+    const parsedFile = await this.parser.parse(input.filePath);
+    const batches = parsedFile.batches;
     const importBatchId = `batch-${Date.now()}-${randomUUID().slice(0, 8)}`;
     const allTransactions: Transaction[] = [];
     const affectedTickers = new Set<string>();

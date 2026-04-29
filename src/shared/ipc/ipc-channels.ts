@@ -1,3 +1,4 @@
+import { listAssetsContract, updateAssetContract } from './contracts/assets/contracts';
 import {
   createBrokerContract,
   listBrokersContract,
@@ -31,6 +32,8 @@ export const ELECTRON_API_CHANNELS = {
   setInitialBalance: setInitialBalanceContract.channel,
   listPositions: listPositionsContract.channel,
   generateAssetsReport: generateAssetsReportContract.channel,
+  listAssets: listAssetsContract.channel,
+  updateAsset: updateAssetContract.channel,
   listBrokers: listBrokersContract.channel,
   createBroker: createBrokerContract.channel,
   updateBroker: updateBrokerContract.channel,

@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { AssetType } from '../../../shared/types/domain';
 import { CsvXlsxConsolidatedPositionParser } from './csv-xlsx-consolidated-position.parser';
 
 async function createTempFile(fileName: string, content: string): Promise<string> {
@@ -40,12 +41,16 @@ describe('CsvXlsxConsolidatedPositionParser', () => {
       quantity: 100,
       averagePrice: 25.5,
       brokerCode: 'XP',
+      sourceAssetType: null,
+      sourceAssetTypeLabel: null,
     });
     expect(result[1]).toEqual({
       ticker: 'VALE3',
       quantity: 50,
       averagePrice: 68,
       brokerCode: 'CLEAR',
+      sourceAssetType: null,
+      sourceAssetTypeLabel: null,
     });
   });
 
@@ -60,6 +65,25 @@ describe('CsvXlsxConsolidatedPositionParser', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]?.averagePrice).toBe(28);
+  });
+
+  it('normalizes optional Tipo Ativo when present', async () => {
+    const filePath = await createTempFile(
+      'pos.csv',
+      ['Ticker;Quantidade;Preco Medio;Corretora;Tipo Ativo', 'BOVA11;10;120;XP;ETF'].join('\n'),
+    );
+    createdDirs.push(path.dirname(filePath));
+
+    const result = await parser.parse(filePath);
+
+    expect(result[0]).toEqual({
+      ticker: 'BOVA11',
+      quantity: 10,
+      averagePrice: 120,
+      brokerCode: 'XP',
+      sourceAssetType: AssetType.Etf,
+      sourceAssetTypeLabel: 'ETF',
+    });
   });
 
   it('throws when required column is missing', async () => {

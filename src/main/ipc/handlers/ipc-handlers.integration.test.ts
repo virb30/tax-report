@@ -3,37 +3,15 @@ import path from 'node:path';
 import os from 'node:os';
 
 import type { Knex } from 'knex';
-import { AssetType } from '../../../shared/types/domain';
-import { BrokersIpcRegistrar } from '../registrars/brokers-ipc-registrar';
-import { AppIpcRegistrar } from '../registrars/app-ipc-registrar';
-import { ImportIpcRegistrar } from '../registrars/import-ipc-registrar';
-import { PortfolioIpcRegistrar } from '../registrars/portfolio-ipc-registrar';
-import { ReportIpcRegistrar } from '../registrars/report-ipc-registrar';
-import { createDatabaseConnection, initializeDatabase } from '../../database/database';
-import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance.use-case';
-import { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
-import { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
-import { MigrateYearUseCase } from '../../application/use-cases/migrate-year/migrate-year.use-case';
-import { KnexPositionRepository } from '../../infrastructure/repositories/knex-position.repository';
-import { KnexTransactionRepository } from '../../infrastructure/repositories/knex-transaction.repository';
-import { KnexBrokerRepository } from '../../infrastructure/repositories/knex-broker.repository';
-import { KnexAssetRepository } from '../../infrastructure/repositories/knex-asset.repository';
-import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-asset-report/generate-assets-report.use-case';
-import { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
-import { CsvXlsxTransactionParser } from '../../infrastructure/parsers/csv-xlsx-transaction.parser';
-import { SheetjsSpreadsheetFileReader } from '../../infrastructure/adapters/file-readers/sheetjs.spreadsheet.file-reader';
-import { PreviewImportUseCase } from '../../application/use-cases/preview-import/preview-import-use-case';
-import { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions/import-transactions-use-case';
-import { AssetPosition } from '../../domain/portfolio/entities/asset-position.entity';
-import { CreateBrokerUseCase } from '../../application/use-cases/create-broker/create-broker.use-case';
-import { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
-import { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
-import { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
-import { MemoryQueueAdapter } from '../../infrastructure/events/memory-queue.adapter';
-import { RecalculatePositionHandler } from '../../infrastructure/handlers/recalculate-position.handler';
-import { ImportConsolidatedPositionUseCase } from '../../application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
-import { DeletePositionUseCase } from '../../application/use-cases/delete-position/delete-position.use-case';
-import { CsvXlsxConsolidatedPositionParser } from '../../infrastructure/parsers/csv-xlsx-consolidated-position.parser';
+import { AssetType, AssetTypeSource } from '../../../shared/types/domain';
+import { healthCheckContract } from '../../../shared/ipc/contracts/app';
+import { listAssetsContract, updateAssetContract } from '../../../shared/ipc/contracts/assets';
+import {
+  createBrokerContract,
+  listBrokersContract,
+  toggleBrokerActiveContract,
+  updateBrokerContract,
+} from '../../../shared/ipc/contracts/brokers';
 import {
   confirmImportTransactionsContract,
   previewImportTransactionsContract,
@@ -43,13 +21,41 @@ import {
   setInitialBalanceContract,
 } from '../../../shared/ipc/contracts/portfolio';
 import { generateAssetsReportContract } from '../../../shared/ipc/contracts/report';
-import {
-  createBrokerContract,
-  listBrokersContract,
-  toggleBrokerActiveContract,
-  updateBrokerContract,
-} from '../../../shared/ipc/contracts/brokers';
-import { healthCheckContract } from '../../../shared/ipc/contracts/app';
+import { CreateBrokerUseCase } from '../../application/use-cases/create-broker/create-broker.use-case';
+import { DeletePositionUseCase } from '../../application/use-cases/delete-position/delete-position.use-case';
+import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-asset-report/generate-assets-report.use-case';
+import { ImportConsolidatedPositionUseCase } from '../../application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
+import { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions/import-transactions-use-case';
+import { ListAssetsUseCase } from '../../application/use-cases/list-assets/list-assets.use-case';
+import { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
+import { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
+import { MigrateYearUseCase } from '../../application/use-cases/migrate-year/migrate-year.use-case';
+import { PreviewImportUseCase } from '../../application/use-cases/preview-import/preview-import-use-case';
+import { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
+import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance.use-case';
+import { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
+import { UpdateAssetUseCase } from '../../application/use-cases/update-asset/update-asset.use-case';
+import { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
+import { createDatabaseConnection, initializeDatabase } from '../../database/database';
+import { TaxApportioner } from '../../domain/ingestion/tax-apportioner.service';
+import { Asset } from '../../domain/portfolio/entities/asset.entity';
+import { AssetPosition } from '../../domain/portfolio/entities/asset-position.entity';
+import { Cnpj } from '../../domain/shared/cnpj.vo';
+import { SheetjsSpreadsheetFileReader } from '../../infrastructure/adapters/file-readers/sheetjs.spreadsheet.file-reader';
+import { BrokersIpcRegistrar } from '../registrars/brokers-ipc-registrar';
+import { AssetsIpcRegistrar } from '../registrars/assets-ipc-registrar';
+import { AppIpcRegistrar } from '../registrars/app-ipc-registrar';
+import { ImportIpcRegistrar } from '../registrars/import-ipc-registrar';
+import { PortfolioIpcRegistrar } from '../registrars/portfolio-ipc-registrar';
+import { ReportIpcRegistrar } from '../registrars/report-ipc-registrar';
+import { KnexPositionRepository } from '../../infrastructure/repositories/knex-position.repository';
+import { KnexTransactionRepository } from '../../infrastructure/repositories/knex-transaction.repository';
+import { KnexBrokerRepository } from '../../infrastructure/repositories/knex-broker.repository';
+import { KnexAssetRepository } from '../../infrastructure/repositories/knex-asset.repository';
+import { CsvXlsxTransactionParser } from '../../infrastructure/parsers/csv-xlsx-transaction.parser';
+import { MemoryQueueAdapter } from '../../infrastructure/events/memory-queue.adapter';
+import { RecalculatePositionHandler } from '../../infrastructure/handlers/recalculate-position.handler';
+import { CsvXlsxConsolidatedPositionParser } from '../../infrastructure/parsers/csv-xlsx-consolidated-position.parser';
 
 type IpcHandler = (_event: Electron.IpcMainInvokeEvent, ...args: unknown[]) => unknown;
 type IpcMainHandleRegistry = Pick<Electron.IpcMain, 'handle'>;
@@ -99,7 +105,11 @@ describe('IPC handlers integration', () => {
     const transactionParser = new CsvXlsxTransactionParser(spreadsheetFileReader, brokerRepository);
     const consolidatedPositionParser = new CsvXlsxConsolidatedPositionParser();
     const taxApportioner = new TaxApportioner();
-    const previewImportUseCase = new PreviewImportUseCase(transactionParser, taxApportioner);
+    const previewImportUseCase = new PreviewImportUseCase(
+      transactionParser,
+      taxApportioner,
+      tickerDataRepository,
+    );
     const importTransactionsUseCase = new ImportTransactionsUseCase(
       transactionParser,
       taxApportioner,
@@ -108,6 +118,7 @@ describe('IPC handlers integration', () => {
     );
     const importConsolidatedPositionUseCase = new ImportConsolidatedPositionUseCase(
       consolidatedPositionParser,
+      tickerDataRepository,
       brokerRepository,
       knexTransactionRepository,
       queue,
@@ -186,10 +197,20 @@ describe('IPC handlers integration', () => {
 
     const previewResult = (await previewHandler(ipcEvent, {
       filePath: csvPath,
-    })) as { transactionsPreview: Array<{ ticker: string }>; batches: Array<{ brokerId: string }> };
+    })) as {
+      transactionsPreview: Array<{ ticker: string; resolutionStatus: string }>;
+      batches: Array<{ brokerId: string }>;
+      summary: { supportedRows: number; pendingRows: number; unsupportedRows: number };
+    };
     expect(previewResult.transactionsPreview).toHaveLength(1);
     expect(previewResult.batches).toHaveLength(1);
     expect(previewResult.batches[0]?.brokerId).toBeDefined();
+    expect(previewResult.transactionsPreview[0]?.resolutionStatus).toBe('unresolved');
+    expect(previewResult.summary).toEqual({
+      supportedRows: 1,
+      pendingRows: 1,
+      unsupportedRows: 0,
+    });
 
     const importResult = (await confirmHandler(ipcEvent, {
       filePath: csvPath,
@@ -296,5 +317,92 @@ describe('IPC handlers integration', () => {
     };
     const inActiveList = listActiveOnly.items.find((b) => b.id === brokerId);
     expect(inActiveList).toBeUndefined();
+  });
+
+  it('assets:list and assets:update work end-to-end', async () => {
+    const assetRepository = new KnexAssetRepository(database);
+    const listAssetsUseCase = new ListAssetsUseCase(assetRepository);
+    const updateAssetUseCase = new UpdateAssetUseCase(assetRepository);
+
+    await assetRepository.save(
+      Asset.create({
+        ticker: 'HGLG11',
+        assetType: AssetType.Fii,
+        resolutionSource: AssetTypeSource.File,
+      }),
+    );
+    await assetRepository.save(
+      Asset.create({
+        ticker: 'VALE3',
+        issuerCnpj: new Cnpj('33.592.510/0001-54'),
+        name: 'Vale',
+        assetType: AssetType.Stock,
+        resolutionSource: AssetTypeSource.File,
+      }),
+    );
+
+    const handlers = new Map<string, IpcHandler>();
+    const ipcMain: IpcMainHandleRegistry = {
+      handle: (channel: string, listener: IpcHandler) => {
+        handlers.set(channel, listener);
+      },
+    };
+
+    const assetsRegistrar = new AssetsIpcRegistrar(listAssetsUseCase, updateAssetUseCase);
+    assetsRegistrar.register(ipcMain);
+
+    const listHandler = handlers.get(listAssetsContract.channel);
+    const updateHandler = handlers.get(updateAssetContract.channel);
+
+    if (!listHandler || !updateHandler) {
+      throw new Error('Asset IPC handlers not registered.');
+    }
+
+    const pendingOnlyResult = (await listHandler(ipcEvent, { pendingOnly: true })) as {
+      items: Array<{ ticker: string }>;
+    };
+    expect(pendingOnlyResult.items.map((item) => item.ticker)).toEqual(['HGLG11']);
+
+    const updateResult = (await updateHandler(ipcEvent, {
+      ticker: 'HGLG11',
+      name: 'CSHG Logistica',
+      cnpj: '03.837.735/0001-17',
+    })) as {
+      success: boolean;
+      asset?: {
+        ticker: string;
+        assetType: AssetType;
+        resolutionSource: AssetTypeSource;
+        name: string;
+        cnpj: string;
+        isReportReadyMetadata: boolean;
+      };
+    };
+    expect(updateResult.success).toBe(true);
+    expect(updateResult.asset).toEqual({
+      ticker: 'HGLG11',
+      assetType: AssetType.Fii,
+      resolutionSource: AssetTypeSource.File,
+      name: 'CSHG Logistica',
+      cnpj: '03.837.735/0001-17',
+      isReportReadyMetadata: true,
+    });
+
+    const reportBlockingResult = (await listHandler(ipcEvent, {
+      reportBlockingOnly: true,
+    })) as { items: Array<{ ticker: string }> };
+    expect(reportBlockingResult.items).toEqual([]);
+
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const invalidUpdate = (await updateHandler(ipcEvent, {
+      ticker: '',
+      name: 'Invalid',
+    })) as { success: boolean; error?: string };
+    consoleErrorSpy.mockRestore();
+
+    expect(invalidUpdate).toEqual({
+      success: false,
+      error: 'Invalid ticker for update asset.',
+    });
   });
 });

@@ -130,7 +130,24 @@ describe('createPortfolioIpcHandlers', () => {
       createdTransactionsCount: 3,
     });
     importConsolidatedPositionUseCase.preview.mockResolvedValue({
-      rows: [{ ticker: 'BBAS3', quantity: 4, averagePrice: 20, brokerCode: 'XP' }],
+      rows: [
+        {
+          ticker: 'BBAS3',
+          quantity: 4,
+          averagePrice: 20,
+          brokerCode: 'XP',
+          sourceAssetType: null,
+          resolvedAssetType: null,
+          resolutionStatus: 'unresolved',
+          needsReview: true,
+          unsupportedReason: null,
+        },
+      ],
+      summary: {
+        supportedRows: 1,
+        pendingRows: 1,
+        unsupportedRows: 0,
+      },
     });
     importConsolidatedPositionUseCase.execute.mockResolvedValue({
       importedCount: 1,
@@ -148,7 +165,26 @@ describe('createPortfolioIpcHandlers', () => {
       handlers.previewConsolidatedPosition({ filePath: 'positions.csv' }),
     ).resolves.toEqual({
       ok: true,
-      data: { rows: [{ ticker: 'BBAS3', quantity: 4, averagePrice: 20, brokerCode: 'XP' }] },
+      data: {
+        rows: [
+          {
+            ticker: 'BBAS3',
+            quantity: 4,
+            averagePrice: 20,
+            brokerCode: 'XP',
+            sourceAssetType: null,
+            resolvedAssetType: null,
+            resolutionStatus: 'unresolved',
+            needsReview: true,
+            unsupportedReason: null,
+          },
+        ],
+        summary: {
+          supportedRows: 1,
+          pendingRows: 1,
+          unsupportedRows: 0,
+        },
+      },
     });
     await expect(
       handlers.importConsolidatedPosition({ filePath: 'positions.csv', year: 2025 }),

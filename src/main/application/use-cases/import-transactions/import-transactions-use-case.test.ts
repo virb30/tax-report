@@ -7,6 +7,7 @@ import type { Queue } from '../../events/queue.interface';
 import { TransactionsImportedEvent } from '../../../domain/events/transactions-imported.event';
 import type { TaxApportioner } from '../../../domain/ingestion/tax-apportioner.service';
 import { mock, mockReset } from 'jest-mock-extended';
+import type { ParsedTransactionFile } from '../../../../shared/contracts/import-transactions.contract';
 
 describe('ImportTransactionsUseCase', () => {
   const mockParser = mock<ImportTransactionsParser>();
@@ -21,19 +22,44 @@ describe('ImportTransactionsUseCase', () => {
     mockReset(mockTaxApportioner);
   });
 
+  function parsedFileWithBatches(
+    batches: ParsedTransactionFile['batches'],
+  ): ParsedTransactionFile {
+    return {
+      batches,
+      unsupportedRows: [],
+    };
+  }
+
   it('parses, apportions fees, persists and recalculates positions', async () => {
     const brokerId = '019cece0-4a22-75b8-95c4-45eb6f4cb2f4';
-    mockParser.parse.mockResolvedValue([
-      {
-        tradeDate: '2025-04-01',
-        brokerId,
-        totalOperationalCosts: 1,
-        operations: [
-          { ticker: 'PETR4', type: TransactionType.Buy, quantity: 10, unitPrice: 20 },
-          { ticker: 'VALE3', type: TransactionType.Buy, quantity: 5, unitPrice: 40 },
-        ],
-      },
-    ]);
+    mockParser.parse.mockResolvedValue(
+      parsedFileWithBatches([
+        {
+          tradeDate: '2025-04-01',
+          brokerId,
+          totalOperationalCosts: 1,
+          operations: [
+            {
+              ticker: 'PETR4',
+              type: TransactionType.Buy,
+              quantity: 10,
+              unitPrice: 20,
+              sourceAssetType: null,
+              sourceAssetTypeLabel: null,
+            },
+            {
+              ticker: 'VALE3',
+              type: TransactionType.Buy,
+              quantity: 5,
+              unitPrice: 40,
+              sourceAssetType: null,
+              sourceAssetTypeLabel: null,
+            },
+          ],
+        },
+      ]),
+    );
     mockTaxApportioner.allocate.mockReturnValue([0.33, 0.67]);
     mockTransactionRepo.saveMany.mockResolvedValue(undefined);
     mockTransactionRepo.findExistingExternalRefs.mockResolvedValue(new Set<string>());
@@ -82,14 +108,25 @@ describe('ImportTransactionsUseCase', () => {
 
   it('skips duplicates via externalRef (idempotence)', async () => {
     const brokerId = '019cece0-4a22-75b8-95c4-45eb6f4cb2f4';
-    mockParser.parse.mockResolvedValue([
-      {
-        tradeDate: '2025-04-01',
-        brokerId,
-        totalOperationalCosts: 0,
-        operations: [{ ticker: 'PETR4', type: TransactionType.Buy, quantity: 1, unitPrice: 10 }],
-      },
-    ]);
+    mockParser.parse.mockResolvedValue(
+      parsedFileWithBatches([
+        {
+          tradeDate: '2025-04-01',
+          brokerId,
+          totalOperationalCosts: 0,
+          operations: [
+            {
+              ticker: 'PETR4',
+              type: TransactionType.Buy,
+              quantity: 1,
+              unitPrice: 10,
+              sourceAssetType: null,
+              sourceAssetTypeLabel: null,
+            },
+          ],
+        },
+      ]),
+    );
     mockTaxApportioner.allocate.mockReturnValue([0]);
     mockTransactionRepo.saveMany.mockResolvedValue(undefined);
     mockQueue.publish.mockResolvedValue(undefined);

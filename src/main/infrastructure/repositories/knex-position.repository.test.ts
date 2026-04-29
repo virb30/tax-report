@@ -30,9 +30,9 @@ describe('KnexPositionRepository', () => {
       code: 'NU',
     });
     const xpBroker = Broker.create({
-      name: 'XP Investimentos',
+      name: 'XP Investimentos Test',
       cnpj: new Cnpj('22.222.222/0001-22'),
-      code: 'XP',
+      code: 'XPTEST',
     });
     await brokerRepository.save(nuBroker);
     await brokerRepository.save(xpBroker);

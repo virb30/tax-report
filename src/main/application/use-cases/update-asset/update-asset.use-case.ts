@@ -1,0 +1,43 @@
+import { AssetTypeSource } from '../../../../shared/types/domain';
+import { Cnpj } from '../../../domain/shared/cnpj.vo';
+import type { AssetRepository } from '../../repositories/asset.repository';
+import type { UpdateAssetInput } from './update-asset.input';
+import type { UpdateAssetOutput } from './update-asset.output';
+
+export class UpdateAssetUseCase {
+  constructor(private readonly assetRepository: AssetRepository) {}
+
+  async execute(input: UpdateAssetInput): Promise<UpdateAssetOutput> {
+    if (input.assetType === undefined && input.name === undefined && input.cnpj === undefined) {
+      throw new Error('Nenhum campo para atualizar foi informado.');
+    }
+
+    const asset = await this.assetRepository.findByTicker(input.ticker);
+    if (!asset) {
+      throw new Error('Ativo nao encontrado.');
+    }
+
+    if (input.name !== undefined) {
+      asset.changeName(input.name);
+    }
+
+    if (input.cnpj !== undefined) {
+      asset.changeIssuerCnpj(new Cnpj(input.cnpj));
+    }
+
+    if (input.assetType !== undefined) {
+      asset.changeAssetType(input.assetType, AssetTypeSource.Manual);
+    }
+
+    await this.assetRepository.save(asset);
+
+    return {
+      ticker: asset.ticker,
+      assetType: asset.assetType,
+      resolutionSource: asset.resolutionSource,
+      name: asset.name,
+      cnpj: asset.issuerCnpj,
+      isReportReadyMetadata: asset.name !== null && asset.issuerCnpj !== null,
+    };
+  }
+}

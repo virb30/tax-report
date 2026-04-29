@@ -12,7 +12,9 @@ import { CsvXlsxConsolidatedPositionParser } from '../parsers/csv-xlsx-consolida
 import { RecalculatePositionHandler } from '../handlers/recalculate-position.handler';
 
 import { CreateBrokerUseCase } from '../../application/use-cases/create-broker/create-broker.use-case';
+import { ListAssetsUseCase } from '../../application/use-cases/list-assets/list-assets.use-case';
 import { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
+import { UpdateAssetUseCase } from '../../application/use-cases/update-asset/update-asset.use-case';
 import { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
 import { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
 import { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
@@ -26,6 +28,7 @@ import { DeletePositionUseCase } from '../../application/use-cases/delete-positi
 import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-asset-report/generate-assets-report.use-case';
 
 import { BrokersIpcRegistrar } from '../../ipc/registrars/brokers-ipc-registrar';
+import { AssetsIpcRegistrar } from '../../ipc/registrars/assets-ipc-registrar';
 import { AppIpcRegistrar } from '../../ipc/registrars/app-ipc-registrar';
 import { ImportIpcRegistrar } from '../../ipc/registrars/import-ipc-registrar';
 import { PortfolioIpcRegistrar } from '../../ipc/registrars/portfolio-ipc-registrar';
@@ -47,7 +50,9 @@ export interface AppCradle {
   recalculatePositionHandler: RecalculatePositionHandler;
 
   createBrokerUseCase: CreateBrokerUseCase;
+  listAssetsUseCase: ListAssetsUseCase;
   updateBrokerUseCase: UpdateBrokerUseCase;
+  updateAssetUseCase: UpdateAssetUseCase;
   listBrokersUseCase: ListBrokersUseCase;
   toggleActiveBrokerUseCase: ToggleActiveBrokerUseCase;
   recalculatePositionUseCase: RecalculatePositionUseCase;
@@ -61,6 +66,7 @@ export interface AppCradle {
   generateAssetsReportUseCase: GenerateAssetsReportUseCase;
 
   brokersIpcRegistrar: BrokersIpcRegistrar;
+  assetsIpcRegistrar: AssetsIpcRegistrar;
   appIpcRegistrar: AppIpcRegistrar;
   importIpcRegistrar: ImportIpcRegistrar;
   portfolioIpcRegistrar: PortfolioIpcRegistrar;
@@ -102,7 +108,9 @@ export function registerDependencies(db: Knex) {
 
     // Use Cases
     createBrokerUseCase: asClass(CreateBrokerUseCase).singleton(),
+    listAssetsUseCase: asClass(ListAssetsUseCase).singleton(),
     updateBrokerUseCase: asClass(UpdateBrokerUseCase).singleton(),
+    updateAssetUseCase: asClass(UpdateAssetUseCase).singleton(),
     listBrokersUseCase: asClass(ListBrokersUseCase).singleton(),
     toggleActiveBrokerUseCase: asClass(ToggleActiveBrokerUseCase).singleton(),
     recalculatePositionUseCase: asClass(RecalculatePositionUseCase).singleton(),
@@ -118,6 +126,7 @@ export function registerDependencies(db: Knex) {
     previewImportUseCase: asClass(PreviewImportUseCase)
       .inject(() => ({
         parser: container.resolve('transactionParser'),
+        assetRepository: container.resolve('assetRepository'),
       }))
       .singleton(),
     setInitialBalanceUseCase: asClass(SetInitialBalanceUseCase).singleton(),
@@ -127,6 +136,7 @@ export function registerDependencies(db: Knex) {
       () =>
         new ImportConsolidatedPositionUseCase(
           container.resolve('consolidatedPositionParser'),
+          container.resolve('assetRepository'),
           container.resolve('brokerRepository'),
           container.resolve('transactionRepository'),
           container.resolve('queue'),
@@ -141,25 +151,30 @@ export function registerDependencies(db: Knex) {
 
     // IPC registrars
     brokersIpcRegistrar: asClass(BrokersIpcRegistrar).singleton(),
+    assetsIpcRegistrar: asClass(AssetsIpcRegistrar).singleton(),
     appIpcRegistrar: asClass(AppIpcRegistrar).singleton(),
     importIpcRegistrar: asClass(ImportIpcRegistrar).singleton(),
     portfolioIpcRegistrar: asClass(PortfolioIpcRegistrar).singleton(),
     reportIpcRegistrar: asClass(ReportIpcRegistrar).singleton(),
 
     // IPC
-    ipcRegistrars: asFunction((
-      brokersIpcRegistrar: BrokersIpcRegistrar,
-      appIpcRegistrar: AppIpcRegistrar,
-      importIpcRegistrar: ImportIpcRegistrar,
-      portfolioIpcRegistrar: PortfolioIpcRegistrar,
-      reportIpcRegistrar: ReportIpcRegistrar
-    ) => [
-      brokersIpcRegistrar,
-      appIpcRegistrar,
-      importIpcRegistrar,
-      portfolioIpcRegistrar,
-      reportIpcRegistrar
-    ]).singleton(),
+    ipcRegistrars: asFunction(
+      (
+        brokersIpcRegistrar: BrokersIpcRegistrar,
+        assetsIpcRegistrar: AssetsIpcRegistrar,
+        appIpcRegistrar: AppIpcRegistrar,
+        importIpcRegistrar: ImportIpcRegistrar,
+        portfolioIpcRegistrar: PortfolioIpcRegistrar,
+        reportIpcRegistrar: ReportIpcRegistrar,
+      ) => [
+        brokersIpcRegistrar,
+        assetsIpcRegistrar,
+        appIpcRegistrar,
+        importIpcRegistrar,
+        portfolioIpcRegistrar,
+        reportIpcRegistrar,
+      ],
+    ).singleton(),
     ipcRegistry: asClass(IpcRegistry).singleton(),
   });
 

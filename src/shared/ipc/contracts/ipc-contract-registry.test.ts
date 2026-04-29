@@ -1,6 +1,7 @@
 import { ELECTRON_API_CHANNELS, REGISTERED_IPC_CHANNELS } from '../ipc-channels';
 import { ipcContracts, rendererExposedIpcContracts } from './ipc-contract-registry';
 import { appIpcContracts } from './app';
+import { assetIpcContracts } from './assets';
 import { brokerIpcContracts } from './brokers';
 import { importIpcContracts } from './import';
 import { portfolioIpcContracts } from './portfolio';
@@ -45,6 +46,27 @@ describe('ipc contract registry', () => {
     expect(portfolioIpcContracts.map((contract) => contract.errorMode)).toEqual(
       portfolioIpcContracts.map(() => 'result'),
     );
+  });
+
+  it('exposes the asset catalog contracts through the shared registry', () => {
+    expect(
+      assetIpcContracts.map((contract) => ({
+        apiName: contract.api?.name,
+        channel: contract.channel,
+        id: contract.id,
+      })),
+    ).toEqual([
+      {
+        apiName: 'listAssets',
+        channel: 'assets:list',
+        id: 'assets.list',
+      },
+      {
+        apiName: 'updateAsset',
+        channel: 'assets:update',
+        id: 'assets.update',
+      },
+    ]);
   });
 
   it('exposes only approved MVP portfolio contracts', () => {
@@ -112,5 +134,6 @@ describe('ipc contract registry', () => {
       'result',
       'result',
     ]);
+    expect(assetIpcContracts.map((contract) => contract.errorMode)).toEqual(['throw', 'result']);
   });
 });

@@ -47,7 +47,7 @@ export function buildDiscriminationText(input: {
   quantity: number;
   ticker: string;
   assetType: AssetType;
-  issuerCnpj: string;
+  issuerCnpj: string | null;
   brokerName: string;
   brokerCnpj: string;
   averagePrice: number;
@@ -56,8 +56,9 @@ export function buildDiscriminationText(input: {
   const unitLabel = getAssetUnitLabel(input.assetType);
   const avgFormatted = formatBrl(input.averagePrice);
   const totalFormatted = formatBrl(input.totalCost);
+  const issuerCnpj = input.issuerCnpj ?? 'N/A';
 
-  return `${input.quantity} ${unitLabel} ${input.ticker}. CNPJ: ${input.issuerCnpj}. Corretora: ${input.brokerName} (CNPJ: ${input.brokerCnpj}). Custo médio: R$ ${avgFormatted}. Custo total: R$ ${totalFormatted}.`;
+  return `${input.quantity} ${unitLabel} ${input.ticker}. CNPJ: ${issuerCnpj}. Corretora: ${input.brokerName} (CNPJ: ${input.brokerCnpj}). Custo médio: R$ ${avgFormatted}. Custo total: R$ ${totalFormatted}.`;
 }
 
 export class ReportGenerator {
@@ -77,7 +78,7 @@ export class ReportGenerator {
         continue;
       }
 
-      const issuerCnpj = this.assetsMap.get(position.ticker)?.issuerCnpj ?? 'N/A';
+      const issuerCnpj = this.assetsMap.get(position.ticker)?.issuerCnpj ?? null;
       const revenueClassification = getRevenueClassification(position.assetType);
       const totalCost = Math.round(position.totalQuantity * position.averagePrice * 100) / 100;
 
