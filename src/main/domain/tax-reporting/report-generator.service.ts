@@ -1,8 +1,4 @@
-import {
-  AssetType,
-  PendingIssueCode,
-  ReportItemStatus,
-} from '../../../shared/types/domain';
+import { AssetType, PendingIssueCode, ReportItemStatus } from '../../../shared/types/domain';
 import type { AssetPosition } from '../portfolio/entities/asset-position.entity';
 import type { ReportItemOutput } from './report-generator.output';
 
@@ -18,7 +14,7 @@ const FII_CLASSIFICATION = { group: '07', code: '03' } as const;
 const ETF_CLASSIFICATION = { group: '07', code: '09' } as const;
 const BDR_CLASSIFICATION = { group: '04', code: '04' } as const;
 const ASSET_UNIT_LABELS: Record<AssetType, string> = {
-  [AssetType.Stock]: 'acoes',
+  [AssetType.Stock]: 'cotas',
   [AssetType.Fii]: 'cotas',
   [AssetType.Etf]: 'cotas',
   [AssetType.Bdr]: 'acoes',
@@ -68,10 +64,7 @@ export function buildDeclarationDescriptionText(input: {
   const avgFormatted = formatBrl(input.averagePrice);
   const totalFormatted = formatBrl(input.currentYearValue);
   const brokersSummary = input.brokersSummary
-    .map(
-      (broker) =>
-        `${broker.brokerName} (CNPJ: ${broker.cnpj}, ${broker.quantity} ${unitLabel})`,
-    )
+    .map((broker) => `${broker.brokerName} (CNPJ: ${broker.cnpj}, ${broker.quantity} ${unitLabel})`)
     .join('; ');
 
   return `${input.quantity} ${unitLabel} ${input.ticker}. CNPJ: ${input.issuerCnpj}. Corretoras: ${brokersSummary}. Custo medio: R$ ${avgFormatted}. Custo total: R$ ${totalFormatted}.`;
@@ -111,21 +104,24 @@ export class ReportGenerator {
 
       const { totalQuantity, averagePrice } = position;
 
+      const asset = this.assetsMap.get(position.ticker) ?? null;
+      const reportAssetType = asset?.assetType ?? position.assetType;
       const currentYearValue = averagePrice.multiplyBy(totalQuantity.getAmount());
       const previousYearPosition = this.historicalPositionService.reconstructYearEndPosition(
         position.ticker,
-        position.assetType,
+        reportAssetType,
         this.dependencies.baseYear - 1,
         this.dependencies.transactionsByTicker.get(position.ticker) ?? [],
       );
       const previousYearValue = previousYearPosition
-        ? previousYearPosition.averagePrice.multiplyBy(previousYearPosition.totalQuantity.getAmount())
+        ? previousYearPosition.averagePrice.multiplyBy(
+            previousYearPosition.totalQuantity.getAmount(),
+          )
         : Money.from(0);
-      const asset = this.assetsMap.get(position.ticker) ?? null;
-      const pendingIssues = this.buildPendingIssues(asset, position.assetType);
-      const isSupported = this.isSupportedAssetType(position.assetType);
+      const pendingIssues = this.buildPendingIssues(asset, reportAssetType);
+      const isSupported = this.isSupportedAssetType(reportAssetType);
       const eligibility = this.declarationEligibilityService.evaluate({
-        assetType: position.assetType,
+        assetType: reportAssetType,
         previousYearValue,
         currentYearValue,
         hasPendingIssues: pendingIssues.length > 0,
@@ -159,13 +155,13 @@ export class ReportGenerator {
 
       result.push({
         ticker: position.ticker,
-        assetType: position.assetType,
+        assetType: reportAssetType,
         totalQuantity: totalQuantity.toNumber(),
         averagePrice: averagePrice.toNumber(),
         previousYearValue: previousYearValue.toNumber(),
         currentYearValue: currentYearValue.toNumber(),
         acquiredInYear: previousYearValue.isZero() && currentYearValue.isGreaterThan(0),
-        revenueClassification: getRevenueClassification(position.assetType),
+        revenueClassification: getRevenueClassification(reportAssetType),
         status: eligibility.status,
         eligibilityReason: eligibility.reason,
         pendingIssues,
@@ -175,7 +171,7 @@ export class ReportGenerator {
             ? buildDeclarationDescriptionText({
                 quantity: totalQuantity.toNumber(),
                 ticker: position.ticker,
-                assetType: position.assetType,
+                assetType: reportAssetType,
                 issuerCnpj: asset.issuerCnpj,
                 averagePrice: averagePrice.toNumber(),
                 currentYearValue: currentYearValue.toNumber(),

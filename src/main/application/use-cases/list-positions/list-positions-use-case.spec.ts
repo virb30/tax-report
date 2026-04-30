@@ -1,9 +1,10 @@
-
 import { mock } from 'jest-mock-extended';
-import { AssetType } from '../../../../shared/types/domain';
+import { AssetType, AssetTypeSource } from '../../../../shared/types/domain';
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
+import type { AssetRepository } from '../../repositories/asset.repository';
 import type { BrokerRepository } from '../../repositories/broker.repository';
 import { ListPositionsUseCase } from './list-positions-use-case';
+import { Asset } from '../../../domain/portfolio/entities/asset.entity';
 import { Broker } from '../../../domain/portfolio/entities/broker.entity';
 import { Uuid } from '../../../domain/shared/uuid.vo';
 import { Cnpj } from '../../../domain/shared/cnpj.vo';
@@ -14,17 +15,21 @@ import { Quantity } from '../../../domain/portfolio/value-objects/quantity.vo';
 describe('ListPositionsUseCase', () => {
   const positionRepository = mock<AssetPositionRepository>();
   const brokerRepository = mock<BrokerRepository>();
+  const assetRepository = mock<AssetRepository>();
   const brokerId = Uuid.create();
   let useCase: ListPositionsUseCase;
 
   beforeEach(() => {
     brokerRepository.findAll.mockResolvedValue([
-      Broker.restore({ id: brokerId, name: 'XP Investimentos', cnpj: new Cnpj('02.332.886/0001-04'), code: 'XP' }),
+      Broker.restore({
+        id: brokerId,
+        name: 'XP Investimentos',
+        cnpj: new Cnpj('02.332.886/0001-04'),
+        code: 'XP',
+      }),
     ]);
-    useCase = new ListPositionsUseCase(
-      positionRepository,
-      brokerRepository,
-    );
+    assetRepository.findByTickersList.mockResolvedValue([]);
+    useCase = new ListPositionsUseCase(positionRepository, brokerRepository, assetRepository);
   });
 
   it('should return mapped position list with broker breakdown enriched', async () => {
@@ -59,5 +64,29 @@ describe('ListPositionsUseCase', () => {
         },
       ],
     });
+  });
+
+  it('prefers the corrected catalog asset type over the stale persisted position type', async () => {
+    positionRepository.findAllByYear.mockResolvedValue([
+      AssetPosition.restore({
+        ticker: 'IVVB11',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: Quantity.from(10),
+        averagePrice: Money.from(100),
+        brokerBreakdown: [{ brokerId, quantity: Quantity.from(10) }],
+      }),
+    ]);
+    assetRepository.findByTickersList.mockResolvedValue([
+      Asset.create({
+        ticker: 'IVVB11',
+        assetType: AssetType.Etf,
+        resolutionSource: AssetTypeSource.Manual,
+      }),
+    ]);
+
+    const result = await useCase.execute({ baseYear: 2025 });
+
+    expect(result.items[0]?.assetType).toBe(AssetType.Etf);
   });
 });

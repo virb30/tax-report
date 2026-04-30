@@ -3,7 +3,12 @@ import path from 'node:path';
 import os from 'node:os';
 
 import type { Knex } from 'knex';
-import { AssetType, AssetTypeSource, SourceType, TransactionType } from '../../../shared/types/domain';
+import {
+  AssetType,
+  AssetTypeSource,
+  SourceType,
+  TransactionType,
+} from '../../../shared/types/domain';
 import { healthCheckContract } from '../../../shared/ipc/contracts/app';
 import {
   listAssetsContract,
@@ -97,6 +102,7 @@ describe('IPC handlers integration', () => {
     const knexPositionRepository = new KnexPositionRepository(database);
     const knexTransactionRepository = new KnexTransactionRepository(database);
     const brokerRepository = new KnexBrokerRepository(database);
+    const tickerDataRepository = new KnexAssetRepository(database);
     const positionSyncService = new InitialBalanceDocumentPositionSyncService(
       knexPositionRepository,
       knexTransactionRepository,
@@ -108,12 +114,17 @@ describe('IPC handlers integration', () => {
     const listInitialBalanceDocumentsUseCase = new ListInitialBalanceDocumentsUseCase(
       knexTransactionRepository,
       knexPositionRepository,
+      tickerDataRepository,
     );
     const deleteInitialBalanceDocumentUseCase = new DeleteInitialBalanceDocumentUseCase(
       knexTransactionRepository,
       positionSyncService,
     );
-    const listPositionsUseCase = new ListPositionsUseCase(knexPositionRepository, brokerRepository);
+    const listPositionsUseCase = new ListPositionsUseCase(
+      knexPositionRepository,
+      brokerRepository,
+      tickerDataRepository,
+    );
     const recalculatePositionUseCase = new RecalculatePositionUseCase(
       knexPositionRepository,
       knexTransactionRepository,
@@ -124,7 +135,6 @@ describe('IPC handlers integration', () => {
       knexPositionRepository,
       knexTransactionRepository,
     );
-    const tickerDataRepository = new KnexAssetRepository(database);
     const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
       knexPositionRepository,
       brokerRepository,
@@ -361,9 +371,13 @@ describe('IPC handlers integration', () => {
     );
     const portfolioRegistrar = new PortfolioIpcRegistrar(
       new SaveInitialBalanceDocumentUseCase(knexTransactionRepository, positionSyncService),
-      new ListInitialBalanceDocumentsUseCase(knexTransactionRepository, knexPositionRepository),
+      new ListInitialBalanceDocumentsUseCase(
+        knexTransactionRepository,
+        knexPositionRepository,
+        tickerDataRepository,
+      ),
       new DeleteInitialBalanceDocumentUseCase(knexTransactionRepository, positionSyncService),
-      new ListPositionsUseCase(knexPositionRepository, brokerRepository),
+      new ListPositionsUseCase(knexPositionRepository, brokerRepository, tickerDataRepository),
       recalculatePositionUseCase,
       new MigrateYearUseCase(knexPositionRepository, knexTransactionRepository),
       importConsolidatedPositionUseCase,

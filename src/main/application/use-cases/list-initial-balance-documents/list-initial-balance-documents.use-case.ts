@@ -1,6 +1,7 @@
 import type { ListInitialBalanceDocumentsQuery } from '../../../../shared/contracts/initial-balance.contract';
 import { AssetType } from '../../../../shared/types/domain';
 import { assertSupportedYear } from '../../../../shared/utils/year';
+import type { AssetRepository } from '../../repositories/asset.repository';
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
 
@@ -8,6 +9,7 @@ export class ListInitialBalanceDocumentsUseCase {
   constructor(
     private readonly transactionRepository: TransactionRepository,
     private readonly positionRepository: AssetPositionRepository,
+    private readonly assetRepository: AssetRepository,
   ) {}
 
   async execute(input: ListInitialBalanceDocumentsQuery) {
@@ -20,14 +22,28 @@ export class ListInitialBalanceDocumentsUseCase {
       this.transactionRepository.findInitialBalanceDocumentsByYear(input.year),
       this.positionRepository.findAllByYear(input.year),
     ]);
+
+    const tickers = [...new Set(documents.map((document) => document.ticker))];
+    const assets = await this.assetRepository.findByTickersList(tickers);
+    const catalogAssetTypeByTicker = new Map(
+      assets
+        .filter((asset) => asset.assetType !== null)
+        .map((asset) => [asset.ticker, asset.assetType]),
+    );
     const assetTypeByTicker = new Map(
-      positions.map((position) => [position.ticker, position.assetType]),
+      positions.map((position) => [
+        position.ticker,
+        catalogAssetTypeByTicker.get(position.ticker) ?? position.assetType,
+      ]),
     );
 
     return {
       items: documents.map((document) => ({
         ...document,
-        assetType: assetTypeByTicker.get(document.ticker) ?? AssetType.Stock,
+        assetType:
+          catalogAssetTypeByTicker.get(document.ticker) ??
+          assetTypeByTicker.get(document.ticker) ??
+          AssetType.Stock,
       })),
     };
   }

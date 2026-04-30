@@ -3,7 +3,12 @@ import path from 'node:path';
 import os from 'node:os';
 
 import type { Knex } from 'knex';
-import { AssetType, AssetTypeSource, SourceType, TransactionType } from '../../../shared/types/domain';
+import {
+  AssetType,
+  AssetTypeSource,
+  SourceType,
+  TransactionType,
+} from '../../../shared/types/domain';
 import { createDatabaseConnection, initializeDatabase } from '../../database/database';
 import { KnexBrokerRepository } from '../../infrastructure/repositories/knex-broker.repository';
 import { KnexPositionRepository } from '../../infrastructure/repositories/knex-position.repository';
@@ -59,12 +64,17 @@ describe('Application contracts integration', () => {
     const listInitialBalanceDocumentsUseCase = new ListInitialBalanceDocumentsUseCase(
       knexTransactionRepository,
       knexPositionRepository,
+      tickerDataRepository,
     );
     const deleteInitialBalanceDocumentUseCase = new DeleteInitialBalanceDocumentUseCase(
       knexTransactionRepository,
       positionSyncService,
     );
-    const listPositionsUseCase = new ListPositionsUseCase(knexPositionRepository, brokerRepository);
+    const listPositionsUseCase = new ListPositionsUseCase(
+      knexPositionRepository,
+      brokerRepository,
+      tickerDataRepository,
+    );
     const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
       knexPositionRepository,
       brokerRepository,
@@ -210,7 +220,11 @@ describe('Application contracts integration', () => {
       knexPositionRepository,
       knexTransactionRepository,
     );
-    const listPositionsUseCase = new ListPositionsUseCase(knexPositionRepository, brokerRepository);
+    const listPositionsUseCase = new ListPositionsUseCase(
+      knexPositionRepository,
+      brokerRepository,
+      tickerDataRepository,
+    );
     await knexPositionRepository.save(
       AssetPosition.create({
         ticker: 'PETR4',

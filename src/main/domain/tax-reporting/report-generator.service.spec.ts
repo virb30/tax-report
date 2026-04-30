@@ -13,7 +13,12 @@ import { Transaction } from '../portfolio/entities/transaction.entity';
 import { Cnpj } from '../shared/cnpj.vo';
 import { Money } from '../portfolio/value-objects/money.vo';
 import { Quantity } from '../portfolio/value-objects/quantity.vo';
-import { buildDeclarationDescriptionText, ReportGenerator, formatBrl, getRevenueClassification } from './report-generator.service';
+import {
+  buildDeclarationDescriptionText,
+  ReportGenerator,
+  formatBrl,
+  getRevenueClassification,
+} from './report-generator.service';
 
 describe('ReportGenerator', () => {
   const broker = Broker.create({
@@ -62,7 +67,7 @@ describe('ReportGenerator', () => {
         ],
       });
 
-      expect(description).toContain('100 acoes PETR4.');
+      expect(description).toContain('100 cotas PETR4.');
       expect(description).toContain('Corretoras: XP Investimentos');
       expect(description).toContain('Custo total: R$ 3.520,00.');
     });
@@ -162,6 +167,42 @@ describe('ReportGenerator', () => {
         canCopy: true,
       });
       expect(result[0]?.description).toContain('PETR4');
+    });
+
+    it('uses the corrected catalog asset type when the persisted position type is stale', () => {
+      const generator = new ReportGenerator({
+        brokers: [broker],
+        assets: [
+          Asset.create({
+            ticker: 'IVVB11',
+            assetType: AssetType.Etf,
+            resolutionSource: AssetTypeSource.Manual,
+            issuerCnpj: new Cnpj('03.203.151/0001-35'),
+            name: 'BlackRock',
+          }),
+        ],
+        transactionsByTicker: new Map(),
+        baseYear: 2025,
+      });
+
+      const result = generator.generate([
+        AssetPosition.create({
+          ticker: 'IVVB11',
+          assetType: AssetType.Stock,
+          totalQuantity: Quantity.from(10),
+          averagePrice: Money.from(100),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(10) }],
+          year: 2025,
+        }),
+      ]);
+
+      expect(result[0]).toMatchObject({
+        ticker: 'IVVB11',
+        assetType: AssetType.Etf,
+        revenueClassification: { group: '07', code: '09' },
+        canCopy: true,
+      });
+      expect(result[0]?.description).toContain('10 cotas IVVB11.');
     });
 
     it('skips zeroed positions', () => {

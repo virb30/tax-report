@@ -37,9 +37,9 @@ export function InitialBalancePositionsTable({
                 <tr key={position.ticker} className="border-t">
                   <td className="px-3 py-2">{position.ticker}</td>
                   <td className="px-3 py-2">{position.assetType}</td>
-                  <td className="px-3 py-2">{position.totalQuantity.toFixed(2)}</td>
-                  <td className="px-3 py-2">R$ {position.averagePrice.toFixed(2)}</td>
-                  <td className="px-3 py-2">R$ {position.totalCost.toFixed(2)}</td>
+                  <td className="px-3 py-2">{Number(position.totalQuantity)?.toFixed(2)}</td>
+                  <td className="px-3 py-2">R$ {Number(position.averagePrice)?.toFixed(2)}</td>
+                  <td className="px-3 py-2">R$ {Number(position.totalCost)?.toFixed(2)}</td>
                 </tr>
               ))}
               {positions.length === 0 ? (
