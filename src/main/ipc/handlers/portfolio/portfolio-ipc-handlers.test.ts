@@ -1,15 +1,19 @@
 import { mock, mockReset } from 'jest-mock-extended';
+import type { DeleteInitialBalanceDocumentUseCase } from '../../../application/use-cases/delete-initial-balance-document/delete-initial-balance-document.use-case';
 import type { DeletePositionUseCase } from '../../../application/use-cases/delete-position/delete-position.use-case';
 import type { ImportConsolidatedPositionUseCase } from '../../../application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
+import type { ListInitialBalanceDocumentsUseCase } from '../../../application/use-cases/list-initial-balance-documents/list-initial-balance-documents.use-case';
 import type { ListPositionsUseCase } from '../../../application/use-cases/list-positions/list-positions-use-case';
 import type { MigrateYearUseCase } from '../../../application/use-cases/migrate-year/migrate-year.use-case';
 import type { RecalculatePositionUseCase } from '../../../application/use-cases/recalculate-position/recalculate-position.use-case';
-import type { SetInitialBalanceUseCase } from '../../../application/use-cases/set-initial-balance/set-initial-balance.use-case';
-import { AssetType } from '../../../../shared/types/domain';
+import type { SaveInitialBalanceDocumentUseCase } from '../../../application/use-cases/save-initial-balance-document/save-initial-balance-document.use-case';
+import { AssetResolutionStatus, AssetType } from '../../../../shared/types/domain';
 import { createPortfolioIpcHandlers } from './portfolio-ipc-handlers';
 
 describe('createPortfolioIpcHandlers', () => {
-  const setInitialBalanceUseCase = mock<SetInitialBalanceUseCase>();
+  const saveInitialBalanceDocumentUseCase = mock<SaveInitialBalanceDocumentUseCase>();
+  const listInitialBalanceDocumentsUseCase = mock<ListInitialBalanceDocumentsUseCase>();
+  const deleteInitialBalanceDocumentUseCase = mock<DeleteInitialBalanceDocumentUseCase>();
   const listPositionsUseCase = mock<ListPositionsUseCase>();
   const recalculatePositionUseCase = mock<RecalculatePositionUseCase>();
   const migrateYearUseCase = mock<MigrateYearUseCase>();
@@ -17,7 +21,9 @@ describe('createPortfolioIpcHandlers', () => {
   const deletePositionUseCase = mock<DeletePositionUseCase>();
 
   beforeEach(() => {
-    mockReset(setInitialBalanceUseCase);
+    mockReset(saveInitialBalanceDocumentUseCase);
+    mockReset(listInitialBalanceDocumentsUseCase);
+    mockReset(deleteInitialBalanceDocumentUseCase);
     mockReset(listPositionsUseCase);
     mockReset(recalculatePositionUseCase);
     mockReset(migrateYearUseCase);
@@ -27,7 +33,9 @@ describe('createPortfolioIpcHandlers', () => {
 
   function createHandlers() {
     return createPortfolioIpcHandlers(
-      setInitialBalanceUseCase,
+      saveInitialBalanceDocumentUseCase,
+      listInitialBalanceDocumentsUseCase,
+      deleteInitialBalanceDocumentUseCase,
       listPositionsUseCase,
       recalculatePositionUseCase,
       migrateYearUseCase,
@@ -35,6 +43,72 @@ describe('createPortfolioIpcHandlers', () => {
       deletePositionUseCase,
     );
   }
+
+  it('returns initial balance document handlers as ok results with use-case output data', async () => {
+    saveInitialBalanceDocumentUseCase.execute.mockResolvedValue({
+      ticker: 'PETR4',
+      year: 2025,
+      assetType: AssetType.Stock,
+      averagePrice: 30,
+      allocations: [{ brokerId: 'broker-xp', quantity: 10 }],
+      totalQuantity: 10,
+    });
+    listInitialBalanceDocumentsUseCase.execute.mockResolvedValue({
+      items: [
+        {
+          ticker: 'PETR4',
+          year: 2025,
+          assetType: AssetType.Stock,
+          averagePrice: 30,
+          allocations: [{ brokerId: 'broker-xp', quantity: 10 }],
+          totalQuantity: 10,
+        },
+      ],
+    });
+    deleteInitialBalanceDocumentUseCase.execute.mockResolvedValue({ deleted: true });
+    const handlers = createHandlers();
+
+    await expect(
+      handlers.saveInitialBalanceDocument({
+        ticker: 'PETR4',
+        year: 2025,
+        assetType: AssetType.Stock,
+        averagePrice: 30,
+        allocations: [{ brokerId: 'broker-xp', quantity: 10 }],
+      }),
+    ).resolves.toEqual({
+      ok: true,
+      data: {
+        ticker: 'PETR4',
+        year: 2025,
+        assetType: AssetType.Stock,
+        averagePrice: 30,
+        allocations: [{ brokerId: 'broker-xp', quantity: 10 }],
+        totalQuantity: 10,
+      },
+    });
+    await expect(handlers.listInitialBalanceDocuments({ year: 2025 })).resolves.toEqual({
+      ok: true,
+      data: {
+        items: [
+          {
+            ticker: 'PETR4',
+            year: 2025,
+            assetType: AssetType.Stock,
+            averagePrice: 30,
+            allocations: [{ brokerId: 'broker-xp', quantity: 10 }],
+            totalQuantity: 10,
+          },
+        ],
+      },
+    });
+    await expect(
+      handlers.deleteInitialBalanceDocument({ ticker: 'PETR4', year: 2025 }),
+    ).resolves.toEqual({
+      ok: true,
+      data: { deleted: true },
+    });
+  });
 
   it('returns list positions as an ok result with mapped list data and preserved asset types', async () => {
     listPositionsUseCase.execute.mockResolvedValue({
@@ -82,48 +156,6 @@ describe('createPortfolioIpcHandlers', () => {
     });
   });
 
-  it('returns set initial balance as an ok result with use-case output data', async () => {
-    setInitialBalanceUseCase.execute.mockResolvedValue({
-      ticker: 'PETR4',
-      brokerId: 'broker-xp',
-      quantity: 10,
-      averagePrice: 30,
-    });
-    const handlers = createHandlers();
-
-    await expect(
-      handlers.setInitialBalance({
-        ticker: 'PETR4',
-        brokerId: 'broker-xp',
-        assetType: AssetType.Stock,
-        quantity: 10,
-        averagePrice: 30,
-        year: 2025,
-      }),
-    ).resolves.toEqual({
-      ok: true,
-      data: {
-        ticker: 'PETR4',
-        brokerId: 'broker-xp',
-        quantity: 10,
-        averagePrice: 30,
-      },
-    });
-  });
-
-  it('returns recalculate position as an ok result with an empty payload', async () => {
-    recalculatePositionUseCase.execute.mockResolvedValue({
-      totalQuantity: 10,
-      averagePrice: 30,
-    });
-    const handlers = createHandlers();
-
-    await expect(handlers.recalculatePosition({ ticker: 'PETR4', year: 2025 })).resolves.toEqual({
-      ok: true,
-      data: undefined,
-    });
-  });
-
   it('returns ok results for the remaining portfolio commands', async () => {
     migrateYearUseCase.execute.mockResolvedValue({
       migratedPositionsCount: 2,
@@ -138,7 +170,7 @@ describe('createPortfolioIpcHandlers', () => {
           brokerCode: 'XP',
           sourceAssetType: null,
           resolvedAssetType: null,
-          resolutionStatus: 'unresolved',
+          resolutionStatus: AssetResolutionStatus.Unresolved,
           needsReview: true,
           unsupportedReason: null,
         },
@@ -152,6 +184,7 @@ describe('createPortfolioIpcHandlers', () => {
     importConsolidatedPositionUseCase.execute.mockResolvedValue({
       importedCount: 1,
       recalculatedTickers: ['BBAS3'],
+      skippedUnsupportedRows: 0,
     });
     deletePositionUseCase.execute.mockResolvedValue({ deleted: true });
     deletePositionUseCase.executeAll.mockResolvedValue({ deletedCount: 2 });
@@ -187,10 +220,14 @@ describe('createPortfolioIpcHandlers', () => {
       },
     });
     await expect(
-      handlers.importConsolidatedPosition({ filePath: 'positions.csv', year: 2025 }),
+      handlers.importConsolidatedPosition({
+        filePath: 'positions.csv',
+        year: 2025,
+        assetTypeOverrides: [],
+      }),
     ).resolves.toEqual({
       ok: true,
-      data: { importedCount: 1, recalculatedTickers: ['BBAS3'] },
+      data: { importedCount: 1, recalculatedTickers: ['BBAS3'], skippedUnsupportedRows: 0 },
     });
     await expect(handlers.deletePosition({ ticker: 'BBAS3', year: 2025 })).resolves.toEqual({
       ok: true,

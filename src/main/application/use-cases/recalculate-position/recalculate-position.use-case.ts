@@ -48,7 +48,7 @@ export class RecalculatePositionUseCase {
   ): AssetPosition {
     return AssetPosition.create({
       ticker: input.ticker,
-      assetType: currentPosition?.assetType ?? AssetType.Stock,
+      assetType: input.assetType ?? currentPosition?.assetType ?? AssetType.Stock,
       year: input.year,
     });
   }

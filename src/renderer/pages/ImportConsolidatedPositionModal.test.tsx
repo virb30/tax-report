@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ElectronApi } from '../../shared/types/electron-api';
 import { ImportConsolidatedPositionModal } from './ImportConsolidatedPositionModal';
+import { AssetType, AssetResolutionStatus } from '../../shared/types/domain';
 
 function getButton(name: string): HTMLButtonElement {
   const element = screen.getByRole('button', { name });
@@ -19,9 +20,14 @@ function createElectronApiMock(): ElectronApi {
     importSelectFile: jest.fn<ElectronApi['importSelectFile']>(),
     previewImportTransactions: jest.fn<ElectronApi['previewImportTransactions']>(),
     confirmImportTransactions: jest.fn<ElectronApi['confirmImportTransactions']>(),
-    setInitialBalance: jest.fn<ElectronApi['setInitialBalance']>(),
+    saveInitialBalanceDocument: jest.fn<ElectronApi['saveInitialBalanceDocument']>(),
+    listInitialBalanceDocuments: jest.fn<ElectronApi['listInitialBalanceDocuments']>(),
+    deleteInitialBalanceDocument: jest.fn<ElectronApi['deleteInitialBalanceDocument']>(),
     listPositions: jest.fn<ElectronApi['listPositions']>(),
     generateAssetsReport: jest.fn<ElectronApi['generateAssetsReport']>(),
+    listAssets: jest.fn<ElectronApi['listAssets']>(),
+    updateAsset: jest.fn<ElectronApi['updateAsset']>(),
+    repairAssetType: jest.fn<ElectronApi['repairAssetType']>(),
     listBrokers: jest.fn<ElectronApi['listBrokers']>(),
     createBroker: jest.fn<ElectronApi['createBroker']>(),
     updateBroker: jest.fn<ElectronApi['updateBroker']>(),
@@ -31,6 +37,7 @@ function createElectronApiMock(): ElectronApi {
     previewConsolidatedPosition: jest.fn<ElectronApi['previewConsolidatedPosition']>(),
     importConsolidatedPosition: jest.fn<ElectronApi['importConsolidatedPosition']>(),
     deletePosition: jest.fn<ElectronApi['deletePosition']>(),
+    deleteAllPositions: jest.fn<ElectronApi['deleteAllPositions']>(),
   };
 }
 
@@ -57,7 +64,22 @@ describe('ImportConsolidatedPositionModal', () => {
     jest.mocked(electronApi.previewConsolidatedPosition).mockResolvedValue({
       ok: true,
       data: {
-        rows: [{ ticker: 'PETR4', quantity: 10, averagePrice: 30, brokerCode: 'XP' }],
+        rows: [{ 
+          ticker: 'PETR4',
+          quantity: 10, 
+          averagePrice: 30, 
+          brokerCode: 'XP', 
+          sourceAssetType: AssetType.Stock,
+          resolvedAssetType: AssetType.Stock,
+          resolutionStatus: AssetResolutionStatus.ResolvedFromFile,
+          needsReview: false,
+          unsupportedReason: null,
+        }],
+        summary: {
+          supportedRows: 1,
+          pendingRows: 1,
+          unsupportedRows: 0,
+        }
       },
     });
     jest.mocked(electronApi.importConsolidatedPosition).mockResolvedValue({
@@ -65,6 +87,7 @@ describe('ImportConsolidatedPositionModal', () => {
       data: {
         importedCount: 1,
         recalculatedTickers: ['PETR4'],
+        skippedUnsupportedRows: 0,
       },
     });
 
@@ -88,6 +111,7 @@ describe('ImportConsolidatedPositionModal', () => {
         expect.objectContaining({
           filePath: 'C:/tmp/positions.csv',
           year: expect.any(Number),
+          assetTypeOverrides: [],
         }),
       );
     });

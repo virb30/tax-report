@@ -124,6 +124,7 @@ describe('ImportIpcRegistrar', () => {
     importTransactionsUseCase.execute.mockResolvedValue({
       importedCount: 2,
       recalculatedTickers: ['PETR4', 'VALE3'],
+      skippedUnsupportedRows: 1,
     });
     const handlers = registerRegistrar();
     const confirmHandler = handlers.get(confirmImportTransactionsContract.channel);
@@ -131,10 +132,12 @@ describe('ImportIpcRegistrar', () => {
     await expect(
       confirmHandler?.(ipcEvent, {
         filePath: 'C:/imports/operations.csv',
+        assetTypeOverrides: [],
       }),
     ).resolves.toEqual({
       importedCount: 2,
       recalculatedTickers: ['PETR4', 'VALE3'],
+      skippedUnsupportedRows: 1,
     });
   });
 });

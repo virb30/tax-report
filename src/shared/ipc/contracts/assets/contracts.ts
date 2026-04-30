@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import type { ListAssetsResult, UpdateAssetResult } from '../../../contracts/assets.contract';
+import type {
+  ListAssetsResult,
+  RepairAssetTypeResult,
+  UpdateAssetResult,
+} from '../../../contracts/assets.contract';
 import { AssetType } from '../../../types/domain';
 import { defineIpcContract } from '../../define-ipc-contract';
 
@@ -46,4 +50,23 @@ export const updateAssetContract = defineIpcContract<UpdateAssetResult>()({
   payloadErrorMessage: 'Invalid payload for update asset.',
 });
 
-export const assetIpcContracts = [listAssetsContract, updateAssetContract] as const;
+export const repairAssetTypeSchema = z.object({
+  ticker: z.string().trim().min(1, 'Invalid ticker for repair asset type.'),
+  assetType: z.enum(AssetType),
+});
+
+export const repairAssetTypeContract = defineIpcContract<RepairAssetTypeResult>()({
+  id: 'assets.repairType',
+  channel: 'assets:repair-type',
+  inputSchema: repairAssetTypeSchema,
+  errorMode: 'result',
+  exposeToRenderer: true,
+  api: { name: 'repairAssetType' },
+  payloadErrorMessage: 'Invalid payload for repair asset type.',
+});
+
+export const assetIpcContracts = [
+  listAssetsContract,
+  updateAssetContract,
+  repairAssetTypeContract,
+] as const;

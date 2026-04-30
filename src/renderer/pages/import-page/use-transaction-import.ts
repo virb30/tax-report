@@ -73,7 +73,10 @@ export function useTransactionImport() {
     setErrorMessage('');
     setFeedbackMessage('');
     try {
-      const result = await window.electronApi.confirmImportTransactions({ filePath });
+      const result = await window.electronApi.confirmImportTransactions({
+        filePath,
+        assetTypeOverrides: [],
+      });
       setFeedbackMessage(
         `Importação concluída: ${result.importedCount} transações importadas. Posições recalculadas: ${result.recalculatedTickers.join(', ') || 'nenhuma'}.`,
       );

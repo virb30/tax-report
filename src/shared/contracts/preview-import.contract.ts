@@ -1,6 +1,7 @@
 import type { AssetType, TransactionType } from '../types/domain';
 import type { ParsedTransactionBatch } from './import-transactions.contract';
 import type {
+  AssetTypeOverrideDecision,
   ImportPreviewReviewState,
   ImportPreviewSummary,
 } from './import-preview-review.contract';
@@ -35,9 +36,11 @@ export type PreviewImportTransactionsResult = {
 
 export type ConfirmImportTransactionsCommand = {
   filePath: string;
+  assetTypeOverrides: AssetTypeOverrideDecision[];
 };
 
 export type ConfirmImportTransactionsResult = {
   importedCount: number;
   recalculatedTickers: string[];
+  skippedUnsupportedRows: number;
 };

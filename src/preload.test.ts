@@ -1,9 +1,18 @@
-import { listAssetsContract, updateAssetContract } from './shared/ipc/contracts/assets';
+import {
+  listAssetsContract,
+  repairAssetTypeContract,
+  updateAssetContract,
+} from './shared/ipc/contracts/assets';
 import {
   confirmImportTransactionsContract,
   previewImportTransactionsContract,
 } from './shared/ipc/contracts/import';
-import { listPositionsContract, setInitialBalanceContract } from './shared/ipc/contracts/portfolio';
+import {
+  deleteInitialBalanceDocumentContract,
+  listInitialBalanceDocumentsContract,
+  listPositionsContract,
+  saveInitialBalanceDocumentContract,
+} from './shared/ipc/contracts/portfolio';
 import { generateAssetsReportContract } from './shared/ipc/contracts/report';
 import {
   ipcContracts,
@@ -39,15 +48,17 @@ describe('preload', () => {
     });
     await electronApi.confirmImportTransactions({
       filePath: '/tmp/operations.csv',
+      assetTypeOverrides: [],
     });
-    await electronApi.setInitialBalance({
+    await electronApi.saveInitialBalanceDocument({
       ticker: 'IVVB11',
-      brokerId: 'broker-xp',
-      assetType: AssetType.Etf,
-      quantity: 2,
-      averagePrice: 300,
       year: 2025,
+      assetType: AssetType.Etf,
+      averagePrice: 300,
+      allocations: [{ brokerId: 'broker-xp', quantity: 2 }],
     });
+    await electronApi.listInitialBalanceDocuments({ year: 2025 });
+    await electronApi.deleteInitialBalanceDocument({ ticker: 'IVVB11', year: 2025 });
     await electronApi.listPositions({ baseYear: 2025 });
     await electronApi.generateAssetsReport({ baseYear: 2025 });
     await electronApi.listAssets({ pendingOnly: true });
@@ -56,34 +67,49 @@ describe('preload', () => {
       assetType: AssetType.Etf,
       name: 'iShares Core S&P 500',
     });
+    await electronApi.repairAssetType({
+      ticker: 'IVVB11',
+      assetType: AssetType.Etf,
+    });
 
     expect(invoke).toHaveBeenNthCalledWith(1, previewImportTransactionsContract.channel, {
       filePath: '/tmp/operations.csv',
     });
     expect(invoke).toHaveBeenNthCalledWith(2, confirmImportTransactionsContract.channel, {
       filePath: '/tmp/operations.csv',
+      assetTypeOverrides: [],
     });
-    expect(invoke).toHaveBeenNthCalledWith(3, setInitialBalanceContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(3, saveInitialBalanceDocumentContract.channel, {
       ticker: 'IVVB11',
-      brokerId: 'broker-xp',
+      year: 2025,
       assetType: AssetType.Etf,
-      quantity: 2,
       averagePrice: 300,
+      allocations: [{ brokerId: 'broker-xp', quantity: 2 }],
+    });
+    expect(invoke).toHaveBeenNthCalledWith(4, listInitialBalanceDocumentsContract.channel, {
       year: 2025,
     });
-    expect(invoke).toHaveBeenNthCalledWith(4, listPositionsContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(5, deleteInitialBalanceDocumentContract.channel, {
+      ticker: 'IVVB11',
+      year: 2025,
+    });
+    expect(invoke).toHaveBeenNthCalledWith(6, listPositionsContract.channel, {
       baseYear: 2025,
     });
-    expect(invoke).toHaveBeenNthCalledWith(5, generateAssetsReportContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(7, generateAssetsReportContract.channel, {
       baseYear: 2025,
     });
-    expect(invoke).toHaveBeenNthCalledWith(6, listAssetsContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(8, listAssetsContract.channel, {
       pendingOnly: true,
     });
-    expect(invoke).toHaveBeenNthCalledWith(7, updateAssetContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(9, updateAssetContract.channel, {
       ticker: 'IVVB11',
       assetType: AssetType.Etf,
       name: 'iShares Core S&P 500',
+    });
+    expect(invoke).toHaveBeenNthCalledWith(10, repairAssetTypeContract.channel, {
+      ticker: 'IVVB11',
+      assetType: AssetType.Etf,
     });
   });
 
@@ -94,18 +120,21 @@ describe('preload', () => {
       'confirmImportTransactions',
       'createBroker',
       'deleteAllPositions',
+      'deleteInitialBalanceDocument',
       'deletePosition',
       'generateAssetsReport',
       'importConsolidatedPosition',
       'importSelectFile',
       'listAssets',
       'listBrokers',
+      'listInitialBalanceDocuments',
       'listPositions',
       'migrateYear',
       'previewConsolidatedPosition',
       'previewImportTransactions',
       'recalculatePosition',
-      'setInitialBalance',
+      'repairAssetType',
+      'saveInitialBalanceDocument',
       'toggleBrokerActive',
       'updateAsset',
       'updateBroker',

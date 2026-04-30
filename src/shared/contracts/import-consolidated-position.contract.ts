@@ -1,18 +1,21 @@
 import type { IpcResult } from '../ipc/ipc-result';
-import type { AssetType } from '../types/domain';
 import type {
+  AssetTypeOverrideDecision,
   ImportPreviewReviewState,
   ImportPreviewSummary,
 } from './import-preview-review.contract';
+import type { AssetType } from '../types/domain';
 
 export type ImportConsolidatedPositionCommand = {
   filePath: string;
   year: number;
+  assetTypeOverrides: AssetTypeOverrideDecision[];
 };
 
 export type ImportConsolidatedPositionData = {
   importedCount: number;
   recalculatedTickers: string[];
+  skippedUnsupportedRows: number;
 };
 
 export type PreviewConsolidatedPositionCommand = {

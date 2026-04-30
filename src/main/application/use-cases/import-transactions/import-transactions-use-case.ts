@@ -1,33 +1,59 @@
 import { randomUUID } from 'node:crypto';
-import { SourceType } from '../../../../shared/types/domain';
+import {
+  AssetResolutionStatus,
+  AssetTypeSource,
+  SourceType,
+} from '../../../../shared/types/domain';
+import type { AssetType } from '../../../../shared/types/domain';
 import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
 import { Uuid } from '../../../domain/shared/uuid.vo';
+import { Asset } from '../../../domain/portfolio/entities/asset.entity';
 import type { TaxApportioner } from '../../../domain/ingestion/tax-apportioner.service';
 import type { ImportTransactionsParser } from '../../interfaces/transactions.parser.interface';
+import type { AssetRepository } from '../../repositories/asset.repository';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
 import type { Queue } from '../../events/queue.interface';
 import type {
-  ImportTransactionsCommand,
-  ImportTransactionsResult,
-} from '../../../../shared/contracts/import-transactions.contract';
+  ConfirmImportTransactionsCommand,
+  ConfirmImportTransactionsResult,
+} from '../../../../shared/contracts/preview-import.contract';
 import { TransactionsImportedEvent } from '../../../domain/events/transactions-imported.event';
+import { ImportConfirmReviewResolver } from '../../../domain/ingestion/import-confirm-review-resolver.service';
+
+type AcceptedTransactionImport = {
+  tradeDate: string;
+  type: Transaction['type'];
+  ticker: string;
+  quantity: number;
+  unitPrice: number;
+  fees: number;
+  brokerId: string;
+  resolvedAssetType: AssetType;
+  resolutionStatus: AssetResolutionStatus;
+};
 
 export class ImportTransactionsUseCase {
   constructor(
     private readonly parser: ImportTransactionsParser,
     private readonly taxApportioner: TaxApportioner,
+    private readonly assetRepository: AssetRepository,
     private readonly transactionRepository: TransactionRepository,
     private readonly queue: Queue,
+    private readonly reviewResolver: ImportConfirmReviewResolver = new ImportConfirmReviewResolver(),
   ) {}
 
-  async execute(input: ImportTransactionsCommand): Promise<ImportTransactionsResult> {
+  async execute(input: ConfirmImportTransactionsCommand): Promise<ConfirmImportTransactionsResult> {
     const parsedFile = await this.parser.parse(input.filePath);
-    const batches = parsedFile.batches;
+    const assetCatalogMap = await this.loadAssetCatalogMap(parsedFile);
+    const overridesByTicker = new Map(
+      input.assetTypeOverrides.map((override) => [override.ticker, override.assetType]),
+    );
     const importBatchId = `batch-${Date.now()}-${randomUUID().slice(0, 8)}`;
-    const allTransactions: Transaction[] = [];
-    const affectedTickers = new Set<string>();
+    const acceptedRows: AcceptedTransactionImport[] = [];
+    const unresolvedTickers = new Set<string>();
+    let skippedUnsupportedRows = parsedFile.unsupportedRows.length;
 
-    for (const batch of batches) {
+    for (const batch of parsedFile.batches) {
       const allocatedFees = this.taxApportioner.allocate({
         totalOperationalCosts: batch.totalOperationalCosts,
         operations: batch.operations.map((op) => ({
@@ -43,7 +69,26 @@ export class ImportTransactionsUseCase {
         if (!op) {
           continue;
         }
-        const externalRef = createExternalRef({
+
+        const reviewState = this.reviewResolver.resolve({
+          fileAssetType: op.sourceAssetType,
+          fileAssetTypeLabel: op.sourceAssetTypeLabel,
+          catalogAssetType: assetCatalogMap.get(op.ticker)?.assetType ?? null,
+          hasSupportedEvent: true,
+          overrideAssetType: overridesByTicker.get(op.ticker) ?? null,
+        });
+
+        if (reviewState.unsupportedReason) {
+          skippedUnsupportedRows += 1;
+          continue;
+        }
+
+        if (reviewState.needsReview || !reviewState.resolvedAssetType) {
+          unresolvedTickers.add(op.ticker);
+          continue;
+        }
+
+        acceptedRows.push({
           tradeDate: batch.tradeDate,
           type: op.type,
           ticker: op.ticker,
@@ -51,23 +96,38 @@ export class ImportTransactionsUseCase {
           unitPrice: op.unitPrice,
           fees,
           brokerId: batch.brokerId,
-          sourceType: SourceType.Csv,
+          resolvedAssetType: reviewState.resolvedAssetType,
+          resolutionStatus: reviewState.resolutionStatus,
         });
-        allTransactions.push(Transaction.create({
-          date: batch.tradeDate,
-          type: op.type,
-          ticker: op.ticker,
-          quantity: op.quantity,
-          unitPrice: op.unitPrice,
-          fees,
-          brokerId: Uuid.from(batch.brokerId),
-          sourceType: SourceType.Csv,
-          externalRef,
-          importBatchId,
-        }));
-        affectedTickers.add(op.ticker);
       }
     }
+
+    this.ensureNoUnresolvedSupportedRows(unresolvedTickers);
+    await this.persistAcceptedCatalogUpdates(acceptedRows, assetCatalogMap);
+
+    const allTransactions = acceptedRows.map((row) =>
+      Transaction.create({
+        date: row.tradeDate,
+        type: row.type,
+        ticker: row.ticker,
+        quantity: row.quantity,
+        unitPrice: row.unitPrice,
+        fees: row.fees,
+        brokerId: Uuid.from(row.brokerId),
+        sourceType: SourceType.Csv,
+        externalRef: createExternalRef({
+          tradeDate: row.tradeDate,
+          type: row.type,
+          ticker: row.ticker,
+          quantity: row.quantity,
+          unitPrice: row.unitPrice,
+          fees: row.fees,
+          brokerId: row.brokerId,
+          sourceType: SourceType.Csv,
+        }),
+        importBatchId,
+      }),
+    );
 
     const existingRefs = await this.transactionRepository.findExistingExternalRefs(
       allTransactions.map((t) => t.externalRef).filter(Boolean) as string[],
@@ -95,8 +155,88 @@ export class ImportTransactionsUseCase {
 
     return {
       importedCount: newTransactions.length,
-      recalculatedTickers: [...affectedTickers],
+      recalculatedTickers: [...tickerYears.keys()],
+      skippedUnsupportedRows,
     };
+  }
+
+  private async loadAssetCatalogMap(
+    parsedFile: Awaited<ReturnType<ImportTransactionsParser['parse']>>,
+  ): Promise<
+    Map<string, NonNullable<Awaited<ReturnType<AssetRepository['findByTickersList']>>[number]>>
+  > {
+    const tickers = new Set<string>();
+
+    for (const batch of parsedFile.batches) {
+      for (const operation of batch.operations) {
+        tickers.add(operation.ticker);
+      }
+    }
+
+    for (const row of parsedFile.unsupportedRows) {
+      tickers.add(row.ticker);
+    }
+
+    const assets = await this.assetRepository.findByTickersList([...tickers]);
+    return new Map(assets.map((asset) => [asset.ticker, asset]));
+  }
+
+  private ensureNoUnresolvedSupportedRows(unresolvedTickers: Set<string>): void {
+    if (unresolvedTickers.size === 0) {
+      return;
+    }
+
+    const tickers = [...unresolvedTickers].sort();
+    throw new Error(
+      `Existem linhas suportadas sem tipo de ativo resolvido para: ${tickers.join(', ')}. Informe um tipo de ativo antes de confirmar.`,
+    );
+  }
+
+  private async persistAcceptedCatalogUpdates(
+    acceptedRows: AcceptedTransactionImport[],
+    assetCatalogMap: Map<
+      string,
+      NonNullable<Awaited<ReturnType<AssetRepository['findByTickersList']>>[number]>
+    >,
+  ): Promise<void> {
+    const decisions = new Map<
+      string,
+      {
+        assetType: AcceptedTransactionImport['resolvedAssetType'];
+        resolutionSource: AssetTypeSource;
+      }
+    >();
+
+    for (const row of acceptedRows) {
+      const resolutionSource = this.mapResolutionSource(row.resolutionStatus);
+      if (!resolutionSource) {
+        continue;
+      }
+
+      decisions.set(row.ticker, {
+        assetType: row.resolvedAssetType,
+        resolutionSource,
+      });
+    }
+
+    for (const [ticker, decision] of decisions) {
+      const asset = assetCatalogMap.get(ticker) ?? Asset.create({ ticker });
+      asset.changeAssetType(decision.assetType, decision.resolutionSource);
+      await this.assetRepository.save(asset);
+      assetCatalogMap.set(ticker, asset);
+    }
+  }
+
+  private mapResolutionSource(status: AssetResolutionStatus): AssetTypeSource | null {
+    if (status === AssetResolutionStatus.ResolvedFromFile) {
+      return AssetTypeSource.File;
+    }
+
+    if (status === AssetResolutionStatus.ManualOverride) {
+      return AssetTypeSource.Manual;
+    }
+
+    return null;
   }
 }
 

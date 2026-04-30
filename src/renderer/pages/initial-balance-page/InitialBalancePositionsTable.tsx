@@ -13,8 +13,11 @@ export function InitialBalancePositionsTable({
   year,
 }: InitialBalancePositionsTableProps): JSX.Element {
   return (
-    <div className="mt-6">
+    <div className="mt-8 border-t border-slate-200 pt-6">
       <h3 className="text-base font-semibold text-slate-800">Posições em 31/12/{year}</h3>
+      <p className="mt-1 text-sm text-slate-600">
+        Esta tabela mostra a posição consolidada do ano, separada dos documentos editáveis acima.
+      </p>
       {isLoading ? (
         <p className="mt-2 text-sm text-slate-600">Carregando...</p>
       ) : (

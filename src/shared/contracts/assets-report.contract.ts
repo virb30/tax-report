@@ -1,4 +1,4 @@
-import type { AssetType } from '../types/domain';
+import type { AssetType, PendingIssueCode, ReportItemStatus } from '../types/domain';
 
 export type GenerateAssetsReportQuery = {
   baseYear: number;
@@ -9,13 +9,17 @@ export type RevenueClassification = {
   code: string;
 };
 
-export type AssetsReportAllocation = {
+export type PendingIssue = {
+  code: PendingIssueCode;
+  message: string;
+};
+
+export type AssetsReportBrokerSummary = {
   brokerId: string;
   brokerName: string;
   cnpj: string;
   quantity: number;
   totalCost: number;
-  description: string;
 };
 
 export type AssetsReportItem = {
@@ -23,9 +27,16 @@ export type AssetsReportItem = {
   assetType: AssetType;
   totalQuantity: number;
   averagePrice: number;
-  totalCost: number;
+  previousYearValue: number;
+  currentYearValue: number;
+  acquiredInYear: boolean;
   revenueClassification: RevenueClassification;
-  allocations: AssetsReportAllocation[];
+  status: ReportItemStatus;
+  eligibilityReason: string;
+  pendingIssues: PendingIssue[];
+  canCopy: boolean;
+  description: string | null;
+  brokersSummary: AssetsReportBrokerSummary[];
 };
 
 export type GenerateAssetsReportResult = {

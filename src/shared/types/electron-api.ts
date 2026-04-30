@@ -1,6 +1,8 @@
 import type {
   ListAssetsQuery,
   ListAssetsResult,
+  RepairAssetTypeCommand,
+  RepairAssetTypeResult,
   UpdateAssetCommand,
   UpdateAssetResult,
 } from '../contracts/assets.contract';
@@ -10,8 +12,12 @@ import type {
 } from '../contracts/assets-report.contract';
 import type { ListPositionsQuery, ListPositionsResult } from '../contracts/list-positions.contract';
 import type {
-  SetInitialBalanceCommand,
-  SetInitialBalanceResult,
+  DeleteInitialBalanceDocumentCommand,
+  DeleteInitialBalanceDocumentResult,
+  ListInitialBalanceDocumentsQuery,
+  ListInitialBalanceDocumentsResult,
+  SaveInitialBalanceDocumentCommand,
+  SaveInitialBalanceDocumentResult,
 } from '../contracts/initial-balance.contract';
 import type {
   CreateBrokerCommand,
@@ -56,11 +62,20 @@ export type ElectronApi = {
   confirmImportTransactions: (
     input: ConfirmImportTransactionsCommand,
   ) => Promise<ConfirmImportTransactionsResult>;
-  setInitialBalance: (input: SetInitialBalanceCommand) => Promise<SetInitialBalanceResult>;
+  saveInitialBalanceDocument: (
+    input: SaveInitialBalanceDocumentCommand,
+  ) => Promise<SaveInitialBalanceDocumentResult>;
+  listInitialBalanceDocuments: (
+    input: ListInitialBalanceDocumentsQuery,
+  ) => Promise<ListInitialBalanceDocumentsResult>;
+  deleteInitialBalanceDocument: (
+    input: DeleteInitialBalanceDocumentCommand,
+  ) => Promise<DeleteInitialBalanceDocumentResult>;
   listPositions: (input: ListPositionsQuery) => Promise<ListPositionsResult>;
   generateAssetsReport: (input: GenerateAssetsReportQuery) => Promise<GenerateAssetsReportResult>;
   listAssets: (input?: ListAssetsQuery) => Promise<ListAssetsResult>;
   updateAsset: (input: UpdateAssetCommand) => Promise<UpdateAssetResult>;
+  repairAssetType: (input: RepairAssetTypeCommand) => Promise<RepairAssetTypeResult>;
   listBrokers: (input?: ListBrokersQuery) => Promise<ListBrokersResult>;
   createBroker: (input: CreateBrokerCommand) => Promise<CreateBrokerResult>;
   updateBroker: (input: UpdateBrokerCommand) => Promise<UpdateBrokerResult>;

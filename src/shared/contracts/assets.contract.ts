@@ -28,3 +28,20 @@ export type UpdateAssetCommand = {
 export type UpdateAssetResult =
   | { success: true; asset: AssetCatalogItem }
   | { success: false; error: string };
+
+export type RepairAssetTypeCommand = {
+  ticker: string;
+  assetType: AssetType;
+};
+
+export type RepairAssetTypeResult =
+  | {
+      success: true;
+      repair: {
+        ticker: string;
+        assetType: AssetType;
+        affectedYears: number[];
+        reprocessedCount: number;
+      };
+    }
+  | { success: false; error: string };

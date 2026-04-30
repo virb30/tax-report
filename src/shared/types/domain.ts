@@ -49,6 +49,22 @@ export enum UnsupportedImportReason {
   UnsupportedEvent = 'unsupported_event',
 }
 
+export enum ReportItemStatus {
+  Required = 'required',
+  Optional = 'optional',
+  BelowThreshold = 'below_threshold',
+  Pending = 'pending',
+  Unsupported = 'unsupported',
+}
+
+export enum PendingIssueCode {
+  MissingAssetType = 'missing_asset_type',
+  MissingIssuerName = 'missing_issuer_name',
+  MissingIssuerCnpj = 'missing_issuer_cnpj',
+  UnsupportedRow = 'unsupported_row',
+  UnsupportedScope = 'unsupported_scope',
+}
+
 export type Asset = {
   id: number;
   ticker: string;

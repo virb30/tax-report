@@ -1,0 +1,76 @@
+import type { SaveInitialBalanceDocumentCommand } from '../../../../shared/contracts/initial-balance.contract';
+import { SourceType, TransactionType } from '../../../../shared/types/domain';
+import { assertSupportedYear } from '../../../../shared/utils/year';
+import type { TransactionRepository } from '../../repositories/transaction.repository';
+import type { InitialBalanceDocumentPositionSyncService } from '../../services/initial-balance-document-position-sync.service';
+import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
+import { Uuid } from '../../../domain/shared/uuid.vo';
+
+export class SaveInitialBalanceDocumentUseCase {
+  constructor(
+    private readonly transactionRepository: TransactionRepository,
+    private readonly initialBalanceDocumentPositionSyncService: InitialBalanceDocumentPositionSyncService,
+  ) {}
+
+  async execute(input: SaveInitialBalanceDocumentCommand) {
+    this.validate(input);
+
+    const transactions = input.allocations.map((allocation) =>
+      Transaction.create({
+        date: `${input.year}-01-01`,
+        type: TransactionType.InitialBalance,
+        ticker: input.ticker,
+        quantity: allocation.quantity,
+        unitPrice: input.averagePrice,
+        fees: 0,
+        brokerId: Uuid.from(allocation.brokerId),
+        sourceType: SourceType.Manual,
+      }),
+    );
+
+    await this.transactionRepository.replaceInitialBalanceTransactionsForTickerAndYear(
+      input.ticker,
+      input.year,
+      transactions,
+    );
+    const position = await this.initialBalanceDocumentPositionSyncService.sync({
+      ticker: input.ticker,
+      year: input.year,
+      assetType: input.assetType,
+    });
+
+    return {
+      ticker: input.ticker,
+      year: input.year,
+      assetType: input.assetType,
+      averagePrice: input.averagePrice,
+      allocations: input.allocations,
+      totalQuantity: position.totalQuantity,
+    };
+  }
+
+  private validate(input: SaveInitialBalanceDocumentCommand): void {
+    if (typeof input.ticker !== 'string' || input.ticker.trim().length === 0) {
+      throw new Error('Ticker é obrigatório.');
+    }
+    assertSupportedYear(input.year, {
+      invalidTypeMessage: 'Ano inválido.',
+      outOfRangeMessage: 'Ano deve estar entre 2000 e 2100.',
+    });
+    if (typeof input.averagePrice !== 'number' || input.averagePrice <= 0) {
+      throw new Error('Preço médio deve ser maior que zero.');
+    }
+    if (input.allocations.length === 0) {
+      throw new Error('Documento deve conter ao menos uma alocação.');
+    }
+
+    for (const allocation of input.allocations) {
+      if (typeof allocation.brokerId !== 'string' || allocation.brokerId.trim().length === 0) {
+        throw new Error('Corretora é obrigatória.');
+      }
+      if (typeof allocation.quantity !== 'number' || allocation.quantity <= 0) {
+        throw new Error('Quantidade deve ser maior que zero.');
+      }
+    }
+  }
+}

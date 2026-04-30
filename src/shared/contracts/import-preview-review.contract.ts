@@ -1,8 +1,9 @@
-import type {
-  AssetResolutionStatus,
-  AssetType,
-  UnsupportedImportReason,
-} from '../types/domain';
+import type { AssetResolutionStatus, AssetType, UnsupportedImportReason } from '../types/domain';
+
+export type AssetTypeOverrideDecision = {
+  ticker: string;
+  assetType: AssetType;
+};
 
 export type ImportPreviewReviewState = {
   resolvedAssetType: AssetType | null;

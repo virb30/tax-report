@@ -1,17 +1,25 @@
-import type { AssetType } from "../../../../shared/types/domain";
+import type {
+  AssetType,
+  PendingIssueCode,
+  ReportItemStatus,
+} from '../../../../shared/types/domain';
 
 export interface RevenueClassification {
   group: string;
   code: string;
 }
 
-export interface AssetsReportAllocation {
+export interface PendingIssueOutput {
+  code: PendingIssueCode;
+  message: string;
+}
+
+export interface AssetsReportBrokerSummaryOutput {
   brokerId: string;
   brokerName: string;
   cnpj: string;
   quantity: number;
   totalCost: number;
-  description: string;
 }
 
 export interface AssetsReportItem {
@@ -19,9 +27,16 @@ export interface AssetsReportItem {
   assetType: AssetType;
   totalQuantity: number;
   averagePrice: number;
-  totalCost: number;
+  previousYearValue: number;
+  currentYearValue: number;
+  acquiredInYear: boolean;
   revenueClassification: RevenueClassification;
-  allocations: AssetsReportAllocation[];
+  status: ReportItemStatus;
+  eligibilityReason: string;
+  pendingIssues: PendingIssueOutput[];
+  canCopy: boolean;
+  description: string | null;
+  brokersSummary: AssetsReportBrokerSummaryOutput[];
 }
 
 export interface GenerateAssetReportOutput {

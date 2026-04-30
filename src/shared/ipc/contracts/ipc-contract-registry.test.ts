@@ -66,6 +66,11 @@ describe('ipc contract registry', () => {
         channel: 'assets:update',
         id: 'assets.update',
       },
+      {
+        apiName: 'repairAssetType',
+        channel: 'assets:repair-type',
+        id: 'assets.repairType',
+      },
     ]);
   });
 
@@ -78,9 +83,19 @@ describe('ipc contract registry', () => {
       })),
     ).toEqual([
       {
-        apiName: 'setInitialBalance',
-        channel: 'portfolio:set-initial-balance',
-        id: 'portfolio.setInitialBalance',
+        apiName: 'saveInitialBalanceDocument',
+        channel: 'portfolio:save-initial-balance-document',
+        id: 'portfolio.saveInitialBalanceDocument',
+      },
+      {
+        apiName: 'listInitialBalanceDocuments',
+        channel: 'portfolio:list-initial-balance-documents',
+        id: 'portfolio.listInitialBalanceDocuments',
+      },
+      {
+        apiName: 'deleteInitialBalanceDocument',
+        channel: 'portfolio:delete-initial-balance-document',
+        id: 'portfolio.deleteInitialBalanceDocument',
       },
       {
         apiName: 'listPositions',
@@ -134,6 +149,10 @@ describe('ipc contract registry', () => {
       'result',
       'result',
     ]);
-    expect(assetIpcContracts.map((contract) => contract.errorMode)).toEqual(['throw', 'result']);
+    expect(assetIpcContracts.map((contract) => contract.errorMode)).toEqual([
+      'throw',
+      'result',
+      'result',
+    ]);
   });
 });

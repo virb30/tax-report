@@ -275,6 +275,40 @@ describe('RecalculatePositionUseCase', () => {
     });
   });
 
+  it('uses the explicit assetType override when reprocessing a repaired ticker', async () => {
+    const brokerId = Uuid.create();
+    positionRepository.findByTickerAndYear.mockResolvedValue(
+      AssetPosition.create({
+        ticker: 'AAPL34',
+        year: 2024,
+        assetType: AssetType.Stock,
+        totalQuantity: 10,
+        averagePrice: 40,
+        brokerBreakdown: [{ brokerId, quantity: 10 }],
+      }),
+    );
+    transactionRepository.findByTicker.mockResolvedValue([
+      Transaction.create({
+        date: '2024-01-01',
+        type: TransactionType.InitialBalance,
+        ticker: 'AAPL34',
+        quantity: 10,
+        unitPrice: 40,
+        fees: 0,
+        brokerId,
+        sourceType: SourceType.Manual,
+      }),
+    ]);
+
+    await useCase.execute({ ticker: 'AAPL34', year: 2024, assetType: AssetType.Bdr });
+
+    expect(positionRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assetType: AssetType.Bdr,
+      }),
+    );
+  });
+
   it('persists empty position when no transactions exist', async () => {
     transactionRepository.findByTicker.mockResolvedValue([]);
     positionRepository.findByTickerAndYear.mockResolvedValue(AssetPosition.create({

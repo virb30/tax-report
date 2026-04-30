@@ -3,6 +3,7 @@ import type {
   ConfirmImportTransactionsResult,
   PreviewImportTransactionsResult,
 } from '../../../contracts/preview-import.contract';
+import { AssetType } from '../../../types/domain';
 import { defineIpcContract } from '../../define-ipc-contract';
 
 export type ImportSelectFileResult = {
@@ -18,11 +19,22 @@ export const previewImportTransactionsSchema = z.object({
     .min(1, 'Invalid file path for preview import transactions.'),
 });
 
+const assetTypeOverrideSchema = z.object({
+  ticker: z
+    .string({ message: 'Invalid ticker for import asset type override.' })
+    .trim()
+    .min(1, 'Invalid ticker for import asset type override.'),
+  assetType: z.nativeEnum(AssetType, {
+    message: 'Invalid asset type for import asset type override.',
+  }),
+});
+
 export const confirmImportTransactionsSchema = z.object({
   filePath: z
     .string({ message: 'Invalid file path for confirm import transactions.' })
     .trim()
     .min(1, 'Invalid file path for confirm import transactions.'),
+  assetTypeOverrides: z.array(assetTypeOverrideSchema),
 });
 
 export const importSelectFileContract = defineIpcContract<ImportSelectFileResult>()({

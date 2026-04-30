@@ -1,8 +1,12 @@
 import type { Knex } from 'knex';
-import type { TransactionRepository } from '../../application/repositories/transaction.repository';
+import type {
+  InitialBalanceDocumentRecord,
+  TransactionRepository,
+} from '../../application/repositories/transaction.repository';
 import { Transaction } from '../../domain/portfolio/entities/transaction.entity';
 import { Uuid } from '../../domain/shared/uuid.vo';
-import type { SourceType, TransactionType } from '../../../shared/types/domain';
+import { TransactionType } from '../../../shared/types/domain';
+import type { SourceType } from '../../../shared/types/domain';
 
 type TransactionRow = {
   id: string;
@@ -19,6 +23,11 @@ type TransactionRow = {
   external_ref: string | null;
   import_batch_id: string | null;
 };
+
+type InitialBalanceRow = Pick<
+  TransactionRow,
+  'ticker' | 'date' | 'broker_id' | 'quantity' | 'unit_price' | 'type'
+>;
 
 function toPersistence(record: Transaction): Record<string, unknown> {
   const unitPriceCents = Math.round(record.unitPrice * 100);
@@ -69,9 +78,7 @@ export class KnexTransactionRepository implements TransactionRepository {
       return;
     }
 
-    const rows = transactions.map((transaction) =>
-      toPersistence(transaction),
-    );
+    const rows = transactions.map((transaction) => toPersistence(transaction));
     await this.database('transactions').insert(rows);
   }
 
@@ -83,10 +90,7 @@ export class KnexTransactionRepository implements TransactionRepository {
     return rows.map(toDomain);
   }
 
-  async findByPeriod(input: {
-    startDate: string;
-    endDate: string;
-  }): Promise<Transaction[]> {
+  async findByPeriod(input: { startDate: string; endDate: string }): Promise<Transaction[]> {
     const rows = await this.database<TransactionRow>('transactions')
       .whereBetween('date', [input.startDate, input.endDate])
       .orderBy('date', 'asc')
@@ -109,20 +113,97 @@ export class KnexTransactionRepository implements TransactionRepository {
   }
 
   async deleteInitialBalanceByTickerAndYear(ticker: string, year: number): Promise<void> {
-    const yearStart = `${year}-01-01`;
-    const yearEnd = `${year}-12-31`;
     await this.database('transactions')
-      .where({ ticker, type: 'initial_balance' })
-      .whereBetween('date', [yearStart, yearEnd])
+      .where({ ticker, type: TransactionType.InitialBalance })
+      .whereBetween('date', this.yearBounds(year))
       .delete();
   }
 
   async deleteByTickerAndYear(ticker: string, year: number): Promise<void> {
-    const yearStart = `${year}-01-01`;
-    const yearEnd = `${year}-12-31`;
     await this.database('transactions')
       .where({ ticker })
-      .whereBetween('date', [yearStart, yearEnd])
+      .whereBetween('date', this.yearBounds(year))
       .delete();
+  }
+
+  async replaceInitialBalanceTransactionsForTickerAndYear(
+    ticker: string,
+    year: number,
+    transactions: Transaction[],
+  ): Promise<void> {
+    await this.database.transaction(async (trx) => {
+      await trx('transactions')
+        .where({ ticker, type: TransactionType.InitialBalance })
+        .whereBetween('date', this.yearBounds(year))
+        .delete();
+
+      if (transactions.length === 0) {
+        return;
+      }
+
+      await trx('transactions').insert(
+        transactions.map((transaction) => toPersistence(transaction)),
+      );
+    });
+  }
+
+  async findInitialBalanceDocumentsByYear(year: number): Promise<InitialBalanceDocumentRecord[]> {
+    const rows = await this.database<InitialBalanceRow>('transactions')
+      .where({ type: TransactionType.InitialBalance })
+      .whereBetween('date', this.yearBounds(year))
+      .orderBy('ticker', 'asc')
+      .orderBy('broker_id', 'asc')
+      .select('ticker', 'date', 'broker_id', 'quantity', 'unit_price', 'type');
+
+    return this.groupInitialBalanceRows(rows, year);
+  }
+
+  async findInitialBalanceDocumentByTickerAndYear(
+    ticker: string,
+    year: number,
+  ): Promise<InitialBalanceDocumentRecord | null> {
+    const rows = await this.database<InitialBalanceRow>('transactions')
+      .where({ ticker, type: TransactionType.InitialBalance })
+      .whereBetween('date', this.yearBounds(year))
+      .orderBy('broker_id', 'asc')
+      .select('ticker', 'date', 'broker_id', 'quantity', 'unit_price', 'type');
+
+    const [document] = this.groupInitialBalanceRows(rows, year);
+    return document ?? null;
+  }
+
+  private yearBounds(year: number): [string, string] {
+    return [`${year}-01-01`, `${year}-12-31`];
+  }
+
+  private groupInitialBalanceRows(
+    rows: InitialBalanceRow[],
+    fallbackYear: number,
+  ): InitialBalanceDocumentRecord[] {
+    const documents = new Map<string, InitialBalanceDocumentRecord>();
+
+    for (const row of rows) {
+      const year = Number.parseInt(row.date.slice(0, 4), 10) || fallbackYear;
+      const document =
+        documents.get(row.ticker) ??
+        ({
+          ticker: row.ticker,
+          year,
+          averagePrice: row.unit_price,
+          totalQuantity: 0,
+          allocations: [],
+        } satisfies InitialBalanceDocumentRecord);
+
+      document.averagePrice = row.unit_price;
+      document.totalQuantity += row.quantity;
+      document.allocations.push({
+        brokerId: row.broker_id,
+        quantity: row.quantity,
+      });
+
+      documents.set(row.ticker, document);
+    }
+
+    return [...documents.values()];
   }
 }

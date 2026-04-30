@@ -1,4 +1,5 @@
 import type { JSX } from 'react';
+import { InitialBalanceDocumentsTable } from './initial-balance-page/InitialBalanceDocumentsTable';
 import { InitialBalanceForm } from './initial-balance-page/InitialBalanceForm';
 import { InitialBalancePositionsTable } from './initial-balance-page/InitialBalancePositionsTable';
 import { useInitialBalance } from './initial-balance-page/use-initial-balance';
@@ -15,20 +16,24 @@ export function InitialBalancePage(): JSX.Element {
       </p>
 
       <InitialBalanceForm
+        allocations={initialBalance.allocations}
         assetType={initialBalance.assetType}
         averagePrice={initialBalance.averagePrice}
-        brokerId={initialBalance.brokerId}
         brokers={initialBalance.brokers}
+        canRemoveAllocation={initialBalance.canRemoveAllocation}
         canSave={initialBalance.canSave}
+        isEditing={initialBalance.isEditing}
         isSaving={initialBalance.isSaving}
+        onAddAllocation={initialBalance.addAllocation}
+        onAllocationBrokerIdChange={initialBalance.updateAllocationBrokerId}
+        onAllocationQuantityChange={initialBalance.updateAllocationQuantity}
         onAssetTypeChange={initialBalance.setAssetType}
         onAveragePriceChange={initialBalance.setAveragePrice}
-        onBrokerIdChange={initialBalance.setBrokerId}
-        onQuantityChange={initialBalance.setQuantity}
+        onCancelEdit={() => initialBalance.resetEditor()}
+        onRemoveAllocation={initialBalance.removeAllocation}
         onSave={() => void initialBalance.saveInitialBalance()}
         onTickerChange={initialBalance.setTicker}
         onYearChange={initialBalance.setYear}
-        quantity={initialBalance.quantity}
         ticker={initialBalance.ticker}
         year={initialBalance.year}
         yearOptions={initialBalance.yearOptions}
@@ -45,8 +50,18 @@ export function InitialBalancePage(): JSX.Element {
         </p>
       ) : null}
 
+      <InitialBalanceDocumentsTable
+        brokers={initialBalance.brokers}
+        deletingDocumentKey={initialBalance.deletingDocumentKey}
+        documents={initialBalance.documents}
+        isLoading={initialBalance.isLoadingDocuments}
+        onDelete={(document) => void initialBalance.deleteDocument(document)}
+        onEdit={initialBalance.editDocument}
+        year={initialBalance.year}
+      />
+
       <InitialBalancePositionsTable
-        isLoading={initialBalance.isLoading}
+        isLoading={initialBalance.isLoadingPositions}
         positions={initialBalance.positions}
         year={initialBalance.year}
       />
