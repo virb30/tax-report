@@ -1,8 +1,9 @@
 import { Quantity } from '../../../domain/portfolio/value-objects/quantity.vo';
 import { Money } from '../../../domain/portfolio/value-objects/money.vo';
-import { mock } from 'jest-mock-extended';
+import { mock, mockReset } from 'jest-mock-extended';
 import { Asset } from '../../../domain/portfolio/entities/asset.entity';
 import { AssetPosition } from '../../../domain/portfolio/entities/asset-position.entity';
+import { Cnpj } from '../../../domain/shared/cnpj.vo';
 import { Uuid } from '../../../domain/shared/uuid.vo';
 import { AssetType, AssetTypeSource } from '../../../../shared/types/domain';
 import type { AssetRepository } from '../../repositories/asset.repository';
@@ -19,6 +20,9 @@ describe('ListInitialBalanceDocumentsUseCase', () => {
   let useCase: ListInitialBalanceDocumentsUseCase;
 
   beforeEach(() => {
+    mockReset(transactionRepository);
+    mockReset(positionRepository);
+    mockReset(assetRepository);
     clearBrokerId = Uuid.create().value;
     xpBrokerId = Uuid.create().value;
 
@@ -62,6 +66,8 @@ describe('ListInitialBalanceDocumentsUseCase', () => {
           ticker: 'PETR4',
           year: 2025,
           assetType: AssetType.Stock,
+          name: null,
+          cnpj: null,
           averagePrice: '21',
           totalQuantity: '15',
           allocations: [
@@ -91,6 +97,8 @@ describe('ListInitialBalanceDocumentsUseCase', () => {
       Asset.create({
         ticker: 'PETR4',
         assetType: AssetType.Fii,
+        issuerCnpj: new Cnpj('03.837.735/0001-17'),
+        name: 'CSHG Logistica',
         resolutionSource: AssetTypeSource.Manual,
       }),
     ]);
@@ -100,6 +108,8 @@ describe('ListInitialBalanceDocumentsUseCase', () => {
         {
           ticker: 'PETR4',
           assetType: AssetType.Fii,
+          name: 'CSHG Logistica',
+          cnpj: '03.837.735/0001-17',
         },
       ],
     });

@@ -33,14 +33,19 @@ const initialBalanceAllocationSchema = z.object({
   quantity: z
     .string({ message: 'Invalid quantity for initial balance allocation.' })
     .trim()
-    .refine(
-      (value) => {
-        const parsed = Number(value);
-        return value.length > 0 && !Number.isNaN(parsed) && parsed > 0;
-      },
-      'Initial balance allocation quantity must be greater than zero.',
-    ),
+    .refine((value) => {
+      const parsed = Number(value);
+      return value.length > 0 && !Number.isNaN(parsed) && parsed > 0;
+    }, 'Initial balance allocation quantity must be greater than zero.'),
 });
+
+const optionalMetadataFieldSchema = z
+  .string({ message: 'Invalid optional asset metadata.' })
+  .optional()
+  .transform((value) => {
+    const trimmed = value?.trim();
+    return trimmed && trimmed.length > 0 ? trimmed : undefined;
+  });
 
 export const saveInitialBalanceDocumentSchema = z.object({
   ticker: z
@@ -56,13 +61,12 @@ export const saveInitialBalanceDocumentSchema = z.object({
   averagePrice: z
     .string({ message: 'Invalid average price for initial balance.' })
     .trim()
-    .refine(
-      (value) => {
-        const parsed = Number(value);
-        return value.length > 0 && !Number.isNaN(parsed) && parsed > 0;
-      },
-      'Initial balance average price must be greater than zero.',
-    ),
+    .refine((value) => {
+      const parsed = Number(value);
+      return value.length > 0 && !Number.isNaN(parsed) && parsed > 0;
+    }, 'Initial balance average price must be greater than zero.'),
+  name: optionalMetadataFieldSchema,
+  cnpj: optionalMetadataFieldSchema,
   year: z
     .number({ message: 'Invalid year for initial balance.' })
     .int('Invalid year for initial balance.'),

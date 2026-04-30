@@ -25,6 +25,7 @@ export class ListInitialBalanceDocumentsUseCase {
 
     const tickers = [...new Set(documents.map((document) => document.ticker))];
     const assets = await this.assetRepository.findByTickersList(tickers);
+    const assetByTicker = new Map(assets.map((asset) => [asset.ticker, asset]));
     const catalogAssetTypeByTicker = new Map(
       assets
         .filter((asset) => asset.assetType !== null)
@@ -40,6 +41,8 @@ export class ListInitialBalanceDocumentsUseCase {
     return {
       items: documents.map((document) => ({
         ...document,
+        name: assetByTicker.get(document.ticker)?.name ?? null,
+        cnpj: assetByTicker.get(document.ticker)?.issuerCnpj ?? null,
         assetType:
           catalogAssetTypeByTicker.get(document.ticker) ??
           assetTypeByTicker.get(document.ticker) ??

@@ -54,8 +54,10 @@ describe('preload', () => {
       ticker: 'IVVB11',
       year: 2025,
       assetType: AssetType.Etf,
-      averagePrice: 300,
-      allocations: [{ brokerId: 'broker-xp', quantity: 2 }],
+      name: 'iShares Core S&P 500',
+      cnpj: '11.111.111/0001-11',
+      averagePrice: '300',
+      allocations: [{ brokerId: 'broker-xp', quantity: '2' }],
     });
     await electronApi.listInitialBalanceDocuments({ year: 2025 });
     await electronApi.deleteInitialBalanceDocument({ ticker: 'IVVB11', year: 2025 });
@@ -83,6 +85,8 @@ describe('preload', () => {
       ticker: 'IVVB11',
       year: 2025,
       assetType: AssetType.Etf,
+      name: 'iShares Core S&P 500',
+      cnpj: '11.111.111/0001-11',
       averagePrice: 300,
       allocations: [{ brokerId: 'broker-xp', quantity: 2 }],
     });

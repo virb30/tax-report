@@ -60,6 +60,7 @@ describe('Application contracts integration', () => {
     const saveInitialBalanceDocumentUseCase = new SaveInitialBalanceDocumentUseCase(
       knexTransactionRepository,
       positionSyncService,
+      tickerDataRepository,
     );
     const listInitialBalanceDocumentsUseCase = new ListInitialBalanceDocumentsUseCase(
       knexTransactionRepository,
@@ -123,6 +124,8 @@ describe('Application contracts integration', () => {
       ticker: 'IVVB11',
       year: 2025,
       assetType: AssetType.Etf,
+      name: 'iShares Core S&P 500',
+      cnpj: '11.111.111/0001-11',
       averagePrice: '300',
       allocations: [{ brokerId: brokerId.value, quantity: '2' }],
     });
@@ -131,6 +134,8 @@ describe('Application contracts integration', () => {
       ticker: 'IVVB11',
       year: 2025,
       assetType: AssetType.Etf,
+      name: 'iShares Core S&P 500',
+      cnpj: '11.111.111/0001-11',
       averagePrice: '300',
       allocations: [{ brokerId: brokerId.value, quantity: '2' }],
       totalQuantity: '2',
@@ -142,12 +147,23 @@ describe('Application contracts integration', () => {
           ticker: 'IVVB11',
           year: 2025,
           assetType: AssetType.Etf,
+          name: 'iShares Core S&P 500',
+          cnpj: '11.111.111/0001-11',
           averagePrice: '300',
           allocations: [{ brokerId: brokerId.value, quantity: '2' }],
           totalQuantity: '2',
         },
       ],
     });
+    await expect(tickerDataRepository.findByTicker('IVVB11')).resolves.toEqual(
+      expect.objectContaining({
+        ticker: 'IVVB11',
+        assetType: AssetType.Etf,
+        resolutionSource: AssetTypeSource.Manual,
+        name: 'iShares Core S&P 500',
+        issuerCnpj: '11.111.111/0001-11',
+      }),
+    );
 
     const positionsResult = await listPositionsUseCase.execute({ baseYear: 2025 });
     expect(positionsResult.items).toEqual(

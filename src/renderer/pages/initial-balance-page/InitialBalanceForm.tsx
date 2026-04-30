@@ -10,6 +10,8 @@ type InitialBalanceFormProps = {
   brokers: Broker[];
   canRemoveAllocation: boolean;
   canSave: boolean;
+  issuerCnpj: string;
+  issuerName: string;
   isEditing: boolean;
   isSaving: boolean;
   onAddAllocation: () => void;
@@ -18,6 +20,8 @@ type InitialBalanceFormProps = {
   onAssetTypeChange: (value: AssetType) => void;
   onAveragePriceChange: (value: string) => void;
   onCancelEdit: () => void;
+  onIssuerCnpjChange: (value: string) => void;
+  onIssuerNameChange: (value: string) => void;
   onRemoveAllocation: (allocationId: string) => void;
   onSave: () => void;
   onTickerChange: (value: string) => void;
@@ -34,6 +38,8 @@ export function InitialBalanceForm({
   brokers,
   canRemoveAllocation,
   canSave,
+  issuerCnpj,
+  issuerName,
   isEditing,
   isSaving,
   onAddAllocation,
@@ -42,6 +48,8 @@ export function InitialBalanceForm({
   onAssetTypeChange,
   onAveragePriceChange,
   onCancelEdit,
+  onIssuerCnpjChange,
+  onIssuerNameChange,
   onRemoveAllocation,
   onSave,
   onTickerChange,
@@ -108,6 +116,24 @@ export function InitialBalanceForm({
             <option value={AssetType.Etf}>ETF</option>
             <option value={AssetType.Bdr}>BDR</option>
           </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-slate-700">
+          Nome do emissor
+          <input
+            className="rounded-md border border-slate-300 bg-white px-3 py-2"
+            value={issuerName}
+            onChange={(event) => onIssuerNameChange(event.target.value)}
+            placeholder="Ex: Petrobras"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-slate-700">
+          CNPJ
+          <input
+            className="rounded-md border border-slate-300 bg-white px-3 py-2"
+            value={issuerCnpj}
+            onChange={(event) => onIssuerCnpjChange(event.target.value)}
+            placeholder="Ex: 33.000.167/0001-01"
+          />
         </label>
         <label className="flex flex-col gap-1 text-sm text-slate-700">
           Preço médio global (R$)

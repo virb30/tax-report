@@ -10,6 +10,8 @@ export type InitialBalanceDocument = {
   ticker: string;
   year: number;
   assetType: AssetType;
+  name?: string | null;
+  cnpj?: string | null;
   averagePrice: string;
   allocations: InitialBalanceAllocationInput[];
   totalQuantity: string;
@@ -19,6 +21,8 @@ export type SaveInitialBalanceDocumentCommand = {
   ticker: string;
   year: number;
   assetType: AssetType;
+  name?: string;
+  cnpj?: string;
   averagePrice: string;
   allocations: InitialBalanceAllocationInput[];
 };

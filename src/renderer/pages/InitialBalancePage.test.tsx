@@ -6,7 +6,10 @@ import type {
   InitialBalanceDocument,
   ListInitialBalanceDocumentsResult,
 } from '../../shared/contracts/initial-balance.contract';
-import type { ListPositionsResult, PositionListItem } from '../../shared/contracts/list-positions.contract';
+import type {
+  ListPositionsResult,
+  PositionListItem,
+} from '../../shared/contracts/list-positions.contract';
 import { AssetType } from '../../shared/types/domain';
 import type { ElectronApi } from '../../shared/types/electron-api';
 import { listActiveBrokers } from '../services/api/list-brokers';
@@ -24,6 +27,8 @@ function createDocument(overrides: Partial<InitialBalanceDocument> = {}): Initia
     ticker: 'IVVB11',
     year: 2025,
     assetType: AssetType.Etf,
+    name: 'iShares Core S&P 500',
+    cnpj: '11.111.111/0001-11',
     averagePrice: '300',
     allocations: [
       { brokerId: 'broker-xp', quantity: '2' },
@@ -104,9 +109,9 @@ describe('InitialBalancePage', () => {
         {
           ticker: 'PETR4',
           assetType: AssetType.Stock,
-          totalQuantity: 10,
-          averagePrice: 30,
-          totalCost: 300,
+          totalQuantity: '10',
+          averagePrice: '30',
+          totalCost: '300',
           brokerBreakdown: [],
         },
       ]),
@@ -137,9 +142,9 @@ describe('InitialBalancePage', () => {
           {
             ticker: 'IVVB11',
             assetType: AssetType.Etf,
-            totalQuantity: 3,
-            averagePrice: 300,
-            totalCost: 900,
+            totalQuantity: '3',
+            averagePrice: '300',
+            totalCost: '900',
             brokerBreakdown: [],
           },
         ]),
@@ -153,6 +158,8 @@ describe('InitialBalancePage', () => {
     });
 
     await user.type(getInput('Ticker'), 'ivvb11');
+    await user.type(getInput('Nome do emissor'), 'iShares Core S&P 500');
+    await user.type(getInput('CNPJ'), '11.111.111/0001-11');
     await user.clear(getInput('Preço médio global (R$)'));
     await user.type(getInput('Preço médio global (R$)'), '300');
     await user.clear(getInput('Quantidade'));
@@ -170,6 +177,8 @@ describe('InitialBalancePage', () => {
       ticker: 'IVVB11',
       year: 2025,
       assetType: AssetType.Stock,
+      name: 'iShares Core S&P 500',
+      cnpj: '11.111.111/0001-11',
       averagePrice: 300,
       allocations: [
         { brokerId: 'broker-xp', quantity: 2 },
@@ -217,6 +226,8 @@ describe('InitialBalancePage', () => {
     });
 
     expect(getInput('Ticker').value).toBe('IVVB11');
+    expect(getInput('Nome do emissor').value).toBe('iShares Core S&P 500');
+    expect(getInput('CNPJ').value).toBe('11.111.111/0001-11');
     expect(screen.getAllByLabelText('Quantidade')[0]).toHaveValue(2);
     expect(screen.getAllByLabelText('Quantidade')[1]).toHaveValue(1);
 
@@ -236,6 +247,8 @@ describe('InitialBalancePage', () => {
       ticker: 'IVVB11',
       year: 2025,
       assetType: AssetType.Etf,
+      name: 'iShares Core S&P 500',
+      cnpj: '11.111.111/0001-11',
       averagePrice: 320,
       allocations: [
         { brokerId: 'broker-xp', quantity: 5 },
@@ -313,5 +326,23 @@ describe('InitialBalancePage', () => {
         'Esta tabela mostra a posição consolidada do ano, separada dos documentos editáveis acima.',
       ),
     ).toBeInTheDocument();
+  });
+
+  it('renders optional issuer fields and keeps them editable when no catalog metadata exists', async () => {
+    const user = userEvent.setup();
+    render(<InitialBalancePage />);
+
+    await waitFor(() => {
+      expect(getSelect('Corretora 1').value).toBe('broker-xp');
+    });
+
+    expect(getInput('Nome do emissor')).toHaveValue('');
+    expect(getInput('CNPJ')).toHaveValue('');
+
+    await user.type(getInput('Nome do emissor'), 'Ambev');
+    await user.type(getInput('CNPJ'), '07.526.557/0001-00');
+
+    expect(getInput('Nome do emissor')).toHaveValue('Ambev');
+    expect(getInput('CNPJ')).toHaveValue('07.526.557/0001-00');
   });
 });

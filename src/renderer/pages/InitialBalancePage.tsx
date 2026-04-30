@@ -22,6 +22,8 @@ export function InitialBalancePage(): JSX.Element {
         brokers={initialBalance.brokers}
         canRemoveAllocation={initialBalance.canRemoveAllocation}
         canSave={initialBalance.canSave}
+        issuerCnpj={initialBalance.issuerCnpj}
+        issuerName={initialBalance.issuerName}
         isEditing={initialBalance.isEditing}
         isSaving={initialBalance.isSaving}
         onAddAllocation={initialBalance.addAllocation}
@@ -30,6 +32,8 @@ export function InitialBalancePage(): JSX.Element {
         onAssetTypeChange={initialBalance.setAssetType}
         onAveragePriceChange={initialBalance.setAveragePrice}
         onCancelEdit={() => initialBalance.resetEditor()}
+        onIssuerCnpjChange={initialBalance.setIssuerCnpj}
+        onIssuerNameChange={initialBalance.setIssuerName}
         onRemoveAllocation={initialBalance.removeAllocation}
         onSave={() => void initialBalance.saveInitialBalance()}
         onTickerChange={initialBalance.setTicker}

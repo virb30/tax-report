@@ -110,6 +110,7 @@ describe('IPC handlers integration', () => {
     const saveInitialBalanceDocumentUseCase = new SaveInitialBalanceDocumentUseCase(
       knexTransactionRepository,
       positionSyncService,
+      tickerDataRepository,
     );
     const listInitialBalanceDocumentsUseCase = new ListInitialBalanceDocumentsUseCase(
       knexTransactionRepository,
@@ -290,6 +291,8 @@ describe('IPC handlers integration', () => {
       ticker: 'IVVB11',
       year: 2025,
       assetType: AssetType.Etf,
+      name: 'iShares Core S&P 500',
+      cnpj: '11.111.111/0001-11',
       averagePrice: '300',
       allocations: [{ brokerId: xpBroker.id.value, quantity: '2' }],
     });
@@ -301,6 +304,8 @@ describe('IPC handlers integration', () => {
       data: {
         items: Array<{
           ticker: string;
+          name: string | null;
+          cnpj: string | null;
           allocations: Array<{ brokerId: string; quantity: string }>;
         }>;
       };
@@ -310,11 +315,22 @@ describe('IPC handlers integration', () => {
         ticker: 'IVVB11',
         year: 2025,
         assetType: AssetType.Etf,
+        name: 'iShares Core S&P 500',
+        cnpj: '11.111.111/0001-11',
         averagePrice: '300',
         allocations: [{ brokerId: xpBroker.id.value, quantity: '2' }],
         totalQuantity: '2',
       },
     ]);
+    await expect(tickerDataRepository.findByTicker('IVVB11')).resolves.toEqual(
+      expect.objectContaining({
+        ticker: 'IVVB11',
+        assetType: AssetType.Etf,
+        resolutionSource: AssetTypeSource.Manual,
+        name: 'iShares Core S&P 500',
+        issuerCnpj: '11.111.111/0001-11',
+      }),
+    );
 
     const positionsResult = (await listPositionsHandler(ipcEvent, { baseYear: 2025 })) as {
       ok: true;
@@ -370,7 +386,11 @@ describe('IPC handlers integration', () => {
       knexTransactionRepository,
     );
     const portfolioRegistrar = new PortfolioIpcRegistrar(
-      new SaveInitialBalanceDocumentUseCase(knexTransactionRepository, positionSyncService),
+      new SaveInitialBalanceDocumentUseCase(
+        knexTransactionRepository,
+        positionSyncService,
+        tickerDataRepository,
+      ),
       new ListInitialBalanceDocumentsUseCase(
         knexTransactionRepository,
         knexPositionRepository,

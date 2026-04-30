@@ -10,7 +10,6 @@ import type { SaveInitialBalanceDocumentUseCase } from '../../../application/use
 import { AssetResolutionStatus, AssetType } from '../../../../shared/types/domain';
 import { createPortfolioIpcHandlers } from './portfolio-ipc-handlers';
 
-
 describe('createPortfolioIpcHandlers', () => {
   const saveInitialBalanceDocumentUseCase = mock<SaveInitialBalanceDocumentUseCase>();
   const listInitialBalanceDocumentsUseCase = mock<ListInitialBalanceDocumentsUseCase>();
@@ -50,6 +49,8 @@ describe('createPortfolioIpcHandlers', () => {
       ticker: 'PETR4',
       year: 2025,
       assetType: AssetType.Stock,
+      name: 'Petrobras',
+      cnpj: '33.000.167/0001-01',
       averagePrice: '30',
       allocations: [{ brokerId: 'broker-xp', quantity: '10' }],
       totalQuantity: '10',
@@ -60,6 +61,8 @@ describe('createPortfolioIpcHandlers', () => {
           ticker: 'PETR4',
           year: 2025,
           assetType: AssetType.Stock,
+          name: 'Petrobras',
+          cnpj: '33.000.167/0001-01',
           averagePrice: '30',
           allocations: [{ brokerId: 'broker-xp', quantity: '10' }],
           totalQuantity: '10',
@@ -75,6 +78,8 @@ describe('createPortfolioIpcHandlers', () => {
         year: 2025,
         assetType: AssetType.Stock,
         averagePrice: '30',
+        name: 'Petrobras',
+        cnpj: '33.000.167/0001-01',
         allocations: [{ brokerId: 'broker-xp', quantity: '10' }],
       }),
     ).resolves.toEqual({
@@ -83,6 +88,8 @@ describe('createPortfolioIpcHandlers', () => {
         ticker: 'PETR4',
         year: 2025,
         assetType: AssetType.Stock,
+        name: 'Petrobras',
+        cnpj: '33.000.167/0001-01',
         averagePrice: '30',
         allocations: [{ brokerId: 'broker-xp', quantity: '10' }],
         totalQuantity: '10',
@@ -96,6 +103,8 @@ describe('createPortfolioIpcHandlers', () => {
             ticker: 'PETR4',
             year: 2025,
             assetType: AssetType.Stock,
+            name: 'Petrobras',
+            cnpj: '33.000.167/0001-01',
             averagePrice: '30',
             allocations: [{ brokerId: 'broker-xp', quantity: '10' }],
             totalQuantity: '10',

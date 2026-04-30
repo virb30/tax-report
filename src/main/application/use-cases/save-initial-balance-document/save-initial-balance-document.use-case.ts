@@ -1,26 +1,33 @@
 import type { SaveInitialBalanceDocumentCommand } from '../../../../shared/contracts/initial-balance.contract';
-import { SourceType, TransactionType } from '../../../../shared/types/domain';
+import { AssetTypeSource, SourceType, TransactionType } from '../../../../shared/types/domain';
 import { assertSupportedYear } from '../../../../shared/utils/year';
+import { Asset } from '../../../domain/portfolio/entities/asset.entity';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
+import type { AssetRepository } from '../../repositories/asset.repository';
 import type { InitialBalanceDocumentPositionSyncService } from '../../services/initial-balance-document-position-sync.service';
 import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
 import { Uuid } from '../../../domain/shared/uuid.vo';
 import { Quantity } from '../../../domain/portfolio/value-objects/quantity.vo';
 import { Money } from '../../../domain/portfolio/value-objects/money.vo';
+import { Cnpj } from '../../../domain/shared/cnpj.vo';
 import type { SaveInitialBalanceDocumentOutput } from './save-initial-balance-document.output';
 
 export class SaveInitialBalanceDocumentUseCase {
   constructor(
     private readonly transactionRepository: TransactionRepository,
     private readonly initialBalanceDocumentPositionSyncService: InitialBalanceDocumentPositionSyncService,
+    private readonly assetRepository: AssetRepository,
   ) {}
 
-  async execute(input: SaveInitialBalanceDocumentCommand): Promise<SaveInitialBalanceDocumentOutput> {
+  async execute(
+    input: SaveInitialBalanceDocumentCommand,
+  ): Promise<SaveInitialBalanceDocumentOutput> {
     this.validate(input);
 
     const averagePrice = Money.from(input.averagePrice);
+    const asset = await this.persistAssetCatalog(input);
 
-    const transactions = input.allocations.map((allocation) => 
+    const transactions = input.allocations.map((allocation) =>
       Transaction.create({
         date: `${input.year}-01-01`,
         type: TransactionType.InitialBalance,
@@ -48,10 +55,45 @@ export class SaveInitialBalanceDocumentUseCase {
       ticker: input.ticker,
       year: input.year,
       assetType: input.assetType,
+      name: asset.name,
+      cnpj: asset.issuerCnpj,
       averagePrice: averagePrice.getAmount(),
       allocations: input.allocations,
       totalQuantity: position.totalQuantity.getAmount(),
     };
+  }
+
+  private async persistAssetCatalog(input: SaveInitialBalanceDocumentCommand): Promise<Asset> {
+    const asset =
+      (await this.assetRepository.findByTicker(input.ticker)) ??
+      Asset.create({
+        ticker: input.ticker,
+      });
+    const normalizedName = this.normalizeOptionalText(input.name);
+    const normalizedCnpj = this.normalizeOptionalText(input.cnpj);
+
+    asset.changeAssetType(input.assetType, AssetTypeSource.Manual);
+
+    if (normalizedName !== undefined && this.isMissingAssetName(asset)) {
+      asset.changeName(normalizedName);
+    }
+
+    if (normalizedCnpj !== undefined && asset.issuerCnpj === null) {
+      asset.changeIssuerCnpj(new Cnpj(normalizedCnpj));
+    }
+
+    await this.assetRepository.save(asset);
+
+    return asset;
+  }
+
+  private isMissingAssetName(asset: Asset): boolean {
+    return asset.name === null || asset.name.trim().length === 0;
+  }
+
+  private normalizeOptionalText(value?: string): string | undefined {
+    const normalized = value?.trim();
+    return normalized && normalized.length > 0 ? normalized : undefined;
   }
 
   private validate(input: SaveInitialBalanceDocumentCommand): void {
@@ -68,6 +110,12 @@ export class SaveInitialBalanceDocumentUseCase {
     }
     if (input.allocations.length === 0) {
       throw new Error('Documento deve conter ao menos uma alocação.');
+    }
+    if (input.name !== undefined && typeof input.name !== 'string') {
+      throw new Error('Nome do emissor inválido.');
+    }
+    if (input.cnpj !== undefined && typeof input.cnpj !== 'string') {
+      throw new Error('CNPJ inválido.');
     }
 
     for (const allocation of input.allocations) {

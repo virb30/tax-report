@@ -17,8 +17,10 @@ export type InitialBalanceAllocationDraft = {
 };
 
 type SaveValidationResult = {
-  allocations: Array<{ brokerId: string; quantity: number }>;
+  allocations: Array<{ brokerId: string; quantity: string }>;
   averagePrice: number;
+  issuerCnpj?: string;
+  issuerName?: string;
   ticker: string;
 };
 
@@ -45,6 +47,8 @@ export function useInitialBalance() {
   const [year, setYearState] = useState(defaultBaseYear);
   const [ticker, setTicker] = useState('');
   const [assetType, setAssetType] = useState<AssetType>(AssetType.Stock);
+  const [issuerName, setIssuerName] = useState('');
+  const [issuerCnpj, setIssuerCnpj] = useState('');
   const [averagePrice, setAveragePrice] = useState('');
   const [brokers, setBrokers] = useState<Broker[]>([]);
   const [allocations, setAllocations] = useState<InitialBalanceAllocationDraft[]>([
@@ -74,6 +78,8 @@ export function useInitialBalance() {
 
     setTicker('');
     setAssetType(AssetType.Stock);
+    setIssuerName('');
+    setIssuerCnpj('');
     setAveragePrice('');
     setAllocations([createAllocationDraft(1, brokers[0]?.id ?? '')]);
     setNextAllocationId(2);
@@ -132,6 +138,8 @@ export function useInitialBalance() {
   function validateSaveInput(): SaveValidationResult | null {
     const parsedAveragePrice = Number(averagePrice);
     const normalizedTicker = ticker.toUpperCase().trim();
+    const normalizedIssuerName = issuerName.trim();
+    const normalizedIssuerCnpj = issuerCnpj.trim();
 
     if (normalizedTicker.length === 0) {
       setErrorMessage('Informe um ticker.');
@@ -148,7 +156,7 @@ export function useInitialBalance() {
       return null;
     }
 
-    const parsedAllocations: Array<{ brokerId: string; quantity: number }> = [];
+    const parsedAllocations: Array<{ brokerId: string; quantity: string }> = [];
 
     for (const allocation of allocations) {
       if (allocation.brokerId.length === 0) {
@@ -164,13 +172,15 @@ export function useInitialBalance() {
 
       parsedAllocations.push({
         brokerId: allocation.brokerId,
-        quantity: parsedQuantity,
+        quantity: String(parsedQuantity),
       });
     }
 
     return {
       allocations: parsedAllocations,
       averagePrice: parsedAveragePrice,
+      issuerCnpj: normalizedIssuerCnpj.length > 0 ? normalizedIssuerCnpj : undefined,
+      issuerName: normalizedIssuerName.length > 0 ? normalizedIssuerName : undefined,
       ticker: normalizedTicker,
     };
   }
@@ -194,7 +204,9 @@ export function useInitialBalance() {
           ticker: validatedInput.ticker,
           year,
           assetType,
-          averagePrice: validatedInput.averagePrice,
+          name: validatedInput.issuerName,
+          cnpj: validatedInput.issuerCnpj,
+          averagePrice: String(validatedInput.averagePrice),
           allocations: validatedInput.allocations,
         }),
       );
@@ -246,6 +258,8 @@ export function useInitialBalance() {
   function editDocument(document: InitialBalanceDocument): void {
     setTicker(document.ticker);
     setAssetType(document.assetType);
+    setIssuerName(document.name ?? '');
+    setIssuerCnpj(document.cnpj ?? '');
     setAveragePrice(document.averagePrice.toString());
     setAllocations(
       document.allocations.map((allocation, index) => ({
@@ -320,6 +334,8 @@ export function useInitialBalance() {
     editingDocumentKey,
     errorMessage,
     feedbackMessage,
+    issuerCnpj,
+    issuerName,
     isEditing: editingDocumentKey !== null,
     isLoadingDocuments,
     isLoadingPositions,
@@ -330,6 +346,8 @@ export function useInitialBalance() {
     saveInitialBalance,
     setAssetType,
     setAveragePrice,
+    setIssuerCnpj,
+    setIssuerName,
     setTicker,
     setYear,
     ticker,

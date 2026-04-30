@@ -1,5 +1,14 @@
 # Repository Guidelines
 
+Load these rules before executing any task:
+
+@.agents/rules/architecture.md
+@.agents/rules/code-standards.md
+@.agents/rules/tests.md
+@.agents/rules/react.md
+@.agends/rules/node.md
+@.agents/rules/electron.md
+
 ## Project Structure & Module Organization
 
 This is an Electron Forge + Vite TypeScript desktop app for Brazilian variable income tax workflows. Core code lives in `src/`:
