@@ -10,7 +10,7 @@ export const createAccumulatedLossesMigration = {
         .notNullable()
         .unique()
         .checkIn(['stock', 'fii', 'etf', 'bdr']);
-      table.float('amount').notNullable().defaultTo(0);
+      table.text('amount').notNullable().defaultTo('0');
       table.timestamp('updated_at').notNullable().defaultTo(knex.fn.now());
     });
   },
