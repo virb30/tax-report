@@ -1,40 +1,66 @@
+import { Decimal } from 'decimal.js';
+
 export class Quantity {
-  private constructor(private readonly value: number) {
-    this.validate(value);
-  }
+  private readonly amount: Decimal;
 
-  static from(value: number): Quantity {
-    return new Quantity(value);
-  }
-
-  add(other: Quantity): Quantity {
-    return new Quantity(this.value + other.value);
-  }
-
-  subtract(other: Quantity): Quantity {
-    const result = this.value - other.value;
-    if (result < 0) {
-      throw new Error('Quantity cannot be negative.');
+  private constructor(amount: number | string) {
+    try {
+      this.amount = new Decimal(amount);
+    } catch {
+      throw new Error('Invalid quantity amount.');
     }
-
-    return new Quantity(result);
+    this.validate();
   }
 
-  toNumber(): number {
-    return this.value;
+  static from(amount: number | string): Quantity {
+    return new Quantity(amount);
   }
 
-  isZero(): boolean {
-    return this.value === 0;
-  }
-
-  private validate(value: number): void {
-    if (!Number.isFinite(value)) {
+  private validate() {
+    if (!this.amount.isFinite()) {
       throw new Error('Quantity must be finite.');
     }
 
-    if (value < 0) {
+    if (this.amount.isNegative()) {
       throw new Error('Quantity cannot be negative.');
     }
+  }
+
+  add(other: Quantity): Quantity {
+    const result = this.amount.plus(other.amount);
+    return new Quantity(result.toString());
+  }
+
+  subtract(other: Quantity): Quantity {
+    const result = this.amount.minus(other.amount);
+    return new Quantity(result.toString());
+  }
+
+  multiplyBy(multiplier: number | string): Quantity {
+    const decimalMultiplier = new Decimal(multiplier);
+    const result = this.amount.times(decimalMultiplier);
+    return new Quantity(result.toString());
+  }
+
+  divideBy(divisor: number | string): Quantity {
+    const decimalDivisor = new Decimal(divisor);
+    if (decimalDivisor.lte(0)) {
+      throw new Error('Divisor must be greater than zero.');
+    }
+    const result = this.amount.dividedBy(decimalDivisor);
+    return new Quantity(result.toString());
+  }
+
+  getAmount(): string {
+    return this.amount.toDecimalPlaces(8).toString();
+  }
+
+  isLessThanOrEqualTo(other: string | number): boolean {
+    const decimalOther = new Decimal(other);
+    return this.amount.lte(decimalOther);
+  }
+
+  isZero(): boolean {
+    return this.amount.isZero();
   }
 }
