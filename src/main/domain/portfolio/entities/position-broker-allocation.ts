@@ -1,8 +1,9 @@
 import { Uuid } from '../../shared/uuid.vo';
+import { Quantity } from '../value-objects/quantity.vo';
 import type { BrokerAllocation } from './asset-position.entity';
 
 export class PositionBrokerAllocation {
-  private readonly quantities: Map<string, number>;
+  private readonly quantities: Map<string, Quantity>;
 
   constructor(initialAllocations: BrokerAllocation[]) {
     this.quantities = new Map(
@@ -10,39 +11,41 @@ export class PositionBrokerAllocation {
     );
   }
 
-  set(brokerId: Uuid, quantity: number): void {
+  set(brokerId: Uuid, quantity: Quantity): void {
     this.quantities.set(brokerId.value, quantity);
   }
 
-  replaceWith(brokerId: Uuid, quantity: number): void {
+  replaceWith(brokerId: Uuid, quantity: Quantity): void {
     this.quantities.clear();
     this.set(brokerId, quantity);
   }
 
-  increment(brokerId: Uuid, quantity: number): void {
-    const currentBrokerQty = this.quantities.get(brokerId.value) ?? 0;
-    this.quantities.set(brokerId.value, currentBrokerQty + quantity);
+  increment(brokerId: Uuid, quantity: Quantity): void {
+    const currentBrokerQty = this.quantities.get(brokerId.value) ?? Quantity.from(0);
+    this.quantities.set(brokerId.value, currentBrokerQty.add(quantity));
   }
 
-  decrement(brokerId: Uuid, quantity: number): void {
-    const brokerQty = this.quantities.get(brokerId.value) ?? 0;
+  decrement(brokerId: Uuid, quantity: Quantity): void {
+    const brokerQty = this.quantities.get(brokerId.value) ?? Quantity.from(0);
 
-    if (quantity > brokerQty) {
+    let newBrokerQty: Quantity;
+    try {
+      newBrokerQty = brokerQty.subtract(quantity);
+    } catch {
       throw new Error('Cannot sell more than current quantity allocated to this broker.');
     }
 
-    const newBrokerQty = brokerQty - quantity;
-    if (newBrokerQty > 0) {
+    if (!newBrokerQty.isZero()) {
       this.quantities.set(brokerId.value, newBrokerQty);
     } else {
       this.quantities.delete(brokerId.value);
     }
   }
 
-  applyRatio(transform: (quantity: number) => number): void {
+  applyRatio(transform: (quantity: Quantity) => Quantity): void {
     for (const [brokerId, quantity] of this.quantities.entries()) {
-      const nextBrokerQty = Math.floor(transform(quantity));
-      if (nextBrokerQty > 0) {
+      const nextBrokerQty = Quantity.from(transform(quantity).getAmount());
+      if (!nextBrokerQty.isZero()) {
         this.quantities.set(brokerId, nextBrokerQty);
       } else {
         this.quantities.delete(brokerId);
@@ -50,8 +53,11 @@ export class PositionBrokerAllocation {
     }
   }
 
-  total(): number {
-    return Array.from(this.quantities.values()).reduce((acc, quantity) => acc + quantity, 0);
+  total(): Quantity {
+    return Array.from(this.quantities.values()).reduce(
+      (acc, quantity) => acc.add(quantity),
+      Quantity.from(0),
+    );
   }
 
   toArray(): BrokerAllocation[] {

@@ -5,6 +5,9 @@ import type { TransactionRepository } from '../../repositories/transaction.repos
 import type { InitialBalanceDocumentPositionSyncService } from '../../services/initial-balance-document-position-sync.service';
 import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
 import { Uuid } from '../../../domain/shared/uuid.vo';
+import { Quantity } from '../../../domain/portfolio/value-objects/quantity.vo';
+import { Money } from '../../../domain/portfolio/value-objects/money.vo';
+import type { SaveInitialBalanceDocumentOutput } from './save-initial-balance-document.output';
 
 export class SaveInitialBalanceDocumentUseCase {
   constructor(
@@ -12,17 +15,19 @@ export class SaveInitialBalanceDocumentUseCase {
     private readonly initialBalanceDocumentPositionSyncService: InitialBalanceDocumentPositionSyncService,
   ) {}
 
-  async execute(input: SaveInitialBalanceDocumentCommand) {
+  async execute(input: SaveInitialBalanceDocumentCommand): Promise<SaveInitialBalanceDocumentOutput> {
     this.validate(input);
 
-    const transactions = input.allocations.map((allocation) =>
+    const averagePrice = Money.from(input.averagePrice);
+
+    const transactions = input.allocations.map((allocation) => 
       Transaction.create({
         date: `${input.year}-01-01`,
         type: TransactionType.InitialBalance,
         ticker: input.ticker,
-        quantity: allocation.quantity,
-        unitPrice: input.averagePrice,
-        fees: 0,
+        quantity: Quantity.from(allocation.quantity),
+        unitPrice: averagePrice,
+        fees: Money.from(0),
         brokerId: Uuid.from(allocation.brokerId),
         sourceType: SourceType.Manual,
       }),
@@ -43,9 +48,9 @@ export class SaveInitialBalanceDocumentUseCase {
       ticker: input.ticker,
       year: input.year,
       assetType: input.assetType,
-      averagePrice: input.averagePrice,
+      averagePrice: averagePrice.getAmount(),
       allocations: input.allocations,
-      totalQuantity: position.totalQuantity,
+      totalQuantity: position.totalQuantity.getAmount(),
     };
   }
 

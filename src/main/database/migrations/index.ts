@@ -12,6 +12,8 @@ import { addYearToPositionsMigration } from './010-add-year-to-positions';
 import { addCodeToBrokersMigration } from './011-add-code-to-brokers';
 import { addActiveToBrokersMigration } from './012-add-active-to-brokers';
 import { extendTickerDataAssetCatalogMigration } from './013-extend-ticker-data-asset-catalog';
+import { removeCentsColumnsMigration } from './014-remove-cents-columns';
+import { changeFinancialColumnsToTextMigration } from './015-change-financial-columns-to-text';
 
 export type DatabaseMigration = {
   name: string;
@@ -33,4 +35,6 @@ export const databaseMigrations: DatabaseMigration[] = [
   addCodeToBrokersMigration,
   addActiveToBrokersMigration,
   extendTickerDataAssetCatalogMigration,
+  removeCentsColumnsMigration,
+  changeFinancialColumnsToTextMigration,
 ];

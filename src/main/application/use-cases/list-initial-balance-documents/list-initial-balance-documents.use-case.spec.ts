@@ -1,3 +1,5 @@
+import { Quantity } from '../../../domain/portfolio/value-objects/quantity.vo';
+import { Money } from '../../../domain/portfolio/value-objects/money.vo';
 import { mock } from 'jest-mock-extended';
 import { AssetPosition } from '../../../domain/portfolio/entities/asset-position.entity';
 import { Uuid } from '../../../domain/shared/uuid.vo';
@@ -21,11 +23,11 @@ describe('ListInitialBalanceDocumentsUseCase', () => {
       {
         ticker: 'PETR4',
         year: 2025,
-        averagePrice: 21,
-        totalQuantity: 15,
+        averagePrice: '21',
+        totalQuantity: '15',
         allocations: [
-          { brokerId: clearBrokerId, quantity: 5 },
-          { brokerId: xpBrokerId, quantity: 10 },
+          { brokerId: clearBrokerId, quantity: '5' },
+          { brokerId: xpBrokerId, quantity: '10' },
         ],
       },
     ]);
@@ -34,11 +36,11 @@ describe('ListInitialBalanceDocumentsUseCase', () => {
         ticker: 'PETR4',
         assetType: AssetType.Stock,
         year: 2025,
-        totalQuantity: 15,
-        averagePrice: 21,
+        totalQuantity: Quantity.from(15),
+        averagePrice: Money.from(21),
         brokerBreakdown: [
-          { brokerId: Uuid.from(clearBrokerId), quantity: 5 },
-          { brokerId: Uuid.from(xpBrokerId), quantity: 10 },
+          { brokerId: Uuid.from(clearBrokerId), quantity: Quantity.from('5') },
+          { brokerId: Uuid.from(xpBrokerId), quantity: Quantity.from('10') },
         ],
       }),
     ]);
@@ -52,11 +54,11 @@ describe('ListInitialBalanceDocumentsUseCase', () => {
           ticker: 'PETR4',
           year: 2025,
           assetType: AssetType.Stock,
-          averagePrice: 21,
-          totalQuantity: 15,
+          averagePrice: '21',
+          totalQuantity: '15',
           allocations: [
-            { brokerId: clearBrokerId, quantity: 5 },
-            { brokerId: xpBrokerId, quantity: 10 },
+            { brokerId: clearBrokerId, quantity: '5' },
+            { brokerId: xpBrokerId, quantity: '10' },
           ],
         },
       ],

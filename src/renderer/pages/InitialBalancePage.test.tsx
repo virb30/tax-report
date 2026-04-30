@@ -24,12 +24,12 @@ function createDocument(overrides: Partial<InitialBalanceDocument> = {}): Initia
     ticker: 'IVVB11',
     year: 2025,
     assetType: AssetType.Etf,
-    averagePrice: 300,
+    averagePrice: '300',
     allocations: [
-      { brokerId: 'broker-xp', quantity: 2 },
-      { brokerId: 'broker-rico', quantity: 1 },
+      { brokerId: 'broker-xp', quantity: '2' },
+      { brokerId: 'broker-rico', quantity: '1' },
     ],
-    totalQuantity: 3,
+    totalQuantity: '3',
     ...overrides,
   };
 }
@@ -184,12 +184,12 @@ describe('InitialBalancePage', () => {
   it('preloads an existing document for editing and replaces it on save', async () => {
     const existingDocument = createDocument();
     const replacedDocument = createDocument({
-      averagePrice: 320,
+      averagePrice: '320',
       allocations: [
-        { brokerId: 'broker-xp', quantity: 5 },
-        { brokerId: 'broker-rico', quantity: 2 },
+        { brokerId: 'broker-xp', quantity: '5' },
+        { brokerId: 'broker-rico', quantity: '2' },
       ],
-      totalQuantity: 7,
+      totalQuantity: '7',
     });
 
     electronApi.listInitialBalanceDocuments

@@ -6,6 +6,8 @@ import type { TransactionRepository } from '../../repositories/transaction.repos
 import { AssetType } from '../../../../shared/types/domain';
 import { Uuid } from '../../../domain/shared/uuid.vo';
 import { AssetPosition } from '../../../domain/portfolio/entities/asset-position.entity';
+import { Quantity } from '../../../domain/portfolio/value-objects/quantity.vo';
+import { Money } from '../../../domain/portfolio/value-objects/money.vo';
 
 describe('DeletePositionUseCase', () => {
   let positionRepo: jest.Mocked<AssetPositionRepository>;
@@ -27,9 +29,9 @@ describe('DeletePositionUseCase', () => {
       ticker: 'PETR4',
       assetType: AssetType.Stock,
       year: 2024,
-      totalQuantity: 100,
-      averagePrice: 25,
-      brokerBreakdown: [{ brokerId,  quantity: 100 }],
+      totalQuantity: Quantity.from(100),
+      averagePrice: Money.from(25),
+      brokerBreakdown: [{ brokerId,  quantity: Quantity.from(100) }],
     }));
 
     const result = await useCase.execute({ ticker: 'PETR4', year: 2024 });
@@ -49,17 +51,17 @@ describe('DeletePositionUseCase', () => {
         ticker: 'PETR4',
         assetType: AssetType.Stock,
         year: 2024,
-        totalQuantity: 100,
-        averagePrice: 25,
-        brokerBreakdown: [{ brokerId, quantity: 100 }],
+        totalQuantity: Quantity.from(100),
+        averagePrice: Money.from(25),
+        brokerBreakdown: [{ brokerId, quantity: Quantity.from(100) }],
       }),
       AssetPosition.restore({
         ticker: 'VALE3',
         assetType: AssetType.Stock,
         year: 2024,
-        totalQuantity: 10,
-        averagePrice: 60,
-        brokerBreakdown: [{ brokerId, quantity: 10 }],
+        totalQuantity: Quantity.from(10),
+        averagePrice: Money.from(60),
+        brokerBreakdown: [{ brokerId, quantity: Quantity.from(10) }],
       }),
     ]);
 

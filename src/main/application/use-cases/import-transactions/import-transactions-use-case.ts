@@ -19,6 +19,8 @@ import type {
 } from '../../../../shared/contracts/preview-import.contract';
 import { TransactionsImportedEvent } from '../../../domain/events/transactions-imported.event';
 import { ImportConfirmReviewResolver } from '../../../domain/ingestion/import-confirm-review-resolver.service';
+import { Money } from '../../../domain/portfolio/value-objects/money.vo';
+import { Quantity } from '../../../domain/portfolio/value-objects/quantity.vo';
 
 type AcceptedTransactionImport = {
   tradeDate: string;
@@ -110,9 +112,9 @@ export class ImportTransactionsUseCase {
         date: row.tradeDate,
         type: row.type,
         ticker: row.ticker,
-        quantity: row.quantity,
-        unitPrice: row.unitPrice,
-        fees: row.fees,
+        quantity: Quantity.from(row.quantity),
+        unitPrice: Money.from(row.unitPrice),
+        fees: Money.from(row.fees),
         brokerId: Uuid.from(row.brokerId),
         sourceType: SourceType.Csv,
         externalRef: createExternalRef({

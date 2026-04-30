@@ -50,6 +50,10 @@ export function EditAssetModal({
     });
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    void handleSave(e);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
@@ -58,7 +62,7 @@ export function EditAssetModal({
           Atualize os dados do emissor ou corrija a classificacao do ativo.
         </p>
 
-        <form onSubmit={void handleSave} className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
             Nome do Emissor
             <input

@@ -3,6 +3,8 @@ import type { AssetPositionRepository } from '../repositories/asset-position.rep
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import { AssetPosition } from '../../domain/portfolio/entities/asset-position.entity';
 import { PositionCalculatorService } from '../../domain/portfolio/services/position-calculator.service';
+import { Money } from '../../domain/portfolio/value-objects/money.vo';
+import { Quantity } from '../../domain/portfolio/value-objects/quantity.vo';
 
 type SyncInitialBalanceDocumentPositionInput = {
   ticker: string;
@@ -11,8 +13,8 @@ type SyncInitialBalanceDocumentPositionInput = {
 };
 
 type SyncInitialBalanceDocumentPositionOutput = {
-  totalQuantity: number;
-  averagePrice: number;
+  totalQuantity: Quantity;
+  averagePrice: Money;
 };
 
 export class InitialBalanceDocumentPositionSyncService {
@@ -39,8 +41,8 @@ export class InitialBalanceDocumentPositionSyncService {
     if (transactions.length === 0) {
       await this.positionRepository.delete(input.ticker, input.year);
       return {
-        totalQuantity: 0,
-        averagePrice: 0,
+        totalQuantity: Quantity.from(0),
+        averagePrice: Money.from(0),
       };
     }
 
@@ -51,11 +53,11 @@ export class InitialBalanceDocumentPositionSyncService {
     });
     const [position] = this.positionCalculator.compute(transactions, [basePosition], input.year);
 
-    if (!position || position.totalQuantity <= 0) {
+    if (!position || position.totalQuantity.isZero()) {
       await this.positionRepository.delete(input.ticker, input.year);
       return {
-        totalQuantity: 0,
-        averagePrice: 0,
+        totalQuantity: Quantity.from(0),
+        averagePrice: Money.from(0),
       };
     }
 

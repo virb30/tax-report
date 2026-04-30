@@ -56,6 +56,10 @@ export class Money {
     return this.amount.lte(decimalOther);
   }
 
+  isNegative(): boolean {
+    return this.amount.isNegative();
+  }
+
   private validate() {
     if (!this.amount.isFinite()) {
       throw new Error('Money amount must be finite.');

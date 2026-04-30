@@ -6,6 +6,8 @@ import { Broker } from '../../domain/portfolio/entities/broker.entity';
 import { Cnpj } from '../../domain/shared/cnpj.vo';
 import { KnexBrokerRepository } from './knex-broker.repository';
 import { KnexPositionRepository } from './knex-position.repository';
+import { Quantity } from '../../domain/portfolio/value-objects/quantity.vo';
+import { Money } from '../../domain/portfolio/value-objects/money.vo';
 
 describe('KnexPositionRepository', () => {
   let database: Knex;
@@ -42,9 +44,9 @@ describe('KnexPositionRepository', () => {
         ticker: 'PETR4',
         assetType: AssetType.Stock,
         year: 2024,
-        totalQuantity: 1,
-        averagePrice: 20,
-        brokerBreakdown: [{ brokerId: nuBroker.id, quantity: 1 }],
+        totalQuantity: Quantity.from(1),
+        averagePrice: Money.from(20),
+        brokerBreakdown: [{ brokerId: nuBroker.id, quantity: Quantity.from(1) }],
       }),
     );
 
@@ -53,15 +55,15 @@ describe('KnexPositionRepository', () => {
         ticker: 'PETR4',
         assetType: AssetType.Stock,
         year: 2024,
-        totalQuantity: 7,
-        averagePrice: 21.43,
-        brokerBreakdown: [{ brokerId: xpBroker.id, quantity: 7 }],
+        totalQuantity: Quantity.from(7),
+        averagePrice: Money.from(21.43),
+        brokerBreakdown: [{ brokerId: xpBroker.id, quantity: Quantity.from(7) }],
       }),
     );
 
     const position = await positionRepository.findByTickerAndYear('PETR4', 2024);
 
-    expect(position?.totalQuantity).toBe(7);
-    expect(position?.brokerBreakdown).toEqual([{ brokerId: xpBroker.id, quantity: 7 }]);
+    expect(position?.totalQuantity.getAmount()).toBe(Quantity.from(7).getAmount());
+    expect(position?.brokerBreakdown).toEqual([{ brokerId: xpBroker.id, quantity: Quantity.from(7) }]);
   });
 });

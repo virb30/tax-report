@@ -4,6 +4,8 @@ import { KnexTransactionRepository } from './knex-transaction.repository';
 import { Transaction } from '../../domain/portfolio/entities/transaction.entity';
 import { Uuid } from '../../domain/shared/uuid.vo';
 import { SourceType, TransactionType } from '../../../shared/types/domain';
+import { Quantity } from '../../domain/portfolio/value-objects/quantity.vo';
+import { Money } from '../../domain/portfolio/value-objects/money.vo';
 
 describe('KnexTransactionRepository', () => {
   let database: Knex;
@@ -53,9 +55,9 @@ describe('KnexTransactionRepository', () => {
         date: '2025-01-01',
         type: TransactionType.InitialBalance,
         ticker: 'PETR4',
-        quantity: 10,
-        unitPrice: 20,
-        fees: 0,
+        quantity: Quantity.from(10),
+        unitPrice: Money.from(20),
+        fees: Money.from(0),
         brokerId: firstBrokerId,
         sourceType: SourceType.Manual,
       }),
@@ -63,9 +65,9 @@ describe('KnexTransactionRepository', () => {
         date: '2025-01-01',
         type: TransactionType.InitialBalance,
         ticker: 'VALE3',
-        quantity: 8,
-        unitPrice: 30,
-        fees: 0,
+        quantity: Quantity.from(8),
+        unitPrice: Money.from(30),
+        fees: Money.from(0),
         brokerId: unaffectedBrokerId,
         sourceType: SourceType.Manual,
       }),
@@ -76,9 +78,9 @@ describe('KnexTransactionRepository', () => {
         date: '2025-01-01',
         type: TransactionType.InitialBalance,
         ticker: 'PETR4',
-        quantity: 7,
-        unitPrice: 25,
-        fees: 0,
+        quantity: Quantity.from(7),
+        unitPrice: Money.from(25),
+        fees: Money.from(0),
         brokerId: secondBrokerId,
         sourceType: SourceType.Manual,
       }),
@@ -93,15 +95,15 @@ describe('KnexTransactionRepository', () => {
 
     expect(petrRows).toEqual([
       {
-        quantity: 7,
-        unit_price: 25,
+        quantity: Quantity.from(7).getAmount(),
+        unit_price: Money.from(25).getAmount(),
         broker_id: secondBrokerId.value,
       },
     ]);
     expect(valeRows).toEqual([
       {
-        quantity: 8,
-        unit_price: 30,
+        quantity: Quantity.from(8).getAmount(),
+        unit_price: Money.from(30).getAmount(),
         broker_id: unaffectedBrokerId.value,
       },
     ]);
@@ -133,9 +135,9 @@ describe('KnexTransactionRepository', () => {
         date: '2025-01-01',
         type: TransactionType.InitialBalance,
         ticker: 'PETR4',
-        quantity: 10,
-        unitPrice: 20,
-        fees: 0,
+        quantity: Quantity.from(10),
+        unitPrice: Money.from(20),
+        fees: Money.from(0),
         brokerId: firstBrokerId,
         sourceType: SourceType.Manual,
       }),
@@ -143,9 +145,9 @@ describe('KnexTransactionRepository', () => {
         date: '2025-01-01',
         type: TransactionType.InitialBalance,
         ticker: 'PETR4',
-        quantity: 5,
-        unitPrice: 20,
-        fees: 0,
+        quantity: Quantity.from(5),
+        unitPrice: Money.from(20),
+        fees: Money.from(0),
         brokerId: secondBrokerId,
         sourceType: SourceType.Manual,
       }),
@@ -156,11 +158,11 @@ describe('KnexTransactionRepository', () => {
     expect(document).toEqual({
       ticker: 'PETR4',
       year: 2025,
-      averagePrice: 20,
-      totalQuantity: 15,
+      averagePrice: Money.from(20).getAmount(),
+      totalQuantity: Quantity.from(15).getAmount(),
       allocations: expect.arrayContaining([
-        { brokerId: firstBrokerId.value, quantity: 10 },
-        { brokerId: secondBrokerId.value, quantity: 5 },
+        { brokerId: firstBrokerId.value, quantity: Quantity.from(10).getAmount() },
+        { brokerId: secondBrokerId.value, quantity: Quantity.from(5).getAmount() },
       ]),
     });
     expect(document?.allocations).toHaveLength(2);

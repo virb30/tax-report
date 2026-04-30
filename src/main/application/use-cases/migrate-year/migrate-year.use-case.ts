@@ -7,6 +7,7 @@ import type { MigrateYearInput } from './migrate-year.input';
 import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
 import { PositionCalculatorService } from '../../../domain/portfolio/services/position-calculator.service';
 import { assertSupportedYear } from '../../../../shared/utils/year';
+import { Money } from '../../../domain/portfolio/value-objects/money.vo';
 
 export class MigrateYearUseCase {
   constructor(
@@ -37,14 +38,14 @@ export class MigrateYearUseCase {
       }
 
       position.brokerBreakdown.forEach((broker) => {
-        if (broker.quantity <= 0) return;
+        if (broker.quantity.toNumber() <= 0) return;
         const transaction = Transaction.create({
           type: TransactionType.InitialBalance,
           date: targetYearStart,
           ticker: position.ticker,
           quantity: broker.quantity,
           unitPrice: position.averagePrice,
-          fees: 0,
+          fees: Money.from(0),
           brokerId: broker.brokerId,
           sourceType: SourceType.Manual,
         });
@@ -63,7 +64,7 @@ export class MigrateYearUseCase {
       input.targetYear,
     );
 
-    const positionsWithQuantity = positionsAtYearEnd.filter((p) => p.totalQuantity > 0);
+    const positionsWithQuantity = positionsAtYearEnd.filter((p) => p.totalQuantity.toNumber() > 0);
 
     if (positionsWithQuantity.length === 0) {
       return {

@@ -1,4 +1,4 @@
-﻿import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AssetType, PendingIssueCode, ReportItemStatus } from '../../shared/types/domain';
 import type { GenerateAssetsReportResult } from '../../shared/contracts/assets-report.contract';
@@ -160,7 +160,9 @@ describe('ReportPage', () => {
     await user.clear(cnpjInput);
     await user.type(cnpjInput, '33.592.510/0001-54');
 
-    await user.click(screen.getByRole('button', { name: 'Salvar Alteracoes' }));
+    const saveForm = screen.getByRole('button', { name: 'Salvar Alteracoes' }).closest('form');
+    expect(saveForm).not.toBeNull();
+    fireEvent.submit(saveForm as HTMLFormElement);
 
     await waitFor(() => {
       expect(electronApi.updateAsset).toHaveBeenCalled();

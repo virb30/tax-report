@@ -1,5 +1,7 @@
 import { AssetType, SourceType, TransactionType } from '../../../shared/types/domain';
 import { Transaction } from '../portfolio/entities/transaction.entity';
+import { Money } from '../portfolio/value-objects/money.vo';
+import { Quantity } from '../portfolio/value-objects/quantity.vo';
 import { Uuid } from '../shared/uuid.vo';
 import { HistoricalPositionService } from './historical-position.service';
 
@@ -17,9 +19,9 @@ describe('HistoricalPositionService', () => {
         date: '2025-01-01',
         type: TransactionType.Buy,
         ticker: 'PETR4',
-        quantity: 5,
-        unitPrice: 20,
-        fees: 0,
+        quantity: Quantity.from(5),
+        unitPrice: Money.from(20),
+        fees: Money.from(0),
         brokerId,
         sourceType: SourceType.Manual,
       }),
@@ -27,9 +29,9 @@ describe('HistoricalPositionService', () => {
         date: '2025-01-01',
         type: TransactionType.InitialBalance,
         ticker: 'PETR4',
-        quantity: 10,
-        unitPrice: 10,
-        fees: 0,
+        quantity: Quantity.from(10),
+        unitPrice: Money.from(10),
+        fees: Money.from(0),
         brokerId,
         sourceType: SourceType.Manual,
       }),

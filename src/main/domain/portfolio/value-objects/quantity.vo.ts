@@ -63,4 +63,8 @@ export class Quantity {
   isZero(): boolean {
     return this.amount.isZero();
   }
+
+  floor(): Quantity {
+    return new Quantity(this.amount.floor().toString());
+  }
 }

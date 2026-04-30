@@ -79,17 +79,12 @@ describe('ImportTransactionsUseCase', () => {
     expect(mockParser.parse).toHaveBeenCalledWith('/tmp/ops.csv');
     expect(mockAssetRepo.save).toHaveBeenCalledTimes(2);
     expect(mockTransactionRepo.saveMany).toHaveBeenCalledTimes(1);
-    const savedTransactions = mockTransactionRepo.saveMany.mock.calls[0]?.[0] as Array<{
-      ticker: string;
-      type: string;
-      fees: number;
-      externalRef?: string;
-    }>;
+    const savedTransactions = mockTransactionRepo.saveMany.mock.calls[0]?.[0];
     expect(savedTransactions).toHaveLength(2);
     expect(savedTransactions[0]?.ticker).toBe('PETR4');
-    expect(savedTransactions[0]?.fees).toBe(0.33);
+    expect(savedTransactions[0]?.fees).toBe('0.33');
     expect(savedTransactions[1]?.ticker).toBe('VALE3');
-    expect(savedTransactions[1]?.fees).toBe(0.67);
+    expect(savedTransactions[1]?.fees).toBe('0.67');
     expect(mockQueue.publish).toHaveBeenCalledWith(
       expect.objectContaining({
         name: TransactionsImportedEvent.name,

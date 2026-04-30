@@ -1,6 +1,8 @@
 import { SourceType, TransactionType } from "../../../../shared/types/domain";
 import { Transaction } from "./transaction.entity";
 import { Uuid } from "../../shared/uuid.vo";
+import { Quantity } from "../value-objects/quantity.vo";
+import { Money } from "../value-objects/money.vo";
 
 describe('TransactionEntity', () => {
 
@@ -10,9 +12,9 @@ describe('TransactionEntity', () => {
       date: '2025-01-01',
       type: TransactionType.Buy,
       ticker: 'PETR4',
-      quantity: 10,
-      unitPrice: 100,
-      fees: 10,
+      quantity: Quantity.from(10),
+      unitPrice: Money.from(100),
+      fees: Money.from(10),
       brokerId: fakeBrokerId,
       sourceType: SourceType.Pdf,
     });
@@ -21,9 +23,9 @@ describe('TransactionEntity', () => {
     expect(transaction.date).toBe('2025-01-01');
     expect(transaction.type).toBe(TransactionType.Buy);
     expect(transaction.ticker).toBe('PETR4');
-    expect(transaction.quantity).toBe(10);
-    expect(transaction.unitPrice).toBe(100);
-    expect(transaction.fees).toBe(10);
+    expect(transaction.quantity).toBe('10');
+    expect(transaction.unitPrice).toBe('100');
+    expect(transaction.fees).toBe('10');
     expect(transaction.brokerId.value).toBe(fakeBrokerId.value);
     expect(transaction.sourceType).toBe(SourceType.Pdf);
   });
@@ -35,9 +37,9 @@ describe('TransactionEntity', () => {
       date: '2025-01-01',
       type: TransactionType.Buy,
       ticker: 'PETR4',
-      quantity: 10,
-      unitPrice: 100,
-      fees: 10,
+      quantity: Quantity.from(10),
+      unitPrice: Money.from(100),
+      fees: Money.from(10),
       brokerId: fakeBrokerId,
       sourceType: SourceType.Pdf,
     });
@@ -45,9 +47,9 @@ describe('TransactionEntity', () => {
     expect(transaction.date).toBe('2025-01-01');
     expect(transaction.type).toBe(TransactionType.Buy);
     expect(transaction.ticker).toBe('PETR4');
-    expect(transaction.quantity).toBe(10);
-    expect(transaction.unitPrice).toBe(100);
-    expect(transaction.fees).toBe(10);
+    expect(transaction.quantity).toBe('10');
+    expect(transaction.unitPrice).toBe('100');
+    expect(transaction.fees).toBe('10');
     expect(transaction.brokerId.value).toBe(fakeBrokerId.value);
     expect(transaction.sourceType).toBe(SourceType.Pdf);
   });

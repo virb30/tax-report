@@ -7,17 +7,17 @@ import { Transaction } from '../../domain/portfolio/entities/transaction.entity'
 import { Uuid } from '../../domain/shared/uuid.vo';
 import { TransactionType } from '../../../shared/types/domain';
 import type { SourceType } from '../../../shared/types/domain';
+import { Quantity } from '../../domain/portfolio/value-objects/quantity.vo';
+import { Money } from '../../domain/portfolio/value-objects/money.vo';
 
 type TransactionRow = {
   id: string;
   date: string;
   type: string;
   ticker: string;
-  quantity: number;
-  unit_price: number;
-  unit_price_cents: number;
-  fees: number;
-  fees_cents: number;
+  quantity: string;
+  unit_price: string;
+  fees: string;
   broker_id: string;
   source_type: string;
   external_ref: string | null;
@@ -30,9 +30,6 @@ type InitialBalanceRow = Pick<
 >;
 
 function toPersistence(record: Transaction): Record<string, unknown> {
-  const unitPriceCents = Math.round(record.unitPrice * 100);
-  const feesCents = Math.round(record.fees * 100);
-
   return {
     id: record.id.value,
     date: record.date,
@@ -40,9 +37,7 @@ function toPersistence(record: Transaction): Record<string, unknown> {
     ticker: record.ticker,
     quantity: record.quantity,
     unit_price: record.unitPrice,
-    unit_price_cents: unitPriceCents,
     fees: record.fees,
-    fees_cents: feesCents,
     broker_id: record.brokerId.value,
     source_type: record.sourceType,
     external_ref: record.externalRef ?? null,
@@ -56,9 +51,9 @@ function toDomain(row: TransactionRow): Transaction {
     date: row.date,
     type: row.type as TransactionType,
     ticker: row.ticker,
-    quantity: row.quantity,
-    unitPrice: row.unit_price,
-    fees: row.fees,
+    quantity: Quantity.from(row.quantity),
+    unitPrice: Money.from(row.unit_price),
+    fees: Money.from(row.fees),
     brokerId: Uuid.from(row.broker_id),
     sourceType: row.source_type as SourceType,
     externalRef: row.external_ref ?? undefined,
@@ -190,12 +185,14 @@ export class KnexTransactionRepository implements TransactionRepository {
           ticker: row.ticker,
           year,
           averagePrice: row.unit_price,
-          totalQuantity: 0,
+          totalQuantity: '0',
           allocations: [],
         } satisfies InitialBalanceDocumentRecord);
 
       document.averagePrice = row.unit_price;
-      document.totalQuantity += row.quantity;
+      document.totalQuantity = Quantity.from(document.totalQuantity)
+        .add(Quantity.from(row.quantity))
+        .getAmount();
       document.allocations.push({
         brokerId: row.broker_id,
         quantity: row.quantity,

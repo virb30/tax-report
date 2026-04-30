@@ -3,11 +3,11 @@ import type { Transaction } from '../../domain/portfolio/entities/transaction.en
 export type InitialBalanceDocumentRecord = {
   ticker: string;
   year: number;
-  averagePrice: number;
-  totalQuantity: number;
+  averagePrice: string;
+  totalQuantity: string;
   allocations: Array<{
     brokerId: string;
-    quantity: number;
+    quantity: string;
   }>;
 };
 

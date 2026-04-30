@@ -27,8 +27,8 @@ export class RecalculatePositionUseCase {
 
     if (positions.length === 0) {
       return {
-        totalQuantity: 0,
-        averagePrice: 0,
+        totalQuantity: '0',
+        averagePrice: '0',
       };
     }
 
@@ -37,8 +37,8 @@ export class RecalculatePositionUseCase {
     await this.positionRepository.save(recalculatedPosition);
 
     return {
-      totalQuantity: recalculatedPosition.totalQuantity,
-      averagePrice: recalculatedPosition.averagePrice,
+      totalQuantity: recalculatedPosition.totalQuantity.getAmount(),
+      averagePrice: recalculatedPosition.averagePrice.getAmount(),
     };
   }
 

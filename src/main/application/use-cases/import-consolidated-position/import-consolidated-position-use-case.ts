@@ -25,6 +25,8 @@ import type { Broker } from '../../../domain/portfolio/entities/broker.entity';
 import { Asset } from '../../../domain/portfolio/entities/asset.entity';
 import { ImportConfirmReviewResolver } from '../../../domain/ingestion/import-confirm-review-resolver.service';
 import { ImportPreviewReviewResolver } from '../../../domain/ingestion/import-preview-review-resolver.service';
+import { Money } from '../../../domain/portfolio/value-objects/money.vo';
+import { Quantity } from '../../../domain/portfolio/value-objects/quantity.vo';
 
 type ResolvedRow = {
   ticker: string;
@@ -111,9 +113,9 @@ export class ImportConsolidatedPositionUseCase {
           date: `${input.year}-01-01`,
           type: TransactionType.InitialBalance,
           ticker: row.ticker,
-          quantity: row.quantity,
-          unitPrice: row.averagePrice,
-          fees: 0,
+          quantity: Quantity.from(row.quantity),
+          unitPrice: Money.from(row.averagePrice),
+          fees: Money.from(0),
           brokerId: Uuid.from(row.brokerId),
           sourceType: SourceType.Csv,
         }),

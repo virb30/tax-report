@@ -24,7 +24,7 @@ export class GenerateAssetsReportUseCase {
     const assetsData = await this.assetRepository.findByTickersList(tickers);
     const transactionsByTicker = new Map(
       await Promise.all(
-        tickers.map(async (ticker) => [ticker, await this.transactionRepository.findByTicker(ticker)]),
+        tickers.map(async (ticker) => [ticker, await this.transactionRepository.findByTicker(ticker)] as const),
       ),
     );
     const reportGenerator = new ReportGenerator({

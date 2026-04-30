@@ -1,5 +1,7 @@
 import { mock, mockReset } from 'jest-mock-extended';
 import { AssetType } from '../../../../shared/types/domain';
+import { Money } from '../../../domain/portfolio/value-objects/money.vo';
+import { Quantity } from '../../../domain/portfolio/value-objects/quantity.vo';
 import { Uuid } from '../../../domain/shared/uuid.vo';
 import type { TransactionRepository } from '../../repositories/transaction.repository';
 import type { InitialBalanceDocumentPositionSyncService } from '../../services/initial-balance-document-position-sync.service';
@@ -19,8 +21,8 @@ describe('SaveInitialBalanceDocumentUseCase', () => {
       undefined,
     );
     positionSyncService.sync.mockResolvedValue({
-      totalQuantity: 15,
-      averagePrice: 21,
+      totalQuantity: Quantity.from(15),
+      averagePrice: Money.from(21),
     });
     useCase = new SaveInitialBalanceDocumentUseCase(transactionRepository, positionSyncService);
   });
@@ -33,10 +35,10 @@ describe('SaveInitialBalanceDocumentUseCase', () => {
       ticker: 'PETR4',
       year: 2025,
       assetType: AssetType.Stock,
-      averagePrice: 21,
+      averagePrice: '21',
       allocations: [
-        { brokerId: xpBrokerId, quantity: 10 },
-        { brokerId: clearBrokerId, quantity: 5 },
+        { brokerId: xpBrokerId, quantity: '10' },
+        { brokerId: clearBrokerId, quantity: '5' },
       ],
     });
 
@@ -86,8 +88,8 @@ describe('SaveInitialBalanceDocumentUseCase', () => {
         ticker: 'PETR4',
         year: 2025,
         assetType: AssetType.Stock,
-        averagePrice: 21,
-        allocations: [{ brokerId: xpBrokerId, quantity: 0 }],
+        averagePrice: '21',
+        allocations: [{ brokerId: xpBrokerId, quantity: '0' }],
       }),
     ).rejects.toThrow('Quantidade deve ser maior que zero.');
 

@@ -10,6 +10,7 @@ import type { SaveInitialBalanceDocumentUseCase } from '../../../application/use
 import { AssetResolutionStatus, AssetType } from '../../../../shared/types/domain';
 import { createPortfolioIpcHandlers } from './portfolio-ipc-handlers';
 
+
 describe('createPortfolioIpcHandlers', () => {
   const saveInitialBalanceDocumentUseCase = mock<SaveInitialBalanceDocumentUseCase>();
   const listInitialBalanceDocumentsUseCase = mock<ListInitialBalanceDocumentsUseCase>();
@@ -49,9 +50,9 @@ describe('createPortfolioIpcHandlers', () => {
       ticker: 'PETR4',
       year: 2025,
       assetType: AssetType.Stock,
-      averagePrice: 30,
-      allocations: [{ brokerId: 'broker-xp', quantity: 10 }],
-      totalQuantity: 10,
+      averagePrice: '30',
+      allocations: [{ brokerId: 'broker-xp', quantity: '10' }],
+      totalQuantity: '10',
     });
     listInitialBalanceDocumentsUseCase.execute.mockResolvedValue({
       items: [
@@ -59,9 +60,9 @@ describe('createPortfolioIpcHandlers', () => {
           ticker: 'PETR4',
           year: 2025,
           assetType: AssetType.Stock,
-          averagePrice: 30,
-          allocations: [{ brokerId: 'broker-xp', quantity: 10 }],
-          totalQuantity: 10,
+          averagePrice: '30',
+          allocations: [{ brokerId: 'broker-xp', quantity: '10' }],
+          totalQuantity: '10',
         },
       ],
     });

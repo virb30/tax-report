@@ -1,62 +1,60 @@
 import { Money } from '../value-objects/money.vo';
-import { Quantity } from '../value-objects/quantity.vo';
+import type { Quantity } from '../value-objects/quantity.vo';
 import type { AssetPosition } from '../entities/asset-position.entity';
 
 type CalculateAveragePriceInput = {
-  buyQuantity: number;
-  buyUnitPrice: number;
-  operationalCosts: number;
+  buyQuantity: Quantity;
+  buyUnitPrice: Money;
+  operationalCosts: Money;
 };
 
 
 export class AveragePriceService {
-  calculateAfterBuy(position: AssetPosition, input: CalculateAveragePriceInput): number {
-    const currentQuantity = Quantity.from(position.totalQuantity);
-    const buyQuantity = Quantity.from(input.buyQuantity);
+  calculateAfterBuy(position: AssetPosition, input: CalculateAveragePriceInput): Money {
+    const currentQuantity = position.totalQuantity;
+    const buyQuantity = input.buyQuantity;
     if (buyQuantity.isZero()) {
       throw new Error('Buy quantity must be greater than zero.');
     }
 
-    const buyUnitPrice = Money.from(input.buyUnitPrice);
-    const operationalCosts = Money.from(input.operationalCosts);
+    const buyUnitPrice = input.buyUnitPrice;
+    const operationalCosts = input.operationalCosts;
 
-    const currentTotalCost = Money.from(position.totalCost);
-    const buyTotalCost = buyUnitPrice.multiplyBy(buyQuantity.toNumber());
+    const currentTotalCost = position.totalCost;
+    const buyTotalCost = buyUnitPrice.multiplyBy(buyQuantity.getAmount());
     const nextTotalCost = currentTotalCost.add(buyTotalCost).add(operationalCosts);
     const nextQuantity = currentQuantity.add(buyQuantity);
 
-    return nextTotalCost.divideBy(nextQuantity.toNumber()).toNumber();
+    return nextTotalCost.divideBy(nextQuantity.getAmount());
   }
 
   calculateAfterBonus(
     position: AssetPosition,
-    bonusQty: number,
-    unitCost: number,
-  ): number {
-    const bonusQuantity = Quantity.from(bonusQty);
-    if (bonusQuantity.isZero()) {
+    bonusQty: Quantity,
+    unitCost: Money,
+  ): Money {
+    if (bonusQty.isZero()) {
       throw new Error('Bonus quantity must be greater than zero.');
     }
 
-    const currentTotalCost = Money.from(position.totalCost);
-    const bonusCost = Money.from(unitCost).multiplyBy(bonusQuantity.toNumber());
+    const currentTotalCost = position.totalCost;
+    const bonusCost = unitCost.multiplyBy(bonusQty.getAmount());
     const nextTotalCost = currentTotalCost.add(bonusCost);
-    const nextQuantity = Quantity.from(position.totalQuantity).add(bonusQuantity);
+    const nextQuantity = position.totalQuantity.add(bonusQty);
 
     if (nextQuantity.isZero()) {
       throw new Error('Total quantity after bonus must be greater than zero.');
     }
 
-    return nextTotalCost.divideBy(nextQuantity.toNumber()).toNumber();
+    return nextTotalCost.divideBy(nextQuantity.getAmount());
   }
 
-  calculateAfterQuantityChange(position: AssetPosition, nextFreq: number): number {
-    const nextQuantity = Quantity.from(nextFreq);
-    if (nextQuantity.isZero()) {
-      return 0;
+  calculateAfterQuantityChange(position: AssetPosition, nextFreq: Quantity): Money {
+    if (nextFreq.isZero()) {
+      return Money.from(0);
     }
 
-    const currentTotalCost = Money.from(position.totalCost);
-    return currentTotalCost.divideBy(nextQuantity.toNumber()).toNumber();
+    const currentTotalCost = position.totalCost;
+    return currentTotalCost.divideBy(nextFreq.getAmount());
   }
 }

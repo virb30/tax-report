@@ -63,14 +63,14 @@ export function InitialBalanceDocumentsTable({
                   <tr key={documentKey} className="border-t align-top">
                     <td className="px-3 py-2 font-medium">{document.ticker}</td>
                     <td className="px-3 py-2">{document.assetType}</td>
-                    <td className="px-3 py-2">{document.totalQuantity.toFixed(2)}</td>
-                    <td className="px-3 py-2">R$ {document.averagePrice.toFixed(2)}</td>
+                    <td className="px-3 py-2">{Number(document.totalQuantity).toFixed(2)}</td>
+                    <td className="px-3 py-2">R$ {Number(document.averagePrice).toFixed(2)}</td>
                     <td className="px-3 py-2">
                       <ul className="space-y-1">
                         {document.allocations.map((allocation) => (
                           <li key={`${documentKey}:${allocation.brokerId}`}>
                             {brokerNameById.get(allocation.brokerId) ?? allocation.brokerId}:{' '}
-                            {allocation.quantity.toFixed(2)}
+                            {Number(allocation.quantity).toFixed(2)}
                           </li>
                         ))}
                       </ul>

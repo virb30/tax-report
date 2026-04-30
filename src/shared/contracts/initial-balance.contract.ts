@@ -3,23 +3,23 @@ import type { IpcResult } from '../ipc/ipc-result';
 
 export type InitialBalanceAllocationInput = {
   brokerId: string;
-  quantity: number;
+  quantity: string;
 };
 
 export type InitialBalanceDocument = {
   ticker: string;
   year: number;
   assetType: AssetType;
-  averagePrice: number;
+  averagePrice: string;
   allocations: InitialBalanceAllocationInput[];
-  totalQuantity: number;
+  totalQuantity: string;
 };
 
 export type SaveInitialBalanceDocumentCommand = {
   ticker: string;
   year: number;
   assetType: AssetType;
-  averagePrice: number;
+  averagePrice: string;
   allocations: InitialBalanceAllocationInput[];
 };
 

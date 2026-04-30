@@ -21,12 +21,12 @@ describe('App critical UI flows (E2E)', () => {
       ticker: 'IVVB11',
       year: 2025,
       assetType: AssetType.Etf,
-      averagePrice: 300,
+      averagePrice: '300',
       allocations: [
-        { brokerId: 'broker-xp', quantity: 2 },
-        { brokerId: 'broker-rico', quantity: 1 },
+        { brokerId: 'broker-xp', quantity: '2' },
+        { brokerId: 'broker-rico', quantity: '1' },
       ],
-      totalQuantity: 3,
+      totalQuantity: '3',
       ...overrides,
     };
   }
@@ -146,9 +146,9 @@ describe('App critical UI flows (E2E)', () => {
         data: {
           items: [
             createDocument({
-              averagePrice: 320,
-              allocations: [{ brokerId: 'broker-xp', quantity: 5 }],
-              totalQuantity: 5,
+              averagePrice: '320',
+              allocations: [{ brokerId: 'broker-xp', quantity: '5' }],
+              totalQuantity: '5',
             }),
           ],
         },

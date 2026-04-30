@@ -1,14 +1,16 @@
 import { type SourceType, TransactionType } from '../../../../shared/types/domain';
 import { Uuid } from '../../shared/uuid.vo';
+import type { Money } from '../value-objects/money.vo';
+import type { Quantity } from '../value-objects/quantity.vo';
 
 interface TransactionProps {
   id: Uuid;
   date: string;
   type: TransactionType;
   ticker: string;
-  quantity: number;
-  unitPrice: number;
-  fees: number;
+  quantity: Quantity;
+  unitPrice: Money;
+  fees: Money;
   brokerId: Uuid;
   sourceType: SourceType;
   externalRef?: string;
@@ -23,9 +25,9 @@ export class Transaction {
   readonly date: string;
   readonly type: TransactionType;
   readonly ticker: string;
-  readonly quantity: number;
-  readonly unitPrice: number;
-  readonly fees: number;
+  private readonly _quantity: Quantity;
+  private readonly _unitPrice: Money;
+  private readonly _fees: Money;
   readonly brokerId: Uuid;
   readonly sourceType: SourceType;
   readonly externalRef?: string;
@@ -36,9 +38,9 @@ export class Transaction {
     this.date = props.date;
     this.type = props.type;
     this.ticker = props.ticker;
-    this.quantity = props.quantity;
-    this.unitPrice = props.unitPrice;
-    this.fees = props.fees;
+    this._quantity = props.quantity;
+    this._unitPrice = props.unitPrice;
+    this._fees = props.fees;
     this.brokerId = props.brokerId;
     this.sourceType = props.sourceType;
     this.externalRef = props.externalRef;
@@ -79,5 +81,17 @@ export class Transaction {
 
   isInitialBalance(): boolean {
     return this.type === TransactionType.InitialBalance;
+  }
+
+  get quantity(): string {
+    return this._quantity.getAmount();
+  }
+
+  get unitPrice(): string {
+    return this._unitPrice.getAmount();
+  }
+
+  get fees(): string {
+    return this._fees.getAmount();
   }
 }

@@ -1,10 +1,11 @@
-﻿import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AssetType } from '../../shared/types/domain';
 import type { ElectronApi } from '../../shared/types/electron-api';
 import { AssetsPage } from './AssetsPage';
 import { mockReset } from 'jest-mock-extended';
 import mock, { type MockProxy } from 'jest-mock-extended/lib/Mock';
+import type { AssetCatalogItem } from '../../shared/contracts/assets.contract';
 
 function createElectronApiMock(electronApiBaseMock: MockProxy<ElectronApi>): ElectronApi {
   mockReset(electronApiBaseMock);
@@ -66,7 +67,7 @@ describe('AssetsPage', () => {
         { ticker: 'PETR4', assetType: AssetType.Stock, name: 'Petrobras', cnpj: null, resolutionSource: null, isReportReadyMetadata: false }
       ]
     });
-    electronApi.updateAsset.mockResolvedValue({ success: true, asset: {} as any });
+    electronApi.updateAsset.mockResolvedValue({ success: true, asset: {} as AssetCatalogItem });
 
     const user = userEvent.setup();
     render(<AssetsPage />);
@@ -80,7 +81,9 @@ describe('AssetsPage', () => {
     const cnpjInput = screen.getByPlaceholderText('00.000.000/0000-00');
     await user.type(cnpjInput, '90.400.888/0001-42');
 
-    await user.click(screen.getByRole('button', { name: 'Salvar Alteracoes' }));
+    const saveForm = screen.getByRole('button', { name: 'Salvar Alteracoes' }).closest('form');
+    expect(saveForm).not.toBeNull();
+    fireEvent.submit(saveForm as HTMLFormElement);
 
     await waitFor(() => {
       expect(electronApi.updateAsset).toHaveBeenCalledWith(expect.objectContaining({
@@ -100,7 +103,7 @@ describe('AssetsPage', () => {
       success: true,
       repair: { ticker: 'IVVB11', assetType: AssetType.Etf, affectedYears: [2024], reprocessedCount: 1 }
     });
-    electronApi.updateAsset.mockResolvedValue({ success: true, asset: {} as any });
+    electronApi.updateAsset.mockResolvedValue({ success: true, asset: {} as AssetCatalogItem });
 
     const user = userEvent.setup();
     render(<AssetsPage />);
@@ -114,7 +117,9 @@ describe('AssetsPage', () => {
     const typeSelect = screen.getByRole('combobox');
     await user.selectOptions(typeSelect, AssetType.Etf);
 
-    await user.click(screen.getByRole('button', { name: 'Salvar Alteracoes' }));
+    const saveForm = screen.getByRole('button', { name: 'Salvar Alteracoes' }).closest('form');
+    expect(saveForm).not.toBeNull();
+    fireEvent.submit(saveForm as HTMLFormElement);
 
     await waitFor(() => {
       expect(electronApi.repairAssetType).toHaveBeenCalledWith({
