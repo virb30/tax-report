@@ -51,13 +51,31 @@ export class Money {
     return this.amount.toDecimalPlaces(DEFAULT_DECIMAL_PLACES).toString();
   }
 
+  toNumber(): number {
+    return Number(this.amount.toFixed(2));
+  }
+
   isLessThanOrEqualTo(other: string | number): boolean {
     const decimalOther = new Decimal(other);
     return this.amount.lte(decimalOther);
   }
 
+  isGreaterThanOrEqualTo(other: string | number): boolean {
+    const decimalOther = new Decimal(other);
+    return this.amount.gte(decimalOther);
+  }
+
+  isGreaterThan(other: string | number): boolean {
+    const decimalOther = new Decimal(other);
+    return this.amount.gt(decimalOther);
+  }
+
   isNegative(): boolean {
     return this.amount.isNegative();
+  }
+
+  isZero(): boolean {
+    return this.amount.isZero();
   }
 
   private validate() {

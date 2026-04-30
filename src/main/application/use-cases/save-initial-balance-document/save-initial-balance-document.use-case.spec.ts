@@ -47,21 +47,19 @@ describe('SaveInitialBalanceDocumentUseCase', () => {
     ).toHaveBeenCalledWith(
       'PETR4',
       2025,
-      expect.arrayContaining([
-        expect.objectContaining({
-          ticker: 'PETR4',
-          quantity: 10,
-          unitPrice: 21,
-          date: '2025-01-01',
-        }),
-        expect.objectContaining({
-          ticker: 'PETR4',
-          quantity: 5,
-          unitPrice: 21,
-          date: '2025-01-01',
-        }),
-      ]),
+      expect.any(Array),
     );
+    const savedTransactions =
+      transactionRepository.replaceInitialBalanceTransactionsForTickerAndYear.mock.calls[0]?.[2] ?? [];
+    expect(savedTransactions).toHaveLength(2);
+    expect(savedTransactions[0]?.ticker).toBe('PETR4');
+    expect(savedTransactions[0]?.quantity.getAmount()).toBe('10');
+    expect(savedTransactions[0]?.unitPrice.getAmount()).toBe('21');
+    expect(savedTransactions[0]?.date).toBe('2025-01-01');
+    expect(savedTransactions[1]?.ticker).toBe('PETR4');
+    expect(savedTransactions[1]?.quantity.getAmount()).toBe('5');
+    expect(savedTransactions[1]?.unitPrice.getAmount()).toBe('21');
+    expect(savedTransactions[1]?.date).toBe('2025-01-01');
     expect(positionSyncService.sync).toHaveBeenCalledWith({
       ticker: 'PETR4',
       year: 2025,
@@ -71,12 +69,12 @@ describe('SaveInitialBalanceDocumentUseCase', () => {
       ticker: 'PETR4',
       year: 2025,
       assetType: AssetType.Stock,
-      averagePrice: 21,
+      averagePrice: '21',
       allocations: [
-        { brokerId: xpBrokerId, quantity: 10 },
-        { brokerId: clearBrokerId, quantity: 5 },
+        { brokerId: xpBrokerId, quantity: '10' },
+        { brokerId: clearBrokerId, quantity: '5' },
       ],
-      totalQuantity: 15,
+      totalQuantity: '15',
     });
   });
 

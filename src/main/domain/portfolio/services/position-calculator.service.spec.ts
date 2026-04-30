@@ -51,7 +51,7 @@ describe('PositionCalculator', () => {
 
     expect(positions).toHaveLength(1);
     expect(positions[0].ticker).toBe('PETR4');
-    expect(positions[0].totalQuantity).toBe(120);
+    expect(positions[0].totalQuantity.getAmount()).toBe('120');
     expect(positions[0].year).toBe(2024);
   });
 
@@ -78,7 +78,7 @@ describe('PositionCalculator', () => {
     const positions = calculator.compute(transactions, [basePosition], 2024);
 
     expect(positions[0].assetType).toBe(AssetType.Fii);
-    expect(positions[0].totalQuantity).toBe(10);
+    expect(positions[0].totalQuantity.getAmount()).toBe('10');
   });
 
   it('returns multiple positions for multiple tickers', () => {
@@ -110,8 +110,8 @@ describe('PositionCalculator', () => {
     expect(positions).toHaveLength(2);
     const petr = positions.find((p) => p.ticker === 'PETR4');
     const vale = positions.find((p) => p.ticker === 'VALE3');
-    expect(petr?.totalQuantity).toBe(100);
-    expect(vale?.totalQuantity).toBe(50);
+    expect(petr?.totalQuantity.getAmount()).toBe('100');
+    expect(vale?.totalQuantity.getAmount()).toBe('50');
   });
 
   it('processes Split and ReverseSplit', () => {
@@ -150,7 +150,7 @@ describe('PositionCalculator', () => {
 
     const positions = calculator.compute(transactions, [], 2024);
 
-    expect(positions[0].totalQuantity).toBe(4);
-    expect(positions[0].averagePrice).toBe(250);
+    expect(positions[0].totalQuantity.getAmount()).toBe('4');
+    expect(positions[0].averagePrice.getAmount()).toBe('250');
   });
 });

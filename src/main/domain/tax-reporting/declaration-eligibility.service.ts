@@ -1,12 +1,13 @@
 import { AssetType, ReportItemStatus } from '../../../shared/types/domain';
+import type { Money } from '../portfolio/value-objects/money.vo';
 
 const STOCK_AND_BDR_THRESHOLD = 1000;
 const FII_AND_ETF_THRESHOLD = 140;
 
 export type DeclarationEligibilityInput = {
   assetType: AssetType;
-  previousYearValue: number;
-  currentYearValue: number;
+  previousYearValue: Money;
+  currentYearValue: Money;
   hasPendingIssues: boolean;
   isSupported: boolean;
 };
@@ -39,7 +40,7 @@ export class DeclarationEligibilityService {
       };
     }
 
-    if (input.previousYearValue > 0) {
+    if (input.previousYearValue.isGreaterThan(0)) {
       return {
         status: ReportItemStatus.Optional,
         reason: 'held_in_previous_year',
@@ -52,14 +53,14 @@ export class DeclarationEligibilityService {
     };
   }
 
-  private meetsThreshold(assetType: AssetType, currentYearValue: number): boolean {
+  private meetsThreshold(assetType: AssetType, currentYearValue: Money): boolean {
     switch (assetType) {
       case AssetType.Stock:
       case AssetType.Bdr:
-        return currentYearValue >= STOCK_AND_BDR_THRESHOLD;
+        return currentYearValue.isGreaterThanOrEqualTo(STOCK_AND_BDR_THRESHOLD);
       case AssetType.Fii:
       case AssetType.Etf:
-        return currentYearValue > FII_AND_ETF_THRESHOLD;
+        return currentYearValue.isGreaterThan(FII_AND_ETF_THRESHOLD);
       default:
         return false;
     }

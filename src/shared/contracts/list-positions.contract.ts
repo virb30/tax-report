@@ -10,15 +10,15 @@ export type BrokerBreakdownItem = {
   brokerId: string;
   brokerName: string;
   brokerCnpj: string;
-  quantity: number;
+  quantity: string;
 };
 
 export type PositionListItem = {
   ticker: string;
   assetType: AssetType;
-  totalQuantity: number;
-  averagePrice: number;
-  totalCost: number;
+  totalQuantity: string;
+  averagePrice: string;
+  totalCost: string;
   brokerBreakdown: BrokerBreakdownItem[];
 };
 

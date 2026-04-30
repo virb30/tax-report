@@ -21,15 +21,15 @@ export class ListPositionsUseCase {
           brokerId: allocation.brokerId.value,
           brokerName: broker?.name ?? allocation.brokerId.value,
           brokerCnpj: broker?.cnpj?.value ?? '',
-          quantity: allocation.quantity.toNumber(),
+          quantity: allocation.quantity.getAmount(),
         };
       });
       return {
         ticker: position.ticker,
         assetType: position.assetType,
-        totalQuantity: position.totalQuantity.toNumber(),
-        averagePrice: position.averagePrice.toNumber(),
-        totalCost: position.totalCost.toNumber(),
+        totalQuantity: position.totalQuantity.getAmount(),
+        averagePrice: position.averagePrice.getAmount(),
+        totalCost: position.totalCost.getAmount(),
         brokerBreakdown,
       };
     });

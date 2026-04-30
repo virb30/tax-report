@@ -62,7 +62,8 @@ export class SaveInitialBalanceDocumentUseCase {
       invalidTypeMessage: 'Ano inválido.',
       outOfRangeMessage: 'Ano deve estar entre 2000 e 2100.',
     });
-    if (typeof input.averagePrice !== 'number' || input.averagePrice <= 0) {
+    const averagePrice = Number(input.averagePrice);
+    if (input.averagePrice.trim().length === 0 || Number.isNaN(averagePrice) || averagePrice <= 0) {
       throw new Error('Preço médio deve ser maior que zero.');
     }
     if (input.allocations.length === 0) {
@@ -73,7 +74,8 @@ export class SaveInitialBalanceDocumentUseCase {
       if (typeof allocation.brokerId !== 'string' || allocation.brokerId.trim().length === 0) {
         throw new Error('Corretora é obrigatória.');
       }
-      if (typeof allocation.quantity !== 'number' || allocation.quantity <= 0) {
+      const quantity = Number(allocation.quantity);
+      if (allocation.quantity.trim().length === 0 || Number.isNaN(quantity) || quantity <= 0) {
         throw new Error('Quantidade deve ser maior que zero.');
       }
     }

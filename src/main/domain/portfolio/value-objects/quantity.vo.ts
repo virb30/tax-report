@@ -55,6 +55,10 @@ export class Quantity {
     return this.amount.toDecimalPlaces(8).toString();
   }
 
+  toNumber(): number {
+    return this.amount.toNumber();
+  }
+
   isLessThanOrEqualTo(other: string | number): boolean {
     const decimalOther = new Decimal(other);
     return this.amount.lte(decimalOther);

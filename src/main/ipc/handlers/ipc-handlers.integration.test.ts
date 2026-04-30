@@ -56,6 +56,8 @@ import { AssetPosition } from '../../domain/portfolio/entities/asset-position.en
 import { Broker } from '../../domain/portfolio/entities/broker.entity';
 import { Transaction } from '../../domain/portfolio/entities/transaction.entity';
 import { Cnpj } from '../../domain/shared/cnpj.vo';
+import { Money } from '../../domain/portfolio/value-objects/money.vo';
+import { Quantity } from '../../domain/portfolio/value-objects/quantity.vo';
 import { SheetjsSpreadsheetFileReader } from '../../infrastructure/adapters/file-readers/sheetjs.spreadsheet.file-reader';
 import { BrokersIpcRegistrar } from '../registrars/brokers-ipc-registrar';
 import { AssetsIpcRegistrar } from '../registrars/assets-ipc-registrar';
@@ -278,8 +280,8 @@ describe('IPC handlers integration', () => {
       ticker: 'IVVB11',
       year: 2025,
       assetType: AssetType.Etf,
-      averagePrice: 300,
-      allocations: [{ brokerId: xpBroker.id.value, quantity: 2 }],
+      averagePrice: '300',
+      allocations: [{ brokerId: xpBroker.id.value, quantity: '2' }],
     });
 
     const documentsResult = (await listInitialBalanceDocumentsHandler(ipcEvent, {
@@ -289,7 +291,7 @@ describe('IPC handlers integration', () => {
       data: {
         items: Array<{
           ticker: string;
-          allocations: Array<{ brokerId: string; quantity: number }>;
+          allocations: Array<{ brokerId: string; quantity: string }>;
         }>;
       };
     };
@@ -298,9 +300,9 @@ describe('IPC handlers integration', () => {
         ticker: 'IVVB11',
         year: 2025,
         assetType: AssetType.Etf,
-        averagePrice: 300,
-        allocations: [{ brokerId: xpBroker.id.value, quantity: 2 }],
-        totalQuantity: 2,
+        averagePrice: '300',
+        allocations: [{ brokerId: xpBroker.id.value, quantity: '2' }],
+        totalQuantity: '2',
       },
     ]);
 
@@ -541,9 +543,9 @@ describe('IPC handlers integration', () => {
         date: '2024-01-10',
         type: TransactionType.Buy,
         ticker: 'HGLG11',
-        quantity: 1,
-        unitPrice: 100,
-        fees: 0,
+        quantity: Quantity.from(1),
+        unitPrice: Money.from(100),
+        fees: Money.from(0),
         brokerId: repairBroker.id,
         sourceType: SourceType.Csv,
       }),
@@ -551,9 +553,9 @@ describe('IPC handlers integration', () => {
         date: '2025-01-10',
         type: TransactionType.Buy,
         ticker: 'HGLG11',
-        quantity: 1,
-        unitPrice: 100,
-        fees: 0,
+        quantity: Quantity.from(1),
+        unitPrice: Money.from(100),
+        fees: Money.from(0),
         brokerId: repairBroker.id,
         sourceType: SourceType.Csv,
       }),

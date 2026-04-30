@@ -11,6 +11,7 @@ import type { Broker } from '../portfolio/entities/broker.entity';
 import type { Transaction } from '../portfolio/entities/transaction.entity';
 import { DeclarationEligibilityService } from './declaration-eligibility.service';
 import { HistoricalPositionService } from './historical-position.service';
+import { Money } from '../portfolio/value-objects/money.vo';
 
 const STOCK_CLASSIFICATION = { group: '03', code: '01' } as const;
 const FII_CLASSIFICATION = { group: '07', code: '03' } as const;
@@ -104,11 +105,13 @@ export class ReportGenerator {
     const result: ReportItemOutput[] = [];
 
     for (const position of positions) {
-      if (position.totalQuantity <= 0) {
+      if (position.totalQuantity.isLessThanOrEqualTo(0)) {
         continue;
       }
 
-      const currentYearValue = this.roundCurrency(position.totalQuantity * position.averagePrice);
+      const { totalQuantity, averagePrice } = position;
+
+      const currentYearValue = averagePrice.multiplyBy(totalQuantity.getAmount());
       const previousYearPosition = this.historicalPositionService.reconstructYearEndPosition(
         position.ticker,
         position.assetType,
@@ -116,8 +119,8 @@ export class ReportGenerator {
         this.dependencies.transactionsByTicker.get(position.ticker) ?? [],
       );
       const previousYearValue = previousYearPosition
-        ? this.roundCurrency(previousYearPosition.totalQuantity * previousYearPosition.averagePrice)
-        : 0;
+        ? previousYearPosition.averagePrice.multiplyBy(previousYearPosition.totalQuantity.getAmount())
+        : Money.from(0);
       const asset = this.assetsMap.get(position.ticker) ?? null;
       const pendingIssues = this.buildPendingIssues(asset, position.assetType);
       const isSupported = this.isSupportedAssetType(position.assetType);
@@ -129,18 +132,19 @@ export class ReportGenerator {
         isSupported,
       });
       const brokersSummary = position.brokerBreakdown
-        .filter((allocation) => allocation.quantity > 0)
+        .filter((allocation) => allocation.quantity.toNumber() > 0)
         .map((allocation) => {
           const broker = this.brokersMap.get(allocation.brokerId.value);
           const brokerName = broker?.name ?? 'Corretora nao cadastrada';
           const brokerCnpj = broker?.cnpj?.value ?? 'N/A';
+          const brokerQuantity = allocation.quantity.toNumber();
 
           return {
             brokerId: allocation.brokerId.value,
             brokerName,
             cnpj: brokerCnpj,
-            quantity: allocation.quantity,
-            totalCost: this.roundCurrency(allocation.quantity * position.averagePrice),
+            quantity: brokerQuantity,
+            totalCost: averagePrice.multiplyBy(brokerQuantity).toNumber(),
           };
         });
 
@@ -156,11 +160,11 @@ export class ReportGenerator {
       result.push({
         ticker: position.ticker,
         assetType: position.assetType,
-        totalQuantity: position.totalQuantity,
-        averagePrice: position.averagePrice,
-        previousYearValue,
-        currentYearValue,
-        acquiredInYear: previousYearValue === 0 && currentYearValue > 0,
+        totalQuantity: totalQuantity.toNumber(),
+        averagePrice: averagePrice.toNumber(),
+        previousYearValue: previousYearValue.toNumber(),
+        currentYearValue: currentYearValue.toNumber(),
+        acquiredInYear: previousYearValue.isZero() && currentYearValue.isGreaterThan(0),
         revenueClassification: getRevenueClassification(position.assetType),
         status: eligibility.status,
         eligibilityReason: eligibility.reason,
@@ -169,12 +173,12 @@ export class ReportGenerator {
         description:
           canCopy && asset?.issuerCnpj
             ? buildDeclarationDescriptionText({
-                quantity: position.totalQuantity,
+                quantity: totalQuantity.toNumber(),
                 ticker: position.ticker,
                 assetType: position.assetType,
                 issuerCnpj: asset.issuerCnpj,
-                averagePrice: position.averagePrice,
-                currentYearValue,
+                averagePrice: averagePrice.toNumber(),
+                currentYearValue: currentYearValue.toNumber(),
                 brokersSummary,
               })
             : null,

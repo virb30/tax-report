@@ -141,16 +141,12 @@ describe('ImportConsolidatedPositionUseCase', () => {
 
     expect(result.importedCount).toBe(1);
     expect(result.recalculatedTickers).toEqual(['PETR4']);
-    expect(transactionRepo.saveMany).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({
-          ticker: 'PETR4',
-          quantity: 150,
-          unitPrice: 26,
-          brokerId: expect.objectContaining({ value: xpBroker.id.value }),
-        }),
-      ]),
-    );
+    const savedTransactions = transactionRepo.saveMany.mock.calls[0]?.[0];
+    expect(savedTransactions).toHaveLength(1);
+    expect(savedTransactions?.[0]?.ticker).toBe('PETR4');
+    expect(savedTransactions?.[0]?.quantity.getAmount()).toBe('150');
+    expect(savedTransactions?.[0]?.unitPrice.getAmount()).toBe('26');
+    expect(savedTransactions?.[0]?.brokerId.value).toBe(xpBroker.id.value);
   });
 
   it('keeps multiple brokers for same ticker', async () => {
@@ -180,18 +176,16 @@ describe('ImportConsolidatedPositionUseCase', () => {
     });
 
     expect(result.importedCount).toBe(2);
-    expect(transactionRepo.saveMany).toHaveBeenCalledWith(
+    const savedTransactions = transactionRepo.saveMany.mock.calls[0]?.[0];
+    expect(savedTransactions).toHaveLength(2);
+    expect(savedTransactions?.map((transaction) => ({
+      ticker: transaction.ticker,
+      quantity: transaction.quantity.getAmount(),
+      brokerId: transaction.brokerId.value,
+    }))).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          ticker: 'PETR4',
-          quantity: 100,
-          brokerId: expect.objectContaining({ value: xpBroker.id.value }),
-        }),
-        expect.objectContaining({
-          ticker: 'PETR4',
-          quantity: 50,
-          brokerId: expect.objectContaining({ value: clearBroker.id.value }),
-        }),
+        { ticker: 'PETR4', quantity: '100', brokerId: xpBroker.id.value },
+        { ticker: 'PETR4', quantity: '50', brokerId: clearBroker.id.value },
       ]),
     );
   });

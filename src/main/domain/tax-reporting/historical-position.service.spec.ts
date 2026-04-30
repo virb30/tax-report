@@ -37,10 +37,6 @@ describe('HistoricalPositionService', () => {
       }),
     ]);
 
-    expect(position).toEqual(
-      expect.objectContaining({
-        totalQuantity: 15,
-      }),
-    );
+    expect(position?.totalQuantity.getAmount()).toBe('15');
   });
 });

@@ -26,6 +26,8 @@ import { Asset } from '../../domain/portfolio/entities/asset.entity';
 import { Broker } from '../../domain/portfolio/entities/broker.entity';
 import { AssetPosition } from '../../domain/portfolio/entities/asset-position.entity';
 import { Cnpj } from '../../domain/shared/cnpj.vo';
+import { Money } from '../../domain/portfolio/value-objects/money.vo';
+import { Quantity } from '../../domain/portfolio/value-objects/quantity.vo';
 import { InitialBalanceDocumentPositionSyncService } from '../services/initial-balance-document-position-sync.service';
 import { ReprocessTickerYearsService } from '../services/reprocess-ticker-years.service';
 
@@ -84,9 +86,9 @@ describe('Application contracts integration', () => {
         date: '2025-03-01',
         type: TransactionType.Buy,
         ticker: 'PETR4',
-        quantity: 10,
-        unitPrice: 20,
-        fees: 1,
+        quantity: Quantity.from(10),
+        unitPrice: Money.from(20),
+        fees: Money.from(1),
         brokerId,
         sourceType: SourceType.Csv,
       }),
@@ -111,17 +113,17 @@ describe('Application contracts integration', () => {
       ticker: 'IVVB11',
       year: 2025,
       assetType: AssetType.Etf,
-      averagePrice: 300,
-      allocations: [{ brokerId: brokerId.value, quantity: 2 }],
+      averagePrice: '300',
+      allocations: [{ brokerId: brokerId.value, quantity: '2' }],
     });
 
     expect(initialBalanceResult).toEqual({
       ticker: 'IVVB11',
       year: 2025,
       assetType: AssetType.Etf,
-      averagePrice: 300,
-      allocations: [{ brokerId: brokerId.value, quantity: 2 }],
-      totalQuantity: 2,
+      averagePrice: '300',
+      allocations: [{ brokerId: brokerId.value, quantity: '2' }],
+      totalQuantity: '2',
     });
 
     await expect(listInitialBalanceDocumentsUseCase.execute({ year: 2025 })).resolves.toEqual({
@@ -130,9 +132,9 @@ describe('Application contracts integration', () => {
           ticker: 'IVVB11',
           year: 2025,
           assetType: AssetType.Etf,
-          averagePrice: 300,
-          allocations: [{ brokerId: brokerId.value, quantity: 2 }],
-          totalQuantity: 2,
+          averagePrice: '300',
+          allocations: [{ brokerId: brokerId.value, quantity: '2' }],
+          totalQuantity: '2',
         },
       ],
     });
@@ -142,9 +144,9 @@ describe('Application contracts integration', () => {
       expect.arrayContaining([
         expect.objectContaining({
           ticker: 'IVVB11',
-          totalCost: 600,
+          totalCost: '600',
           brokerBreakdown: expect.arrayContaining([
-            expect.objectContaining({ brokerId: brokerId.value, quantity: 2 }),
+            expect.objectContaining({ brokerId: brokerId.value, quantity: '2' }),
           ]),
         }),
       ]),
@@ -295,9 +297,9 @@ describe('Application contracts integration', () => {
         date: '2024-01-10',
         type: TransactionType.Buy,
         ticker: 'AAPL34',
-        quantity: 1,
-        unitPrice: 100,
-        fees: 0,
+        quantity: Quantity.from(1),
+        unitPrice: Money.from(100),
+        fees: Money.from(0),
         brokerId: broker.id,
         sourceType: SourceType.Csv,
       }),
@@ -305,9 +307,9 @@ describe('Application contracts integration', () => {
         date: '2025-01-10',
         type: TransactionType.Buy,
         ticker: 'AAPL34',
-        quantity: 1,
-        unitPrice: 100,
-        fees: 0,
+        quantity: Quantity.from(1),
+        unitPrice: Money.from(100),
+        fees: Money.from(0),
         brokerId: broker.id,
         sourceType: SourceType.Csv,
       }),

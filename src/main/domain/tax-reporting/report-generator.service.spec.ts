@@ -11,6 +11,8 @@ import { AssetPosition } from '../portfolio/entities/asset-position.entity';
 import { Broker } from '../portfolio/entities/broker.entity';
 import { Transaction } from '../portfolio/entities/transaction.entity';
 import { Cnpj } from '../shared/cnpj.vo';
+import { Money } from '../portfolio/value-objects/money.vo';
+import { Quantity } from '../portfolio/value-objects/quantity.vo';
 import { buildDeclarationDescriptionText, ReportGenerator, formatBrl, getRevenueClassification } from './report-generator.service';
 
 describe('ReportGenerator', () => {
@@ -79,9 +81,9 @@ describe('ReportGenerator', () => {
         AssetPosition.create({
           ticker: 'PETR4',
           assetType: AssetType.Stock,
-          totalQuantity: 100,
-          averagePrice: 20,
-          brokerBreakdown: [{ brokerId: broker.id, quantity: 100 }],
+          totalQuantity: Quantity.from(100),
+          averagePrice: Money.from(20),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(100) }],
           year: 2025,
         }),
       ]);
@@ -120,9 +122,9 @@ describe('ReportGenerator', () => {
                 date: '2024-06-01',
                 type: TransactionType.Buy,
                 ticker: 'PETR4',
-                quantity: 10,
-                unitPrice: 20,
-                fees: 0,
+                quantity: Quantity.from(10),
+                unitPrice: Money.from(20),
+                fees: Money.from(0),
                 brokerId: broker.id,
                 sourceType: SourceType.Csv,
               }),
@@ -130,9 +132,9 @@ describe('ReportGenerator', () => {
                 date: '2025-03-01',
                 type: TransactionType.Buy,
                 ticker: 'PETR4',
-                quantity: 10,
-                unitPrice: 20,
-                fees: 0,
+                quantity: Quantity.from(10),
+                unitPrice: Money.from(20),
+                fees: Money.from(0),
                 brokerId: broker.id,
                 sourceType: SourceType.Csv,
               }),
@@ -146,9 +148,9 @@ describe('ReportGenerator', () => {
         AssetPosition.create({
           ticker: 'PETR4',
           assetType: AssetType.Stock,
-          totalQuantity: 20,
-          averagePrice: 20,
-          brokerBreakdown: [{ brokerId: broker.id, quantity: 20 }],
+          totalQuantity: Quantity.from(20),
+          averagePrice: Money.from(20),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(20) }],
           year: 2025,
         }),
       ]);
@@ -175,8 +177,8 @@ describe('ReportGenerator', () => {
           AssetPosition.create({
             ticker: 'PETR4',
             assetType: AssetType.Stock,
-            totalQuantity: 0,
-            averagePrice: 20,
+            totalQuantity: Quantity.from(0),
+            averagePrice: Money.from(20),
             brokerBreakdown: [],
             year: 2025,
           }),

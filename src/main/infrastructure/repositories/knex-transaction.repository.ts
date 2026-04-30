@@ -29,19 +29,19 @@ type InitialBalanceRow = Pick<
   'ticker' | 'date' | 'broker_id' | 'quantity' | 'unit_price' | 'type'
 >;
 
-function toPersistence(record: Transaction): Record<string, unknown> {
+function toPersistence(transaction: Transaction): Record<string, unknown> {
   return {
-    id: record.id.value,
-    date: record.date,
-    type: record.type,
-    ticker: record.ticker,
-    quantity: record.quantity,
-    unit_price: record.unitPrice,
-    fees: record.fees,
-    broker_id: record.brokerId.value,
-    source_type: record.sourceType,
-    external_ref: record.externalRef ?? null,
-    import_batch_id: record.importBatchId ?? null,
+    id: transaction.id.value,
+    date: transaction.date,
+    type: transaction.type,
+    ticker: transaction.ticker,
+    quantity: transaction.quantityAmount,
+    unit_price: transaction.unitPriceAmount,
+    fees: transaction.feesAmount,
+    broker_id: transaction.brokerId.value,
+    source_type: transaction.sourceType,
+    external_ref: transaction.externalRef ?? null,
+    import_batch_id: transaction.importBatchId ?? null,
   };
 }
 

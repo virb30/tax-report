@@ -1,4 +1,5 @@
 import { AssetType, ReportItemStatus } from '../../../shared/types/domain';
+import { Money } from '../portfolio/value-objects/money.vo';
 import { DeclarationEligibilityService } from './declaration-eligibility.service';
 
 describe('DeclarationEligibilityService', () => {
@@ -8,8 +9,8 @@ describe('DeclarationEligibilityService', () => {
     expect(
       service.evaluate({
         assetType: AssetType.Stock,
-        previousYearValue: 0,
-        currentYearValue: 10000,
+        previousYearValue: Money.from(0),
+        currentYearValue: Money.from(10000),
         hasPendingIssues: false,
         isSupported: false,
       }),
@@ -23,8 +24,8 @@ describe('DeclarationEligibilityService', () => {
     expect(
       service.evaluate({
         assetType: AssetType.Stock,
-        previousYearValue: 0,
-        currentYearValue: 10000,
+        previousYearValue: Money.from(0),
+        currentYearValue: Money.from(10000),
         hasPendingIssues: true,
         isSupported: true,
       }),
@@ -38,8 +39,8 @@ describe('DeclarationEligibilityService', () => {
     expect(
       service.evaluate({
         assetType: AssetType.Etf,
-        previousYearValue: 100,
-        currentYearValue: 140,
+        previousYearValue: Money.from(100),
+        currentYearValue: Money.from(140),
         hasPendingIssues: false,
         isSupported: true,
       }),

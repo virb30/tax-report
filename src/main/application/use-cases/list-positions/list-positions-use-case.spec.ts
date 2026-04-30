@@ -8,6 +8,8 @@ import { Broker } from '../../../domain/portfolio/entities/broker.entity';
 import { Uuid } from '../../../domain/shared/uuid.vo';
 import { Cnpj } from '../../../domain/shared/cnpj.vo';
 import { AssetPosition } from '../../../domain/portfolio/entities/asset-position.entity';
+import { Money } from '../../../domain/portfolio/value-objects/money.vo';
+import { Quantity } from '../../../domain/portfolio/value-objects/quantity.vo';
 
 describe('ListPositionsUseCase', () => {
   const positionRepository = mock<AssetPositionRepository>();
@@ -31,9 +33,9 @@ describe('ListPositionsUseCase', () => {
         ticker: 'PETR4',
         assetType: AssetType.Stock,
         year: 2025,
-        totalQuantity: 100,
-        averagePrice: 20,
-        brokerBreakdown: [{ brokerId, quantity: 100 }],
+        totalQuantity: Quantity.from(100),
+        averagePrice: Money.from(20),
+        brokerBreakdown: [{ brokerId, quantity: Quantity.from(100) }],
       }),
     ]);
     const result = await useCase.execute({ baseYear: 2025 });
@@ -43,15 +45,15 @@ describe('ListPositionsUseCase', () => {
         {
           ticker: 'PETR4',
           assetType: AssetType.Stock,
-          totalQuantity: 100,
-          averagePrice: 20,
-          totalCost: 2000,
+          totalQuantity: '100',
+          averagePrice: '20',
+          totalCost: '2000',
           brokerBreakdown: [
             {
               brokerId: brokerId.value,
               brokerName: 'XP Investimentos',
               brokerCnpj: '02.332.886/0001-04',
-              quantity: 100,
+              quantity: '100',
             },
           ],
         },

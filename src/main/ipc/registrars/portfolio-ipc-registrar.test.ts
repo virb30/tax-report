@@ -82,8 +82,8 @@ describe('PortfolioIpcRegistrar', () => {
         ticker: 'PETR4',
         year: 2025,
         assetType: AssetType.Stock,
-        averagePrice: 30,
-        allocations: [{ brokerId: 'broker-xp', quantity: 10 }],
+        averagePrice: '30',
+        allocations: [{ brokerId: 'broker-xp', quantity: '10' }],
       }),
     ).resolves.toEqual({
       ok: false,

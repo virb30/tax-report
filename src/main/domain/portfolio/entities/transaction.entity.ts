@@ -83,15 +83,27 @@ export class Transaction {
     return this.type === TransactionType.InitialBalance;
   }
 
-  get quantity(): string {
+  get quantity(): Quantity {
+    return this._quantity;
+  }
+
+  get unitPrice(): Money {
+    return this._unitPrice;
+  }
+
+  get fees(): Money {
+    return this._fees;
+  }
+
+  get quantityAmount(): string {
     return this._quantity.getAmount();
   }
 
-  get unitPrice(): string {
+  get unitPriceAmount(): string {
     return this._unitPrice.getAmount();
   }
 
-  get fees(): string {
+  get feesAmount(): string {
     return this._fees.getAmount();
   }
 }

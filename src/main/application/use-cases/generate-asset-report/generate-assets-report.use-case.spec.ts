@@ -12,6 +12,8 @@ import { AssetPosition } from '../../../domain/portfolio/entities/asset-position
 import { Broker } from '../../../domain/portfolio/entities/broker.entity';
 import { Transaction } from '../../../domain/portfolio/entities/transaction.entity';
 import { Cnpj } from '../../../domain/shared/cnpj.vo';
+import { Money } from '../../../domain/portfolio/value-objects/money.vo';
+import { Quantity } from '../../../domain/portfolio/value-objects/quantity.vo';
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { AssetRepository } from '../../repositories/asset.repository';
 import type { BrokerRepository } from '../../repositories/broker.repository';
@@ -57,11 +59,11 @@ describe('GenerateAssetsReportUseCase', () => {
         ticker: 'PETR4',
         year: 2025,
         assetType: AssetType.Stock,
-        totalQuantity: 150,
-        averagePrice: 10,
+        totalQuantity: Quantity.from(150),
+        averagePrice: Money.from(10),
         brokerBreakdown: [
-          { brokerId: broker.id, quantity: 100 },
-          { brokerId: broker2.id, quantity: 50 },
+          { brokerId: broker.id, quantity: Quantity.from(100) },
+          { brokerId: broker2.id, quantity: Quantity.from(50) },
         ],
       }),
     ]);
@@ -79,9 +81,9 @@ describe('GenerateAssetsReportUseCase', () => {
         date: '2025-01-15',
         type: TransactionType.Buy,
         ticker: 'PETR4',
-        quantity: 150,
-        unitPrice: 10,
-        fees: 0,
+        quantity: Quantity.from(150),
+        unitPrice: Money.from(10),
+        fees: Money.from(0),
         brokerId: broker.id,
         sourceType: SourceType.Csv,
       }),
@@ -106,17 +108,17 @@ describe('GenerateAssetsReportUseCase', () => {
         ticker: 'ABEV3',
         year: 2025,
         assetType: AssetType.Stock,
-        totalQuantity: 1,
-        averagePrice: 999.99,
-        brokerBreakdown: [{ brokerId: broker.id, quantity: 1 }],
+        totalQuantity: Quantity.from(1),
+        averagePrice: Money.from(999.99),
+        brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(1) }],
       }),
       AssetPosition.create({
         ticker: 'BOVA34',
         year: 2025,
         assetType: AssetType.Bdr,
-        totalQuantity: 1,
-        averagePrice: 1000,
-        brokerBreakdown: [{ brokerId: broker.id, quantity: 1 }],
+        totalQuantity: Quantity.from(1),
+        averagePrice: Money.from(1000),
+        brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(1) }],
       }),
     ]);
     assetRepository.findByTickersList.mockResolvedValue([
@@ -152,17 +154,17 @@ describe('GenerateAssetsReportUseCase', () => {
         ticker: 'HGLG11',
         year: 2025,
         assetType: AssetType.Fii,
-        totalQuantity: 1,
-        averagePrice: 140,
-        brokerBreakdown: [{ brokerId: broker.id, quantity: 1 }],
+        totalQuantity: Quantity.from(1),
+        averagePrice: Money.from(140),
+        brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(1) }],
       }),
       AssetPosition.create({
         ticker: 'IVVB11',
         year: 2025,
         assetType: AssetType.Etf,
-        totalQuantity: 1,
-        averagePrice: 140.01,
-        brokerBreakdown: [{ brokerId: broker.id, quantity: 1 }],
+        totalQuantity: Quantity.from(1),
+        averagePrice: Money.from(140.01),
+        brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(1) }],
       }),
     ]);
     assetRepository.findByTickersList.mockResolvedValue([
@@ -198,9 +200,9 @@ describe('GenerateAssetsReportUseCase', () => {
         ticker: 'PETR4',
         year: 2025,
         assetType: AssetType.Stock,
-        totalQuantity: 100,
-        averagePrice: 50,
-        brokerBreakdown: [{ brokerId: broker.id, quantity: 100 }],
+        totalQuantity: Quantity.from(100),
+        averagePrice: Money.from(50),
+        brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(100) }],
       }),
     ]);
     assetRepository.findByTickersList.mockResolvedValue([
@@ -232,9 +234,9 @@ describe('GenerateAssetsReportUseCase', () => {
         ticker: 'PETR4',
         year: 2025,
         assetType: AssetType.Stock,
-        totalQuantity: 15,
-        averagePrice: 10,
-        brokerBreakdown: [{ brokerId: broker.id, quantity: 15 }],
+        totalQuantity: Quantity.from(15),
+        averagePrice: Money.from(10),
+        brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(15) }],
       }),
     ]);
     assetRepository.findByTickersList.mockResolvedValue([
@@ -251,9 +253,9 @@ describe('GenerateAssetsReportUseCase', () => {
         date: '2024-06-01',
         type: TransactionType.Buy,
         ticker: 'PETR4',
-        quantity: 10,
-        unitPrice: 10,
-        fees: 0,
+        quantity: Quantity.from(10),
+        unitPrice: Money.from(10),
+        fees: Money.from(0),
         brokerId: broker.id,
         sourceType: SourceType.Csv,
       }),
@@ -261,9 +263,9 @@ describe('GenerateAssetsReportUseCase', () => {
         date: '2025-02-01',
         type: TransactionType.Buy,
         ticker: 'PETR4',
-        quantity: 5,
-        unitPrice: 10,
-        fees: 0,
+        quantity: Quantity.from(5),
+        unitPrice: Money.from(10),
+        fees: Money.from(0),
         brokerId: broker.id,
         sourceType: SourceType.Csv,
       }),

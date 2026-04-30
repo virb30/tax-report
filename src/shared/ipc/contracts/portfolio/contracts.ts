@@ -31,9 +31,13 @@ const initialBalanceAllocationSchema = z.object({
     .trim()
     .min(1, 'Invalid broker for initial balance allocation.'),
   quantity: z
-    .number({ message: 'Invalid quantity for initial balance allocation.' })
+    .string({ message: 'Invalid quantity for initial balance allocation.' })
+    .trim()
     .refine(
-      (value) => !Number.isNaN(value) && value > 0,
+      (value) => {
+        const parsed = Number(value);
+        return value.length > 0 && !Number.isNaN(parsed) && parsed > 0;
+      },
       'Initial balance allocation quantity must be greater than zero.',
     ),
 });
@@ -50,9 +54,13 @@ export const saveInitialBalanceDocumentSchema = z.object({
       'Invalid asset type for initial balance.',
     ) as unknown as z.ZodType<AssetType>,
   averagePrice: z
-    .number({ message: 'Invalid average price for initial balance.' })
+    .string({ message: 'Invalid average price for initial balance.' })
+    .trim()
     .refine(
-      (value) => !Number.isNaN(value) && value > 0,
+      (value) => {
+        const parsed = Number(value);
+        return value.length > 0 && !Number.isNaN(parsed) && parsed > 0;
+      },
       'Initial balance average price must be greater than zero.',
     ),
   year: z

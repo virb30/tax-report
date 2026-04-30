@@ -82,9 +82,9 @@ describe('ImportTransactionsUseCase', () => {
     const savedTransactions = mockTransactionRepo.saveMany.mock.calls[0]?.[0];
     expect(savedTransactions).toHaveLength(2);
     expect(savedTransactions[0]?.ticker).toBe('PETR4');
-    expect(savedTransactions[0]?.fees).toBe('0.33');
+    expect(savedTransactions[0]?.fees.getAmount()).toBe('0.33');
     expect(savedTransactions[1]?.ticker).toBe('VALE3');
-    expect(savedTransactions[1]?.fees).toBe('0.67');
+    expect(savedTransactions[1]?.fees.getAmount()).toBe('0.67');
     expect(mockQueue.publish).toHaveBeenCalledWith(
       expect.objectContaining({
         name: TransactionsImportedEvent.name,
@@ -264,12 +264,10 @@ describe('ImportTransactionsUseCase', () => {
       recalculatedTickers: ['PETR4'],
       skippedUnsupportedRows: 2,
     });
-    expect(mockTransactionRepo.saveMany).toHaveBeenCalledWith([
-      expect.objectContaining({
-        ticker: 'PETR4',
-        fees: 0.75,
-      }),
-    ]);
+    const savedTransactions = mockTransactionRepo.saveMany.mock.calls[0]?.[0];
+    expect(savedTransactions).toHaveLength(1);
+    expect(savedTransactions?.[0]?.ticker).toBe('PETR4');
+    expect(savedTransactions?.[0]?.fees.getAmount()).toBe('0.75');
     expect(mockQueue.publish).toHaveBeenCalledTimes(1);
     expect(mockQueue.publish).toHaveBeenCalledWith(
       expect.objectContaining({
