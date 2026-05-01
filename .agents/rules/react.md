@@ -10,6 +10,8 @@ Estas regras definem padroes para o frontend em React.
 
 ## Frontend (React)
 
+- Mantenha paginas como composition roots. Mova workflows, IPC calls, submit handlers, modal state e estado derivado para hooks `use...` focados.
+- Mova forms, tables e modals para componentes nomeados.
 - Use componentes funcionais e Hooks (`useState`, `useEffect`, etc.); nao use componentes de classe.
 - Use Context API para comunicacao entre componentes quando necessario; evite bibliotecas de estado sem necessidade clara.
 - Todo hook customizado deve comecar com `use` (ex.: `useUserData`).

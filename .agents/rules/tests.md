@@ -20,6 +20,7 @@ Para rodar os testes, utilize o comando `npm test`.
 - Evite excesso de mocks; use apenas quando necessario.
 - Teste comportamento, nao detalhes de implementacao.
 - Prefira `jest-mock-extended` para criacao de mocks quando fizer sentido.
+- Adicione ou atualize testes focados quando comportamento ou limites entre modulos mudarem.
 
 ## Exemplo rapido
 

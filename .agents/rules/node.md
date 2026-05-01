@@ -13,6 +13,7 @@ Estas regras definem padroes para o backend em Node no contexto do main process.
 - Classes, funcoes e logicas de negocio em `src/main/` devem ter cobertura de testes de 100%.
 - Organize o backend em classes coesas; prefira orientacao a objetos quando fizer sentido.
 - Evite concentrar logica no arquivo principal; distribua responsabilidades em modulos claros.
+- Evite modulos genericos `utils`; mantenha comportamento perto do modulo responsavel.
 - Evite metodos e classes muito grandes.
 - Declare propriedades de classe como `private` ou `readonly`; evite `public` explicito.
 - Prefira `find`, `filter`, `map` e `reduce` em vez de `for` e `while` quando melhorar legibilidade.
