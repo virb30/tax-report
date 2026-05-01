@@ -14,23 +14,25 @@ Load the relevant rules before executing any task.
 
 ## Rules Map
 
-| Rule           | Path                               | Use when                                                                                                     |
-| -------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Architecture   | `@.agents/rules/architecture.md`   | Changing module boundaries, use cases, repositories, adapters, entities, DTOs, or backend/shared structure.  |
-| Code Standards | `@.agents/rules/code-standards.md` | Any code edit. This is the default baseline.                                                                 |
-| Tests          | `@.agents/rules/tests.md`          | Adding, changing, fixing, or reviewing tests, or validating behavior changes.                                |
-| React          | `@.agents/rules/react.md`          | Working in `src/renderer/**` with pages, hooks, components, styles, or renderer tests.                       |
-| Node           | `@.agents/rules/node.md`           | Working in `src/main/**` with services, controllers, repositories, parsers, database code, or backend tests. |
-| Electron       | `@.agents/rules/electron.md`       | Changing IPC, `preload.ts`, `src/shared/**`, or anything crossing main/renderer boundaries.                  |
+| Rule             | Path                                     | Use when                                                                                                     |
+| ---------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Architecture     | `@.agents/rules/architecture.md`         | Changing responsibilities, dependency direction, use cases, repositories, adapters, entities, or DTOs.       |
+| Folder Structure | `@.agents/rules/folder-structure.md`     | Creating, moving, or reviewing files and folders in `src/**`.                                                |
+| Code Standards   | `@.agents/rules/code-standards.md`       | Any code edit. This is the default baseline.                                                                 |
+| Tests            | `@.agents/rules/tests.md`                | Adding, changing, fixing, or reviewing tests, or validating behavior changes.                                |
+| React            | `@.agents/rules/react.md`                | Working in `src/renderer/**` with pages, hooks, components, styles, or renderer tests.                       |
+| Backend          | `@.agents/rules/backend.md`              | Working in `src/main/**` with services, handlers, repositories, parsers, database code, or backend tests.    |
+| Electron         | `@.agents/rules/electron.md`             | Changing IPC, `preload.ts`, `src/shared/**`, or anything crossing main/renderer boundaries.                  |
 
 ## Loading Order
 
 1. Always load `@.agents/rules/code-standards.md`.
 2. Load `@.agents/rules/architecture.md` before modifying structure or responsibilities.
-3. Load `@.agents/rules/react.md` for renderer work in `src/renderer/**`.
-4. Load `@.agents/rules/node.md` for backend work in `src/main/**`.
-5. Load `@.agents/rules/electron.md` for IPC, `preload.ts`, `src/shared/**`, or process-boundary work.
-6. Load `@.agents/rules/tests.md` whenever tests are involved.
+3. Load `@.agents/rules/folder-structure.md` before creating, moving, or reviewing files in `src/**`.
+4. Load `@.agents/rules/react.md` for renderer work in `src/renderer/**`.
+5. Load `@.agents/rules/backend.md` for backend work in `src/main/**`.
+6. Load `@.agents/rules/electron.md` for IPC, `preload.ts`, `src/shared/**`, or process-boundary work.
+7. Load `@.agents/rules/tests.md` whenever tests are involved.
 
 ## Useful Commands
 

@@ -26,6 +26,10 @@ Estas regras existem para guiar implementação e revisão de código com consis
 10. Use TypeScript em todo código novo ou alterado.
 11. Siga Prettier: aspas simples, ponto e vírgula, trailing commas e largura de linha de 100 caracteres.
 12. Siga ESLint sem warnings, sem `any` e com imports type-only consistentes.
+13. Use `import` e `export` (ESM); não use `require`.
+14. Prefira `async/await` em vez de callbacks ou cadeias de Promise desnecessárias.
+15. Use `const` por padrão. Use `let` apenas quando houver reatribuição. `var` é proibido.
+16. Quando o tipo de entrada for desconhecido, use `unknown` com validação explícita.
 
 ## Regras recomendadas (`SHOULD`)
 

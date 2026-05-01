@@ -24,16 +24,7 @@ Use arquitetura em camadas baseada em Clean Architecture.
 Cada use case deve ficar em sua própria pasta com nomenclatura `[verbo]-[objeto]` (ex: `create-broker`, `list-brokers`, `update-broker`, `toggle-active-broker`).
 Casos de uso devem ter uma responsabilidade clara e bem definida, representando a intenção do usuário.
 Um caso de uso não pode depender diretamente de outro caso de uso.
-
-**Arquivos obrigatórios:**
-
-- `[nome].use-case.ts` - Classe com método `execute(input): Promise<output>`
-- `[nome].input.ts` - Interface de entrada (DTO)
-- `[nome].output.ts` - Interface de saída (DTO)
-
-**Arquivo opcional:**
-
-- `[nome].use-case.spec.ts` - Testes unitários
+Siga `@.agents/rules/folder-structure.md` para localizacao e arquivos do use case.
 
 **Padrões do use case:**
 
@@ -63,8 +54,8 @@ Exemplo:
 
 - `asset.entity.ts` entidade de domínio que representa o ativo
 - `assets.repository.ts` interface do repositório que lida com ativos
-- `assets-knex.repository.ts` implementação concreta do repositorio de ativos usando knex
+- `assets.database.repository.ts` implementação concreta do repositorio de ativos usando banco de dados
 - `asset-type.vo.ts` value-object que representa tipo de ativo
 - `assets.query.ts` interface para queries que lidam com assets (CQS)
 - `create-broker.use-case.ts` use case de criação de corretora
-- `create-broker.input.ts` / `create-broker.output.ts` DTOs de entrada e saída do use case
+- `create-broker.dto.ts` DTOs de entrada e saída do use case
