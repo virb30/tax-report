@@ -4,6 +4,8 @@ import { jest } from '@jest/globals';
 export class ElectronAppStub extends EventEmitter {
   private isReady = false;
 
+  getPath = jest.fn(() => '/app/user-data');
+
   async whenReady() {
     return new Promise<void>((resolve) => {
       if (this.isReady) resolve();

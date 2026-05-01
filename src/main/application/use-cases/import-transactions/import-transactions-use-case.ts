@@ -22,6 +22,8 @@ import { ImportConfirmReviewResolver } from '../../../domain/ingestion/import-co
 import { Money } from '../../../domain/portfolio/value-objects/money.vo';
 import { Quantity } from '../../../domain/portfolio/value-objects/quantity.vo';
 
+type ParsedTransactionImportFile = Awaited<ReturnType<ImportTransactionsParser['parse']>>;
+
 type AcceptedTransactionImport = {
   tradeDate: string;
   type: Transaction['type'];
@@ -32,6 +34,11 @@ type AcceptedTransactionImport = {
   brokerId: string;
   resolvedAssetType: AssetType;
   resolutionStatus: AssetResolutionStatus;
+};
+
+type ResolveAcceptedRowsResult = {
+  acceptedRows: AcceptedTransactionImport[];
+  skippedUnsupportedRows: number;
 };
 
 export class ImportTransactionsUseCase {
@@ -47,10 +54,42 @@ export class ImportTransactionsUseCase {
   async execute(input: ConfirmImportTransactionsCommand): Promise<ConfirmImportTransactionsResult> {
     const parsedFile = await this.parser.parse(input.filePath);
     const assetCatalogMap = await this.loadAssetCatalogMap(parsedFile);
-    const overridesByTicker = new Map(
-      input.assetTypeOverrides.map((override) => [override.ticker, override.assetType]),
+    const { acceptedRows, skippedUnsupportedRows } = this.resolveAcceptedRows(
+      parsedFile,
+      assetCatalogMap,
+      input.assetTypeOverrides,
     );
     const importBatchId = `batch-${Date.now()}-${randomUUID().slice(0, 8)}`;
+
+    await this.persistAcceptedCatalogUpdates(acceptedRows, assetCatalogMap);
+
+    const allTransactions = acceptedRows.map((row) => this.createTransaction(row, importBatchId));
+    const newTransactions = await this.filterNewTransactions(allTransactions);
+
+    if (newTransactions.length > 0) {
+      await this.transactionRepository.saveMany(newTransactions);
+    }
+
+    const tickerYears = await this.publishImportedEvents(newTransactions);
+
+    return {
+      importedCount: newTransactions.length,
+      recalculatedTickers: [...tickerYears.keys()],
+      skippedUnsupportedRows,
+    };
+  }
+
+  private resolveAcceptedRows(
+    parsedFile: ParsedTransactionImportFile,
+    assetCatalogMap: Map<
+      string,
+      NonNullable<Awaited<ReturnType<AssetRepository['findByTickersList']>>[number]>
+    >,
+    overrides: ConfirmImportTransactionsCommand['assetTypeOverrides'],
+  ): ResolveAcceptedRowsResult {
+    const overridesByTicker = new Map(
+      overrides.map((override) => [override.ticker, override.assetType]),
+    );
     const acceptedRows: AcceptedTransactionImport[] = [];
     const unresolvedTickers = new Set<string>();
     let skippedUnsupportedRows = parsedFile.unsupportedRows.length;
@@ -105,42 +144,52 @@ export class ImportTransactionsUseCase {
     }
 
     this.ensureNoUnresolvedSupportedRows(unresolvedTickers);
-    await this.persistAcceptedCatalogUpdates(acceptedRows, assetCatalogMap);
 
-    const allTransactions = acceptedRows.map((row) =>
-      Transaction.create({
-        date: row.tradeDate,
+    return {
+      acceptedRows,
+      skippedUnsupportedRows,
+    };
+  }
+
+  private createTransaction(row: AcceptedTransactionImport, importBatchId: string): Transaction {
+    return Transaction.create({
+      date: row.tradeDate,
+      type: row.type,
+      ticker: row.ticker,
+      quantity: Quantity.from(row.quantity),
+      unitPrice: Money.from(row.unitPrice),
+      fees: Money.from(row.fees),
+      brokerId: Uuid.from(row.brokerId),
+      sourceType: SourceType.Csv,
+      externalRef: createExternalRef({
+        tradeDate: row.tradeDate,
         type: row.type,
         ticker: row.ticker,
-        quantity: Quantity.from(row.quantity),
-        unitPrice: Money.from(row.unitPrice),
-        fees: Money.from(row.fees),
-        brokerId: Uuid.from(row.brokerId),
+        quantity: row.quantity,
+        unitPrice: row.unitPrice,
+        fees: row.fees,
+        brokerId: row.brokerId,
         sourceType: SourceType.Csv,
-        externalRef: createExternalRef({
-          tradeDate: row.tradeDate,
-          type: row.type,
-          ticker: row.ticker,
-          quantity: row.quantity,
-          unitPrice: row.unitPrice,
-          fees: row.fees,
-          brokerId: row.brokerId,
-          sourceType: SourceType.Csv,
-        }),
-        importBatchId,
       }),
-    );
+      importBatchId,
+    });
+  }
 
+  private async filterNewTransactions(transactions: Transaction[]): Promise<Transaction[]> {
     const existingRefs = await this.transactionRepository.findExistingExternalRefs(
-      allTransactions.map((t) => t.externalRef).filter(Boolean) as string[],
+      transactions
+        .map((transaction) => transaction.externalRef)
+        .filter((externalRef): externalRef is string => Boolean(externalRef)),
     );
-    const newTransactions = allTransactions.filter((t) => !existingRefs.has(t.externalRef ?? ''));
 
-    if (newTransactions.length > 0) {
-      await this.transactionRepository.saveMany(newTransactions);
-    }
+    return transactions.filter((transaction) => !existingRefs.has(transaction.externalRef ?? ''));
+  }
 
+  private async publishImportedEvents(
+    newTransactions: Transaction[],
+  ): Promise<Map<string, Set<number>>> {
     const tickerYears = new Map<string, Set<number>>();
+
     for (const tx of newTransactions) {
       const year = parseInt(tx.date.slice(0, 4), 10);
       if (!tickerYears.has(tx.ticker)) {
@@ -155,15 +204,11 @@ export class ImportTransactionsUseCase {
       }
     }
 
-    return {
-      importedCount: newTransactions.length,
-      recalculatedTickers: [...tickerYears.keys()],
-      skippedUnsupportedRows,
-    };
+    return tickerYears;
   }
 
   private async loadAssetCatalogMap(
-    parsedFile: Awaited<ReturnType<ImportTransactionsParser['parse']>>,
+    parsedFile: ParsedTransactionImportFile,
   ): Promise<
     Map<string, NonNullable<Awaited<ReturnType<AssetRepository['findByTickersList']>>[number]>>
   > {

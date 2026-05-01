@@ -5,57 +5,40 @@ description: Regras de arquitetura em camadas com Clean Architecture
 
 # Architecture Rules
 
-Use arquitetura em camadas baseada em Clean Architecture.
+A arquitetura deve ser separada em camadas claras dentro do contexto delimitado.
 
 ## Domain Layer
 
-- Centralize regras de negocio independentes de framework.
+- Centraliza regras de negocio independentes de framework.
 - Mantenha nesta camada: entidades/agregados, value objects, domain events e interfaces de repositorio.
 - Repositories devem persistir e restaurar agregados SOMENTE
-- Queris (CQS) podem receber e devolver DTOs
+- Queries (CQS) podem receber e devolver DTOs
 
 ## Application Layer
 
 - Orquestre fluxos de negocio sem acoplamento com detalhes de infraestrutura.
 - Mantenha nesta camada: use cases, services e portas para servicos externos.
+- Utilize uma abordagem CQS, funções/métodos que retornam dados não devem modificá-los
 
 ### Estrutura de Use Cases
 
-Cada use case deve ficar em sua própria pasta com nomenclatura `[verbo]-[objeto]` (ex: `create-broker`, `list-brokers`, `update-broker`, `toggle-active-broker`).
 Casos de uso devem ter uma responsabilidade clara e bem definida, representando a intenção do usuário.
 Um caso de uso não pode depender diretamente de outro caso de uso.
 Siga `@.agents/rules/folder-structure.md` para localizacao e arquivos do use case.
-
-**Padrões do use case:**
-
-- Classe: `[PascalCaseVerboObjeto]UseCase`
-- Injeção de dependências (repositories, portas) via construtor
-- Método único: `execute(input: InputType): Promise<OutputType>`
-- Para queries sem parâmetros, o input pode ser opcional: `execute(query?: InputType)`
+Use cases devem ter apenas um método: `execute(input: InputType): Promise<OutputType>`
+Injeção de dependências (repositories, portas) via construtor
 
 ## Infrastructure Layer
 
-- Implemente adaptadores concretos para integrar com banco, APIs e bibliotecas externas.
+- Implementa adaptadores concretos para integrar com banco, APIs e bibliotecas externas.
 - Mantenha nesta camada: implementacoes de repositorios e clients externos.
-- Prefira implementar apenas 1 interface por adaptador (evite `implements interfaceA, interfaceB`)
 
 ## Dependency Rule
 
 - Camadas internas nao podem depender de camadas externas.
-- Respeite o fluxo de dependencia: `infra -> application -> domain`.
+- Respeite o fluxo de dependencia: `infra -> interface <- application -> domain`.
 - Regras de negocio e aplicacao devem permanecer desacopladas da infraestrutura.
 - Prefira inversao de dependencia para integrar camadas.
-- A camada de aplicacao nao deve depender diretamente de bibliotecas externas; use sempre portas/adapters.
-
-## Padrões de nomenclatura
-
-Utilize o formato `[nome-da-classe].[tipo].ts`
-Exemplo:
-
-- `asset.entity.ts` entidade de domínio que representa o ativo
-- `assets.repository.ts` interface do repositório que lida com ativos
-- `assets.database.repository.ts` implementação concreta do repositorio de ativos usando banco de dados
-- `asset-type.vo.ts` value-object que representa tipo de ativo
-- `assets.query.ts` interface para queries que lidam com assets (CQS)
-- `create-broker.use-case.ts` use case de criação de corretora
-- `create-broker.dto.ts` DTOs de entrada e saída do use case
+- Toda interação com sistemas externos (API, Banco de dados, Gateway de pagamento etc.) deve ser realizada através de portas e adaptadores.
+- Como regra geral, bibliotecas externas não devem ser utilizadas diretamente nas camadas de aplicação/domínio. Prefira extrair um adaptador para a biblioteca em um conceito claro do que ela representa.
+  - Exceções: para manter a simplicidade, bibliotecas que lidam com dados simples e que não mudam com frequência como `uuid`, `decimal.js`, `cripto` podem ser utilizadas desde que encapsuladas em uma classe de domínio/aplicação. Ex: VO Money utiliza a biblioteca decimal.js, mas não expõe nada da biblioteca para as outras camadas.

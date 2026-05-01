@@ -87,8 +87,8 @@ describe('preload', () => {
       assetType: AssetType.Etf,
       name: 'iShares Core S&P 500',
       cnpj: '11.111.111/0001-11',
-      averagePrice: 300,
-      allocations: [{ brokerId: 'broker-xp', quantity: 2 }],
+      averagePrice: '300',
+      allocations: [{ brokerId: 'broker-xp', quantity: '2' }],
     });
     expect(invoke).toHaveBeenNthCalledWith(4, listInitialBalanceDocumentsContract.channel, {
       year: 2025,

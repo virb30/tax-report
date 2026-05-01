@@ -4,7 +4,7 @@ import {
   AssetPosition,
   type BrokerAllocation,
 } from '../../domain/portfolio/entities/asset-position.entity';
-import type { AssetType } from '../../../shared/types/domain';
+import { AssetType } from '../../../shared/types/domain';
 import { Uuid } from '../../domain/shared/uuid.vo';
 import { Quantity } from '../../domain/portfolio/value-objects/quantity.vo';
 import { Money } from '../../domain/portfolio/value-objects/money.vo';
@@ -15,7 +15,6 @@ type PositionRow = {
   asset_type: string;
   total_quantity: string;
   average_price: string;
-
 };
 
 type AllocationRow = {
@@ -31,31 +30,31 @@ const ALLOCATION_INSERT_CHUNK_SIZE = 500;
 
 function toAssetType(assetType: string): AssetType {
   const map: Record<string, AssetType> = {
-    stock: 'stock' as AssetType,
-    fii: 'fii' as AssetType,
-    etf: 'etf' as AssetType,
-    bdr: 'bdr' as AssetType,
+    stock: AssetType.Stock,
+    fii: AssetType.Fii,
+    etf: AssetType.Etf,
+    bdr: AssetType.Bdr,
   };
-  const t = map[assetType];
-  if (!t) {
+  const mappedAssetType = map[assetType];
+
+  if (!mappedAssetType) {
     throw new Error(`Unknown asset type: ${assetType}`);
   }
-  return t;
+
+  return mappedAssetType;
 }
 
 function toAssetTypeColumn(assetType: AssetType): string {
   return assetType;
 }
 
-function postitionToPersistence(position: AssetPosition): PositionRow {
-
+function positionToPersistence(position: AssetPosition): PositionRow {
   return {
     ticker: position.ticker,
     year: position.year,
     asset_type: toAssetTypeColumn(position.assetType),
     total_quantity: position.totalQuantity.getAmount(),
     average_price: position.averagePrice.getAmount(),
-
   };
 }
 
@@ -66,6 +65,13 @@ function brokerBreakdownToPersistence(position: AssetPosition): AllocationRow[] 
     broker_id: allocation.brokerId.value,
     quantity: allocation.quantity.getAmount(),
   }));
+}
+
+function allocationToDomain(row: AllocationRow): BrokerAllocation {
+  return {
+    brokerId: Uuid.from(row.broker_id),
+    quantity: Quantity.from(row.quantity),
+  };
 }
 
 export class KnexPositionRepository implements AssetPositionRepository {
@@ -80,12 +86,9 @@ export class KnexPositionRepository implements AssetPositionRepository {
 
     const allocations = await this.database<AllocationRow>('position_broker_allocations')
       .where({ position_ticker: ticker, position_year: year })
-      .select('broker_id', 'quantity');
+      .select('broker_id', 'quantity', 'position_ticker', 'position_year');
 
-    const brokerBreakdown: BrokerAllocation[] = allocations.map((a) => ({
-      brokerId: Uuid.from(a.broker_id),
-      quantity: Quantity.from(a.quantity),
-    }));
+    const brokerBreakdown = allocations.map(allocationToDomain);
 
     return AssetPosition.restore({
       ticker: row.ticker,
@@ -103,24 +106,25 @@ export class KnexPositionRepository implements AssetPositionRepository {
       .select('*')
       .orderBy('ticker', 'asc');
 
+    if (rows.length === 0) {
+      return [];
+    }
+
     const allocations = await this.database<AllocationRow>('position_broker_allocations')
       .whereIn(
         'position_ticker',
         rows.map((r) => r.ticker),
       )
       .where('position_year', year)
-      .select('position_ticker', 'broker_id', 'quantity');
+      .select('position_ticker', 'broker_id', 'quantity', 'position_year');
 
     const allocationsByTicker = new Map<string, BrokerAllocation[]>();
 
-    allocations.forEach((a) => {
-      const allocations = allocationsByTicker.get(a.position_ticker) ?? [];
-      allocationsByTicker.set(a.position_ticker, [
-        ...allocations,
-        {
-          brokerId: Uuid.from(a.broker_id),
-          quantity: Quantity.from(a.quantity),
-        },
+    allocations.forEach((allocation) => {
+      const currentAllocations = allocationsByTicker.get(allocation.position_ticker) ?? [];
+      allocationsByTicker.set(allocation.position_ticker, [
+        ...currentAllocations,
+        allocationToDomain(allocation),
       ]);
     });
 
@@ -138,7 +142,7 @@ export class KnexPositionRepository implements AssetPositionRepository {
 
   async save(position: AssetPosition): Promise<void> {
     await this.database.transaction(async (trx) => {
-      await this.upsertPositions(trx, [postitionToPersistence(position)]);
+      await this.upsertPositions(trx, [positionToPersistence(position)]);
       await this.replaceAllocations(trx, brokerBreakdownToPersistence(position), [
         [position.ticker, position.year],
       ]);
@@ -149,9 +153,13 @@ export class KnexPositionRepository implements AssetPositionRepository {
     if (positions.length === 0) return;
 
     await this.database.transaction(async (trx) => {
-      const positionRows = positions.map((p) => postitionToPersistence(p));
-      const positionPairs = positions.map((p) => [p.ticker, p.year] as PositionKey);
-      const allocationRows = positions.flatMap((p) => brokerBreakdownToPersistence(p));
+      const positionRows = positions.map((position) => positionToPersistence(position));
+      const positionPairs = positions.map(
+        (position) => [position.ticker, position.year] as PositionKey,
+      );
+      const allocationRows = positions.flatMap((position) =>
+        brokerBreakdownToPersistence(position),
+      );
 
       await this.upsertPositions(trx, positionRows);
       await this.replaceAllocations(trx, allocationRows, positionPairs);

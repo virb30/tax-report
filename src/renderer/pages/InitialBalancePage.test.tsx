@@ -179,10 +179,10 @@ describe('InitialBalancePage', () => {
       assetType: AssetType.Stock,
       name: 'iShares Core S&P 500',
       cnpj: '11.111.111/0001-11',
-      averagePrice: 300,
+      averagePrice: '300',
       allocations: [
-        { brokerId: 'broker-xp', quantity: 2 },
-        { brokerId: 'broker-rico', quantity: 1 },
+        { brokerId: 'broker-xp', quantity: '2' },
+        { brokerId: 'broker-rico', quantity: '1' },
       ],
     });
     expect(getInput('Ticker').value).toBe('');
@@ -249,10 +249,10 @@ describe('InitialBalancePage', () => {
       assetType: AssetType.Etf,
       name: 'iShares Core S&P 500',
       cnpj: '11.111.111/0001-11',
-      averagePrice: 320,
+      averagePrice: '320',
       allocations: [
-        { brokerId: 'broker-xp', quantity: 5 },
-        { brokerId: 'broker-rico', quantity: 2 },
+        { brokerId: 'broker-xp', quantity: '5' },
+        { brokerId: 'broker-rico', quantity: '2' },
       ],
     });
     expect(screen.getByText('XP: 5.00')).toBeInTheDocument();

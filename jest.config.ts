@@ -34,6 +34,7 @@ const config: Config = {
     '!src/main/main.ts',
     'src/preload.ts',
     '!src/main/__stubs__/**/*.ts',
+    '!src/main/infrastructure/runtime/**/*.ts'
   ],
   coveragePathIgnorePatterns: ['/node_modules/', '\\.d\\.ts$'],
   coverageThreshold: {

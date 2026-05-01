@@ -29,7 +29,7 @@ describe('KnexPositionRepository', () => {
     const nuBroker = Broker.create({
       name: 'Nu Invest',
       cnpj: new Cnpj('11.111.111/0001-11'),
-      code: 'NU',
+      code: 'NUTEST',
     });
     const xpBroker = Broker.create({
       name: 'XP Investimentos Test',
@@ -64,6 +64,8 @@ describe('KnexPositionRepository', () => {
     const position = await positionRepository.findByTickerAndYear('PETR4', 2024);
 
     expect(position?.totalQuantity.getAmount()).toBe(Quantity.from(7).getAmount());
-    expect(position?.brokerBreakdown).toEqual([{ brokerId: xpBroker.id, quantity: Quantity.from(7) }]);
+    expect(position?.brokerBreakdown).toEqual([
+      { brokerId: xpBroker.id, quantity: Quantity.from(7) },
+    ]);
   });
 });

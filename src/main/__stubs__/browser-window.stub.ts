@@ -3,7 +3,7 @@ import { jest } from '@jest/globals';
 interface WindowStub {
   loadURL: jest.Mock<(url: string) => Promise<void>>;
   loadFile: jest.Mock<(filePath: string) => Promise<void>>;
-};
+}
 
 export class BrowserWindowStub implements WindowStub {
   static lastOptions: unknown;
@@ -13,12 +13,16 @@ export class BrowserWindowStub implements WindowStub {
     return BrowserWindowStub.instances[0];
   }
 
+  static getAllWindows(): BrowserWindowStub[] {
+    return BrowserWindowStub.instances;
+  }
+
   constructor(options: unknown) {
     BrowserWindowStub.lastOptions = options;
     BrowserWindowStub.instances.push(this);
   }
 
-  loadURL = jest.fn<(url:string) => Promise<void>>().mockResolvedValue(undefined);
+  loadURL = jest.fn<(url: string) => Promise<void>>().mockResolvedValue(undefined);
   loadFile = jest.fn<(filePath: string) => Promise<void>>().mockResolvedValue(undefined);
 
   static clear() {

@@ -102,38 +102,48 @@ export class ImportConsolidatedPositionUseCase {
     const grouped = this.groupByTickerAndBroker(resolved);
     await this.persistAcceptedCatalogUpdates(acceptedRows, assetCatalogMap);
 
-    const tickers = [...new Set(grouped.map((r) => r.ticker))];
-
-    for (const ticker of tickers) {
-      await this.transactionRepository.deleteInitialBalanceByTickerAndYear(ticker, input.year);
-
-      const tickerRows = grouped.filter((r) => r.ticker === ticker);
-      const transactions = tickerRows.map((row) =>
-        Transaction.create({
-          date: `${input.year}-01-01`,
-          type: TransactionType.InitialBalance,
-          ticker: row.ticker,
-          quantity: Quantity.from(row.quantity),
-          unitPrice: Money.from(row.averagePrice),
-          fees: Money.from(0),
-          brokerId: Uuid.from(row.brokerId),
-          sourceType: SourceType.Csv,
-        }),
-      );
-
-      await this.transactionRepository.saveMany(transactions);
-      const event = new ConsolidatedPositionImportedEvent({
-        ticker,
-        year: input.year,
-      });
-      await this.queue.publish(event);
-    }
+    const tickers = this.extractUniqueTickers(grouped);
+    await this.replaceInitialBalanceRows(grouped, tickers, input.year);
 
     return {
       importedCount: grouped.length,
       recalculatedTickers: tickers,
       skippedUnsupportedRows,
     };
+  }
+
+  private extractUniqueTickers(rows: ResolvedRow[]): string[] {
+    return [...new Set(rows.map((row) => row.ticker))];
+  }
+
+  private async replaceInitialBalanceRows(
+    rows: ResolvedRow[],
+    tickers: string[],
+    year: number,
+  ): Promise<void> {
+    for (const ticker of tickers) {
+      await this.transactionRepository.deleteInitialBalanceByTickerAndYear(ticker, year);
+
+      const transactions = rows
+        .filter((row) => row.ticker === ticker)
+        .map((row) => this.createInitialBalanceTransaction(row, year));
+
+      await this.transactionRepository.saveMany(transactions);
+      await this.queue.publish(new ConsolidatedPositionImportedEvent({ ticker, year }));
+    }
+  }
+
+  private createInitialBalanceTransaction(row: ResolvedRow, year: number): Transaction {
+    return Transaction.create({
+      date: `${year}-01-01`,
+      type: TransactionType.InitialBalance,
+      ticker: row.ticker,
+      quantity: Quantity.from(row.quantity),
+      unitPrice: Money.from(row.averagePrice),
+      fees: Money.from(0),
+      brokerId: Uuid.from(row.brokerId),
+      sourceType: SourceType.Csv,
+    });
   }
 
   private validatePreviewInput(input: PreviewConsolidatedPositionCommand): void {

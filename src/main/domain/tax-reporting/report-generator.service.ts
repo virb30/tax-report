@@ -95,94 +95,109 @@ export class ReportGenerator {
   }
 
   generate(positions: AssetPosition[]): ReportItemOutput[] {
-    const result: ReportItemOutput[] = [];
+    return positions
+      .map((position) => this.buildReportItem(position))
+      .filter((item): item is ReportItemOutput => item !== null);
+  }
 
-    for (const position of positions) {
-      if (position.totalQuantity.isLessThanOrEqualTo(0)) {
-        continue;
-      }
-
-      const { totalQuantity, averagePrice } = position;
-
-      const asset = this.assetsMap.get(position.ticker) ?? null;
-      const reportAssetType = asset?.assetType ?? position.assetType;
-      const currentYearValue = averagePrice.multiplyBy(totalQuantity.getAmount());
-      const previousYearPosition = this.historicalPositionService.reconstructYearEndPosition(
-        position.ticker,
-        reportAssetType,
-        this.dependencies.baseYear - 1,
-        this.dependencies.transactionsByTicker.get(position.ticker) ?? [],
-      );
-      const previousYearValue = previousYearPosition
-        ? previousYearPosition.averagePrice.multiplyBy(
-            previousYearPosition.totalQuantity.getAmount(),
-          )
-        : Money.from(0);
-      const pendingIssues = this.buildPendingIssues(asset, reportAssetType);
-      const isSupported = this.isSupportedAssetType(reportAssetType);
-      const eligibility = this.declarationEligibilityService.evaluate({
-        assetType: reportAssetType,
-        previousYearValue,
-        currentYearValue,
-        hasPendingIssues: pendingIssues.length > 0,
-        isSupported,
-      });
-      const brokersSummary = position.brokerBreakdown
-        .filter((allocation) => allocation.quantity.toNumber() > 0)
-        .map((allocation) => {
-          const broker = this.brokersMap.get(allocation.brokerId.value);
-          const brokerName = broker?.name ?? 'Corretora nao cadastrada';
-          const brokerCnpj = broker?.cnpj?.value ?? 'N/A';
-          const brokerQuantity = allocation.quantity.toNumber();
-
-          return {
-            brokerId: allocation.brokerId.value,
-            brokerName,
-            cnpj: brokerCnpj,
-            quantity: brokerQuantity,
-            totalCost: averagePrice.multiplyBy(brokerQuantity).toNumber(),
-          };
-        });
-
-      if (brokersSummary.length === 0) {
-        continue;
-      }
-
-      const canCopy =
-        pendingIssues.length === 0 &&
-        eligibility.status !== ReportItemStatus.Pending &&
-        eligibility.status !== ReportItemStatus.Unsupported;
-
-      result.push({
-        ticker: position.ticker,
-        assetType: reportAssetType,
-        totalQuantity: totalQuantity.toNumber(),
-        averagePrice: averagePrice.toNumber(),
-        previousYearValue: previousYearValue.toNumber(),
-        currentYearValue: currentYearValue.toNumber(),
-        acquiredInYear: previousYearValue.isZero() && currentYearValue.isGreaterThan(0),
-        revenueClassification: getRevenueClassification(reportAssetType),
-        status: eligibility.status,
-        eligibilityReason: eligibility.reason,
-        pendingIssues,
-        canCopy,
-        description:
-          canCopy && asset?.issuerCnpj
-            ? buildDeclarationDescriptionText({
-                quantity: totalQuantity.toNumber(),
-                ticker: position.ticker,
-                assetType: reportAssetType,
-                issuerCnpj: asset.issuerCnpj,
-                averagePrice: averagePrice.toNumber(),
-                currentYearValue: currentYearValue.toNumber(),
-                brokersSummary,
-              })
-            : null,
-        brokersSummary,
-      });
+  private buildReportItem(position: AssetPosition): ReportItemOutput | null {
+    if (position.totalQuantity.isLessThanOrEqualTo(0)) {
+      return null;
     }
 
-    return result;
+    const { totalQuantity, averagePrice } = position;
+    const asset = this.assetsMap.get(position.ticker) ?? null;
+    const reportAssetType = asset?.assetType ?? position.assetType;
+    const currentYearValue = averagePrice.multiplyBy(totalQuantity.getAmount());
+    const previousYearValue = this.calculatePreviousYearValue(position, reportAssetType);
+    const pendingIssues = this.buildPendingIssues(asset, reportAssetType);
+    const eligibility = this.declarationEligibilityService.evaluate({
+      assetType: reportAssetType,
+      previousYearValue,
+      currentYearValue,
+      hasPendingIssues: pendingIssues.length > 0,
+      isSupported: this.isSupportedAssetType(reportAssetType),
+    });
+    const brokersSummary = this.buildBrokersSummary(position);
+
+    if (brokersSummary.length === 0) {
+      return null;
+    }
+
+    const canCopy = this.canCopyReportItem(pendingIssues, eligibility.status);
+
+    return {
+      ticker: position.ticker,
+      assetType: reportAssetType,
+      totalQuantity: totalQuantity.toNumber(),
+      averagePrice: averagePrice.toNumber(),
+      previousYearValue: previousYearValue.toNumber(),
+      currentYearValue: currentYearValue.toNumber(),
+      acquiredInYear: previousYearValue.isZero() && currentYearValue.isGreaterThan(0),
+      revenueClassification: getRevenueClassification(reportAssetType),
+      status: eligibility.status,
+      eligibilityReason: eligibility.reason,
+      pendingIssues,
+      canCopy,
+      description:
+        canCopy && asset?.issuerCnpj
+          ? buildDeclarationDescriptionText({
+              quantity: totalQuantity.toNumber(),
+              ticker: position.ticker,
+              assetType: reportAssetType,
+              issuerCnpj: asset.issuerCnpj,
+              averagePrice: averagePrice.toNumber(),
+              currentYearValue: currentYearValue.toNumber(),
+              brokersSummary,
+            })
+          : null,
+      brokersSummary,
+    };
+  }
+
+  private calculatePreviousYearValue(position: AssetPosition, assetType: AssetType): Money {
+    const previousYearPosition = this.historicalPositionService.reconstructYearEndPosition(
+      position.ticker,
+      assetType,
+      this.dependencies.baseYear - 1,
+      this.dependencies.transactionsByTicker.get(position.ticker) ?? [],
+    );
+
+    if (!previousYearPosition) {
+      return Money.from(0);
+    }
+
+    return previousYearPosition.averagePrice.multiplyBy(
+      previousYearPosition.totalQuantity.getAmount(),
+    );
+  }
+
+  private buildBrokersSummary(position: AssetPosition): ReportItemOutput['brokersSummary'] {
+    return position.brokerBreakdown
+      .filter((allocation) => allocation.quantity.toNumber() > 0)
+      .map((allocation) => {
+        const broker = this.brokersMap.get(allocation.brokerId.value);
+        const brokerQuantity = allocation.quantity.toNumber();
+
+        return {
+          brokerId: allocation.brokerId.value,
+          brokerName: broker?.name ?? 'Corretora nao cadastrada',
+          cnpj: broker?.cnpj?.value ?? 'N/A',
+          quantity: brokerQuantity,
+          totalCost: position.averagePrice.multiplyBy(brokerQuantity).toNumber(),
+        };
+      });
+  }
+
+  private canCopyReportItem(
+    pendingIssues: Array<{ code: PendingIssueCode; message: string }>,
+    status: ReportItemStatus,
+  ): boolean {
+    return (
+      pendingIssues.length === 0 &&
+      status !== ReportItemStatus.Pending &&
+      status !== ReportItemStatus.Unsupported
+    );
   }
 
   private buildPendingIssues(
@@ -224,9 +239,5 @@ export class ReportGenerator {
 
   private isSupportedAssetType(assetType: AssetType): boolean {
     return Object.values(AssetType).includes(assetType);
-  }
-
-  private roundCurrency(value: number): number {
-    return Math.round(value * 100) / 100;
   }
 }
