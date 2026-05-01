@@ -66,6 +66,7 @@ export function useImportConsolidatedPositionModal({
       const result = await window.electronApi.importConsolidatedPosition({
         filePath,
         year,
+        assetTypeOverrides: [],
       });
       const data = unwrapIpcResult(result);
       setFeedbackMessage(

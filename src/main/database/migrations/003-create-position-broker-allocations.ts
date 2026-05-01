@@ -7,7 +7,7 @@ export const createPositionBrokerAllocationsMigration = {
       table.increments('id').primary();
       table.text('position_ticker').notNullable().references('ticker').inTable('positions');
       table.text('broker_id').notNullable().references('id').inTable('brokers');
-      table.float('quantity').notNullable().defaultTo(0);
+      table.text('quantity').notNullable().defaultTo('0');
       table.unique(['position_ticker', 'broker_id']);
     });
   },

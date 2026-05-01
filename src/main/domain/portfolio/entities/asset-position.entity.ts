@@ -3,17 +3,19 @@ import { YEAR_RANGE } from '../../../../shared/utils/year';
 import type { Uuid } from '../../shared/uuid.vo';
 import { AveragePriceService } from '../services/average-price.service';
 import { PositionBrokerAllocation } from './position-broker-allocation';
+import { Money } from '../value-objects/money.vo';
+import { Quantity } from '../value-objects/quantity.vo';
 
 export type BrokerAllocation = {
   brokerId: Uuid;
-  quantity: number;
+  quantity: Quantity;
 };
 
 export interface AssetPositionProps {
   ticker: string;
   assetType: AssetType;
-  totalQuantity: number;
-  averagePrice: number;
+  totalQuantity: Quantity;
+  averagePrice: Money;
   brokerBreakdown: BrokerAllocation[];
   year: number;
 }
@@ -22,8 +24,8 @@ interface RestoreAssetPositionProps {
   ticker: string;
   assetType: AssetType;
   year: number;
-  totalQuantity: number;
-  averagePrice: number;
+  totalQuantity: Quantity;
+  averagePrice: Money;
   brokerBreakdown: BrokerAllocation[];
 }
 
@@ -31,25 +33,25 @@ interface CreateAssetPositionProps {
   ticker: string;
   assetType: AssetType;
   year: number;
-  totalQuantity?: number;
-  averagePrice?: number;
+  totalQuantity?: Quantity;
+  averagePrice?: Money;
   brokerBreakdown?: BrokerAllocation[];
 }
 
 interface ApplyOperationInput {
-  quantity: number;
+  quantity: Quantity;
   brokerId: Uuid;
 }
 
 interface ApplyBuyInput extends ApplyOperationInput {
-  unitPrice: number;
-  fees?: number;
+  unitPrice: Money;
+  fees?: Money;
 }
 
 type ApplySellInput = ApplyOperationInput;
 
 interface ApplyBonusInput extends ApplyOperationInput {
-  unitCost: number;
+  unitCost: Money;
 }
 
 type ApplyTransferOutInput = ApplyOperationInput;
@@ -57,7 +59,7 @@ type ApplyTransferOutInput = ApplyOperationInput;
 type ApplyTransferInInput = ApplyOperationInput;
 
 interface ApplyInitialBalanceInput extends ApplyOperationInput {
-  averagePrice: number;
+  averagePrice: Money;
 }
 
 interface ApplySplitInput {
@@ -72,8 +74,8 @@ export const MIN_SUPPORTED_YEAR = YEAR_RANGE.min;
 
 export class AssetPosition {
   private readonly averagePriceService: AveragePriceService;
-  private _totalQuantity: number;
-  private _averagePrice: number;
+  private _totalQuantity: Quantity;
+  private _averagePrice: Money;
   private readonly brokerBreakdownState: PositionBrokerAllocation;
   private _year: number;
 
@@ -90,8 +92,8 @@ export class AssetPosition {
     return new AssetPosition({
       ticker: props.ticker,
       assetType: props.assetType,
-      totalQuantity: props.totalQuantity ?? 0,
-      averagePrice: props.averagePrice ?? 0,
+      totalQuantity: props.totalQuantity ?? Quantity.from(0),
+      averagePrice: props.averagePrice ?? Money.from(0),
       brokerBreakdown: props.brokerBreakdown ?? [],
       year: props.year,
     });
@@ -104,11 +106,11 @@ export class AssetPosition {
   applyBuy(input: ApplyBuyInput): void {
     this.assertPositiveQuantity(input.quantity, 'Buy quantity must be greater than zero.');
 
-    const nextQuantity = this._totalQuantity + input.quantity;
+    const nextQuantity = this._totalQuantity.add(input.quantity);
     const nextAveragePrice = this.averagePriceService.calculateAfterBuy(this, {
       buyQuantity: input.quantity,
       buyUnitPrice: input.unitPrice,
-      operationalCosts: input.fees ?? 0,
+      operationalCosts: input.fees ?? Money.from(0),
     });
 
     this.brokerBreakdownState.increment(input.brokerId, input.quantity);
@@ -117,25 +119,28 @@ export class AssetPosition {
 
   applySell(input: ApplySellInput): void {
     this.assertPositiveQuantity(input.quantity, 'Sell quantity must be greater than zero.');
-    if (this._totalQuantity === 0) {
+    if (this._totalQuantity.isZero()) {
       throw new Error('Cannot sell asset without an open position.');
     }
 
     this.brokerBreakdownState.decrement(input.brokerId, input.quantity);
-    this.commitQuantityAndAveragePrice(this.totalQuantity - input.quantity, this._averagePrice);
+    this.commitQuantityAndAveragePrice(this._totalQuantity.subtract(input.quantity), this._averagePrice);
   }
 
   applyBonus(input: ApplyBonusInput): void {
     this.assertPositiveQuantity(input.quantity, 'Bonus quantity must be greater than zero.');
 
-    const nextQuantity = this._totalQuantity + input.quantity;
+    const creditedQuantity = input.quantity.floor();
+    const nextQuantity = this._totalQuantity.add(creditedQuantity);
     const nextAveragePrice = this.averagePriceService.calculateAfterBonus(
       this,
       input.quantity,
       input.unitCost,
     );
 
-    this.brokerBreakdownState.increment(input.brokerId, input.quantity);
+    if (!creditedQuantity.isZero()) {
+      this.brokerBreakdownState.increment(input.brokerId, creditedQuantity);
+    }
     this.commitQuantityAndAveragePrice(nextQuantity, nextAveragePrice);
   }
 
@@ -143,14 +148,14 @@ export class AssetPosition {
     this.assertPositiveQuantity(input.quantity, 'Transfer quantity must be greater than zero.');
 
     this.brokerBreakdownState.decrement(input.brokerId, input.quantity);
-    this.commitQuantityAndAveragePrice(this._totalQuantity - input.quantity, this._averagePrice);
+    this.commitQuantityAndAveragePrice(this._totalQuantity.subtract(input.quantity), this._averagePrice);
   }
 
   applyTransferIn(input: ApplyTransferInInput): void {
     this.assertPositiveQuantity(input.quantity, 'Transfer quantity must be greater than zero.');
 
     this.brokerBreakdownState.increment(input.brokerId, input.quantity);
-    this.commitQuantityAndAveragePrice(this._totalQuantity + input.quantity, this._averagePrice);
+    this.commitQuantityAndAveragePrice(this._totalQuantity.add(input.quantity), this._averagePrice);
   }
 
   applyInitialBalance(input: ApplyInitialBalanceInput): void {
@@ -158,11 +163,11 @@ export class AssetPosition {
       input.quantity,
       'Initial balance quantity must be greater than zero.',
     );
-    if (input.averagePrice <= 0) {
+    if (input.averagePrice.isLessThanOrEqualTo(0)) {
       throw new Error('Initial balance average price must be greater than zero.');
     }
 
-    this.brokerBreakdownState.set(input.brokerId, input.quantity);
+    this.brokerBreakdownState.replaceWith(input.brokerId, input.quantity);
     this.commitQuantityAndAveragePrice(this.calculateTotalQuantity(), input.averagePrice);
   }
 
@@ -171,7 +176,7 @@ export class AssetPosition {
       throw new Error('Split ratio must be greater than zero.');
     }
 
-    this.applyCorporateAction((quantity) => quantity * input.ratio);
+    this.applyCorporateAction((quantity) => quantity.multiplyBy(input.ratio).floor());
   }
 
   applyReverseSplit(input: ApplyReverseSplitInput): void {
@@ -179,14 +184,14 @@ export class AssetPosition {
       throw new Error('Reverse Split ratio must be greater than zero.');
     }
 
-    this.applyCorporateAction((quantity) => quantity / input.ratio);
+    this.applyCorporateAction((quantity) => quantity.divideBy(input.ratio).floor());
   }
 
-  get totalQuantity(): number {
+  get totalQuantity(): Quantity {
     return this._totalQuantity;
   }
 
-  get averagePrice(): number {
+  get averagePrice(): Money {
     return this._averagePrice;
   }
 
@@ -206,36 +211,32 @@ export class AssetPosition {
     return this.props.ticker;
   }
 
-  get totalCost(): number {
-    return this._totalQuantity * this._averagePrice;
+  get totalCost(): Money {
+    return this._averagePrice.multiplyBy(this._totalQuantity.getAmount());
   }
 
   private validate(): void {
-    if (this._totalQuantity < 0) {
-      throw new Error('Total quantity cannot be negative.');
-    }
-
-    if (this._averagePrice < 0) {
-      throw new Error('Average price cannot be negative.');
-    }
-
     if (this._year < MIN_SUPPORTED_YEAR) {
       throw new Error(`Year must be greater than or equal to ${MIN_SUPPORTED_YEAR}.`);
     }
 
+    if (this._averagePrice.isNegative()) {
+      throw new Error('Average price cannot be negative.');
+    }
+
     const breakdownSum = this.brokerBreakdownState.total();
-    if (Math.abs(breakdownSum - this._totalQuantity) > 1e-9) {
+    if (!breakdownSum.subtract(this._totalQuantity).isZero()) {
       throw new Error(
-        `Broker breakdown sum (${breakdownSum}) must equal total quantity (${this._totalQuantity}).`,
+        `Broker breakdown sum (${breakdownSum.getAmount()}) must equal total quantity (${this._totalQuantity.getAmount()}).`,
       );
     }
   }
 
-  private calculateTotalQuantity(): number {
+  private calculateTotalQuantity(): Quantity {
     return this.brokerBreakdownState.total();
   }
 
-  private applyCorporateAction(transform: (quantity: number) => number): void {
+  private applyCorporateAction(transform: (quantity: Quantity) => Quantity): void {
     this.brokerBreakdownState.applyRatio(transform);
     const nextTotalQuantity = this.calculateTotalQuantity();
     const nextAveragePrice = this.averagePriceService.calculateAfterQuantityChange(
@@ -245,14 +246,14 @@ export class AssetPosition {
     this.commitQuantityAndAveragePrice(nextTotalQuantity, nextAveragePrice);
   }
 
-  private commitQuantityAndAveragePrice(totalQuantity: number, averagePrice: number): void {
+  private commitQuantityAndAveragePrice(totalQuantity: Quantity, averagePrice: Money): void {
     this._totalQuantity = totalQuantity;
     this._averagePrice = averagePrice;
     this.validate();
   }
 
-  private assertPositiveQuantity(quantity: number, errorMessage: string): void {
-    if (quantity <= 0) {
+  private assertPositiveQuantity(quantity: Quantity, errorMessage: string): void {
+    if (quantity.isLessThanOrEqualTo(0)) {
       throw new Error(errorMessage);
     }
   }

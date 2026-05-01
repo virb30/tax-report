@@ -1,4 +1,4 @@
 export interface RecalculatePositionOutput {
-  totalQuantity: number;
-  averagePrice: number;
+  totalQuantity: string;
+  averagePrice: string;
 }

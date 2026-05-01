@@ -6,21 +6,23 @@ import {
 } from '../../domain/portfolio/entities/asset-position.entity';
 import type { AssetType } from '../../../shared/types/domain';
 import { Uuid } from '../../domain/shared/uuid.vo';
+import { Quantity } from '../../domain/portfolio/value-objects/quantity.vo';
+import { Money } from '../../domain/portfolio/value-objects/money.vo';
 
 type PositionRow = {
   ticker: string;
   year: number;
   asset_type: string;
-  total_quantity: number;
-  average_price: number;
-  average_price_cents: number;
+  total_quantity: string;
+  average_price: string;
+
 };
 
 type AllocationRow = {
   position_ticker: string;
   position_year: number;
   broker_id: string;
-  quantity: number;
+  quantity: string;
 };
 
 type PositionKey = [string, number];
@@ -46,14 +48,14 @@ function toAssetTypeColumn(assetType: AssetType): string {
 }
 
 function postitionToPersistence(position: AssetPosition): PositionRow {
-  const averagePriceCents = Math.round(position.averagePrice * 100);
+
   return {
     ticker: position.ticker,
     year: position.year,
     asset_type: toAssetTypeColumn(position.assetType),
-    total_quantity: position.totalQuantity,
-    average_price: position.averagePrice,
-    average_price_cents: averagePriceCents,
+    total_quantity: position.totalQuantity.getAmount(),
+    average_price: position.averagePrice.getAmount(),
+
   };
 }
 
@@ -62,7 +64,7 @@ function brokerBreakdownToPersistence(position: AssetPosition): AllocationRow[] 
     position_ticker: position.ticker,
     position_year: position.year,
     broker_id: allocation.brokerId.value,
-    quantity: allocation.quantity,
+    quantity: allocation.quantity.getAmount(),
   }));
 }
 
@@ -82,15 +84,15 @@ export class KnexPositionRepository implements AssetPositionRepository {
 
     const brokerBreakdown: BrokerAllocation[] = allocations.map((a) => ({
       brokerId: Uuid.from(a.broker_id),
-      quantity: a.quantity,
+      quantity: Quantity.from(a.quantity),
     }));
 
     return AssetPosition.restore({
       ticker: row.ticker,
       assetType: toAssetType(row.asset_type),
       year: row.year,
-      totalQuantity: row.total_quantity,
-      averagePrice: row.average_price,
+      totalQuantity: Quantity.from(row.total_quantity),
+      averagePrice: Money.from(row.average_price),
       brokerBreakdown,
     });
   }
@@ -117,7 +119,7 @@ export class KnexPositionRepository implements AssetPositionRepository {
         ...allocations,
         {
           brokerId: Uuid.from(a.broker_id),
-          quantity: a.quantity,
+          quantity: Quantity.from(a.quantity),
         },
       ]);
     });
@@ -127,8 +129,8 @@ export class KnexPositionRepository implements AssetPositionRepository {
         ticker: row.ticker,
         assetType: toAssetType(row.asset_type),
         year: row.year,
-        totalQuantity: row.total_quantity,
-        averagePrice: row.average_price,
+        totalQuantity: Quantity.from(row.total_quantity),
+        averagePrice: Money.from(row.average_price),
         brokerBreakdown: allocationsByTicker.get(row.ticker) ?? [],
       });
     });
@@ -169,7 +171,7 @@ export class KnexPositionRepository implements AssetPositionRepository {
     await trx('positions')
       .insert(rows)
       .onConflict(['ticker', 'year'])
-      .merge(['asset_type', 'total_quantity', 'average_price', 'average_price_cents']);
+      .merge(['asset_type', 'total_quantity', 'average_price']);
   }
 
   private async replaceAllocations(
@@ -177,9 +179,11 @@ export class KnexPositionRepository implements AssetPositionRepository {
     rows: AllocationRow[],
     positionKeys: PositionKey[],
   ): Promise<void> {
-    await trx('position_broker_allocations')
-      .whereIn(['position_ticker', 'position_year'], positionKeys)
-      .delete();
+    for (const [ticker, year] of positionKeys) {
+      await trx('position_broker_allocations')
+        .where({ position_ticker: ticker, position_year: year })
+        .delete();
+    }
 
     if (rows.length === 0) {
       return;

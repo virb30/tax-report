@@ -12,20 +12,28 @@ import { CsvXlsxConsolidatedPositionParser } from '../parsers/csv-xlsx-consolida
 import { RecalculatePositionHandler } from '../handlers/recalculate-position.handler';
 
 import { CreateBrokerUseCase } from '../../application/use-cases/create-broker/create-broker.use-case';
+import { ListAssetsUseCase } from '../../application/use-cases/list-assets/list-assets.use-case';
 import { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
+import { UpdateAssetUseCase } from '../../application/use-cases/update-asset/update-asset.use-case';
 import { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
 import { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
 import { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
 import { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions/import-transactions-use-case';
 import { PreviewImportUseCase } from '../../application/use-cases/preview-import/preview-import-use-case';
-import { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance.use-case';
+import { DeleteInitialBalanceDocumentUseCase } from '../../application/use-cases/delete-initial-balance-document/delete-initial-balance-document.use-case';
 import { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
+import { ListInitialBalanceDocumentsUseCase } from '../../application/use-cases/list-initial-balance-documents/list-initial-balance-documents.use-case';
 import { MigrateYearUseCase } from '../../application/use-cases/migrate-year/migrate-year.use-case';
 import { ImportConsolidatedPositionUseCase } from '../../application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
 import { DeletePositionUseCase } from '../../application/use-cases/delete-position/delete-position.use-case';
 import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-asset-report/generate-assets-report.use-case';
+import { SaveInitialBalanceDocumentUseCase } from '../../application/use-cases/save-initial-balance-document/save-initial-balance-document.use-case';
+import { InitialBalanceDocumentPositionSyncService } from '../../application/services/initial-balance-document-position-sync.service';
+import { ReprocessTickerYearsService } from '../../application/services/reprocess-ticker-years.service';
+import { RepairAssetTypeUseCase } from '../../application/use-cases/repair-asset-type/repair-asset-type.use-case';
 
 import { BrokersIpcRegistrar } from '../../ipc/registrars/brokers-ipc-registrar';
+import { AssetsIpcRegistrar } from '../../ipc/registrars/assets-ipc-registrar';
 import { AppIpcRegistrar } from '../../ipc/registrars/app-ipc-registrar';
 import { ImportIpcRegistrar } from '../../ipc/registrars/import-ipc-registrar';
 import { PortfolioIpcRegistrar } from '../../ipc/registrars/portfolio-ipc-registrar';
@@ -47,20 +55,28 @@ export interface AppCradle {
   recalculatePositionHandler: RecalculatePositionHandler;
 
   createBrokerUseCase: CreateBrokerUseCase;
+  listAssetsUseCase: ListAssetsUseCase;
   updateBrokerUseCase: UpdateBrokerUseCase;
+  updateAssetUseCase: UpdateAssetUseCase;
   listBrokersUseCase: ListBrokersUseCase;
   toggleActiveBrokerUseCase: ToggleActiveBrokerUseCase;
   recalculatePositionUseCase: RecalculatePositionUseCase;
   importTransactionsUseCase: ImportTransactionsUseCase;
   previewImportUseCase: PreviewImportUseCase;
-  setInitialBalanceUseCase: SetInitialBalanceUseCase;
+  initialBalanceDocumentPositionSyncService: InitialBalanceDocumentPositionSyncService;
+  reprocessTickerYearsService: ReprocessTickerYearsService;
+  saveInitialBalanceDocumentUseCase: SaveInitialBalanceDocumentUseCase;
+  listInitialBalanceDocumentsUseCase: ListInitialBalanceDocumentsUseCase;
+  deleteInitialBalanceDocumentUseCase: DeleteInitialBalanceDocumentUseCase;
   listPositionsUseCase: ListPositionsUseCase;
   migrateYearUseCase: MigrateYearUseCase;
   importConsolidatedPositionUseCase: ImportConsolidatedPositionUseCase;
   deletePositionUseCase: DeletePositionUseCase;
   generateAssetsReportUseCase: GenerateAssetsReportUseCase;
+  repairAssetTypeUseCase: RepairAssetTypeUseCase;
 
   brokersIpcRegistrar: BrokersIpcRegistrar;
+  assetsIpcRegistrar: AssetsIpcRegistrar;
   appIpcRegistrar: AppIpcRegistrar;
   importIpcRegistrar: ImportIpcRegistrar;
   portfolioIpcRegistrar: PortfolioIpcRegistrar;
@@ -102,7 +118,9 @@ export function registerDependencies(db: Knex) {
 
     // Use Cases
     createBrokerUseCase: asClass(CreateBrokerUseCase).singleton(),
+    listAssetsUseCase: asClass(ListAssetsUseCase).singleton(),
     updateBrokerUseCase: asClass(UpdateBrokerUseCase).singleton(),
+    updateAssetUseCase: asClass(UpdateAssetUseCase).singleton(),
     listBrokersUseCase: asClass(ListBrokersUseCase).singleton(),
     toggleActiveBrokerUseCase: asClass(ToggleActiveBrokerUseCase).singleton(),
     recalculatePositionUseCase: asClass(RecalculatePositionUseCase).singleton(),
@@ -111,6 +129,7 @@ export function registerDependencies(db: Knex) {
         new ImportTransactionsUseCase(
           container.resolve('transactionParser'),
           container.resolve('taxApportioner'),
+          container.resolve('assetRepository'),
           container.resolve('transactionRepository'),
           container.resolve('queue'),
         ),
@@ -118,48 +137,58 @@ export function registerDependencies(db: Knex) {
     previewImportUseCase: asClass(PreviewImportUseCase)
       .inject(() => ({
         parser: container.resolve('transactionParser'),
+        assetRepository: container.resolve('assetRepository'),
       }))
       .singleton(),
-    setInitialBalanceUseCase: asClass(SetInitialBalanceUseCase).singleton(),
+    initialBalanceDocumentPositionSyncService: asClass(
+      InitialBalanceDocumentPositionSyncService,
+    ).singleton(),
+    reprocessTickerYearsService: asClass(ReprocessTickerYearsService).singleton(),
+    saveInitialBalanceDocumentUseCase: asClass(SaveInitialBalanceDocumentUseCase).singleton(),
+    listInitialBalanceDocumentsUseCase: asClass(ListInitialBalanceDocumentsUseCase).singleton(),
+    deleteInitialBalanceDocumentUseCase: asClass(DeleteInitialBalanceDocumentUseCase).singleton(),
     listPositionsUseCase: asClass(ListPositionsUseCase).singleton(),
     migrateYearUseCase: asClass(MigrateYearUseCase).singleton(),
     importConsolidatedPositionUseCase: asFunction(
       () =>
         new ImportConsolidatedPositionUseCase(
           container.resolve('consolidatedPositionParser'),
+          container.resolve('assetRepository'),
           container.resolve('brokerRepository'),
           container.resolve('transactionRepository'),
           container.resolve('queue'),
         ),
     ).singleton(),
     deletePositionUseCase: asClass(DeletePositionUseCase).singleton(),
-    generateAssetsReportUseCase: asClass(GenerateAssetsReportUseCase)
-      .inject(() => ({
-        tickerDataRepository: container.resolve('assetRepository'),
-      }))
-      .singleton(),
+    generateAssetsReportUseCase: asClass(GenerateAssetsReportUseCase).singleton(),
+    repairAssetTypeUseCase: asClass(RepairAssetTypeUseCase).singleton(),
 
     // IPC registrars
     brokersIpcRegistrar: asClass(BrokersIpcRegistrar).singleton(),
+    assetsIpcRegistrar: asClass(AssetsIpcRegistrar).singleton(),
     appIpcRegistrar: asClass(AppIpcRegistrar).singleton(),
     importIpcRegistrar: asClass(ImportIpcRegistrar).singleton(),
     portfolioIpcRegistrar: asClass(PortfolioIpcRegistrar).singleton(),
     reportIpcRegistrar: asClass(ReportIpcRegistrar).singleton(),
 
     // IPC
-    ipcRegistrars: asFunction((
-      brokersIpcRegistrar: BrokersIpcRegistrar,
-      appIpcRegistrar: AppIpcRegistrar,
-      importIpcRegistrar: ImportIpcRegistrar,
-      portfolioIpcRegistrar: PortfolioIpcRegistrar,
-      reportIpcRegistrar: ReportIpcRegistrar
-    ) => [
-      brokersIpcRegistrar,
-      appIpcRegistrar,
-      importIpcRegistrar,
-      portfolioIpcRegistrar,
-      reportIpcRegistrar
-    ]).singleton(),
+    ipcRegistrars: asFunction(
+      (
+        brokersIpcRegistrar: BrokersIpcRegistrar,
+        assetsIpcRegistrar: AssetsIpcRegistrar,
+        appIpcRegistrar: AppIpcRegistrar,
+        importIpcRegistrar: ImportIpcRegistrar,
+        portfolioIpcRegistrar: PortfolioIpcRegistrar,
+        reportIpcRegistrar: ReportIpcRegistrar,
+      ) => [
+        brokersIpcRegistrar,
+        assetsIpcRegistrar,
+        appIpcRegistrar,
+        importIpcRegistrar,
+        portfolioIpcRegistrar,
+        reportIpcRegistrar,
+      ],
+    ).singleton(),
     ipcRegistry: asClass(IpcRegistry).singleton(),
   });
 

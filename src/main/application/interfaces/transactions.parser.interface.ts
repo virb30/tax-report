@@ -1,5 +1,5 @@
-import type { ParsedTransactionBatch } from '../../../shared/contracts/import-transactions.contract';
+import type { ParsedTransactionFile } from '../../../shared/contracts/import-transactions.contract';
 
 export interface ImportTransactionsParser {
-  parse(filePath: string): Promise<ParsedTransactionBatch[]>;
+  parse(filePath: string): Promise<ParsedTransactionFile>;
 }

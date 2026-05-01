@@ -1,6 +1,7 @@
 import type { BrokerRepository } from '../../repositories/broker.repository';
 import type { AssetPositionRepository } from '../../repositories/asset-position.repository';
 import type { AssetRepository } from '../../repositories/asset.repository';
+import type { TransactionRepository } from '../../repositories/transaction.repository';
 import { ReportGenerator } from '../../../domain/tax-reporting/report-generator.service';
 import type { GenerateAssetReportInput } from './generate-asset-report.input';
 import type { GenerateAssetReportOutput } from './generate-asset-report.output';
@@ -10,6 +11,7 @@ export class GenerateAssetsReportUseCase {
     private readonly positionRepository: AssetPositionRepository,
     private readonly brokerRepository: BrokerRepository,
     private readonly assetRepository: AssetRepository,
+    private readonly transactionRepository: TransactionRepository,
   ) {}
 
   async execute(input: GenerateAssetReportInput): Promise<GenerateAssetReportOutput> {
@@ -20,19 +22,18 @@ export class GenerateAssetsReportUseCase {
     const brokers = await this.brokerRepository.findAll();
     const tickers = positions.map((p) => p.ticker);
     const assetsData = await this.assetRepository.findByTickersList(tickers);
-
-    const reportGenerator = new ReportGenerator(brokers, assetsData);
-    const reportItems = reportGenerator.generate(positions);
-
-    const items = reportItems.map((item) => ({
-      ticker: item.ticker,
-      assetType: item.assetType,
-      totalQuantity: item.totalQuantity,
-      averagePrice: item.averagePrice,
-      totalCost: item.totalCost,
-      revenueClassification: item.revenueClassification,
-      allocations: item.allocations,
-    }));
+    const transactionsByTicker = new Map(
+      await Promise.all(
+        tickers.map(async (ticker) => [ticker, await this.transactionRepository.findByTicker(ticker)] as const),
+      ),
+    );
+    const reportGenerator = new ReportGenerator({
+      brokers,
+      assets: assetsData,
+      transactionsByTicker,
+      baseYear: input.baseYear,
+    });
+    const items = reportGenerator.generate(positions);
 
     return {
       referenceDate,

@@ -1,8 +1,8 @@
-
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { Knex } from 'knex';
+import { KnexAssetRepository } from '../infrastructure/repositories/knex-asset.repository';
 import {
   createAndInitializeDatabase,
   createDatabaseConnection,
@@ -18,6 +18,11 @@ async function tableExists(database: Knex, tableName: string): Promise<boolean> 
 
   return Boolean(row);
 }
+
+type TableInfoRow = {
+  name: string;
+  notnull: number;
+};
 
 describe('database', () => {
   let database: Knex;
@@ -52,6 +57,17 @@ describe('database', () => {
     expect(hasOperationsTable).toBe(true);
     expect(hasAccumulatedLossesTable).toBe(true);
     expect(hasTaxConfigTable).toBe(true);
+
+    const tickerDataColumns = (await database.raw("PRAGMA table_info('ticker_data')")) as
+      | TableInfoRow[]
+      | { rows: TableInfoRow[] };
+    const columns = Array.isArray(tickerDataColumns) ? tickerDataColumns : tickerDataColumns.rows;
+    const cnpjColumn = columns.find((column) => column.name === 'cnpj');
+
+    expect(columns.map((column) => column.name)).toEqual(
+      expect.arrayContaining(['ticker', 'cnpj', 'name', 'asset_type', 'resolution_source']),
+    );
+    expect(cnpjColumn?.notnull).toBe(0);
   });
 
   it('creates and initializes a file database', async () => {
@@ -98,4 +114,39 @@ describe('database', () => {
     expect(hasAssetsAfterUp).toBe(true);
   });
 
+  it('keeps rows created under the old ticker_data layout readable after migration 013', async () => {
+    database = createDatabaseConnection(':memory:');
+
+    for (const migration of databaseMigrations.slice(0, 12)) {
+      await migration.up(database);
+    }
+
+    await database('ticker_data').insert({
+      ticker: 'PETR4',
+      cnpj: '33.000.167/0001-01',
+      name: 'Petrobras',
+    });
+
+    await databaseMigrations[12]?.up(database);
+
+    const repository = new KnexAssetRepository(database);
+    const asset = await repository.findByTicker('PETR4');
+    const rawRow = await database('ticker_data').where({ ticker: 'PETR4' }).first();
+
+    expect(asset).not.toBeNull();
+    expect(asset).toMatchObject({
+      ticker: 'PETR4',
+      issuerCnpj: '33.000.167/0001-01',
+      name: 'Petrobras',
+      assetType: null,
+      resolutionSource: null,
+    });
+    expect(rawRow).toMatchObject({
+      ticker: 'PETR4',
+      cnpj: '33.000.167/0001-01',
+      name: 'Petrobras',
+      asset_type: null,
+      resolution_source: null,
+    });
+  });
 });

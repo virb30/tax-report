@@ -1,14 +1,22 @@
 import { z } from 'zod';
-import type { DeletePositionResult } from '../../../contracts/delete-position.contract';
+import type {
+  DeleteAllPositionsResult,
+  DeletePositionResult,
+} from '../../../contracts/delete-position.contract';
 import type {
   ImportConsolidatedPositionResult,
   PreviewConsolidatedPositionResult,
 } from '../../../contracts/import-consolidated-position.contract';
-import type { SetInitialBalanceResult } from '../../../contracts/initial-balance.contract';
+import type {
+  DeleteInitialBalanceDocumentResult,
+  ListInitialBalanceDocumentsResult,
+  SaveInitialBalanceDocumentResult,
+} from '../../../contracts/initial-balance.contract';
 import type { ListPositionsResult } from '../../../contracts/list-positions.contract';
 import type { MigrateYearResult } from '../../../contracts/migrate-year.contract';
 import type { RecalculatePositionResult } from '../../../contracts/recalculate.contract';
 import type { AssetType } from '../../../types/domain';
+import { AssetType as AssetTypeEnum } from '../../../types/domain';
 import { defineIpcContract } from '../../define-ipc-contract';
 
 export const listPositionsSchema = z.object({
@@ -17,30 +25,70 @@ export const listPositionsSchema = z.object({
     .int('Invalid base year for list positions.'),
 });
 
-export const setInitialBalanceSchema = z.object({
+const initialBalanceAllocationSchema = z.object({
+  brokerId: z
+    .string({ message: 'Invalid broker for initial balance allocation.' })
+    .trim()
+    .min(1, 'Invalid broker for initial balance allocation.'),
+  quantity: z
+    .string({ message: 'Invalid quantity for initial balance allocation.' })
+    .trim()
+    .refine((value) => {
+      const parsed = Number(value);
+      return value.length > 0 && !Number.isNaN(parsed) && parsed > 0;
+    }, 'Initial balance allocation quantity must be greater than zero.'),
+});
+
+const optionalMetadataFieldSchema = z
+  .string({ message: 'Invalid optional asset metadata.' })
+  .optional()
+  .transform((value) => {
+    const trimmed = value?.trim();
+    return trimmed && trimmed.length > 0 ? trimmed : undefined;
+  });
+
+export const saveInitialBalanceDocumentSchema = z.object({
   ticker: z
     .string({ message: 'Invalid ticker for initial balance.' })
     .trim()
     .min(1, 'Invalid ticker for initial balance.'),
-  brokerId: z
-    .string({ message: 'Invalid broker for initial balance.' })
-    .trim()
-    .min(1, 'Invalid broker for initial balance.'),
   assetType: z
     .any()
     .refine(
       (value) => typeof value === 'string' && ['stock', 'fii', 'etf', 'bdr'].includes(value),
       'Invalid asset type for initial balance.',
     ) as unknown as z.ZodType<AssetType>,
-  quantity: z
-    .number({ message: 'Invalid quantity for initial balance.' })
-    .refine((value) => !Number.isNaN(value), 'Invalid quantity for initial balance.'),
   averagePrice: z
-    .number({ message: 'Invalid average price for initial balance.' })
-    .refine((value) => !Number.isNaN(value), 'Invalid average price for initial balance.'),
+    .string({ message: 'Invalid average price for initial balance.' })
+    .trim()
+    .refine((value) => {
+      const parsed = Number(value);
+      return value.length > 0 && !Number.isNaN(parsed) && parsed > 0;
+    }, 'Initial balance average price must be greater than zero.'),
+  name: optionalMetadataFieldSchema,
+  cnpj: optionalMetadataFieldSchema,
   year: z
     .number({ message: 'Invalid year for initial balance.' })
     .int('Invalid year for initial balance.'),
+  allocations: z
+    .array(initialBalanceAllocationSchema)
+    .min(1, 'At least one initial balance allocation is required.'),
+});
+
+export const listInitialBalanceDocumentsSchema = z.object({
+  year: z
+    .number({ message: 'Invalid year for list initial balance documents.' })
+    .int('Invalid year for list initial balance documents.'),
+});
+
+export const deleteInitialBalanceDocumentSchema = z.object({
+  ticker: z
+    .string({ message: 'Invalid ticker for delete initial balance document.' })
+    .trim()
+    .min(1, 'Invalid ticker for delete initial balance document.'),
+  year: z
+    .number({ message: 'Invalid year for delete initial balance document.' })
+    .int('Invalid year for delete initial balance document.'),
 });
 
 export const recalculatePositionSchema = z.object({
@@ -77,6 +125,17 @@ export const importConsolidatedPositionSchema = z.object({
   year: z
     .number({ message: 'Invalid year for import consolidated position.' })
     .int('Invalid year for import consolidated position.'),
+  assetTypeOverrides: z.array(
+    z.object({
+      ticker: z
+        .string({ message: 'Invalid ticker for consolidated import asset type override.' })
+        .trim()
+        .min(1, 'Invalid ticker for consolidated import asset type override.'),
+      assetType: z.nativeEnum(AssetTypeEnum, {
+        message: 'Invalid asset type for consolidated import asset type override.',
+      }),
+    }),
+  ),
 });
 
 export const deletePositionSchema = z.object({
@@ -89,15 +148,44 @@ export const deletePositionSchema = z.object({
     .int('Invalid year for delete position.'),
 });
 
-export const setInitialBalanceContract = defineIpcContract<SetInitialBalanceResult>()({
-  id: 'portfolio.setInitialBalance',
-  channel: 'portfolio:set-initial-balance',
-  inputSchema: setInitialBalanceSchema,
-  errorMode: 'result',
-  exposeToRenderer: true,
-  api: { name: 'setInitialBalance' },
-  payloadErrorMessage: 'Invalid payload for initial balance.',
+export const deleteAllPositionsSchema = z.object({
+  year: z
+    .number({ message: 'Invalid year for delete all positions.' })
+    .int('Invalid year for delete all positions.'),
 });
+
+export const saveInitialBalanceDocumentContract =
+  defineIpcContract<SaveInitialBalanceDocumentResult>()({
+    id: 'portfolio.saveInitialBalanceDocument',
+    channel: 'portfolio:save-initial-balance-document',
+    inputSchema: saveInitialBalanceDocumentSchema,
+    errorMode: 'result',
+    exposeToRenderer: true,
+    api: { name: 'saveInitialBalanceDocument' },
+    payloadErrorMessage: 'Invalid payload for save initial balance document.',
+  });
+
+export const listInitialBalanceDocumentsContract =
+  defineIpcContract<ListInitialBalanceDocumentsResult>()({
+    id: 'portfolio.listInitialBalanceDocuments',
+    channel: 'portfolio:list-initial-balance-documents',
+    inputSchema: listInitialBalanceDocumentsSchema,
+    errorMode: 'result',
+    exposeToRenderer: true,
+    api: { name: 'listInitialBalanceDocuments' },
+    payloadErrorMessage: 'Invalid payload for list initial balance documents.',
+  });
+
+export const deleteInitialBalanceDocumentContract =
+  defineIpcContract<DeleteInitialBalanceDocumentResult>()({
+    id: 'portfolio.deleteInitialBalanceDocument',
+    channel: 'portfolio:delete-initial-balance-document',
+    inputSchema: deleteInitialBalanceDocumentSchema,
+    errorMode: 'result',
+    exposeToRenderer: true,
+    api: { name: 'deleteInitialBalanceDocument' },
+    payloadErrorMessage: 'Invalid payload for delete initial balance document.',
+  });
 
 export const listPositionsContract = defineIpcContract<ListPositionsResult>()({
   id: 'portfolio.listPositions',
@@ -161,12 +249,25 @@ export const deletePositionContract = defineIpcContract<DeletePositionResult>()(
   payloadErrorMessage: 'Invalid payload for delete position.',
 });
 
+export const deleteAllPositionsContract = defineIpcContract<DeleteAllPositionsResult>()({
+  id: 'portfolio.deleteAllPositions',
+  channel: 'portfolio:delete-all-positions',
+  inputSchema: deleteAllPositionsSchema,
+  errorMode: 'result',
+  exposeToRenderer: true,
+  api: { name: 'deleteAllPositions' },
+  payloadErrorMessage: 'Invalid payload for delete all positions.',
+});
+
 export const portfolioIpcContracts = [
-  setInitialBalanceContract,
+  saveInitialBalanceDocumentContract,
+  listInitialBalanceDocumentsContract,
+  deleteInitialBalanceDocumentContract,
   listPositionsContract,
   recalculatePositionContract,
   migrateYearContract,
   previewConsolidatedPositionContract,
   importConsolidatedPositionContract,
   deletePositionContract,
+  deleteAllPositionsContract,
 ] as const;

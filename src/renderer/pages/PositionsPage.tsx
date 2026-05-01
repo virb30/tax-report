@@ -49,9 +49,25 @@ export function PositionsPage(): JSX.Element {
             type="button"
             className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
             onClick={() => void positionsPage.recalculateAllPositions()}
-            disabled={positionsPage.recalculatingAll || positionsPage.positions.length === 0}
+            disabled={
+              positionsPage.recalculatingAll ||
+              positionsPage.deletingAll ||
+              positionsPage.positions.length === 0
+            }
           >
             {positionsPage.recalculatingAll ? 'Recalculando...' : 'Recalcular todas'}
+          </button>
+          <button
+            type="button"
+            className="rounded-md border border-rose-300 bg-white px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={() => void positionsPage.deleteAllPositions()}
+            disabled={
+              positionsPage.deletingAll ||
+              positionsPage.recalculatingAll ||
+              positionsPage.positions.length === 0
+            }
+          >
+            {positionsPage.deletingAll ? 'Excluindo...' : 'Excluir todos'}
           </button>
         </div>
       </div>
@@ -82,7 +98,7 @@ export function PositionsPage(): JSX.Element {
         onRecalculatePosition={(ticker) => void positionsPage.recalculatePosition(ticker)}
         onToggleExpand={positionsPage.toggleExpand}
         positions={positionsPage.positions}
-        recalculatingAll={positionsPage.recalculatingAll}
+        recalculatingAll={positionsPage.recalculatingAll || positionsPage.deletingAll}
         recalculatingTicker={positionsPage.recalculatingTicker}
       />
     </section>

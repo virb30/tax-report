@@ -41,6 +41,7 @@ export function createImportIpcHandlers(
       return {
         importedCount: result.importedCount,
         recalculatedTickers: result.recalculatedTickers,
+        skippedUnsupportedRows: result.skippedUnsupportedRows,
       };
     },
   };

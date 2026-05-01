@@ -8,14 +8,11 @@ export const createTransactionsMigration = {
       table.text('date').notNullable();
       table
         .text('type')
-        .notNullable()
-        .checkIn(['buy', 'sell', 'bonus', 'initial_balance']);
+        .notNullable();
       table.text('ticker').notNullable();
-      table.float('quantity').notNullable();
-      table.float('unit_price').notNullable().defaultTo(0);
-      table.integer('unit_price_cents').notNullable().defaultTo(0);
-      table.float('fees').notNullable().defaultTo(0);
-      table.integer('fees_cents').notNullable().defaultTo(0);
+      table.text('quantity').notNullable();
+      table.text('unit_price').notNullable().defaultTo('0');
+      table.text('fees').notNullable().defaultTo('0');
       table.text('broker_id').notNullable().references('id').inTable('brokers');
       table
         .text('source_type')

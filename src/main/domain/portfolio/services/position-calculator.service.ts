@@ -51,10 +51,10 @@ export class PositionCalculatorService {
           position.applyTransferIn({ quantity: tx.quantity, brokerId: tx.brokerId });
           break;
         case TransactionType.Split:
-          position.applySplit({ ratio: tx.quantity });
+          position.applySplit({ ratio: tx.quantity.toNumber() });
           break;
         case TransactionType.ReverseSplit:
-          position.applyReverseSplit({ ratio: tx.quantity });
+          position.applyReverseSplit({ ratio: tx.quantity.toNumber() });
           break;
         case TransactionType.InitialBalance:
           position.applyInitialBalance({

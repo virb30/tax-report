@@ -1,15 +1,18 @@
 ---
 trigger: model_decision
-description: Regras de frontend React com padroes comuns de TypeScript e testes
+description: Regras de frontend React
 globs: src/renderer/**/*.{ts,tsx,js,jsx,html,css,scss}
 ---
 
 # React Rules
 
-Estas regras definem padroes para o frontend em React.
+Use esta regra ao alterar codigo em `src/renderer/**`.
 
 ## Frontend (React)
 
+- Mantenha paginas como composition roots.
+- Mova workflows, IPC calls, submit handlers, modal state e estado derivado para hooks `use...` focados.
+- Mova forms, tables e modals para componentes nomeados quando forem responsabilidades separadas.
 - Use componentes funcionais e Hooks (`useState`, `useEffect`, etc.); nao use componentes de classe.
 - Use Context API para comunicacao entre componentes quando necessario; evite bibliotecas de estado sem necessidade clara.
 - Todo hook customizado deve comecar com `use` (ex.: `useUserData`).
@@ -19,15 +22,3 @@ Estas regras definem padroes para o frontend em React.
 - Componentes devem ter testes automatizados cobrindo o comportamento principal.
 - Crie componentes em pastas `PascalCase`; o arquivo principal deve ter o mesmo nome da pasta com extensao `.tsx`; nao use `index.tsx` para componentes.
 - Mantenha o estado o mais proximo possivel de onde ele e utilizado.
-
-## Regras Comuns (TypeScript e JavaScript)
-
-- Nao use `any`; prefira tipos especificos. Quando necessario, use `unknown` com validacao de tipo.
-- Use `import` e `export` (ESM); nao use `require`.
-- Prefira `async/await` em vez de callbacks ou cadeias de Promise desnecessarias.
-- Use `const` por padrao. Use `let` apenas quando houver reatribuicao. `var` e proibido.
-
-## Regras Comuns de Testes
-
-- Mantenha arquivos de teste na mesma pasta do arquivo testado.
-- Use sufixos `*.test.ts`, `*.test.tsx`, `*.spec.ts` ou `*.spec.tsx`.

@@ -1,34 +1,44 @@
+import type { DeleteInitialBalanceDocumentUseCase } from '../../../application/use-cases/delete-initial-balance-document/delete-initial-balance-document.use-case';
 import type { DeletePositionUseCase } from '../../../application/use-cases/delete-position/delete-position.use-case';
 import type { ImportConsolidatedPositionUseCase } from '../../../application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
+import type { ListInitialBalanceDocumentsUseCase } from '../../../application/use-cases/list-initial-balance-documents/list-initial-balance-documents.use-case';
 import type { ListPositionsUseCase } from '../../../application/use-cases/list-positions/list-positions-use-case';
 import type { MigrateYearUseCase } from '../../../application/use-cases/migrate-year/migrate-year.use-case';
 import type { RecalculatePositionUseCase } from '../../../application/use-cases/recalculate-position/recalculate-position.use-case';
-import type { SetInitialBalanceUseCase } from '../../../application/use-cases/set-initial-balance/set-initial-balance.use-case';
+import type { SaveInitialBalanceDocumentUseCase } from '../../../application/use-cases/save-initial-balance-document/save-initial-balance-document.use-case';
 import type { IpcContractHandler } from '../../binding/bind-ipc-contract';
 import type { AssetType } from '../../../../shared/types/domain';
 import type {
+  deleteInitialBalanceDocumentContract,
+  deleteAllPositionsContract,
   deletePositionContract,
   importConsolidatedPositionContract,
+  listInitialBalanceDocumentsContract,
   listPositionsContract,
   migrateYearContract,
   previewConsolidatedPositionContract,
   recalculatePositionContract,
-  setInitialBalanceContract,
+  saveInitialBalanceDocumentContract,
 } from '../../../../shared/ipc/contracts/portfolio';
 import { ipcSuccess } from '../../../../shared/ipc/ipc-result';
 
 export type PortfolioIpcHandlers = {
-  setInitialBalance: IpcContractHandler<typeof setInitialBalanceContract>;
+  saveInitialBalanceDocument: IpcContractHandler<typeof saveInitialBalanceDocumentContract>;
+  listInitialBalanceDocuments: IpcContractHandler<typeof listInitialBalanceDocumentsContract>;
+  deleteInitialBalanceDocument: IpcContractHandler<typeof deleteInitialBalanceDocumentContract>;
   listPositions: IpcContractHandler<typeof listPositionsContract>;
   recalculatePosition: IpcContractHandler<typeof recalculatePositionContract>;
   migrateYear: IpcContractHandler<typeof migrateYearContract>;
   previewConsolidatedPosition: IpcContractHandler<typeof previewConsolidatedPositionContract>;
   importConsolidatedPosition: IpcContractHandler<typeof importConsolidatedPositionContract>;
   deletePosition: IpcContractHandler<typeof deletePositionContract>;
+  deleteAllPositions: IpcContractHandler<typeof deleteAllPositionsContract>;
 };
 
 export function createPortfolioIpcHandlers(
-  setInitialBalanceUseCase: SetInitialBalanceUseCase,
+  saveInitialBalanceDocumentUseCase: SaveInitialBalanceDocumentUseCase,
+  listInitialBalanceDocumentsUseCase: ListInitialBalanceDocumentsUseCase,
+  deleteInitialBalanceDocumentUseCase: DeleteInitialBalanceDocumentUseCase,
   listPositionsUseCase: ListPositionsUseCase,
   recalculatePositionUseCase: RecalculatePositionUseCase,
   migrateYearUseCase: MigrateYearUseCase,
@@ -36,8 +46,12 @@ export function createPortfolioIpcHandlers(
   deletePositionUseCase: DeletePositionUseCase,
 ): PortfolioIpcHandlers {
   return {
-    setInitialBalance: async (payload) =>
-      ipcSuccess(await setInitialBalanceUseCase.execute(payload)),
+    saveInitialBalanceDocument: async (payload) =>
+      ipcSuccess(await saveInitialBalanceDocumentUseCase.execute(payload)),
+    listInitialBalanceDocuments: async (payload) =>
+      ipcSuccess(await listInitialBalanceDocumentsUseCase.execute(payload)),
+    deleteInitialBalanceDocument: async (payload) =>
+      ipcSuccess(await deleteInitialBalanceDocumentUseCase.execute(payload)),
     listPositions: async (payload) => {
       const result = await listPositionsUseCase.execute(payload);
 
@@ -58,5 +72,7 @@ export function createPortfolioIpcHandlers(
     importConsolidatedPosition: async (payload) =>
       ipcSuccess(await importConsolidatedPositionUseCase.execute(payload)),
     deletePosition: async (payload) => ipcSuccess(await deletePositionUseCase.execute(payload)),
+    deleteAllPositions: async (payload) =>
+      ipcSuccess(await deletePositionUseCase.executeAll(payload)),
   };
 }

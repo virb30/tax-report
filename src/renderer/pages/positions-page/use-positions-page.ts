@@ -17,6 +17,7 @@ export function usePositionsPage() {
   const [migrateModalOpen, setMigrateModalOpen] = useState(false);
   const [importConsolidatedModalOpen, setImportConsolidatedModalOpen] = useState(false);
   const [deletingTicker, setDeletingTicker] = useState<string | null>(null);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   useEffect(() => {
     void loadPositions();
@@ -84,6 +85,29 @@ export function usePositionsPage() {
     }
   }
 
+  async function deleteAllPositions(): Promise<void> {
+    if (
+      !window.confirm(
+        `Excluir todos os ativos e transações vinculadas da posição de ${baseYear}?`,
+      )
+    ) {
+      return;
+    }
+
+    setDeletingAll(true);
+    setErrorMessage('');
+    try {
+      const result = await window.electronApi.deleteAllPositions({ year: baseYear });
+      if (unwrapIpcResult(result).deletedCount > 0) {
+        await loadPositions();
+      }
+    } catch (error: unknown) {
+      setErrorMessage(buildErrorMessage(error));
+    } finally {
+      setDeletingAll(false);
+    }
+  }
+
   function toggleExpand(ticker: string): void {
     setExpandedTickers((currentExpandedTickers) => {
       const nextExpandedTickers = new Set(currentExpandedTickers);
@@ -108,7 +132,9 @@ export function usePositionsPage() {
 
   return {
     baseYear,
+    deletingAll,
     deletingTicker,
+    deleteAllPositions,
     deletePosition,
     errorMessage,
     expandedTickers,

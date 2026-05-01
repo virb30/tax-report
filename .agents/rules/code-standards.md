@@ -23,6 +23,13 @@ Estas regras existem para guiar implementação e revisão de código com consis
 7. Não misture consulta com mutação na mesma função. Consultas devem ser livres de efeitos colaterais.
 8. Evite mais de 2 níveis de aninhamento de `if/else`; prefira `early return`.
 9. Nunca declare mais de uma variável na mesma linha.
+10. Use TypeScript em todo código novo ou alterado.
+11. Siga Prettier: aspas simples, ponto e vírgula, trailing commas e largura de linha de 100 caracteres.
+12. Siga ESLint sem warnings, sem `any` e com imports type-only consistentes.
+13. Use `import` e `export` (ESM); não use `require`.
+14. Prefira `async/await` em vez de callbacks ou cadeias de Promise desnecessárias.
+15. Use `const` por padrão. Use `let` apenas quando houver reatribuição. `var` é proibido.
+16. Quando o tipo de entrada for desconhecido, use `unknown` com validação explícita.
 
 ## Regras recomendadas (`SHOULD`)
 
@@ -31,6 +38,7 @@ Estas regras existem para guiar implementação e revisão de código com consis
 3. Mantenha funções com até 50 linhas e classes com até 300 linhas; extraia responsabilidades quando ultrapassar.
 4. Declare variáveis o mais próximo possível do ponto de uso.
 5. Evite comentários óbvios; use comentários apenas para explicar intenção, contexto ou trade-off.
+6. Use sufixos de arquivo consistentes: `*.entity.ts`, `*.vo.ts`, `*.service.ts`, `*.use-case.ts`, `*.contract.ts` e `*.repository.ts`.
 
 ## Exemplos rápidos
 

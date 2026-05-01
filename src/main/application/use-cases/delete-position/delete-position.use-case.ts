@@ -25,6 +25,22 @@ export class DeletePositionUseCase {
     return { deleted: true };
   }
 
+  async executeAll(input: { year: number }): Promise<{ deletedCount: number }> {
+    assertSupportedYear(input.year, {
+      invalidTypeMessage: 'Ano inválido.',
+      outOfRangeMessage: 'Ano deve estar entre 2000 e 2100.',
+    });
+
+    const positions = await this.positionRepository.findAllByYear(input.year);
+
+    for (const position of positions) {
+      await this.transactionRepository.deleteByTickerAndYear(position.ticker, input.year);
+      await this.positionRepository.delete(position.ticker, input.year);
+    }
+
+    return { deletedCount: positions.length };
+  }
+
   private validate(input: DeletePositionInput): void {
     if (typeof input.ticker !== 'string' || input.ticker.trim().length === 0) {
       throw new Error('Ticker inválido.');

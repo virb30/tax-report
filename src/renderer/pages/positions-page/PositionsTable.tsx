@@ -60,9 +60,9 @@ export function PositionsTable({
                   </td>
                   <td className="px-3 py-2 font-medium">{position.ticker}</td>
                   <td className="px-3 py-2">{position.assetType}</td>
-                  <td className="px-3 py-2">{position.totalQuantity.toFixed(2)}</td>
-                  <td className="px-3 py-2">R$ {position.averagePrice.toFixed(2)}</td>
-                  <td className="px-3 py-2">R$ {position.totalCost.toFixed(2)}</td>
+                  <td className="px-3 py-2">{Number(position.totalQuantity)?.toFixed(2)}</td>
+                  <td className="px-3 py-2">R$ {Number(position.averagePrice)?.toFixed(2)}</td>
+                  <td className="px-3 py-2">R$ {Number(position.totalCost)?.toFixed(2)}</td>
                   <td className="px-3 py-2">
                     <div className="flex gap-1">
                       <button
@@ -116,7 +116,7 @@ export function PositionsTable({
                                   {brokerBreakdown.brokerCnpj}
                                 </td>
                                 <td className="py-1 text-right">
-                                  {brokerBreakdown.quantity.toFixed(2)}
+                                  {Number(brokerBreakdown.quantity).toFixed(2)}
                                 </td>
                               </tr>
                             ))}

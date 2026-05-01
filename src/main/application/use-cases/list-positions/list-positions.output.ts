@@ -2,15 +2,15 @@ export interface BrokerBreakdownItem {
   brokerId: string;
   brokerName: string;
   brokerCnpj: string;
-  quantity: number;
+  quantity: string;
 };
 
 export interface PositionListItem {
   ticker: string;
   assetType: string;
-  totalQuantity: number;
-  averagePrice: number;
-  totalCost: number;
+  totalQuantity: string;
+  averagePrice: string;
+  totalCost: string;
   brokerBreakdown: BrokerBreakdownItem[];
 };
 

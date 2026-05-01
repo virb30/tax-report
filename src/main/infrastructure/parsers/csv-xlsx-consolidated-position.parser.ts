@@ -4,6 +4,7 @@ import type {
   ConsolidatedPositionParserPort,
   ConsolidatedPositionRow,
 } from '../../application/interfaces/consolidated-position-parser.port';
+import { UnsupportedImportClassifier } from '../../domain/ingestion/unsupported-import-classifier.service';
 
 type SpreadsheetRow = Record<string, string | number | null | undefined>;
 
@@ -21,6 +22,9 @@ function toCanonicalHeader(value: string): string {
   const normalizedValue = normalizeHeader(value);
   if (normalizedValue === 'preco medio' || normalizedValue === 'preço médio') {
     return 'Preco Medio';
+  }
+  if (normalizedValue === 'tipo ativo') {
+    return 'Tipo Ativo';
   }
 
   for (const requiredColumn of REQUIRED_COLUMNS) {
@@ -107,6 +111,8 @@ function resolveFileTypeFromPath(filePath: string): 'csv' | 'xlsx' {
 }
 
 export class CsvXlsxConsolidatedPositionParser implements ConsolidatedPositionParserPort {
+  private readonly classifier = new UnsupportedImportClassifier();
+
   async parse(filePath: string): Promise<ConsolidatedPositionRow[]> {
     const fileType = resolveFileTypeFromPath(filePath);
     const rows =
@@ -131,6 +137,8 @@ export class CsvXlsxConsolidatedPositionParser implements ConsolidatedPositionPa
 
       const quantity = parseNumber(row.Quantidade, 'Quantidade');
       const averagePrice = parseNumber(row['Preco Medio'], 'Preco Medio');
+      const sourceAssetTypeLabel = this.toOptionalString(row['Tipo Ativo']);
+      const sourceAssetType = this.classifier.normalizeAssetType(sourceAssetTypeLabel);
 
       if (quantity <= 0) {
         throw new Error(`Quantidade deve ser maior que zero (Ticker: ${ticker}).`);
@@ -144,9 +152,24 @@ export class CsvXlsxConsolidatedPositionParser implements ConsolidatedPositionPa
         quantity,
         averagePrice,
         brokerCode: brokerCode.trim().toUpperCase(),
+        sourceAssetType,
+        sourceAssetTypeLabel,
       });
     }
 
     return result;
+  }
+
+  private toOptionalString(value: unknown): string | null {
+    if (typeof value !== 'string' && typeof value !== 'number') {
+      return null;
+    }
+
+    const normalized = String(value).trim();
+    if (!normalized || normalized === 'undefined') {
+      return null;
+    }
+
+    return normalized;
   }
 }

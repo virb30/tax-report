@@ -2,10 +2,13 @@ import '@testing-library/jest-dom';
 
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AssetType, TransactionType } from '../shared/types/domain';
+import { AssetType, ReportItemStatus, TransactionType, AssetResolutionStatus } from '../shared/types/domain';
 import type { ElectronApi } from '../shared/types/electron-api';
 import type { GenerateAssetsReportResult } from '../shared/contracts/assets-report.contract';
-import type { SetInitialBalanceResult } from '../shared/contracts/initial-balance.contract';
+import type {
+  InitialBalanceDocument,
+  SaveInitialBalanceDocumentResult,
+} from '../shared/contracts/initial-balance.contract';
 import type { ListPositionsResult } from '../shared/contracts/list-positions.contract';
 import { App } from './App';
 import mock, { mockReset } from 'jest-mock-extended/lib/Mock';
@@ -13,8 +16,28 @@ import mock, { mockReset } from 'jest-mock-extended/lib/Mock';
 describe('App critical UI flows (E2E)', () => {
   const electronApi = mock<ElectronApi>();
 
+  function createDocument(overrides: Partial<InitialBalanceDocument> = {}): InitialBalanceDocument {
+    return {
+      ticker: 'IVVB11',
+      year: 2025,
+      assetType: AssetType.Etf,
+      averagePrice: '300',
+      allocations: [
+        { brokerId: 'broker-xp', quantity: '2' },
+        { brokerId: 'broker-rico', quantity: '1' },
+      ],
+      totalQuantity: '3',
+      ...overrides,
+    };
+  }
+
   beforeEach(() => {
     mockReset(electronApi);
+    jest.spyOn(window, 'confirm').mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('runs import, manual base and annual report flows through UI', async () => {
@@ -31,25 +54,31 @@ describe('App critical UI flows (E2E)', () => {
           unitPrice: 20,
           fees: 1,
           brokerId: 'broker-xp',
+          resolvedAssetType: AssetType.Stock,
+          resolutionStatus: AssetResolutionStatus.ResolvedFromFile,
+          needsReview: false,
+          unsupportedReason: null,
+          sourceAssetType: AssetType.Stock,
         },
       ],
+      summary: {
+        supportedRows: 1,
+        pendingRows: 0,
+        unsupportedRows: 0,
+      },
     });
 
     electronApi.confirmImportTransactions.mockResolvedValue({
       importedCount: 1,
       recalculatedTickers: ['PETR4'],
+      skippedUnsupportedRows: 0,
     });
 
-    const setInitialBalanceResult: SetInitialBalanceResult = {
+    const saveInitialBalanceDocumentResult: SaveInitialBalanceDocumentResult = {
       ok: true,
-      data: {
-        ticker: 'IVVB11',
-        brokerId: 'broker-xp',
-        quantity: 2,
-        averagePrice: 300,
-      },
+      data: createDocument(),
     };
-    electronApi.setInitialBalance.mockResolvedValue(setInitialBalanceResult);
+    electronApi.saveInitialBalanceDocument.mockResolvedValue(saveInitialBalanceDocumentResult);
 
     const emptyPositionsResult: ListPositionsResult = {
       ok: true,
@@ -62,15 +91,21 @@ describe('App critical UI flows (E2E)', () => {
           {
             ticker: 'IVVB11',
             assetType: AssetType.Etf,
-            totalQuantity: 2,
+            totalQuantity: 3,
             averagePrice: 300,
-            totalCost: 600,
+            totalCost: 900,
             brokerBreakdown: [
               {
                 brokerId: 'broker-xp',
                 brokerName: 'XP',
                 brokerCnpj: '00.000.000/0001-00',
                 quantity: 2,
+              },
+              {
+                brokerId: 'broker-rico',
+                brokerName: 'Rico',
+                brokerCnpj: '11.111.111/0001-11',
+                quantity: 1,
               },
             ],
           },
@@ -79,7 +114,45 @@ describe('App critical UI flows (E2E)', () => {
     };
     electronApi.listPositions
       .mockResolvedValueOnce(emptyPositionsResult)
-      .mockResolvedValueOnce(filledPositionsResult);
+      .mockResolvedValueOnce(filledPositionsResult)
+      .mockResolvedValueOnce({
+        ok: true,
+        data: {
+          items: [
+            {
+              ticker: 'IVVB11',
+              assetType: AssetType.Etf,
+              totalQuantity: 5,
+              averagePrice: 320,
+              totalCost: 1600,
+              brokerBreakdown: [
+                {
+                  brokerId: 'broker-xp',
+                  brokerName: 'XP',
+                  brokerCnpj: '00.000.000/0001-00',
+                  quantity: 5,
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+    electronApi.listInitialBalanceDocuments
+      .mockResolvedValueOnce({ ok: true, data: { items: [] } })
+      .mockResolvedValueOnce({ ok: true, data: { items: [createDocument()] } })
+      .mockResolvedValueOnce({
+        ok: true,
+        data: {
+          items: [
+            createDocument({
+              averagePrice: '320',
+              allocations: [{ brokerId: 'broker-xp', quantity: '5' }],
+              totalQuantity: '5',
+            }),
+          ],
+        },
+      });
 
     const assetsReportResult: GenerateAssetsReportResult = {
       referenceDate: '2025-12-31',
@@ -87,19 +160,25 @@ describe('App critical UI flows (E2E)', () => {
         {
           ticker: 'IVVB11',
           assetType: AssetType.Etf,
-          totalQuantity: 2,
-          averagePrice: 300,
-          totalCost: 600,
+          totalQuantity: 5,
+          averagePrice: 320,
+          previousYearValue: 0,
+          currentYearValue: 1600,
+          acquiredInYear: true,
           revenueClassification: { group: '07', code: '09' },
-          allocations: [
+          status: ReportItemStatus.Required,
+          eligibilityReason: 'threshold_met',
+          pendingIssues: [],
+          canCopy: true,
+          description:
+            '5 cotas IVVB11. CNPJ: 02.332.886/0001-04. Corretoras: XP Investimentos (CNPJ: 02.332.886/0001-04, 5 cotas). Custo medio: R$ 320,00. Custo total: R$ 1.600,00.',
+          brokersSummary: [
             {
               brokerId: 'broker-xp',
               brokerName: 'XP Investimentos',
               cnpj: '02.332.886/0001-04',
-              quantity: 2,
-              totalCost: 600,
-              description:
-                '2 cotas IVVB11. CNPJ: 02.332.886/0001-04. Corretora: XP Investimentos. Custo médio: R$ 300,00. Custo total: R$ 600,00.',
+              quantity: 5,
+              totalCost: 1600,
             },
           ],
         },
@@ -116,6 +195,13 @@ describe('App critical UI flows (E2E)', () => {
           code: 'XP',
           active: true,
         },
+        {
+          id: 'broker-rico',
+          name: 'Rico',
+          cnpj: '11.111.111/0001-11',
+          code: 'RICO',
+          active: true,
+        },
       ],
     });
     electronApi.createBroker.mockResolvedValue({
@@ -123,10 +209,8 @@ describe('App critical UI flows (E2E)', () => {
       broker: { id: 'new', name: 'New', cnpj: '00', code: 'NEW', active: true },
     });
 
-    window.electronApi = {
-      ...electronApi,
-      appName: 'tax-report',
-    } satisfies ElectronApi;
+    (electronApi as ElectronApi).appName = 'tax-report';
+    window.electronApi = electronApi as ElectronApi;
 
     Object.defineProperty(navigator, 'clipboard', {
       value: {
@@ -155,25 +239,48 @@ describe('App critical UI flows (E2E)', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'Saldo Inicial' }));
+    await waitFor(() => {
+      expect(screen.getByLabelText('Corretora 1')).toHaveValue('broker-xp');
+    });
     await user.type(screen.getByLabelText('Ticker'), 'IVVB11');
+    await user.clear(screen.getByLabelText('Preço médio global (R$)'));
+    await user.type(screen.getByLabelText('Preço médio global (R$)'), '300');
     await user.clear(screen.getByLabelText('Quantidade'));
     await user.type(screen.getByLabelText('Quantidade'), '2');
-    await user.clear(screen.getByLabelText('Preço médio (R$)'));
-    await user.type(screen.getByLabelText('Preço médio (R$)'), '300');
+    await user.click(screen.getByRole('button', { name: 'Adicionar alocação' }));
+    await user.selectOptions(screen.getByLabelText('Corretora 2'), 'broker-rico');
+    await user.type(screen.getAllByLabelText('Quantidade')[1], '1');
     await user.click(screen.getByRole('button', { name: 'Salvar saldo inicial' }));
     await waitFor(() => {
       expect(screen.getByText('Saldo inicial cadastrado com sucesso.')).toBeInTheDocument();
     });
     await waitFor(() => {
-      expect(screen.getByText('IVVB11')).toBeInTheDocument();
+      expect(screen.getByText(/XP Investimentos:\s+2\.00/)).toBeInTheDocument();
+      expect(screen.getByText(/Rico:\s+1\.00/)).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole('button', { name: 'Relatorio Bens e Direitos' }));
-    await user.click(screen.getByRole('button', { name: 'Gerar Relatório' }));
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
+    await user.clear(screen.getByLabelText('Preço médio global (R$)'));
+    await user.type(screen.getByLabelText('Preço médio global (R$)'), '320');
+    await user.click(screen.getAllByRole('button', { name: 'Remover' })[1]);
+    await user.clear(screen.getByLabelText('Quantidade'));
+    await user.type(screen.getByLabelText('Quantidade'), '5');
+    await user.click(screen.getByRole('button', { name: 'Atualizar saldo inicial' }));
+
     await waitFor(() => {
-      expect(screen.getByText(/Data de referência: 2025-12-31/)).toBeInTheDocument();
+      expect(screen.getByText('Saldo inicial atualizado com sucesso.')).toBeInTheDocument();
     });
-    await user.click(screen.getByRole('button', { name: 'Copiar' }));
+    await waitFor(() => {
+      expect(screen.getByText(/XP Investimentos:\s+5\.00/)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/Rico:\s+1\.00/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Relatorio Bens e Direitos' }));
+    await user.click(screen.getByRole('button', { name: 'Gerar Relatorio' }));
+    await waitFor(() => {
+      expect(screen.getByText(/Data de referencia: 2025-12-31/)).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole('button', { name: 'Copiar Descricao' }));
     await waitFor(() => {
       expect(screen.getByText(/copiado com sucesso/)).toBeInTheDocument();
     });
@@ -184,8 +291,16 @@ describe('App critical UI flows (E2E)', () => {
     });
     expect(electronApi.confirmImportTransactions).toHaveBeenCalledWith({
       filePath: '/tmp/ops.csv',
+      assetTypeOverrides: [],
     });
-    expect(electronApi.setInitialBalance).toHaveBeenCalledTimes(1);
+    expect(electronApi.saveInitialBalanceDocument).toHaveBeenCalledTimes(2);
+    expect(electronApi.saveInitialBalanceDocument).toHaveBeenLastCalledWith({
+      ticker: 'IVVB11',
+      year: 2025,
+      assetType: AssetType.Etf,
+      averagePrice: 320,
+      allocations: [{ brokerId: 'broker-xp', quantity: 5 }],
+    });
     expect(electronApi.generateAssetsReport).toHaveBeenCalledWith({ baseYear: 2025 });
   });
 });

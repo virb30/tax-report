@@ -1,6 +1,7 @@
 import { ELECTRON_API_CHANNELS, REGISTERED_IPC_CHANNELS } from '../ipc-channels';
 import { ipcContracts, rendererExposedIpcContracts } from './ipc-contract-registry';
 import { appIpcContracts } from './app';
+import { assetIpcContracts } from './assets';
 import { brokerIpcContracts } from './brokers';
 import { importIpcContracts } from './import';
 import { portfolioIpcContracts } from './portfolio';
@@ -47,6 +48,32 @@ describe('ipc contract registry', () => {
     );
   });
 
+  it('exposes the asset catalog contracts through the shared registry', () => {
+    expect(
+      assetIpcContracts.map((contract) => ({
+        apiName: contract.api?.name,
+        channel: contract.channel,
+        id: contract.id,
+      })),
+    ).toEqual([
+      {
+        apiName: 'listAssets',
+        channel: 'assets:list',
+        id: 'assets.list',
+      },
+      {
+        apiName: 'updateAsset',
+        channel: 'assets:update',
+        id: 'assets.update',
+      },
+      {
+        apiName: 'repairAssetType',
+        channel: 'assets:repair-type',
+        id: 'assets.repairType',
+      },
+    ]);
+  });
+
   it('exposes only approved MVP portfolio contracts', () => {
     expect(
       portfolioIpcContracts.map((contract) => ({
@@ -56,9 +83,19 @@ describe('ipc contract registry', () => {
       })),
     ).toEqual([
       {
-        apiName: 'setInitialBalance',
-        channel: 'portfolio:set-initial-balance',
-        id: 'portfolio.setInitialBalance',
+        apiName: 'saveInitialBalanceDocument',
+        channel: 'portfolio:save-initial-balance-document',
+        id: 'portfolio.saveInitialBalanceDocument',
+      },
+      {
+        apiName: 'listInitialBalanceDocuments',
+        channel: 'portfolio:list-initial-balance-documents',
+        id: 'portfolio.listInitialBalanceDocuments',
+      },
+      {
+        apiName: 'deleteInitialBalanceDocument',
+        channel: 'portfolio:delete-initial-balance-document',
+        id: 'portfolio.deleteInitialBalanceDocument',
       },
       {
         apiName: 'listPositions',
@@ -90,6 +127,11 @@ describe('ipc contract registry', () => {
         channel: 'portfolio:delete-position',
         id: 'portfolio.deletePosition',
       },
+      {
+        apiName: 'deleteAllPositions',
+        channel: 'portfolio:delete-all-positions',
+        id: 'portfolio.deleteAllPositions',
+      },
     ]);
   });
 
@@ -104,6 +146,11 @@ describe('ipc contract registry', () => {
     expect(brokerIpcContracts.map((contract) => contract.errorMode)).toEqual([
       'throw',
       'result',
+      'result',
+      'result',
+    ]);
+    expect(assetIpcContracts.map((contract) => contract.errorMode)).toEqual([
+      'throw',
       'result',
       'result',
     ]);

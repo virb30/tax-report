@@ -8,14 +8,6 @@ globs: src/{main,renderer,shared}/**/*
 
 Estas regras definem o que e especifico de arquitetura Electron.
 
-## Tecnologias Principais
-
-- Linguagem principal: TypeScript.
-- Framework principal: Electron.
-- Frontend: React.
-- Use `npm` para gerenciamento de dependencias e execucao de scripts.
-- Instale `@types/*` quando necessario para manter tipagem correta.
-
 ## Estrutura de Diretorios
 
 Use a separacao entre processo principal e processo de renderizacao:
@@ -36,3 +28,4 @@ src/
 
 - A comunicacao entre backend e frontend deve ocorrer via IPC.
 - Use `preload.ts` como ponte segura para expor funcionalidades ao renderer.
+- Mantenha nomes de canais, validacao de payloads e semantica de erros em contratos compartilhados e testados.

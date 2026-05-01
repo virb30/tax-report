@@ -1,20 +1,51 @@
 import type { AssetType } from '../types/domain';
 import type { IpcResult } from '../ipc/ipc-result';
 
-export type SetInitialBalanceCommand = {
-  ticker: string;
+export type InitialBalanceAllocationInput = {
   brokerId: string;
+  quantity: string;
+};
+
+export type InitialBalanceDocument = {
+  ticker: string;
+  year: number;
   assetType: AssetType;
-  quantity: number;
-  averagePrice: number;
+  name?: string | null;
+  cnpj?: string | null;
+  averagePrice: string;
+  allocations: InitialBalanceAllocationInput[];
+  totalQuantity: string;
+};
+
+export type SaveInitialBalanceDocumentCommand = {
+  ticker: string;
+  year: number;
+  assetType: AssetType;
+  name?: string;
+  cnpj?: string;
+  averagePrice: string;
+  allocations: InitialBalanceAllocationInput[];
+};
+
+export type SaveInitialBalanceDocumentResult = IpcResult<InitialBalanceDocument>;
+
+export type ListInitialBalanceDocumentsQuery = {
   year: number;
 };
 
-export type SetInitialBalanceData = {
-  ticker: string;
-  brokerId: string;
-  quantity: number;
-  averagePrice: number;
+export type ListInitialBalanceDocumentsData = {
+  items: InitialBalanceDocument[];
 };
 
-export type SetInitialBalanceResult = IpcResult<SetInitialBalanceData>;
+export type ListInitialBalanceDocumentsResult = IpcResult<ListInitialBalanceDocumentsData>;
+
+export type DeleteInitialBalanceDocumentCommand = {
+  ticker: string;
+  year: number;
+};
+
+export type DeleteInitialBalanceDocumentData = {
+  deleted: boolean;
+};
+
+export type DeleteInitialBalanceDocumentResult = IpcResult<DeleteInitialBalanceDocumentData>;

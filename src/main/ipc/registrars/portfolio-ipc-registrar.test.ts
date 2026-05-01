@@ -1,14 +1,16 @@
 import { mock, mockReset } from 'jest-mock-extended';
 import { AppError } from '../../../shared/app-error';
+import type { DeleteInitialBalanceDocumentUseCase } from '../../application/use-cases/delete-initial-balance-document/delete-initial-balance-document.use-case';
 import type { DeletePositionUseCase } from '../../application/use-cases/delete-position/delete-position.use-case';
 import type { ImportConsolidatedPositionUseCase } from '../../application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
+import type { ListInitialBalanceDocumentsUseCase } from '../../application/use-cases/list-initial-balance-documents/list-initial-balance-documents.use-case';
 import type { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
 import type { MigrateYearUseCase } from '../../application/use-cases/migrate-year/migrate-year.use-case';
 import type { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
-import type { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance.use-case';
+import type { SaveInitialBalanceDocumentUseCase } from '../../application/use-cases/save-initial-balance-document/save-initial-balance-document.use-case';
 import {
   portfolioIpcContracts,
-  setInitialBalanceContract,
+  saveInitialBalanceDocumentContract,
 } from '../../../shared/ipc/contracts/portfolio';
 import { AssetType } from '../../../shared/types/domain';
 import type { IpcMainHandleRegistry } from '../registry/ipc-registrar';
@@ -17,7 +19,9 @@ import { PortfolioIpcRegistrar } from './portfolio-ipc-registrar';
 type IpcHandler = (_event: Electron.IpcMainInvokeEvent, input?: unknown) => Promise<unknown>;
 
 describe('PortfolioIpcRegistrar', () => {
-  const setInitialBalanceUseCase = mock<SetInitialBalanceUseCase>();
+  const saveInitialBalanceDocumentUseCase = mock<SaveInitialBalanceDocumentUseCase>();
+  const listInitialBalanceDocumentsUseCase = mock<ListInitialBalanceDocumentsUseCase>();
+  const deleteInitialBalanceDocumentUseCase = mock<DeleteInitialBalanceDocumentUseCase>();
   const listPositionsUseCase = mock<ListPositionsUseCase>();
   const recalculatePositionUseCase = mock<RecalculatePositionUseCase>();
   const migrateYearUseCase = mock<MigrateYearUseCase>();
@@ -26,7 +30,9 @@ describe('PortfolioIpcRegistrar', () => {
   const ipcEvent = {} as Electron.IpcMainInvokeEvent;
 
   beforeEach(() => {
-    mockReset(setInitialBalanceUseCase);
+    mockReset(saveInitialBalanceDocumentUseCase);
+    mockReset(listInitialBalanceDocumentsUseCase);
+    mockReset(deleteInitialBalanceDocumentUseCase);
     mockReset(listPositionsUseCase);
     mockReset(recalculatePositionUseCase);
     mockReset(migrateYearUseCase);
@@ -43,7 +49,9 @@ describe('PortfolioIpcRegistrar', () => {
     };
 
     const registrar = new PortfolioIpcRegistrar(
-      setInitialBalanceUseCase,
+      saveInitialBalanceDocumentUseCase,
+      listInitialBalanceDocumentsUseCase,
+      deleteInitialBalanceDocumentUseCase,
       listPositionsUseCase,
       recalculatePositionUseCase,
       migrateYearUseCase,
@@ -59,22 +67,23 @@ describe('PortfolioIpcRegistrar', () => {
   }
 
   it('maps a use-case failure to an ok false result through the shared mapper', async () => {
-    setInitialBalanceUseCase.execute.mockRejectedValue(
+    saveInitialBalanceDocumentUseCase.execute.mockRejectedValue(
       new AppError('INITIAL_BALANCE_CONFLICT', 'Saldo inicial duplicado.', 'conflict', {
         ticker: 'PETR4',
       }),
     );
     const handlers = registerRegistrar();
-    const setInitialBalanceHandler = handlers.get(setInitialBalanceContract.channel);
+    const saveInitialBalanceDocumentHandler = handlers.get(
+      saveInitialBalanceDocumentContract.channel,
+    );
 
     await expect(
-      setInitialBalanceHandler?.(ipcEvent, {
+      saveInitialBalanceDocumentHandler?.(ipcEvent, {
         ticker: 'PETR4',
-        brokerId: 'broker-xp',
-        assetType: AssetType.Stock,
-        quantity: 10,
-        averagePrice: 30,
         year: 2025,
+        assetType: AssetType.Stock,
+        averagePrice: '30',
+        allocations: [{ brokerId: 'broker-xp', quantity: '10' }],
       }),
     ).resolves.toEqual({
       ok: false,

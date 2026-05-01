@@ -11,6 +11,7 @@ import { createTickerDataMigration } from './009-create-ticker-data';
 import { addYearToPositionsMigration } from './010-add-year-to-positions';
 import { addCodeToBrokersMigration } from './011-add-code-to-brokers';
 import { addActiveToBrokersMigration } from './012-add-active-to-brokers';
+import { extendTickerDataAssetCatalogMigration } from './013-extend-ticker-data-asset-catalog';
 
 export type DatabaseMigration = {
   name: string;
@@ -31,4 +32,5 @@ export const databaseMigrations: DatabaseMigration[] = [
   addYearToPositionsMigration,
   addCodeToBrokersMigration,
   addActiveToBrokersMigration,
+  extendTickerDataAssetCatalogMigration,
 ];

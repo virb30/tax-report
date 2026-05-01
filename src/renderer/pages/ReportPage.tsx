@@ -1,67 +1,14 @@
-import { useState } from 'react';
+﻿import { useState, useCallback, useMemo } from 'react';
 import type { JSX } from 'react';
-import { AssetType } from '../../shared/types/domain';
+import { ReportItemStatus, type AssetType } from '../../shared/types/domain';
 import type {
-  AssetsReportAllocation,
-  AssetsReportItem,
   GenerateAssetsReportResult,
 } from '../../shared/contracts/assets-report.contract';
+import type { AssetCatalogItem } from '../../shared/contracts/assets.contract';
 import { buildErrorMessage } from '../errors/build-error-message';
 import { buildYearOptions, getDefaultBaseYear } from '../../shared/utils/year';
-
-function formatBrl(value: number): string {
-  return value.toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-const ASSET_TYPE_LABELS: Record<AssetType, string> = {
-  [AssetType.Stock]: 'Ações',
-  [AssetType.Fii]: 'FIIs',
-  [AssetType.Etf]: 'ETFs',
-  [AssetType.Bdr]: 'BDRs',
-};
-
-function groupItemsByAssetType(items: AssetsReportItem[]): Map<AssetType, AssetsReportItem[]> {
-  const groups = new Map<AssetType, AssetsReportItem[]>();
-  const order: AssetType[] = [AssetType.Stock, AssetType.Fii, AssetType.Etf, AssetType.Bdr];
-
-  for (const type of order) {
-    const filtered = items.filter((i) => i.assetType === type);
-    if (filtered.length > 0) {
-      groups.set(type, filtered);
-    }
-  }
-
-  return groups;
-}
-
-type TableRow = {
-  ticker: string;
-  assetType: AssetType;
-  revenueClassification: { group: string; code: string };
-  allocation: AssetsReportAllocation;
-  averagePrice: number;
-};
-
-function flattenToRows(items: AssetsReportItem[]): TableRow[] {
-  const rows: TableRow[] = [];
-
-  for (const item of items) {
-    for (const allocation of item.allocations) {
-      rows.push({
-        ticker: item.ticker,
-        assetType: item.assetType,
-        revenueClassification: item.revenueClassification,
-        allocation,
-        averagePrice: item.averagePrice,
-      });
-    }
-  }
-
-  return rows;
-}
+import { ReportItemCard } from './report-page/ReportItemCard';
+import { EditAssetModal } from '../components/assets/EditAssetModal';
 
 export function ReportPage(): JSX.Element {
   const defaultBaseYear = getDefaultBaseYear();
@@ -74,12 +21,17 @@ export function ReportPage(): JSX.Element {
   const [report, setReport] = useState<GenerateAssetsReportResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [feedbackMessage, setFeedbackMessage] = useState('');
   const [copiedMessage, setCopiedMessage] = useState('');
+  
+  const [editingAsset, setEditingAsset] = useState<AssetCatalogItem | null>(null);
+  const [isRepairing, setIsRepairing] = useState(false);
 
-  async function handleGenerateReport(): Promise<void> {
+  const handleGenerateReport = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage('');
     setCopiedMessage('');
+    setFeedbackMessage('');
     try {
       const result = await window.electronApi.generateAssetsReport({
         baseYear: Number(baseYear),
@@ -91,31 +43,70 @@ export function ReportPage(): JSX.Element {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [baseYear]);
 
   async function handleCopy(label: string, content: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(content);
       setCopiedMessage(`${label} copiado com sucesso.`);
+      setTimeout(() => setCopiedMessage(''), 3000);
     } catch {
-      setCopiedMessage('Não foi possível copiar automaticamente. Selecione e copie manualmente.');
+      setCopiedMessage('Nao foi possivel copiar automaticamente. Selecione e copie manualmente.');
     }
   }
 
-  function handleCopyAll(): void {
-    if (!report) return;
-    const allDescriptions = report.items.flatMap((item) =>
-      item.allocations.map((a) => a.description),
-    );
-    const text = allDescriptions.join('\n\n');
-    void handleCopy('Todas as discriminações', text);
-  }
+  const handleRepair = async (ticker: string) => {
+    try {
+      const result = await window.electronApi.listAssets({ pendingOnly: false });
+      const asset = result.items.find(a => a.ticker === ticker);
+      if (asset) {
+        setEditingAsset(asset);
+      } else {
+        setErrorMessage(`Ativo ${ticker} nao encontrado no catalogo.`);
+      }
+    } catch (error: unknown) {
+      setErrorMessage(buildErrorMessage(error));
+    }
+  };
+
+  const saveRepair = async (ticker: string, data: { name?: string; cnpj?: string; assetType?: AssetType }) => {
+    setIsRepairing(true);
+    setErrorMessage('');
+    try {
+      if (data.assetType && data.assetType !== editingAsset?.assetType) {
+        await window.electronApi.repairAssetType({ ticker, assetType: data.assetType });
+      }
+      
+      const updateResult = await window.electronApi.updateAsset({ ticker, ...data });
+      if (updateResult.success) {
+        setFeedbackMessage(`Ativo ${ticker} corrigido com sucesso. Atualizando relatorio...`);
+        setEditingAsset(null);
+        await handleGenerateReport();
+      } else {
+        setErrorMessage(updateResult.error);
+      }
+    } catch (error: unknown) {
+      setErrorMessage(buildErrorMessage(error));
+    } finally {
+      setIsRepairing(false);
+    }
+  };
+
+  const groupedItems = useMemo(() => {
+    if (!report) return { ready: [], pending: [], unsupported: [] };
+    
+    return {
+      ready: report.items.filter(item => item.canCopy && item.status !== ReportItemStatus.Pending),
+      pending: report.items.filter(item => item.status === ReportItemStatus.Pending),
+      unsupported: report.items.filter(item => item.status === ReportItemStatus.Unsupported || (!item.canCopy && item.status !== ReportItemStatus.Pending)),
+    };
+  }, [report]);
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-semibold text-slate-800">Relatório anual de bens e direitos</h2>
+      <h2 className="text-xl font-semibold text-slate-800">Relatorio anual de bens e direitos</h2>
       <p className="mt-2 text-sm text-slate-600">
-        Gere a posição de 31/12 e copie os campos para a declaração.
+        Gere a posicao de 31/12 e resolva pendencias para atingir o estado de pronto para declaracao.
       </p>
 
       <div className="mt-4 flex flex-wrap items-end gap-2">
@@ -135,19 +126,24 @@ export function ReportPage(): JSX.Element {
         </label>
         <button
           type="button"
-          className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-60"
+          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-60"
           onClick={() => {
             void handleGenerateReport();
           }}
           disabled={isLoading}
         >
-          {isLoading ? 'Gerando...' : 'Gerar Relatório'}
+          {isLoading ? 'Gerando...' : 'Gerar Relatorio'}
         </button>
       </div>
 
       {errorMessage.length > 0 ? (
         <p className="mt-4 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-800">
           {errorMessage}
+        </p>
+      ) : null}
+      {feedbackMessage.length > 0 ? (
+        <p className="mt-4 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          {feedbackMessage}
         </p>
       ) : null}
       {copiedMessage.length > 0 ? (
@@ -157,89 +153,83 @@ export function ReportPage(): JSX.Element {
       ) : null}
 
       {report ? (
-        <div className="mt-6 space-y-3">
-          <p className="text-sm text-slate-700">Data de referência: {report.referenceDate}</p>
+        <div className="mt-6 space-y-8">
+          <p className="text-sm text-slate-700">Data de referencia: {report.referenceDate}</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="rounded-md bg-emerald-50 p-4 border border-emerald-100">
+              <p className="text-sm text-emerald-700 font-medium">Prontos</p>
+              <p className="text-2xl font-bold text-emerald-900">{groupedItems.ready.length}</p>
+            </div>
+            <div className="rounded-md bg-amber-50 p-4 border border-amber-100">
+              <p className="text-sm text-amber-700 font-medium">Pendencias</p>
+              <p className="text-2xl font-bold text-amber-900">{groupedItems.pending.length}</p>
+            </div>
+            <div className="rounded-md bg-slate-50 p-4 border border-slate-100">
+              <p className="text-sm text-slate-700 font-medium">Outros / Fora de Escopo</p>
+              <p className="text-2xl font-bold text-slate-900">{groupedItems.unsupported.length}</p>
+            </div>
+          </div>
 
           {report.items.length === 0 ? (
             <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-600">
-              Nenhuma posição encontrada para o ano-base selecionado.
+              Nenhuma posicao encontrada para o ano-base selecionado.
             </p>
           ) : (
-            <div className="space-y-6">
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  className="rounded-md bg-slate-700 px-3 py-2 text-sm font-medium text-white hover:bg-slate-600"
-                  onClick={handleCopyAll}
-                >
-                  Copiar Tudo
-                </button>
-              </div>
-
-              {Array.from(groupItemsByAssetType(report.items).entries()).map(
-                ([assetType, items]) => (
-                  <div key={assetType}>
-                    <h3 className="mb-2 text-base font-medium text-slate-700">
-                      {ASSET_TYPE_LABELS[assetType]}
-                    </h3>
-                    <div className="overflow-x-auto rounded-md border border-slate-200">
-                      <table className="min-w-full text-left text-sm">
-                        <thead className="bg-slate-100 text-slate-700">
-                          <tr>
-                            <th className="px-3 py-2">Ticker</th>
-                            <th className="px-3 py-2">Qtd</th>
-                            <th className="px-3 py-2">PM (R$)</th>
-                            <th className="px-3 py-2">Custo total (R$)</th>
-                            <th className="px-3 py-2">Corretora</th>
-                            <th className="px-3 py-2">Grupo/Código</th>
-                            <th className="px-3 py-2">Discriminação</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {flattenToRows(items).map((row, idx) => (
-                            <tr
-                              key={`${row.ticker}-${row.allocation.brokerId}-${idx}`}
-                              className="border-t align-top"
-                            >
-                              <td className="px-3 py-2">{row.ticker}</td>
-                              <td className="px-3 py-2">{row.allocation.quantity}</td>
-                              <td className="px-3 py-2">R$ {formatBrl(row.averagePrice)}</td>
-                              <td className="px-3 py-2">
-                                R$ {formatBrl(row.allocation.totalCost)}
-                              </td>
-                              <td className="px-3 py-2">{row.allocation.brokerName}</td>
-                              <td className="px-3 py-2">
-                                {row.revenueClassification.group}/{row.revenueClassification.code}
-                              </td>
-                              <td className="space-y-2 px-3 py-2">
-                                <p className="max-w-xl whitespace-pre-wrap">
-                                  {row.allocation.description}
-                                </p>
-                                <button
-                                  type="button"
-                                  className="rounded-md bg-slate-200 px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-300"
-                                  onClick={() => {
-                                    void handleCopy(
-                                      `Discriminação de ${row.ticker} - ${row.allocation.brokerName}`,
-                                      row.allocation.description,
-                                    );
-                                  }}
-                                >
-                                  Copiar
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+            <div className="space-y-12">
+              {groupedItems.ready.length > 0 && (
+                <div>
+                  <h3 className="mb-4 text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Prontos para Declaracao
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {groupedItems.ready.map(item => (
+                      <ReportItemCard key={item.ticker} item={item} onRepair={handleRepair} onCopy={handleCopy} />
+                    ))}
                   </div>
-                ),
+                </div>
+              )}
+
+              {groupedItems.pending.length > 0 && (
+                <div>
+                  <h3 className="mb-4 text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    Pendencias de Dados
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {groupedItems.pending.map(item => (
+                      <ReportItemCard key={item.ticker} item={item} onRepair={handleRepair} onCopy={handleCopy} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {groupedItems.unsupported.length > 0 && (
+                <div>
+                  <h3 className="mb-4 text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                    Outros Itens (Opcionais, Limites ou Nao Suportados)
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {groupedItems.unsupported.map(item => (
+                      <ReportItemCard key={item.ticker} item={item} onRepair={handleRepair} onCopy={handleCopy} />
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           )}
         </div>
       ) : null}
+
+      <EditAssetModal
+        asset={editingAsset}
+        isOpen={editingAsset !== null}
+        onClose={() => setEditingAsset(null)}
+        onSave={saveRepair}
+        isSaving={isRepairing}
+      />
     </section>
   );
 }

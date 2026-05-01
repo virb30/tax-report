@@ -10,6 +10,14 @@ Utilize a biblioteca Jest para definir cenarios de teste e expectativas.
 
 Para rodar os testes, utilize o comando `npm test`.
 
+## Nomenclatura
+
+- Em `src/main/**`, use sempre o sufixo `*.spec.ts`.
+- Em `src/renderer/**`, use sempre sufixos `*.test.ts` ou `*.test.tsx`.
+- Mantenha arquivos de teste na mesma pasta do arquivo testado.
+
+## Padroes de teste
+
 - Nao crie dependencia entre testes; cada teste deve rodar de forma independente.
 - Siga Arrange-Act-Assert (AAA) ou Given-When-Then para manter legibilidade.
 - Ao testar comportamento dependente de data/hora, use mock de `Date` para repetibilidade.
@@ -20,6 +28,7 @@ Para rodar os testes, utilize o comando `npm test`.
 - Evite excesso de mocks; use apenas quando necessario.
 - Teste comportamento, nao detalhes de implementacao.
 - Prefira `jest-mock-extended` para criacao de mocks quando fizer sentido.
+- Adicione ou atualize testes focados quando comportamento ou limites entre modulos mudarem.
 
 ## Exemplo rapido
 

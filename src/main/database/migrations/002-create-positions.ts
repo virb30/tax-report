@@ -9,9 +9,8 @@ export const createPositionsMigration = {
         .text('asset_type')
         .notNullable()
         .checkIn(['stock', 'fii', 'etf', 'bdr']);
-      table.float('total_quantity').notNullable().defaultTo(0);
-      table.float('average_price').notNullable().defaultTo(0);
-      table.integer('average_price_cents').notNullable().defaultTo(0);
+      table.text('total_quantity').notNullable().defaultTo('0');
+      table.text('average_price').notNullable().defaultTo('0');
     });
   },
   async down(knex: Knex): Promise<void> {

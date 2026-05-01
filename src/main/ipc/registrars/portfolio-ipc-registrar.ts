@@ -1,27 +1,34 @@
 import type { IpcMainHandleRegistry, IpcRegistrar } from '../registry/ipc-registrar';
-import type { SetInitialBalanceUseCase } from '../../application/use-cases/set-initial-balance/set-initial-balance.use-case';
+import type { DeleteInitialBalanceDocumentUseCase } from '../../application/use-cases/delete-initial-balance-document/delete-initial-balance-document.use-case';
+import type { ListInitialBalanceDocumentsUseCase } from '../../application/use-cases/list-initial-balance-documents/list-initial-balance-documents.use-case';
 import type { ListPositionsUseCase } from '../../application/use-cases/list-positions/list-positions-use-case';
 import type { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
 import type { MigrateYearUseCase } from '../../application/use-cases/migrate-year/migrate-year.use-case';
 import type { ImportConsolidatedPositionUseCase } from '../../application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
 import type { DeletePositionUseCase } from '../../application/use-cases/delete-position/delete-position.use-case';
+import type { SaveInitialBalanceDocumentUseCase } from '../../application/use-cases/save-initial-balance-document/save-initial-balance-document.use-case';
 import { bindIpcContract } from '../binding/bind-ipc-contract';
 import { toIpcResultFailure } from '../binding/ipc-error-mapper';
 import { createPortfolioIpcHandlers } from '../handlers/portfolio/portfolio-ipc-handlers';
 import {
+  deleteInitialBalanceDocumentContract,
+  deleteAllPositionsContract,
   deletePositionContract,
   importConsolidatedPositionContract,
+  listInitialBalanceDocumentsContract,
   listPositionsContract,
   migrateYearContract,
   portfolioIpcContracts,
   previewConsolidatedPositionContract,
   recalculatePositionContract,
-  setInitialBalanceContract,
+  saveInitialBalanceDocumentContract,
 } from '../../../shared/ipc/contracts/portfolio/contracts';
 
 export class PortfolioIpcRegistrar implements IpcRegistrar {
   constructor(
-    private readonly setInitialBalanceUseCase: SetInitialBalanceUseCase,
+    private readonly saveInitialBalanceDocumentUseCase: SaveInitialBalanceDocumentUseCase,
+    private readonly listInitialBalanceDocumentsUseCase: ListInitialBalanceDocumentsUseCase,
+    private readonly deleteInitialBalanceDocumentUseCase: DeleteInitialBalanceDocumentUseCase,
     private readonly listPositionsUseCase: ListPositionsUseCase,
     private readonly recalculatePositionUseCase: RecalculatePositionUseCase,
     private readonly migrateYearUseCase: MigrateYearUseCase,
@@ -31,7 +38,9 @@ export class PortfolioIpcRegistrar implements IpcRegistrar {
 
   register(ipcMain: IpcMainHandleRegistry): string[] {
     const handlers = createPortfolioIpcHandlers(
-      this.setInitialBalanceUseCase,
+      this.saveInitialBalanceDocumentUseCase,
+      this.listInitialBalanceDocumentsUseCase,
+      this.deleteInitialBalanceDocumentUseCase,
       this.listPositionsUseCase,
       this.recalculatePositionUseCase,
       this.migrateYearUseCase,
@@ -39,9 +48,30 @@ export class PortfolioIpcRegistrar implements IpcRegistrar {
       this.deletePositionUseCase,
     );
 
-    bindIpcContract(ipcMain, setInitialBalanceContract, handlers.setInitialBalance, {
-      onError: toIpcResultFailure,
-    });
+    bindIpcContract(
+      ipcMain,
+      saveInitialBalanceDocumentContract,
+      handlers.saveInitialBalanceDocument,
+      {
+        onError: toIpcResultFailure,
+      },
+    );
+    bindIpcContract(
+      ipcMain,
+      listInitialBalanceDocumentsContract,
+      handlers.listInitialBalanceDocuments,
+      {
+        onError: toIpcResultFailure,
+      },
+    );
+    bindIpcContract(
+      ipcMain,
+      deleteInitialBalanceDocumentContract,
+      handlers.deleteInitialBalanceDocument,
+      {
+        onError: toIpcResultFailure,
+      },
+    );
     bindIpcContract(ipcMain, listPositionsContract, handlers.listPositions, {
       onError: toIpcResultFailure,
     });
@@ -68,6 +98,9 @@ export class PortfolioIpcRegistrar implements IpcRegistrar {
       },
     );
     bindIpcContract(ipcMain, deletePositionContract, handlers.deletePosition, {
+      onError: toIpcResultFailure,
+    });
+    bindIpcContract(ipcMain, deleteAllPositionsContract, handlers.deleteAllPositions, {
       onError: toIpcResultFailure,
     });
 

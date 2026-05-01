@@ -5,6 +5,7 @@ const CODE_MAP: Record<string, string> = {
   '02.332.886/0011-78': 'CLEAR',
   '19.180.679/0001-92': 'INTER',
   '13.434.335/0001-60': 'RICO',
+  '62.169.875/0001-79': 'NU',
 };
 
 export const addCodeToBrokersMigration = {

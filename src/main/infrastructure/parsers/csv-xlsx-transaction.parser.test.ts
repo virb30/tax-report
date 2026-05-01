@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx';
 import { SheetjsSpreadsheetFileReader } from '../adapters/file-readers/sheetjs.spreadsheet.file-reader';
 import { CsvXlsxTransactionParser } from './csv-xlsx-transaction.parser';
 import type { BrokerRepository } from '../../application/repositories/broker.repository';
-import { TransactionType } from '../../../shared/types/domain';
+import { AssetType, TransactionType } from '../../../shared/types/domain';
 import { Broker } from '../../domain/portfolio/entities/broker.entity';
 import { Cnpj } from '../../domain/shared/cnpj.vo';
 import { Uuid } from '../../domain/shared/uuid.vo';
@@ -80,12 +80,13 @@ describe('CsvXlsxTransactionParser', () => {
     const parser = new CsvXlsxTransactionParser(new SheetjsSpreadsheetFileReader(), brokerRepo);
     const result = await parser.parse(filePath);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]?.brokerId).toBe(broker.id.value);
-    expect(result[0]?.tradeDate).toBe('2025-04-01');
-    expect(result[0]?.operations).toHaveLength(1);
-    expect(result[0]?.operations[0]?.ticker).toBe('PETR4');
-    expect(result[0]?.operations[0]?.type).toBe('buy');
+    expect(result.batches).toHaveLength(1);
+    expect(result.batches[0]?.brokerId).toBe(broker.id.value);
+    expect(result.batches[0]?.tradeDate).toBe('2025-04-01');
+    expect(result.batches[0]?.operations).toHaveLength(1);
+    expect(result.batches[0]?.operations[0]?.ticker).toBe('PETR4');
+    expect(result.batches[0]?.operations[0]?.type).toBe('buy');
+    expect(result.unsupportedRows).toEqual([]);
   });
 
   it('throws when broker code is not found in repository', async () => {
@@ -199,10 +200,10 @@ describe('CsvXlsxTransactionParser', () => {
     const parser = new CsvXlsxTransactionParser(new SheetjsSpreadsheetFileReader(), brokerRepo);
     const result = await parser.parse(filePath);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]?.brokerId).toBe(broker.id.value);
-    expect(result[0]?.tradeDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(result[0]?.operations[0]?.ticker).toBe('PETR4');
+    expect(result.batches).toHaveLength(1);
+    expect(result.batches[0]?.brokerId).toBe(broker.id.value);
+    expect(result.batches[0]?.tradeDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(result.batches[0]?.operations[0]?.ticker).toBe('PETR4');
   });
 
   it('correctly parses Excel serial date without timezone issues', async () => {
@@ -226,8 +227,8 @@ describe('CsvXlsxTransactionParser', () => {
     const parser = new CsvXlsxTransactionParser(new SheetjsSpreadsheetFileReader(), brokerRepo);
     const result = await parser.parse(filePath);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]?.tradeDate).toBe('2025-01-15');
+    expect(result.batches).toHaveLength(1);
+    expect(result.batches[0]?.tradeDate).toBe('2025-01-15');
   });
 
   it('parses new operation types: Bonificação, Split, Grupamento, Transferencia', async () => {
@@ -277,17 +278,63 @@ describe('CsvXlsxTransactionParser', () => {
     const parser = new CsvXlsxTransactionParser(new SheetjsSpreadsheetFileReader(), brokerRepo);
     const result = await parser.parse(filePath);
 
-    expect(result).toHaveLength(4);
-    expect(result[0]?.operations[0]?.type).toBe(TransactionType.Bonus);
-    expect(result[0]?.operations[0]?.unitPrice).toBe(15);
+    expect(result.batches).toHaveLength(4);
+    expect(result.batches[0]?.operations[0]?.type).toBe(TransactionType.Bonus);
+    expect(result.batches[0]?.operations[0]?.unitPrice).toBe(15);
 
-    expect(result[1]?.operations[0]?.type).toBe(TransactionType.Split);
-    expect(result[1]?.operations[0]?.unitPrice).toBe(0);
+    expect(result.batches[1]?.operations[0]?.type).toBe(TransactionType.Split);
+    expect(result.batches[1]?.operations[0]?.unitPrice).toBe(0);
 
-    expect(result[2]?.operations[0]?.type).toBe(TransactionType.ReverseSplit);
-    expect(result[2]?.operations[0]?.unitPrice).toBe(0);
+    expect(result.batches[2]?.operations[0]?.type).toBe(TransactionType.ReverseSplit);
+    expect(result.batches[2]?.operations[0]?.unitPrice).toBe(0);
 
-    expect(result[3]?.operations[0]?.type).toBe(TransactionType.TransferIn);
-    expect(result[3]?.operations[0]?.unitPrice).toBe(10);
+    expect(result.batches[3]?.operations[0]?.type).toBe(TransactionType.TransferIn);
+    expect(result.batches[3]?.operations[0]?.unitPrice).toBe(10);
+  });
+
+  it('normalizes optional Tipo Ativo and separates unsupported events', async () => {
+    const brokerRepo = mock<BrokerRepository>();
+    brokerRepo.findAllByCodes.mockResolvedValue([createBroker()]);
+
+    const filePath = await createTempXlsxFile('typed-events.xlsx', [
+      {
+        Data: '2025-04-01',
+        'Entrada/Saída': 'Crédito',
+        Movimentação: 'Transferência - Liquidação',
+        Ticker: 'PETR4',
+        Quantidade: 10,
+        'Preco Unitario': 20,
+        'Tipo Ativo': 'Ações',
+        Corretora: 'XP',
+      },
+      {
+        Data: '2025-04-02',
+        'Entrada/Saída': 'Crédito',
+        Movimentação: 'Evento Desconhecido',
+        Ticker: 'HASH11',
+        Quantidade: 1,
+        'Preco Unitario': 99,
+        'Tipo Ativo': 'Cripto',
+        Corretora: 'XP',
+      },
+    ]);
+    createdDirs.push(path.dirname(filePath));
+
+    const parser = new CsvXlsxTransactionParser(new SheetjsSpreadsheetFileReader(), brokerRepo);
+    const result = await parser.parse(filePath);
+
+    expect(result.batches[0]?.operations[0]).toMatchObject({
+      ticker: 'PETR4',
+      sourceAssetType: AssetType.Stock,
+      sourceAssetTypeLabel: 'Ações',
+    });
+    expect(result.unsupportedRows).toEqual([
+      expect.objectContaining({
+        ticker: 'HASH11',
+        sourceAssetType: null,
+        sourceAssetTypeLabel: 'Cripto',
+        unsupportedReason: 'unsupported_event',
+      }),
+    ]);
   });
 });

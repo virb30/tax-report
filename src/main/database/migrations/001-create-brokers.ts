@@ -6,6 +6,7 @@ const KNOWN_BROKERS = [
   { id: uuidv7(), name: 'Clear Corretora', cnpj: '02.332.886/0011-78' },
   { id: uuidv7(), name: 'Inter DTVM', cnpj: '19.180.679/0001-92' },
   { id: uuidv7(), name: 'Rico Investimentos', cnpj: '13.434.335/0001-60' },
+  { id: uuidv7(), name: 'Nu Invest', cnpj: '62.169.875/0001-79' },
 ];
 
 

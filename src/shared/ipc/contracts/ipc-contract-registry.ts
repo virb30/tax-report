@@ -1,4 +1,5 @@
 import { appIpcContracts } from './app/contracts';
+import { assetIpcContracts } from './assets/contracts';
 import { brokerIpcContracts } from './brokers/contracts';
 import { importIpcContracts } from './import/contracts';
 import { portfolioIpcContracts } from './portfolio/contracts';
@@ -25,6 +26,7 @@ export const ipcContracts: readonly IpcContractDefinition<z.ZodType, unknown, st
   ...portfolioIpcContracts,
   ...reportIpcContracts,
   ...brokerIpcContracts,
+  ...assetIpcContracts,
 ] as const;
 
 export const rendererExposedIpcContracts = ipcContracts.filter(isRendererExposedContract);
