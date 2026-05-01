@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AssetType } from '../../shared/types/domain';
-import type { ElectronApi } from '../../shared/types/electron-api';
+import type { ElectronApi } from '../../preload/renderer/electron-api';
 import { AssetsPage } from './AssetsPage';
 import { mockReset } from 'jest-mock-extended';
 import mock, { type MockProxy } from 'jest-mock-extended/lib/Mock';
-import type { AssetCatalogItem } from '../../shared/contracts/assets.contract';
+import type { AssetCatalogItem } from '../../preload/contracts/portfolio/assets.contract';
 
 function createElectronApiMock(electronApiBaseMock: MockProxy<ElectronApi>): ElectronApi {
   mockReset(electronApiBaseMock);
@@ -48,8 +48,15 @@ describe('AssetsPage', () => {
   it('loads and displays assets', async () => {
     electronApi.listAssets.mockResolvedValue({
       items: [
-        { ticker: 'PETR4', assetType: AssetType.Stock, name: 'Petrobras', cnpj: '90.400.888/0001-42', resolutionSource: null, isReportReadyMetadata: true }
-      ]
+        {
+          ticker: 'PETR4',
+          assetType: AssetType.Stock,
+          name: 'Petrobras',
+          cnpj: '90.400.888/0001-42',
+          resolutionSource: null,
+          isReportReadyMetadata: true,
+        },
+      ],
     });
 
     render(<AssetsPage />);
@@ -64,8 +71,15 @@ describe('AssetsPage', () => {
   it('opens edit modal and saves changes', async () => {
     electronApi.listAssets.mockResolvedValue({
       items: [
-        { ticker: 'PETR4', assetType: AssetType.Stock, name: 'Petrobras', cnpj: null, resolutionSource: null, isReportReadyMetadata: false }
-      ]
+        {
+          ticker: 'PETR4',
+          assetType: AssetType.Stock,
+          name: 'Petrobras',
+          cnpj: null,
+          resolutionSource: null,
+          isReportReadyMetadata: false,
+        },
+      ],
     });
     electronApi.updateAsset.mockResolvedValue({ success: true, asset: {} as AssetCatalogItem });
 
@@ -86,22 +100,36 @@ describe('AssetsPage', () => {
     fireEvent.submit(saveForm as HTMLFormElement);
 
     await waitFor(() => {
-      expect(electronApi.updateAsset).toHaveBeenCalledWith(expect.objectContaining({
-        ticker: 'PETR4',
-        cnpj: '90.400.888/0001-42'
-      }));
+      expect(electronApi.updateAsset).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ticker: 'PETR4',
+          cnpj: '90.400.888/0001-42',
+        }),
+      );
     });
   });
 
   it('triggers repairAssetType when asset type is changed', async () => {
     electronApi.listAssets.mockResolvedValue({
       items: [
-        { ticker: 'IVVB11', assetType: AssetType.Stock, name: 'IVVB11 ETF', cnpj: null, resolutionSource: null, isReportReadyMetadata: false }
-      ]
+        {
+          ticker: 'IVVB11',
+          assetType: AssetType.Stock,
+          name: 'IVVB11 ETF',
+          cnpj: null,
+          resolutionSource: null,
+          isReportReadyMetadata: false,
+        },
+      ],
     });
     electronApi.repairAssetType.mockResolvedValue({
       success: true,
-      repair: { ticker: 'IVVB11', assetType: AssetType.Etf, affectedYears: [2024], reprocessedCount: 1 }
+      repair: {
+        ticker: 'IVVB11',
+        assetType: AssetType.Etf,
+        affectedYears: [2024],
+        reprocessedCount: 1,
+      },
     });
     electronApi.updateAsset.mockResolvedValue({ success: true, asset: {} as AssetCatalogItem });
 
@@ -124,7 +152,7 @@ describe('AssetsPage', () => {
     await waitFor(() => {
       expect(electronApi.repairAssetType).toHaveBeenCalledWith({
         ticker: 'IVVB11',
-        assetType: AssetType.Etf
+        assetType: AssetType.Etf,
       });
       expect(electronApi.updateAsset).toHaveBeenCalled();
     });

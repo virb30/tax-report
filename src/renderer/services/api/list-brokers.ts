@@ -1,4 +1,4 @@
-import type { Broker } from "../../types/broker.types";
+import type { Broker } from '../../types/broker.types';
 
 export async function listBrokers(): Promise<Broker[]> {
   const result = await window.electronApi.listBrokers();

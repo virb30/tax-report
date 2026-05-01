@@ -1,10 +1,8 @@
 ﻿import { useState, useCallback, useMemo } from 'react';
 import type { JSX } from 'react';
 import { ReportItemStatus, type AssetType } from '../../shared/types/domain';
-import type {
-  GenerateAssetsReportResult,
-} from '../../shared/contracts/assets-report.contract';
-import type { AssetCatalogItem } from '../../shared/contracts/assets.contract';
+import type { GenerateAssetsReportResult } from '../../preload/contracts/tax-reporting/assets-report.contract';
+import type { AssetCatalogItem } from '../../preload/contracts/portfolio/assets.contract';
 import { buildErrorMessage } from '../errors/build-error-message';
 import { buildYearOptions, getDefaultBaseYear } from '../../shared/utils/year';
 import { ReportItemCard } from './report-page/ReportItemCard';
@@ -23,7 +21,7 @@ export function ReportPage(): JSX.Element {
   const [errorMessage, setErrorMessage] = useState('');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [copiedMessage, setCopiedMessage] = useState('');
-  
+
   const [editingAsset, setEditingAsset] = useState<AssetCatalogItem | null>(null);
   const [isRepairing, setIsRepairing] = useState(false);
 
@@ -58,7 +56,7 @@ export function ReportPage(): JSX.Element {
   const handleRepair = async (ticker: string) => {
     try {
       const result = await window.electronApi.listAssets({ pendingOnly: false });
-      const asset = result.items.find(a => a.ticker === ticker);
+      const asset = result.items.find((a) => a.ticker === ticker);
       if (asset) {
         setEditingAsset(asset);
       } else {
@@ -69,14 +67,17 @@ export function ReportPage(): JSX.Element {
     }
   };
 
-  const saveRepair = async (ticker: string, data: { name?: string; cnpj?: string; assetType?: AssetType }) => {
+  const saveRepair = async (
+    ticker: string,
+    data: { name?: string; cnpj?: string; assetType?: AssetType },
+  ) => {
     setIsRepairing(true);
     setErrorMessage('');
     try {
       if (data.assetType && data.assetType !== editingAsset?.assetType) {
         await window.electronApi.repairAssetType({ ticker, assetType: data.assetType });
       }
-      
+
       const updateResult = await window.electronApi.updateAsset({ ticker, ...data });
       if (updateResult.success) {
         setFeedbackMessage(`Ativo ${ticker} corrigido com sucesso. Atualizando relatorio...`);
@@ -94,11 +95,17 @@ export function ReportPage(): JSX.Element {
 
   const groupedItems = useMemo(() => {
     if (!report) return { ready: [], pending: [], unsupported: [] };
-    
+
     return {
-      ready: report.items.filter(item => item.canCopy && item.status !== ReportItemStatus.Pending),
-      pending: report.items.filter(item => item.status === ReportItemStatus.Pending),
-      unsupported: report.items.filter(item => item.status === ReportItemStatus.Unsupported || (!item.canCopy && item.status !== ReportItemStatus.Pending)),
+      ready: report.items.filter(
+        (item) => item.canCopy && item.status !== ReportItemStatus.Pending,
+      ),
+      pending: report.items.filter((item) => item.status === ReportItemStatus.Pending),
+      unsupported: report.items.filter(
+        (item) =>
+          item.status === ReportItemStatus.Unsupported ||
+          (!item.canCopy && item.status !== ReportItemStatus.Pending),
+      ),
     };
   }, [report]);
 
@@ -106,7 +113,8 @@ export function ReportPage(): JSX.Element {
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-xl font-semibold text-slate-800">Relatorio anual de bens e direitos</h2>
       <p className="mt-2 text-sm text-slate-600">
-        Gere a posicao de 31/12 e resolva pendencias para atingir o estado de pronto para declaracao.
+        Gere a posicao de 31/12 e resolva pendencias para atingir o estado de pronto para
+        declaracao.
       </p>
 
       <div className="mt-4 flex flex-wrap items-end gap-2">
@@ -184,8 +192,13 @@ export function ReportPage(): JSX.Element {
                     Prontos para Declaracao
                   </h3>
                   <div className="grid grid-cols-1 gap-4">
-                    {groupedItems.ready.map(item => (
-                      <ReportItemCard key={item.ticker} item={item} onRepair={handleRepair} onCopy={handleCopy} />
+                    {groupedItems.ready.map((item) => (
+                      <ReportItemCard
+                        key={item.ticker}
+                        item={item}
+                        onRepair={handleRepair}
+                        onCopy={handleCopy}
+                      />
                     ))}
                   </div>
                 </div>
@@ -198,8 +211,13 @@ export function ReportPage(): JSX.Element {
                     Pendencias de Dados
                   </h3>
                   <div className="grid grid-cols-1 gap-4">
-                    {groupedItems.pending.map(item => (
-                      <ReportItemCard key={item.ticker} item={item} onRepair={handleRepair} onCopy={handleCopy} />
+                    {groupedItems.pending.map((item) => (
+                      <ReportItemCard
+                        key={item.ticker}
+                        item={item}
+                        onRepair={handleRepair}
+                        onCopy={handleCopy}
+                      />
                     ))}
                   </div>
                 </div>
@@ -212,8 +230,13 @@ export function ReportPage(): JSX.Element {
                     Outros Itens (Opcionais, Limites ou Nao Suportados)
                   </h3>
                   <div className="grid grid-cols-1 gap-4">
-                    {groupedItems.unsupported.map(item => (
-                      <ReportItemCard key={item.ticker} item={item} onRepair={handleRepair} onCopy={handleCopy} />
+                    {groupedItems.unsupported.map((item) => (
+                      <ReportItemCard
+                        key={item.ticker}
+                        item={item}
+                        onRepair={handleRepair}
+                        onCopy={handleCopy}
+                      />
                     ))}
                   </div>
                 </div>

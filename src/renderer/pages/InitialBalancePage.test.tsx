@@ -5,13 +5,13 @@ import userEvent from '@testing-library/user-event';
 import type {
   InitialBalanceDocument,
   ListInitialBalanceDocumentsResult,
-} from '../../shared/contracts/initial-balance.contract';
+} from '../../preload/contracts/portfolio/initial-balance.contract';
 import type {
   ListPositionsResult,
   PositionListItem,
-} from '../../shared/contracts/list-positions.contract';
+} from '../../preload/contracts/portfolio/list-positions.contract';
 import { AssetType } from '../../shared/types/domain';
-import type { ElectronApi } from '../../shared/types/electron-api';
+import type { ElectronApi } from '../../preload/renderer/electron-api';
 import { listActiveBrokers } from '../services/api/list-brokers';
 import { InitialBalancePage } from './InitialBalancePage';
 import mock, { mockReset } from 'jest-mock-extended/lib/Mock';

@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AssetType } from '../../shared/types/domain';
-import type { ListPositionsResult } from '../../shared/contracts/list-positions.contract';
-import type { ElectronApi } from '../../shared/types/electron-api';
+import type { ListPositionsResult } from '../../preload/contracts/portfolio/list-positions.contract';
+import type { ElectronApi } from '../../preload/renderer/electron-api';
 import { PositionsPage } from './PositionsPage';
 import { mockReset } from 'jest-mock-extended';
 import mock, { type MockProxy } from 'jest-mock-extended/lib/Mock';

@@ -1,8 +1,7 @@
-import { ElectronRuntime } from './infrastructure/runtime/electron-runtime';
-import { createAndInitializeDatabase } from './database/database';
-import { container, registerDependencies } from './infrastructure/container';
-import type { Runtime } from './infrastructure/runtime/runtime';
-
+import { ElectronRuntime } from './app/infra/runtime/electron-runtime';
+import { createAndInitializeDatabase } from './app/infra/database/database';
+import { container, registerDependencies } from './app/infra/container';
+import type { Runtime } from './app/infra/runtime/runtime';
 
 const runtime = new ElectronRuntime();
 

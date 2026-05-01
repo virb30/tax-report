@@ -1,13 +1,16 @@
 ﻿import { useState, useEffect } from 'react';
 import type { JSX } from 'react';
 import { AssetType } from '../../../shared/types/domain';
-import type { AssetCatalogItem } from '../../../shared/contracts/assets.contract';
+import type { AssetCatalogItem } from '../../../preload/contracts/portfolio/assets.contract';
 
 interface EditAssetModalProps {
   asset: AssetCatalogItem | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (ticker: string, data: { name?: string; cnpj?: string; assetType?: AssetType }) => Promise<void>;
+  onSave: (
+    ticker: string,
+    data: { name?: string; cnpj?: string; assetType?: AssetType },
+  ) => Promise<void>;
   isSaving: boolean;
 }
 
@@ -92,7 +95,9 @@ export function EditAssetModal({
               value={assetType}
               onChange={(e) => setAssetType(e.target.value as AssetType)}
             >
-              <option value="" disabled>Selecione o tipo</option>
+              <option value="" disabled>
+                Selecione o tipo
+              </option>
               {ASSET_TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}

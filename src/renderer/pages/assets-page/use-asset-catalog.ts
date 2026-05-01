@@ -1,6 +1,9 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
-import type { AssetCatalogItem, ListAssetsQuery } from '../../../shared/contracts/assets.contract';
-import type { AssetType } from '../../../shared/types/domain';  
+import type {
+  AssetCatalogItem,
+  ListAssetsQuery,
+} from '../../../preload/contracts/portfolio/assets.contract';
+import type { AssetType } from '../../../shared/types/domain';
 import { buildErrorMessage } from '../../errors/build-error-message';
 
 export function useAssetCatalog() {
@@ -38,7 +41,10 @@ export function useAssetCatalog() {
     setEditingAsset(null);
   };
 
-  const saveAsset = async (ticker: string, data: { name?: string; cnpj?: string; assetType?: AssetType }) => {
+  const saveAsset = async (
+    ticker: string,
+    data: { name?: string; cnpj?: string; assetType?: AssetType },
+  ) => {
     setIsSaving(true);
     setErrorMessage('');
     setFeedbackMessage('');
@@ -50,7 +56,9 @@ export function useAssetCatalog() {
           assetType: data.assetType,
         });
         if (repairResult.success) {
-          setFeedbackMessage(`Ativo ${ticker} reparado com sucesso. ${repairResult.repair.reprocessedCount} anos reprocessados.`);
+          setFeedbackMessage(
+            `Ativo ${ticker} reparado com sucesso. ${repairResult.repair.reprocessedCount} anos reprocessados.`,
+          );
         } else {
           setErrorMessage(repairResult.error);
         }

@@ -11,10 +11,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "types": ["node", "jest"],
-    "baseUrl": ".",
+    "baseUrl": "."
   },
-  "include": [
-    "src/**/*"
-  ],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "out", ".vite"]
 }

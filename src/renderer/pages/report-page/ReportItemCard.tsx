@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 import { AssetType, ReportItemStatus } from '../../../shared/types/domain';
-import type { AssetsReportItem } from '../../../shared/contracts/assets-report.contract';
+import type { AssetsReportItem } from '../../../preload/contracts/tax-reporting/assets-report.contract';
 
 interface ReportItemCardProps {
   item: AssetsReportItem;
@@ -11,9 +11,15 @@ interface ReportItemCardProps {
 const STATUS_CONFIG: Record<ReportItemStatus, { label: string; className: string }> = {
   [ReportItemStatus.Required]: { label: 'Obrigatorio', className: 'bg-blue-100 text-blue-800' },
   [ReportItemStatus.Optional]: { label: 'Opcional', className: 'bg-slate-100 text-slate-800' },
-  [ReportItemStatus.BelowThreshold]: { label: 'Abaixo do Limite', className: 'bg-slate-100 text-slate-800' },
+  [ReportItemStatus.BelowThreshold]: {
+    label: 'Abaixo do Limite',
+    className: 'bg-slate-100 text-slate-800',
+  },
   [ReportItemStatus.Pending]: { label: 'Pendente', className: 'bg-amber-100 text-amber-800' },
-  [ReportItemStatus.Unsupported]: { label: 'Nao Suportado', className: 'bg-rose-100 text-rose-800' },
+  [ReportItemStatus.Unsupported]: {
+    label: 'Nao Suportado',
+    className: 'bg-rose-100 text-rose-800',
+  },
 };
 
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
@@ -34,13 +40,17 @@ export function ReportItemCard({ item, onRepair, onCopy }: ReportItemCardProps):
   const status = STATUS_CONFIG[item.status];
 
   return (
-    <div className={`rounded-lg border p-4 shadow-sm ${item.status === ReportItemStatus.Pending ? 'border-amber-200 bg-amber-50/30' : 'border-slate-200 bg-white'}`}>
+    <div
+      className={`rounded-lg border p-4 shadow-sm ${item.status === ReportItemStatus.Pending ? 'border-amber-200 bg-amber-50/30' : 'border-slate-200 bg-white'}`}
+    >
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
             <h4 className="text-lg font-bold text-slate-900">{item.ticker}</h4>
             <span className="text-sm text-slate-500">• {ASSET_TYPE_LABELS[item.assetType]}</span>
-            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}>
+            <span
+              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}
+            >
               {status.label}
             </span>
             {item.acquiredInYear && (
@@ -61,7 +71,9 @@ export function ReportItemCard({ item, onRepair, onCopy }: ReportItemCardProps):
       </div>
 
       <div className="mt-4 border-t border-slate-100 pt-3">
-        <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Descricao / Pendencias</h5>
+        <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          Descricao / Pendencias
+        </h5>
         <div className="mt-1">
           {item.description ? (
             <p className="whitespace-pre-wrap text-sm text-slate-700 leading-relaxed">
@@ -75,9 +87,7 @@ export function ReportItemCard({ item, onRepair, onCopy }: ReportItemCardProps):
                 </p>
               ))}
               {item.status === ReportItemStatus.Unsupported && (
-                <p className="text-sm text-rose-700 font-medium">
-                  • {item.eligibilityReason}
-                </p>
+                <p className="text-sm text-rose-700 font-medium">• {item.eligibilityReason}</p>
               )}
             </div>
           )}
@@ -87,7 +97,7 @@ export function ReportItemCard({ item, onRepair, onCopy }: ReportItemCardProps):
       <div className="mt-4 border-t border-slate-100 pt-3">
         <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Corretoras</h5>
         <p className="mt-1 text-xs text-slate-600">
-          {item.brokersSummary.map(b => `${b.brokerName} (${b.cnpj}): ${b.quantity}`).join('; ')}
+          {item.brokersSummary.map((b) => `${b.brokerName} (${b.cnpj}): ${b.quantity}`).join('; ')}
         </p>
       </div>
 

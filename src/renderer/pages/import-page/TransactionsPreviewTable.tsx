@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { JSX } from 'react';
-import type { PreviewTransactionItem } from '../../../shared/contracts/preview-import.contract';
+import type { PreviewTransactionItem } from '../../../preload/contracts/ingestion/preview-import.contract';
 import type { Broker } from '../../types/broker.types';
 
 type TransactionsPreviewTableProps = {

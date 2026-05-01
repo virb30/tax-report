@@ -2,7 +2,7 @@ import globals from 'globals';
 import tsParser from '@typescript-eslint/parser';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import jestPlugin from 'eslint-plugin-jest';
-import { defineConfig } from "eslint/config";
+import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
   {
@@ -36,8 +36,8 @@ export default defineConfig([
   },
   {
     files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx', '**/*.e2e.test.tsx'],
-    plugins: { 
-      jest: jestPlugin 
+    plugins: {
+      jest: jestPlugin,
     },
     rules: {
       '@typescript-eslint/unbound-method': 'off',
@@ -49,6 +49,12 @@ export default defineConfig([
     },
   },
   {
-    ignores: ['scripts/**', 'out/**', '.vite/**', 'coverage/**', 'src/main/database/migrations/**'],
-  }
+    ignores: [
+      'scripts/**',
+      'out/**',
+      '.vite/**',
+      'coverage/**',
+      'src/main/app/infra/database/migrations/**',
+    ],
+  },
 ]);

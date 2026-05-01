@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { ConsolidatedPositionPreviewRow } from '../../../shared/contracts/import-consolidated-position.contract';
+import type { ConsolidatedPositionPreviewRow } from '../../../preload/contracts/ingestion/import-consolidated-position.contract';
 import { buildYearOptions, getDefaultBaseYear } from '../../../shared/utils/year';
 import { buildErrorMessage } from '../../errors/build-error-message';
 import { unwrapIpcResult } from '../../ipc/unwrap-ipc-result';
