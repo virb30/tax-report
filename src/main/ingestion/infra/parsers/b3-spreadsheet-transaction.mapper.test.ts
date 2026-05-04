@@ -48,8 +48,12 @@ describe('B3SpreadsheetTransactionMapper', () => {
       expect(mapper.mapRowType('', 'Direito de Subscrição')).toBeNull();
     });
 
-    it('returns null for explicitly discarded operations like "Leilão de Fração"', () => {
-      expect(mapper.mapRowType('', 'Leilão de Fração')).toBeNull();
+    it('returns FractionAuction for "Leilão de Fração"', () => {
+      expect(mapper.mapRowType('', 'Leilão de Fração')).toBe(OperationType.FractionAuction);
+    });
+
+    it('returns FractionAuction for plural "Leilão de Frações"', () => {
+      expect(mapper.mapRowType('', 'Leilão de Frações')).toBe(OperationType.FractionAuction);
     });
 
     it('returns null for explicitly discarded operations like "Fração em ativos"', () => {

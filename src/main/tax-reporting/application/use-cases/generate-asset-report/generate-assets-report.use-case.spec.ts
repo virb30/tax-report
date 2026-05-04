@@ -359,4 +359,58 @@ describe('GenerateAssetsReportUseCase', () => {
       currentYearValue: 150,
     });
   });
+
+  it('includes fully sold previous-year positions with zero current-year value', async () => {
+    mockPositionsByYear({
+      baseYearPositions: [],
+      previousYearPositions: [
+        AssetPosition.create({
+          ticker: 'PETR4',
+          year: 2024,
+          assetType: AssetType.Stock,
+          totalQuantity: Quantity.from(10),
+          averagePrice: Money.from(25),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(10) }],
+        }),
+      ],
+    });
+    assetRepository.findByTickersList.mockResolvedValue([
+      Asset.create({
+        ticker: 'PETR4',
+        assetType: AssetType.Stock,
+        resolutionSource: AssetTypeSource.File,
+        issuerCnpj: new Cnpj('33.000.167/0001-01'),
+        name: 'Petrobras',
+      }),
+    ]);
+    transactionRepository.findByTicker.mockResolvedValue([
+      Transaction.create({
+        date: '2025-02-01',
+        type: TransactionType.Sell,
+        ticker: 'PETR4',
+        quantity: Quantity.from(10),
+        unitPrice: Money.from(30),
+        fees: Money.from(0),
+        brokerId: broker.id,
+        sourceType: SourceType.Csv,
+      }),
+    ]);
+
+    const result = await useCase.execute({ baseYear: 2025 });
+
+    expect(assetRepository.findByTickersList).toHaveBeenCalledWith(['PETR4']);
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]).toMatchObject({
+      ticker: 'PETR4',
+      totalQuantity: 0,
+      averagePrice: 0,
+      previousYearValue: 250,
+      currentYearValue: 0,
+      acquiredInYear: false,
+      status: ReportItemStatus.Optional,
+      canCopy: false,
+      description: null,
+      brokersSummary: [],
+    });
+  });
 });

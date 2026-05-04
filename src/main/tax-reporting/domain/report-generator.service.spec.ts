@@ -264,6 +264,146 @@ describe('ReportGenerator', () => {
       expect(result[0]?.description).toContain('10 cotas IVVB11.');
     });
 
+    it('projects fractional corporate actions into the report when no fraction auction exists in the year', () => {
+      const generator = new ReportGenerator({
+        brokers: [broker],
+        assets: [
+          Asset.create({
+            ticker: 'PETR4',
+            assetType: AssetType.Stock,
+            resolutionSource: AssetTypeSource.Manual,
+            issuerCnpj: new Cnpj('33.000.167/0001-01'),
+            name: 'Petrobras',
+          }),
+        ],
+        transactionsByTicker: new Map([
+          [
+            'PETR4',
+            [
+              Transaction.create({
+                date: '2025-01-01',
+                type: TransactionType.InitialBalance,
+                ticker: 'PETR4',
+                quantity: Quantity.from(10),
+                unitPrice: Money.from(10),
+                fees: Money.from(0),
+                brokerId: broker.id,
+                sourceType: SourceType.Manual,
+              }),
+              Transaction.create({
+                date: '2025-06-01',
+                type: TransactionType.Bonus,
+                ticker: 'PETR4',
+                quantity: Quantity.from(0.5),
+                unitPrice: Money.from(0),
+                fees: Money.from(0),
+                brokerId: broker.id,
+                sourceType: SourceType.Csv,
+              }),
+            ],
+          ],
+        ]),
+        baseYear: 2025,
+      });
+
+      const result = generator.generate([
+        AssetPosition.create({
+          ticker: 'PETR4',
+          assetType: AssetType.Stock,
+          totalQuantity: Quantity.from(10),
+          averagePrice: Money.from(10),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(10) }],
+          year: 2025,
+        }),
+      ]);
+
+      expect(result[0]).toMatchObject({
+        totalQuantity: 10.5,
+        averagePrice: 9.52,
+        currentYearValue: 100,
+      });
+      expect(result[0]?.brokersSummary[0]).toMatchObject({
+        quantity: 10.5,
+        totalCost: 100,
+      });
+      expect(result[0]?.description).toContain('10,5 cotas PETR4.');
+      expect(result[0]?.description).toContain(
+        'Sendo 0,5 cotas decorrentes de bonificacao em 2025-06-01.',
+      );
+    });
+
+    it('floors fractional projection when a fraction auction exists for the ticker in the year', () => {
+      const generator = new ReportGenerator({
+        brokers: [broker],
+        assets: [
+          Asset.create({
+            ticker: 'PETR4',
+            assetType: AssetType.Stock,
+            resolutionSource: AssetTypeSource.Manual,
+            issuerCnpj: new Cnpj('33.000.167/0001-01'),
+            name: 'Petrobras',
+          }),
+        ],
+        transactionsByTicker: new Map([
+          [
+            'PETR4',
+            [
+              Transaction.create({
+                date: '2025-01-01',
+                type: TransactionType.InitialBalance,
+                ticker: 'PETR4',
+                quantity: Quantity.from(10),
+                unitPrice: Money.from(10),
+                fees: Money.from(0),
+                brokerId: broker.id,
+                sourceType: SourceType.Manual,
+              }),
+              Transaction.create({
+                date: '2025-06-01',
+                type: TransactionType.Bonus,
+                ticker: 'PETR4',
+                quantity: Quantity.from(0.5),
+                unitPrice: Money.from(0),
+                fees: Money.from(0),
+                brokerId: broker.id,
+                sourceType: SourceType.Csv,
+              }),
+              Transaction.create({
+                date: '2025-08-01',
+                type: TransactionType.FractionAuction,
+                ticker: 'PETR4',
+                quantity: Quantity.from(0.5),
+                unitPrice: Money.from(4),
+                fees: Money.from(0),
+                brokerId: broker.id,
+                sourceType: SourceType.Csv,
+              }),
+            ],
+          ],
+        ]),
+        baseYear: 2025,
+      });
+
+      const result = generator.generate([
+        AssetPosition.create({
+          ticker: 'PETR4',
+          assetType: AssetType.Stock,
+          totalQuantity: Quantity.from(10),
+          averagePrice: Money.from(10),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(10) }],
+          year: 2025,
+        }),
+      ]);
+
+      expect(result[0]).toMatchObject({
+        totalQuantity: 10,
+        averagePrice: 10,
+        currentYearValue: 100,
+      });
+      expect(result[0]?.description).toContain('10 cotas PETR4.');
+      expect(result[0]?.description).not.toContain('Sendo');
+    });
+
     it('skips zeroed positions', () => {
       const generator = new ReportGenerator({
         brokers: [broker],

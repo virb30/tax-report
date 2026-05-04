@@ -324,6 +324,8 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
         return TransactionType.TransferIn;
       case OperationType.TransferOut:
         return TransactionType.TransferOut;
+      case OperationType.FractionAuction:
+        return TransactionType.FractionAuction;
       default:
         return TransactionType.Buy;
     }

@@ -70,6 +70,8 @@ export class PositionCalculatorService {
             brokerId: tx.brokerId,
           });
           break;
+        case TransactionType.FractionAuction:
+          break;
         default: {
           const _exhaustive: never = tx.type;
           throw new Error(`Unsupported transaction type: ${String(_exhaustive)}`);

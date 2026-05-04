@@ -24,6 +24,8 @@ export class B3SpreadsheetTransactionMapper implements SpreadsheetTransactionMap
       split: OperationType.Split,
       grupamento: OperationType.ReverseSplit,
       agrupamento: OperationType.ReverseSplit,
+      'leilao de fracao': OperationType.FractionAuction,
+      'leilao de fracoes': OperationType.FractionAuction,
     };
 
   mapRowType(direction: string, movementType: string): OperationType | null {

@@ -228,7 +228,7 @@ describe('CsvXlsxTransactionParser', () => {
     expect(result.batches[0]?.tradeDate).toBe('2025-01-15');
   });
 
-  it('parses new operation types: Bonificação, Split, Grupamento, Transferencia', async () => {
+  it('parses new operation types: Bonificação, Split, Grupamento, Transferencia, Leilão de Frações', async () => {
     const brokerRepo = mock<BrokerRepository>();
     brokerRepo.findAllByCodes.mockResolvedValue([createBroker()]);
 
@@ -269,13 +269,22 @@ describe('CsvXlsxTransactionParser', () => {
         'Preco Unitario': 10,
         Corretora: 'XP',
       },
+      {
+        Data: '2025-04-05',
+        'Entrada/Saída': 'Crédito',
+        Movimentação: 'Leilão de Frações',
+        Ticker: 'PETR4',
+        Quantidade: 0.5,
+        'Preco Unitario': 10,
+        Corretora: 'XP',
+      },
     ]);
     createdDirs.push(path.dirname(filePath));
 
     const parser = new CsvXlsxTransactionParser(new SheetjsSpreadsheetFileReader(), brokerRepo);
     const result = await parser.parse(filePath);
 
-    expect(result.batches).toHaveLength(4);
+    expect(result.batches).toHaveLength(5);
     expect(result.batches[0]?.operations[0]?.type).toBe(TransactionType.Bonus);
     expect(result.batches[0]?.operations[0]?.unitPrice).toBe(15);
 
@@ -287,6 +296,9 @@ describe('CsvXlsxTransactionParser', () => {
 
     expect(result.batches[3]?.operations[0]?.type).toBe(TransactionType.TransferIn);
     expect(result.batches[3]?.operations[0]?.unitPrice).toBe(10);
+
+    expect(result.batches[4]?.operations[0]?.type).toBe(TransactionType.FractionAuction);
+    expect(result.batches[4]?.operations[0]?.quantity).toBe(0.5);
   });
 
   it('normalizes optional Tipo Ativo and separates unsupported events', async () => {

@@ -8,6 +8,10 @@ import type { Transaction } from '../../portfolio/domain/entities/transaction.en
 import { DeclarationEligibilityService } from './declaration-eligibility.service';
 import { HistoricalPositionService } from './historical-position.service';
 import { Money } from '../../portfolio/domain/value-objects/money.vo';
+import {
+  ReportPositionProjectionService,
+  type ReportFractionInfo,
+} from './report-position-projection.service';
 
 const STOCK_CLASSIFICATION = { group: '03', code: '01' } as const;
 const FII_CLASSIFICATION = { group: '07', code: '03' } as const;
@@ -33,6 +37,13 @@ export function formatBrl(value: number): string {
   });
 }
 
+export function formatQuantity(value: number): string {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 8,
+  });
+}
+
 export function getRevenueClassification(assetType: AssetType): { group: string; code: string } {
   const classification = REVENUE_CLASSIFICATIONS[assetType];
 
@@ -54,6 +65,7 @@ export function buildDeclarationDescriptionText(input: {
   issuerCnpj: string;
   averagePrice: number;
   currentYearValue: number;
+  fractionInfo?: ReportFractionInfo | null;
   brokersSummary: Array<{
     brokerName: string;
     cnpj: string;
@@ -63,11 +75,20 @@ export function buildDeclarationDescriptionText(input: {
   const unitLabel = getAssetUnitLabel(input.assetType);
   const avgFormatted = formatBrl(input.averagePrice);
   const totalFormatted = formatBrl(input.currentYearValue);
+  const quantityFormatted = formatQuantity(input.quantity);
   const brokersSummary = input.brokersSummary
-    .map((broker) => `${broker.brokerName} (CNPJ: ${broker.cnpj}, ${broker.quantity} ${unitLabel})`)
+    .map(
+      (broker) =>
+        `${broker.brokerName} (CNPJ: ${broker.cnpj}, ${formatQuantity(broker.quantity)} ${unitLabel})`,
+    )
     .join('; ');
+  const fractionDescription = input.fractionInfo
+    ? ` Sendo ${formatQuantity(input.fractionInfo.quantity)} ${unitLabel} decorrentes de ${input.fractionInfo.sources
+        .map((source) => `${source.eventType} em ${source.date}`)
+        .join(' e ')}.`
+    : '';
 
-  return `${input.quantity} ${unitLabel} ${input.ticker}. CNPJ: ${input.issuerCnpj}. Corretoras: ${brokersSummary}. Custo medio: R$ ${avgFormatted}. Custo total: R$ ${totalFormatted}.`;
+  return `${quantityFormatted} ${unitLabel} ${input.ticker}. CNPJ: ${input.issuerCnpj}. Corretoras: ${brokersSummary}. Custo medio: R$ ${avgFormatted}. Custo total: R$ ${totalFormatted}.${fractionDescription}`;
 }
 
 type ReportGeneratorDependencies = {
@@ -78,6 +99,7 @@ type ReportGeneratorDependencies = {
   previousYearPositions?: AssetPosition[];
   historicalPositionService?: HistoricalPositionService;
   declarationEligibilityService?: DeclarationEligibilityService;
+  reportPositionProjectionService?: ReportPositionProjectionService;
 };
 
 export class ReportGenerator {
@@ -86,6 +108,7 @@ export class ReportGenerator {
   private readonly previousYearPositionsMap: Map<string, AssetPosition>;
   private readonly historicalPositionService: HistoricalPositionService;
   private readonly declarationEligibilityService: DeclarationEligibilityService;
+  private readonly reportPositionProjectionService: ReportPositionProjectionService;
 
   constructor(private readonly dependencies: ReportGeneratorDependencies) {
     this.brokersMap = new Map(dependencies.brokers.map((broker) => [broker.id.value, broker]));
@@ -97,6 +120,8 @@ export class ReportGenerator {
       dependencies.historicalPositionService ?? new HistoricalPositionService();
     this.declarationEligibilityService =
       dependencies.declarationEligibilityService ?? new DeclarationEligibilityService();
+    this.reportPositionProjectionService =
+      dependencies.reportPositionProjectionService ?? new ReportPositionProjectionService();
   }
 
   generate(positions: AssetPosition[]): ReportItemOutput[] {
@@ -106,15 +131,24 @@ export class ReportGenerator {
   }
 
   private buildReportItem(position: AssetPosition): ReportItemOutput | null {
-    if (position.totalQuantity.isLessThanOrEqualTo(0)) {
+    const asset = this.assetsMap.get(position.ticker) ?? null;
+    const reportAssetType = asset?.assetType ?? position.assetType;
+    const projectedPosition = this.reportPositionProjectionService.project({
+      persistedPosition: position,
+      assetType: reportAssetType,
+      year: this.dependencies.baseYear,
+      transactions: this.dependencies.transactionsByTicker.get(position.ticker) ?? [],
+    });
+    const reportPosition = projectedPosition.position;
+
+    const { totalQuantity, averagePrice } = reportPosition;
+    const currentYearValue = averagePrice.multiplyBy(totalQuantity.getAmount());
+    const previousYearValue = this.calculatePreviousYearValue(reportPosition, reportAssetType);
+
+    if (currentYearValue.isZero() && previousYearValue.isZero()) {
       return null;
     }
 
-    const { totalQuantity, averagePrice } = position;
-    const asset = this.assetsMap.get(position.ticker) ?? null;
-    const reportAssetType = asset?.assetType ?? position.assetType;
-    const currentYearValue = averagePrice.multiplyBy(totalQuantity.getAmount());
-    const previousYearValue = this.calculatePreviousYearValue(position, reportAssetType);
     const pendingIssues = this.buildPendingIssues(asset, reportAssetType);
     const eligibility = this.declarationEligibilityService.evaluate({
       assetType: reportAssetType,
@@ -123,13 +157,12 @@ export class ReportGenerator {
       hasPendingIssues: pendingIssues.length > 0,
       isSupported: this.isSupportedAssetType(reportAssetType),
     });
-    const brokersSummary = this.buildBrokersSummary(position);
-
-    if (brokersSummary.length === 0) {
-      return null;
-    }
-
-    const canCopy = this.canCopyReportItem(pendingIssues, eligibility.status);
+    const brokersSummary = this.buildBrokersSummary(reportPosition);
+    const hasCurrentPosition = totalQuantity.isLessThanOrEqualTo(0) === false;
+    const canCopy =
+      hasCurrentPosition &&
+      brokersSummary.length > 0 &&
+      this.canCopyReportItem(pendingIssues, eligibility.status);
 
     return {
       ticker: position.ticker,
@@ -153,6 +186,7 @@ export class ReportGenerator {
               issuerCnpj: asset.issuerCnpj,
               averagePrice: averagePrice.toNumber(),
               currentYearValue: currentYearValue.toNumber(),
+              fractionInfo: projectedPosition.fractionInfo,
               brokersSummary,
             })
           : null,

@@ -191,4 +191,38 @@ describe('PositionCalculator', () => {
     expect(positions[0].averagePrice.getAmount()).toBe('25');
     expect(transaction.fees.getAmount()).toBe('5');
   });
+
+  it('ignores fraction auction when recalculating the operational position', () => {
+    const transactions = [
+      Transaction.create({
+        type: TransactionType.InitialBalance,
+        date: '2025-01-01',
+        ticker: 'PETR4',
+        quantity: Quantity.from(10),
+        unitPrice: Money.from(10),
+        fees: Money.from(0),
+        brokerId,
+        sourceType: SourceType.Manual,
+      }),
+      Transaction.create({
+        type: TransactionType.FractionAuction,
+        date: '2025-07-01',
+        ticker: 'PETR4',
+        quantity: Quantity.from(0.5),
+        unitPrice: Money.from(5),
+        fees: Money.from(0),
+        brokerId,
+        sourceType: SourceType.Csv,
+      }),
+    ];
+
+    const positions = calculator.compute({
+      transactions,
+      basePositions: [],
+      year: 2025,
+    });
+
+    expect(positions[0].totalQuantity.getAmount()).toBe('10');
+    expect(positions[0].averagePrice.getAmount()).toBe('10');
+  });
 });

@@ -25,7 +25,11 @@ export class TransactionFeeAllocator {
         operation,
         weight: operation.unitPrice.multiplyBy(operation.quantity),
       }))
-      .filter((item) => item.operation.type !== TransactionType.InitialBalance);
+      .filter(
+        (item) =>
+          item.operation.type !== TransactionType.InitialBalance &&
+          item.operation.type !== TransactionType.FractionAuction,
+      );
 
     if (totalOperationalCosts.isZero() || eligibleOperations.length === 0) {
       return input.operations.map(() => Money.from(0));

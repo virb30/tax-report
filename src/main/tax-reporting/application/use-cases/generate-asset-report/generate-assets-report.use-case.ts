@@ -2,6 +2,9 @@ import type { BrokerRepository } from '../../../../portfolio/application/reposit
 import type { AssetPositionRepository } from '../../../../portfolio/application/repositories/asset-position.repository';
 import type { AssetRepository } from '../../../../portfolio/application/repositories/asset.repository';
 import type { TransactionRepository } from '../../../../portfolio/application/repositories/transaction.repository';
+import { AssetPosition } from '../../../../portfolio/domain/entities/asset-position.entity';
+import { Money } from '../../../../portfolio/domain/value-objects/money.vo';
+import { Quantity } from '../../../../portfolio/domain/value-objects/quantity.vo';
 import { ReportGenerator } from '../../../domain/report-generator.service';
 import type { GenerateAssetReportInput } from './generate-asset-report.input';
 import type { GenerateAssetReportOutput } from './generate-asset-report.output';
@@ -19,9 +22,14 @@ export class GenerateAssetsReportUseCase {
 
     const positions = await this.positionRepository.findAllByYear(input.baseYear);
     const previousYearPositions = await this.positionRepository.findAllByYear(input.baseYear - 1);
+    const reportPositions = this.buildReportPositions({
+      positions,
+      previousYearPositions,
+      baseYear: input.baseYear,
+    });
 
     const brokers = await this.brokerRepository.findAll();
-    const tickers = positions.map((p) => p.ticker);
+    const tickers = reportPositions.map((p) => p.ticker);
     const assetsData = await this.assetRepository.findByTickersList(tickers);
     const transactionsByTicker = new Map(
       await Promise.all(
@@ -38,11 +46,35 @@ export class GenerateAssetsReportUseCase {
       baseYear: input.baseYear,
       previousYearPositions,
     });
-    const items = reportGenerator.generate(positions);
+    const items = reportGenerator.generate(reportPositions);
 
     return {
       referenceDate,
       items,
     };
+  }
+
+  private buildReportPositions(input: {
+    positions: AssetPosition[];
+    previousYearPositions: AssetPosition[];
+    baseYear: number;
+  }): AssetPosition[] {
+    const currentPositionsByTicker = new Map(
+      input.positions.map((position) => [position.ticker, position]),
+    );
+    const soldPositions = input.previousYearPositions
+      .filter((position) => !currentPositionsByTicker.has(position.ticker))
+      .map((position) =>
+        AssetPosition.create({
+          ticker: position.ticker,
+          assetType: position.assetType,
+          year: input.baseYear,
+          totalQuantity: Quantity.from(0),
+          averagePrice: Money.from(0),
+          brokerBreakdown: [],
+        }),
+      );
+
+    return [...input.positions, ...soldPositions];
   }
 }
