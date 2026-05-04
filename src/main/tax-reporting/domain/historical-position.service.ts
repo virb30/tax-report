@@ -21,11 +21,11 @@ export class HistoricalPositionService {
       return null;
     }
 
-    const [position] = this.positionCalculator.compute(
-      historicalTransactions,
-      [AssetPosition.create({ ticker, assetType, year })],
+    const [position] = this.positionCalculator.compute({
+      transactions: historicalTransactions,
+      basePositions: [AssetPosition.create({ ticker, assetType, year })],
       year,
-    );
+    });
 
     return position ?? null;
   }

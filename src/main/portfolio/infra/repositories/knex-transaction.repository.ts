@@ -17,7 +17,7 @@ type TransactionRow = {
   ticker: string;
   quantity: string;
   unit_price: string;
-  fees: string;
+  total_fees: string | null;
   broker_id: string;
   source_type: string;
   external_ref: string | null;
@@ -37,7 +37,6 @@ function toPersistence(transaction: Transaction): Record<string, unknown> {
     ticker: transaction.ticker,
     quantity: transaction.quantityAmount,
     unit_price: transaction.unitPriceAmount,
-    fees: transaction.feesAmount,
     broker_id: transaction.brokerId.value,
     source_type: transaction.sourceType,
     external_ref: transaction.externalRef ?? null,
@@ -53,7 +52,7 @@ function toDomain(row: TransactionRow): Transaction {
     ticker: row.ticker,
     quantity: Quantity.from(row.quantity),
     unitPrice: Money.from(row.unit_price),
-    fees: Money.from(row.fees),
+    fees: Money.from(row.total_fees ?? 0),
     brokerId: Uuid.from(row.broker_id),
     sourceType: row.source_type as SourceType,
     externalRef: row.external_ref ?? undefined,
@@ -78,18 +77,24 @@ export class KnexTransactionRepository implements TransactionRepository {
   }
 
   async findByTicker(ticker: string): Promise<Transaction[]> {
-    const rows = await this.database<TransactionRow>('transactions')
-      .where({ ticker })
-      .orderBy('date', 'asc')
-      .select('*');
+    const rows = await this.transactionReadQuery()
+      .where('transactions.ticker', ticker)
+      .orderBy('transactions.date', 'asc');
+    return rows.map(toDomain);
+  }
+
+  async findByDateAndBroker(input: { date: string; brokerId: string }): Promise<Transaction[]> {
+    const rows = await this.transactionReadQuery()
+      .where({ 'transactions.date': input.date, 'transactions.broker_id': input.brokerId })
+      .orderBy('transactions.ticker', 'asc')
+      .orderBy('transactions.id', 'asc');
     return rows.map(toDomain);
   }
 
   async findByPeriod(input: { startDate: string; endDate: string }): Promise<Transaction[]> {
-    const rows = await this.database<TransactionRow>('transactions')
-      .whereBetween('date', [input.startDate, input.endDate])
-      .orderBy('date', 'asc')
-      .select('*');
+    const rows = await this.transactionReadQuery()
+      .whereBetween('transactions.date', [input.startDate, input.endDate])
+      .orderBy('transactions.date', 'asc');
     return rows.map(toDomain);
   }
 
@@ -169,6 +174,24 @@ export class KnexTransactionRepository implements TransactionRepository {
 
   private yearBounds(year: number): [string, string] {
     return [`${year}-01-01`, `${year}-12-31`];
+  }
+
+  private transactionReadQuery(): Knex.QueryBuilder<unknown, TransactionRow[]> {
+    return this.database('transactions')
+      .leftJoin('transaction_fees', 'transaction_fees.transaction_id', 'transactions.id')
+      .select([
+        'transactions.id',
+        'transactions.date',
+        'transactions.type',
+        'transactions.ticker',
+        'transactions.quantity',
+        'transactions.unit_price',
+        'transaction_fees.total_fees as total_fees',
+        'transactions.broker_id',
+        'transactions.source_type',
+        'transactions.external_ref',
+        'transactions.import_batch_id',
+      ]);
   }
 
   private groupInitialBalanceRows(

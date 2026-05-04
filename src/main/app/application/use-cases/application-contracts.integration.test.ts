@@ -13,6 +13,7 @@ import { createDatabaseConnection, initializeDatabase } from '../../infra/databa
 import { KnexBrokerRepository } from '../../../portfolio/infra/repositories/knex-broker.repository';
 import { KnexPositionRepository } from '../../../portfolio/infra/repositories/knex-position.repository';
 import { KnexTransactionRepository } from '../../../portfolio/infra/repositories/knex-transaction.repository';
+import { KnexTransactionFeeRepository } from '../../../portfolio/infra/repositories/knex-transaction-fee.repository';
 import { KnexAssetRepository } from '../../../portfolio/infra/repositories/knex-asset.repository';
 import { GenerateAssetsReportUseCase } from '../../../tax-reporting/application/use-cases/generate-asset-report/generate-assets-report.use-case';
 import { ListPositionsUseCase } from '../../../portfolio/application/use-cases/list-positions/list-positions-use-case';
@@ -27,6 +28,7 @@ import { MemoryQueueAdapter } from '../../../shared/infra/events/memory-queue.ad
 import { RecalculatePositionHandler } from '../../../portfolio/infra/handlers/recalculate-position.handler';
 import { SaveInitialBalanceDocumentUseCase } from '../../../portfolio/application/use-cases/save-initial-balance-document/save-initial-balance-document.use-case';
 import { Transaction } from '../../../portfolio/domain/entities/transaction.entity';
+import { TransactionFee } from '../../../portfolio/domain/entities/transaction-fee.entity';
 import { Asset } from '../../../portfolio/domain/entities/asset.entity';
 import { Broker } from '../../../portfolio/domain/entities/broker.entity';
 import { AssetPosition } from '../../../portfolio/domain/entities/asset-position.entity';
@@ -51,6 +53,7 @@ describe('Application contracts integration', () => {
   it('saves, lists, and deletes initial balance documents while keeping positions and reports consistent', async () => {
     const knexPositionRepository = new KnexPositionRepository(database);
     const knexTransactionRepository = new KnexTransactionRepository(database);
+    const knexTransactionFeeRepository = new KnexTransactionFeeRepository(database);
     const brokerRepository = new KnexBrokerRepository(database);
     const tickerDataRepository = new KnexAssetRepository(database);
     const positionSyncService = new InitialBalanceDocumentPositionSyncService(
@@ -92,18 +95,26 @@ describe('Application contracts integration', () => {
 
     await brokerRepository.save(broker);
 
-    await knexTransactionRepository.saveMany([
-      Transaction.create({
-        date: '2025-03-01',
-        type: TransactionType.Buy,
-        ticker: 'PETR4',
-        quantity: Quantity.from(10),
-        unitPrice: Money.from(20),
-        fees: Money.from(1),
-        brokerId,
-        sourceType: SourceType.Csv,
-      }),
-    ]);
+    const transaction = Transaction.create({
+      date: '2025-03-01',
+      type: TransactionType.Buy,
+      ticker: 'PETR4',
+      quantity: Quantity.from(10),
+      unitPrice: Money.from(20),
+      fees: Money.from(0),
+      brokerId,
+      sourceType: SourceType.Csv,
+    });
+    await knexTransactionRepository.saveMany([transaction]);
+    await knexTransactionFeeRepository.replaceForTransactions({
+      transactionIds: [transaction.id],
+      fees: [
+        TransactionFee.create({
+          transactionId: transaction.id,
+          totalFees: Money.from(1),
+        }),
+      ],
+    });
     await knexPositionRepository.save(
       AssetPosition.create({
         ticker: 'PETR4',

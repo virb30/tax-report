@@ -1,6 +1,8 @@
 import type { ImportTransactionsParser } from '../../interfaces/transactions.parser.interface';
-import type { TaxApportioner } from '../../../domain/services/tax-apportioner.service';
+import type { TransactionFeeAllocator } from '../../../../portfolio/domain/services/transaction-fee-allocator.service';
 import type { AssetRepository } from '../../../../portfolio/application/repositories/asset.repository';
+import type { DailyBrokerTaxRepository } from '../../repositories/daily-broker-tax.repository';
+import { Uuid } from '../../../../shared/domain/value-objects/uuid.vo';
 import type {
   PreviewImportTransactionsCommand,
   PreviewImportTransactionsResult,
@@ -9,11 +11,13 @@ import type {
 } from '../../../../../preload/contracts/ingestion/preview-import.contract';
 import { TransactionType } from '../../../../../shared/types/domain';
 import { ImportPreviewReviewResolver } from '../../../domain/services/import-preview-review-resolver.service';
+import { Money } from '../../../../portfolio/domain/value-objects/money.vo';
 
 export class PreviewImportUseCase {
   constructor(
     private readonly parser: ImportTransactionsParser,
-    private readonly taxApportioner: TaxApportioner,
+    private readonly transactionFeeAllocator: TransactionFeeAllocator,
+    private readonly dailyBrokerTaxRepository: DailyBrokerTaxRepository,
     private readonly assetRepository: AssetRepository,
     private readonly reviewResolver: ImportPreviewReviewResolver = new ImportPreviewReviewResolver(),
   ) {}
@@ -22,6 +26,7 @@ export class PreviewImportUseCase {
     const parsedFile = await this.parser.parse(input.filePath);
     const batches = parsedFile.batches;
     const assetCatalogMap = await this.loadAssetCatalogMap(parsedFile);
+    const dailyTaxFeesMap = await this.loadDailyTaxFeesMap(parsedFile);
     const transactionsPreview: PreviewTransactionItem[] = [];
     const warnings: PreviewImportWarning[] = [];
     const summary = {
@@ -32,18 +37,20 @@ export class PreviewImportUseCase {
     let globalRowIndex = 1;
 
     for (const batch of batches) {
-      const allocatedFees = this.taxApportioner.allocate({
-        totalOperationalCosts: batch.totalOperationalCosts,
+      const allocatedFees = this.transactionFeeAllocator.allocate({
+        totalOperationalCosts:
+          dailyTaxFeesMap.get(this.toDailyTaxKey(batch.tradeDate, batch.brokerId)) ?? Money.from(0),
         operations: batch.operations.map((op) => ({
           ticker: op.ticker,
           quantity: op.quantity,
-          unitPrice: op.unitPrice,
+          unitPrice: Money.from(op.unitPrice),
+          type: op.type,
         })),
       });
 
       for (let i = 0; i < batch.operations.length; i += 1) {
         const op = batch.operations[i];
-        const fees = allocatedFees[i] ?? 0;
+        const fees = allocatedFees[i]?.toNumber() ?? 0;
         if (!op) {
           continue;
         }
@@ -131,6 +138,34 @@ export class PreviewImportUseCase {
 
     const assets = await this.assetRepository.findByTickersList([...tickers]);
     return new Map(assets.map((asset) => [asset.ticker, asset]));
+  }
+
+  private async loadDailyTaxFeesMap(
+    parsedFile: Awaited<ReturnType<ImportTransactionsParser['parse']>>,
+  ): Promise<Map<string, Money>> {
+    const keys = new Map<string, { date: string; brokerId: string }>();
+
+    for (const batch of parsedFile.batches) {
+      keys.set(this.toDailyTaxKey(batch.tradeDate, batch.brokerId), {
+        date: batch.tradeDate,
+        brokerId: batch.brokerId,
+      });
+    }
+
+    const feesMap = new Map<string, Money>();
+    for (const key of keys.values()) {
+      const tax = await this.dailyBrokerTaxRepository.findByDateAndBroker({
+        date: key.date,
+        brokerId: Uuid.from(key.brokerId),
+      });
+      feesMap.set(this.toDailyTaxKey(key.date, key.brokerId), tax?.fees ?? Money.from(0));
+    }
+
+    return feesMap;
+  }
+
+  private toDailyTaxKey(date: string, brokerId: string): string {
+    return `${date}::${brokerId}`;
   }
 
   private resolveReviewState(input: {

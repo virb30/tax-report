@@ -46,7 +46,11 @@ describe('PositionCalculator', () => {
       }),
     ];
 
-    const positions = calculator.compute(transactions, [], 2024);
+    const positions = calculator.compute({
+      transactions,
+      basePositions: [],
+      year: 2024,
+    });
 
     expect(positions).toHaveLength(1);
     expect(positions[0].ticker).toBe('PETR4');
@@ -74,7 +78,11 @@ describe('PositionCalculator', () => {
       }),
     ];
 
-    const positions = calculator.compute(transactions, [basePosition], 2024);
+    const positions = calculator.compute({
+      transactions,
+      basePositions: [basePosition],
+      year: 2024,
+    });
 
     expect(positions[0].assetType).toBe(AssetType.Fii);
     expect(positions[0].totalQuantity.getAmount()).toBe('10');
@@ -104,7 +112,11 @@ describe('PositionCalculator', () => {
       }),
     ];
 
-    const positions = calculator.compute(transactions, [], 2024);
+    const positions = calculator.compute({
+      transactions,
+      basePositions: [],
+      year: 2024,
+    });
 
     expect(positions).toHaveLength(2);
     const petr = positions.find((p) => p.ticker === 'PETR4');
@@ -147,9 +159,36 @@ describe('PositionCalculator', () => {
       }),
     ];
 
-    const positions = calculator.compute(transactions, [], 2024);
+    const positions = calculator.compute({
+      transactions,
+      basePositions: [],
+      year: 2024,
+    });
 
     expect(positions[0].totalQuantity.getAmount()).toBe('4');
     expect(positions[0].averagePrice.getAmount()).toBe('250');
+  });
+
+  it('can ignore buy fees in average price calculation without mutating transactions', () => {
+    const transaction = Transaction.create({
+      type: TransactionType.Buy,
+      date: '2024-06-15',
+      ticker: 'PETR4',
+      quantity: Quantity.from(50),
+      unitPrice: Money.from(25),
+      fees: Money.from(5),
+      brokerId,
+      sourceType: SourceType.Manual,
+    });
+
+    const positions = calculator.compute({
+      transactions: [transaction],
+      basePositions: [],
+      year: 2024,
+      averagePriceFeeMode: 'ignore',
+    });
+
+    expect(positions[0].averagePrice.getAmount()).toBe('25');
+    expect(transaction.fees.getAmount()).toBe('5');
   });
 });

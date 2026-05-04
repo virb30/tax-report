@@ -55,18 +55,31 @@ export class Money {
     return Number(this.amount.toFixed(2));
   }
 
-  isLessThanOrEqualTo(other: string | number): boolean {
-    const decimalOther = new Decimal(other);
+  floorToCurrency(): Money {
+    const result = this.amount.toDecimalPlaces(2, Decimal.ROUND_FLOOR);
+    return new Money(result.toString());
+  }
+
+  roundToCurrency(): Money {
+    return new Money(this.toCurrency());
+  }
+
+  static minimumCurrencyUnit(): Money {
+    return new Money('0.01');
+  }
+
+  isLessThanOrEqualTo(other: Money | string | number): boolean {
+    const decimalOther = this.toComparableDecimal(other);
     return this.amount.lte(decimalOther);
   }
 
-  isGreaterThanOrEqualTo(other: string | number): boolean {
-    const decimalOther = new Decimal(other);
+  isGreaterThanOrEqualTo(other: Money | string | number): boolean {
+    const decimalOther = this.toComparableDecimal(other);
     return this.amount.gte(decimalOther);
   }
 
-  isGreaterThan(other: string | number): boolean {
-    const decimalOther = new Decimal(other);
+  isGreaterThan(other: Money | string | number): boolean {
+    const decimalOther = this.toComparableDecimal(other);
     return this.amount.gt(decimalOther);
   }
 
@@ -82,5 +95,13 @@ export class Money {
     if (!this.amount.isFinite()) {
       throw new Error('Money amount must be finite.');
     }
+  }
+
+  private toComparableDecimal(other: Money | string | number): Decimal {
+    if (other instanceof Money) {
+      return other.amount;
+    }
+
+    return new Decimal(other);
   }
 }

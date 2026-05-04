@@ -18,6 +18,7 @@ export class GenerateAssetsReportUseCase {
     const referenceDate = `${input.baseYear}-12-31`;
 
     const positions = await this.positionRepository.findAllByYear(input.baseYear);
+    const previousYearPositions = await this.positionRepository.findAllByYear(input.baseYear - 1);
 
     const brokers = await this.brokerRepository.findAll();
     const tickers = positions.map((p) => p.ticker);
@@ -35,6 +36,7 @@ export class GenerateAssetsReportUseCase {
       assets: assetsData,
       transactionsByTicker,
       baseYear: input.baseYear,
+      previousYearPositions,
     });
     const items = reportGenerator.generate(positions);
 

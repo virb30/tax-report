@@ -58,11 +58,11 @@ export class MigrateYearUseCase {
       ...existingTargetYearTransactions,
       ...targetInitialBalanceTransactions,
     ]);
-    const positionsAtYearEnd = positionCalculator.compute(
-      targetYearTransactions,
-      [],
-      input.targetYear,
-    );
+    const positionsAtYearEnd = positionCalculator.compute({
+      transactions: targetYearTransactions,
+      basePositions: [],
+      year: input.targetYear,
+    });
 
     const positionsWithQuantity = positionsAtYearEnd.filter((p) => p.totalQuantity.toNumber() > 0);
 

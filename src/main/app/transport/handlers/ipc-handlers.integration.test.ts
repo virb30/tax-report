@@ -23,6 +23,7 @@ import {
 } from '../../../../preload/contracts/portfolio/brokers';
 import {
   confirmImportTransactionsContract,
+  importDailyBrokerTaxesContract,
   previewImportTransactionsContract,
 } from '../../../../preload/contracts/ingestion/import';
 import {
@@ -40,6 +41,11 @@ import { DeletePositionUseCase } from '../../../portfolio/application/use-cases/
 import { GenerateAssetsReportUseCase } from '../../../tax-reporting/application/use-cases/generate-asset-report/generate-assets-report.use-case';
 import { ImportConsolidatedPositionUseCase } from '../../../ingestion/application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
 import { ImportTransactionsUseCase } from '../../../ingestion/application/use-cases/import-transactions/import-transactions-use-case';
+import { DeleteDailyBrokerTaxUseCase } from '../../../ingestion/application/use-cases/delete-daily-broker-tax/delete-daily-broker-tax.use-case';
+import { ImportDailyBrokerTaxesUseCase } from '../../../ingestion/application/use-cases/import-daily-broker-taxes/import-daily-broker-taxes.use-case';
+import { ListDailyBrokerTaxesUseCase } from '../../../ingestion/application/use-cases/list-daily-broker-taxes/list-daily-broker-taxes.use-case';
+import { SaveDailyBrokerTaxUseCase } from '../../../ingestion/application/use-cases/save-daily-broker-tax/save-daily-broker-tax.use-case';
+import { ReallocateTransactionFeesService } from '../../../ingestion/application/services/reallocate-transaction-fees.service';
 import { ListAssetsUseCase } from '../../../portfolio/application/use-cases/list-assets/list-assets.use-case';
 import { ListBrokersUseCase } from '../../../portfolio/application/use-cases/list-brokers/list-brokers.use-case';
 import { ListInitialBalanceDocumentsUseCase } from '../../../portfolio/application/use-cases/list-initial-balance-documents/list-initial-balance-documents.use-case';
@@ -55,7 +61,7 @@ import { UpdateBrokerUseCase } from '../../../portfolio/application/use-cases/up
 import { InitialBalanceDocumentPositionSyncService } from '../../../portfolio/application/services/initial-balance-document-position-sync.service';
 import { ReprocessTickerYearsService } from '../../../portfolio/application/services/reprocess-ticker-years.service';
 import { createDatabaseConnection, initializeDatabase } from '../../infra/database/database';
-import { TaxApportioner } from '../../../ingestion/domain/services/tax-apportioner.service';
+import { TransactionFeeAllocator } from '../../../portfolio/domain/services/transaction-fee-allocator.service';
 import { Asset } from '../../../portfolio/domain/entities/asset.entity';
 import { AssetPosition } from '../../../portfolio/domain/entities/asset-position.entity';
 import { Broker } from '../../../portfolio/domain/entities/broker.entity';
@@ -71,9 +77,12 @@ import { ImportIpcRegistrar } from '../../../ingestion/transport/registrars/impo
 import { PortfolioIpcRegistrar } from '../../../portfolio/transport/registrars/portfolio-ipc-registrar';
 import { ReportIpcRegistrar } from '../../../tax-reporting/transport/registrars/report-ipc-registrar';
 import { KnexPositionRepository } from '../../../portfolio/infra/repositories/knex-position.repository';
+import { KnexTransactionFeeRepository } from '../../../portfolio/infra/repositories/knex-transaction-fee.repository';
 import { KnexTransactionRepository } from '../../../portfolio/infra/repositories/knex-transaction.repository';
 import { KnexBrokerRepository } from '../../../portfolio/infra/repositories/knex-broker.repository';
 import { KnexAssetRepository } from '../../../portfolio/infra/repositories/knex-asset.repository';
+import { KnexDailyBrokerTaxRepository } from '../../../ingestion/infra/repositories/knex-daily-broker-tax.repository';
+import { CsvXlsxDailyBrokerTaxParser } from '../../../ingestion/infra/parsers/csv-xlsx-daily-broker-tax.parser';
 import { CsvXlsxTransactionParser } from '../../../ingestion/infra/parsers/csv-xlsx-transaction.parser';
 import { MemoryQueueAdapter } from '../../../shared/infra/events/memory-queue.adapter';
 import { RecalculatePositionHandler } from '../../../portfolio/infra/handlers/recalculate-position.handler';
@@ -101,7 +110,9 @@ describe('IPC handlers integration', () => {
   it('runs transaction preview, confirm, initial balance document, list and report channels end-to-end', async () => {
     const knexPositionRepository = new KnexPositionRepository(database);
     const knexTransactionRepository = new KnexTransactionRepository(database);
+    const knexTransactionFeeRepository = new KnexTransactionFeeRepository(database);
     const brokerRepository = new KnexBrokerRepository(database);
+    const dailyBrokerTaxRepository = new KnexDailyBrokerTaxRepository(database);
     const tickerDataRepository = new KnexAssetRepository(database);
     const positionSyncService = new InitialBalanceDocumentPositionSyncService(
       knexPositionRepository,
@@ -144,18 +155,50 @@ describe('IPC handlers integration', () => {
     );
     const spreadsheetFileReader = new SheetjsSpreadsheetFileReader();
     const transactionParser = new CsvXlsxTransactionParser(spreadsheetFileReader, brokerRepository);
+    const dailyBrokerTaxesParser = new CsvXlsxDailyBrokerTaxParser(
+      spreadsheetFileReader,
+      brokerRepository,
+    );
     const consolidatedPositionParser = new CsvXlsxConsolidatedPositionParser();
-    const taxApportioner = new TaxApportioner();
+    const transactionFeeAllocator = new TransactionFeeAllocator();
     const previewImportUseCase = new PreviewImportUseCase(
       transactionParser,
-      taxApportioner,
+      transactionFeeAllocator,
+      dailyBrokerTaxRepository,
       tickerDataRepository,
+    );
+    const reallocateTransactionFeesService = new ReallocateTransactionFeesService(
+      dailyBrokerTaxRepository,
+      knexTransactionRepository,
+      knexTransactionFeeRepository,
+      transactionFeeAllocator,
     );
     const importTransactionsUseCase = new ImportTransactionsUseCase(
       transactionParser,
-      taxApportioner,
       tickerDataRepository,
       knexTransactionRepository,
+      reallocateTransactionFeesService,
+      queue,
+    );
+    const listDailyBrokerTaxesUseCase = new ListDailyBrokerTaxesUseCase(
+      dailyBrokerTaxRepository,
+      brokerRepository,
+    );
+    const saveDailyBrokerTaxUseCase = new SaveDailyBrokerTaxUseCase(
+      dailyBrokerTaxRepository,
+      brokerRepository,
+      reallocateTransactionFeesService,
+      queue,
+    );
+    const importDailyBrokerTaxesUseCase = new ImportDailyBrokerTaxesUseCase(
+      dailyBrokerTaxesParser,
+      dailyBrokerTaxRepository,
+      reallocateTransactionFeesService,
+      queue,
+    );
+    const deleteDailyBrokerTaxUseCase = new DeleteDailyBrokerTaxUseCase(
+      dailyBrokerTaxRepository,
+      reallocateTransactionFeesService,
       queue,
     );
     const importConsolidatedPositionUseCase = new ImportConsolidatedPositionUseCase(
@@ -187,9 +230,16 @@ describe('IPC handlers integration', () => {
     await fs.writeFile(
       csvPath,
       [
-        'Data;Entrada/Saída;Movimentação;Ticker;Quantidade;Preco Unitario;Taxas Totais;Corretora',
-        '2025-03-10;Crédito;Transferência - Liquidação;PETR4;10;20;1;XP',
+        'Data;Entrada/Saída;Movimentação;Ticker;Quantidade;Preco Unitario;Corretora',
+        '2025-03-10;Crédito;Transferência - Liquidação;PETR4;10;20;XP',
       ].join('\n'),
+      'utf-8',
+    );
+
+    const taxesCsvPath = path.join(temporaryDirectory, 'daily-taxes.csv');
+    await fs.writeFile(
+      taxesCsvPath,
+      ['Data;Corretora;Taxas;IRRF', '2025-03-10;XP;1;0,01'].join('\n'),
       'utf-8',
     );
 
@@ -201,7 +251,14 @@ describe('IPC handlers integration', () => {
     };
 
     const appRegistrar = new AppIpcRegistrar();
-    const importRegistrar = new ImportIpcRegistrar(previewImportUseCase, importTransactionsUseCase);
+    const importRegistrar = new ImportIpcRegistrar(
+      previewImportUseCase,
+      importTransactionsUseCase,
+      listDailyBrokerTaxesUseCase,
+      saveDailyBrokerTaxUseCase,
+      importDailyBrokerTaxesUseCase,
+      deleteDailyBrokerTaxUseCase,
+    );
     const portfolioRegistrar = new PortfolioIpcRegistrar(
       saveInitialBalanceDocumentUseCase,
       listInitialBalanceDocumentsUseCase,
@@ -220,6 +277,7 @@ describe('IPC handlers integration', () => {
     reportRegistrar.register(ipcMain);
 
     const healthHandler = handlers.get(healthCheckContract.channel);
+    const importDailyBrokerTaxesHandler = handlers.get(importDailyBrokerTaxesContract.channel);
     const previewHandler = handlers.get(previewImportTransactionsContract.channel);
     const confirmHandler = handlers.get(confirmImportTransactionsContract.channel);
     const saveInitialBalanceDocumentHandler = handlers.get(
@@ -236,6 +294,7 @@ describe('IPC handlers integration', () => {
 
     if (
       !healthHandler ||
+      !importDailyBrokerTaxesHandler ||
       !previewHandler ||
       !confirmHandler ||
       !saveInitialBalanceDocumentHandler ||
@@ -248,6 +307,15 @@ describe('IPC handlers integration', () => {
     }
 
     expect(await healthHandler(ipcEvent)).toEqual({ status: 'ok' });
+
+    await expect(
+      importDailyBrokerTaxesHandler(ipcEvent, {
+        filePath: taxesCsvPath,
+      }),
+    ).resolves.toEqual({
+      importedCount: 1,
+      recalculatedTickers: [],
+    });
 
     const previewResult = (await previewHandler(ipcEvent, {
       filePath: csvPath,
@@ -279,6 +347,12 @@ describe('IPC handlers integration', () => {
       recalculatedTickers: ['PETR4'],
       skippedUnsupportedRows: 0,
     });
+    await expect(
+      knexTransactionRepository.findByDateAndBroker({
+        date: '2025-03-10',
+        brokerId: xpBroker.id.value,
+      }),
+    ).resolves.toEqual([expect.objectContaining({ feesAmount: '1' })]);
     await expect(tickerDataRepository.findByTicker('PETR4')).resolves.toEqual(
       expect.objectContaining({
         ticker: 'PETR4',

@@ -7,7 +7,6 @@ const SPREADSHEET_MODEL_COLUMNS = [
   { name: 'Ticker', type: 'texto', required: true },
   { name: 'Quantidade', type: 'número', required: true },
   { name: 'Preço Unitário', type: 'número', required: true },
-  { name: 'Taxas Totais', type: 'número', required: false },
   { name: 'Corretora', type: 'texto (código, ex: XP, CLEAR)', required: true },
 ] as const;
 
@@ -25,8 +24,6 @@ function describeColumn(name: string): string {
       return 'Quantidade negociada';
     case 'Preço Unitário':
       return 'Preço por unidade';
-    case 'Taxas Totais':
-      return 'Custos operacionais (default 0)';
     case 'Corretora':
       return 'Código da corretora (ex: XP, CLEAR)';
     default:

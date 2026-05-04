@@ -8,7 +8,11 @@ type TransactionsPreviewTableProps = {
   previewTransactions: PreviewTransactionItem[];
 };
 
-function formatTransactionType(type: string): string {
+function formatTransactionType(type: string | null): string {
+  if (!type) {
+    return 'Não suportada';
+  }
+
   const map: Record<string, string> = {
     buy: 'Compra',
     sell: 'Venda',

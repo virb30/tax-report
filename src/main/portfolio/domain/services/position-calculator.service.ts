@@ -1,25 +1,33 @@
-import { AssetType } from '../../../../shared/types/domain';
+import {
+  AssetType,
+  type AveragePriceFeeMode,
+  TransactionType,
+} from '../../../../shared/types/domain';
 import { AssetPosition } from '../entities/asset-position.entity';
 import type { Transaction } from '../entities/transaction.entity';
-import { TransactionType } from '../../../../shared/types/domain';
+import { Money } from '../value-objects/money.vo';
+
+type ComputePositionsInput = {
+  transactions: Transaction[];
+  basePositions: AssetPosition[];
+  year: number;
+  averagePriceFeeMode?: AveragePriceFeeMode;
+};
 
 export class PositionCalculatorService {
-  compute(
-    transactions: Transaction[],
-    basePositions: AssetPosition[],
-    year: number,
-  ): AssetPosition[] {
+  compute(input: ComputePositionsInput): AssetPosition[] {
+    const averagePriceFeeMode = input.averagePriceFeeMode ?? 'include';
     const positionsByTicker = new Map<string, AssetPosition>(
-      basePositions.map((p) => [p.ticker, p]),
+      input.basePositions.map((p) => [p.ticker, p]),
     );
 
-    for (const tx of transactions) {
+    for (const tx of input.transactions) {
       let position = positionsByTicker.get(tx.ticker);
       if (!position) {
         position = AssetPosition.create({
           ticker: tx.ticker,
           assetType: AssetType.Stock,
-          year,
+          year: input.year,
         });
         positionsByTicker.set(tx.ticker, position);
       }
@@ -29,7 +37,7 @@ export class PositionCalculatorService {
           position.applyBuy({
             quantity: tx.quantity,
             unitPrice: tx.unitPrice,
-            fees: tx.fees,
+            fees: this.resolveBuyFees(tx, averagePriceFeeMode),
             brokerId: tx.brokerId,
           });
           break;
@@ -70,5 +78,13 @@ export class PositionCalculatorService {
     }
 
     return Array.from(positionsByTicker.values());
+  }
+
+  private resolveBuyFees(tx: Transaction, averagePriceFeeMode: AveragePriceFeeMode): Money {
+    if (averagePriceFeeMode === 'ignore') {
+      return Money.from(0);
+    }
+
+    return tx.fees;
   }
 }

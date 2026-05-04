@@ -75,6 +75,7 @@ type ReportGeneratorDependencies = {
   assets: Asset[];
   transactionsByTicker: Map<string, Transaction[]>;
   baseYear: number;
+  previousYearPositions?: AssetPosition[];
   historicalPositionService?: HistoricalPositionService;
   declarationEligibilityService?: DeclarationEligibilityService;
 };
@@ -82,12 +83,16 @@ type ReportGeneratorDependencies = {
 export class ReportGenerator {
   private readonly brokersMap: Map<string, Broker>;
   private readonly assetsMap: Map<string, Asset>;
+  private readonly previousYearPositionsMap: Map<string, AssetPosition>;
   private readonly historicalPositionService: HistoricalPositionService;
   private readonly declarationEligibilityService: DeclarationEligibilityService;
 
   constructor(private readonly dependencies: ReportGeneratorDependencies) {
     this.brokersMap = new Map(dependencies.brokers.map((broker) => [broker.id.value, broker]));
     this.assetsMap = new Map(dependencies.assets.map((asset) => [asset.ticker, asset]));
+    this.previousYearPositionsMap = new Map(
+      (dependencies.previousYearPositions ?? []).map((position) => [position.ticker, position]),
+    );
     this.historicalPositionService =
       dependencies.historicalPositionService ?? new HistoricalPositionService();
     this.declarationEligibilityService =
@@ -156,19 +161,27 @@ export class ReportGenerator {
   }
 
   private calculatePreviousYearValue(position: AssetPosition, assetType: AssetType): Money {
-    const previousYearPosition = this.historicalPositionService.reconstructYearEndPosition(
-      position.ticker,
-      assetType,
-      this.dependencies.baseYear - 1,
-      this.dependencies.transactionsByTicker.get(position.ticker) ?? [],
-    );
+    const persistedPreviousYearPosition = this.previousYearPositionsMap.get(position.ticker);
+    if (persistedPreviousYearPosition) {
+      return persistedPreviousYearPosition.averagePrice.multiplyBy(
+        persistedPreviousYearPosition.totalQuantity.getAmount(),
+      );
+    }
 
-    if (!previousYearPosition) {
+    const reconstructedPreviousYearPosition =
+      this.historicalPositionService.reconstructYearEndPosition(
+        position.ticker,
+        assetType,
+        this.dependencies.baseYear - 1,
+        this.dependencies.transactionsByTicker.get(position.ticker) ?? [],
+      );
+
+    if (!reconstructedPreviousYearPosition) {
       return Money.from(0);
     }
 
-    return previousYearPosition.averagePrice.multiplyBy(
-      previousYearPosition.totalQuantity.getAmount(),
+    return reconstructedPreviousYearPosition.averagePrice.multiplyBy(
+      reconstructedPreviousYearPosition.totalQuantity.getAmount(),
     );
   }
 

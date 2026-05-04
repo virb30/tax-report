@@ -14,6 +14,15 @@ describe('Awilix Container', () => {
     expect(container.resolve('recalculatePositionUseCase')).toBeDefined();
     expect(container.resolve('importTransactionsUseCase')).toBeDefined();
     expect(container.resolve('previewImportUseCase')).toBeDefined();
+    expect(container.resolve('dailyBrokerTaxRepository')).toBeDefined();
+    expect(container.resolve('dailyBrokerTaxesParser')).toBeDefined();
+    expect(container.resolve('transactionFeeRepository')).toBeDefined();
+    expect(container.resolve('transactionFeeAllocator')).toBeDefined();
+    expect(container.resolve('reallocateTransactionFeesService')).toBeDefined();
+    expect(container.resolve('listDailyBrokerTaxesUseCase')).toBeDefined();
+    expect(container.resolve('saveDailyBrokerTaxUseCase')).toBeDefined();
+    expect(container.resolve('importDailyBrokerTaxesUseCase')).toBeDefined();
+    expect(container.resolve('deleteDailyBrokerTaxUseCase')).toBeDefined();
     expect(container.resolve('initialBalanceDocumentPositionSyncService')).toBeDefined();
     expect(container.resolve('saveInitialBalanceDocumentUseCase')).toBeDefined();
     expect(container.resolve('listInitialBalanceDocumentsUseCase')).toBeDefined();

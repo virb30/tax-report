@@ -70,7 +70,6 @@ describe('CsvXlsxTransactionParser', () => {
         Ticker: 'PETR4',
         Quantidade: 10,
         'Preco Unitario': 20,
-        'Taxas Totais': 1,
         Corretora: 'XP',
       },
     ]);
@@ -100,7 +99,6 @@ describe('CsvXlsxTransactionParser', () => {
         Ticker: 'PETR4',
         Quantidade: 10,
         'Preco Unitario': 20,
-        'Taxas Totais': 1,
         Corretora: 'INVALIDO',
       },
     ]);
@@ -190,8 +188,8 @@ describe('CsvXlsxTransactionParser', () => {
     const filePath = await createTempCsvFile(
       'ops.csv',
       [
-        'Data;Entrada/Saída;Movimentação;Ticker;Quantidade;Preco Unitario;Taxas Totais;Corretora',
-        '2025-04-01;Crédito;Transferência - Liquidação;PETR4;10;20;1;XP',
+        'Data;Entrada/Saída;Movimentação;Ticker;Quantidade;Preco Unitario;Corretora',
+        '2025-04-01;Crédito;Transferência - Liquidação;PETR4;10;20;XP',
       ].join('\n'),
     );
     createdDirs.push(path.dirname(filePath));

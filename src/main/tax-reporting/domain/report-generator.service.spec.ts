@@ -169,6 +169,65 @@ describe('ReportGenerator', () => {
       expect(result[0]?.description).toContain('PETR4');
     });
 
+    it('uses persisted previous-year position when available', () => {
+      const generator = new ReportGenerator({
+        brokers: [broker],
+        assets: [
+          Asset.create({
+            ticker: 'PETR4',
+            assetType: AssetType.Stock,
+            resolutionSource: AssetTypeSource.Manual,
+            issuerCnpj: new Cnpj('33.000.167/0001-01'),
+            name: 'Petrobras',
+          }),
+        ],
+        transactionsByTicker: new Map([
+          [
+            'PETR4',
+            [
+              Transaction.create({
+                date: '2024-06-01',
+                type: TransactionType.Buy,
+                ticker: 'PETR4',
+                quantity: Quantity.from(10),
+                unitPrice: Money.from(20),
+                fees: Money.from(5),
+                brokerId: broker.id,
+                sourceType: SourceType.Csv,
+              }),
+            ],
+          ],
+        ]),
+        baseYear: 2025,
+        previousYearPositions: [
+          AssetPosition.create({
+            ticker: 'PETR4',
+            assetType: AssetType.Stock,
+            totalQuantity: Quantity.from(10),
+            averagePrice: Money.from(19),
+            brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(10) }],
+            year: 2024,
+          }),
+        ],
+      });
+
+      const result = generator.generate([
+        AssetPosition.create({
+          ticker: 'PETR4',
+          assetType: AssetType.Stock,
+          totalQuantity: Quantity.from(20),
+          averagePrice: Money.from(20),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(20) }],
+          year: 2025,
+        }),
+      ]);
+
+      expect(result[0]).toMatchObject({
+        previousYearValue: 190,
+        currentYearValue: 400,
+      });
+    });
+
     it('uses the corrected catalog asset type when the persisted position type is stale', () => {
       const generator = new ReportGenerator({
         brokers: [broker],

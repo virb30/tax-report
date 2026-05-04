@@ -58,4 +58,26 @@ describe('TransactionEntity', () => {
     expect(transaction.brokerId.value).toBe(fakeBrokerId.value);
     expect(transaction.sourceType).toBe(SourceType.Pdf);
   });
+
+  it('restores fees without exposing a mutation path', () => {
+    const transactionId = Uuid.create();
+    const transaction = Transaction.restore({
+      id: transactionId,
+      date: '2025-01-01',
+      type: TransactionType.Buy,
+      ticker: 'PETR4',
+      quantity: Quantity.from(10),
+      unitPrice: Money.from(100),
+      fees: Money.from(10),
+      brokerId: fakeBrokerId,
+      sourceType: SourceType.Pdf,
+      externalRef: 'external-ref',
+      importBatchId: 'batch-1',
+    });
+
+    expect(transaction.id.value).toBe(transactionId.value);
+    expect(transaction.fees.getAmount()).toBe('10');
+    expect(transaction.externalRef).toBe('external-ref');
+    expect(transaction.importBatchId).toBe('batch-1');
+  });
 });

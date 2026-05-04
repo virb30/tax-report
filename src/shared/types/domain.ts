@@ -32,6 +32,8 @@ export enum SourceType {
   Manual = 'manual',
 }
 
+export type AveragePriceFeeMode = 'include' | 'ignore';
+
 export enum AssetTypeSource {
   File = 'file',
   Manual = 'manual',

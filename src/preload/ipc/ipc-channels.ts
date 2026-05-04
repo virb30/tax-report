@@ -11,8 +11,12 @@ import {
 } from '../contracts/portfolio/brokers/contracts';
 import {
   confirmImportTransactionsContract,
+  deleteDailyBrokerTaxContract,
+  importDailyBrokerTaxesContract,
   importSelectFileContract,
+  listDailyBrokerTaxesContract,
   previewImportTransactionsContract,
+  saveDailyBrokerTaxContract,
 } from '../contracts/ingestion/import/contracts';
 import {
   deleteInitialBalanceDocumentContract,
@@ -35,6 +39,10 @@ export const ELECTRON_API_CHANNELS = {
   importSelectFile: importSelectFileContract.channel,
   previewImportTransactions: previewImportTransactionsContract.channel,
   confirmImportTransactions: confirmImportTransactionsContract.channel,
+  listDailyBrokerTaxes: listDailyBrokerTaxesContract.channel,
+  saveDailyBrokerTax: saveDailyBrokerTaxContract.channel,
+  importDailyBrokerTaxes: importDailyBrokerTaxesContract.channel,
+  deleteDailyBrokerTax: deleteDailyBrokerTaxContract.channel,
   saveInitialBalanceDocument: saveInitialBalanceDocumentContract.channel,
   listInitialBalanceDocuments: listInitialBalanceDocumentsContract.channel,
   deleteInitialBalanceDocument: deleteInitialBalanceDocumentContract.channel,

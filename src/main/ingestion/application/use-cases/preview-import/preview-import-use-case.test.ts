@@ -7,26 +7,43 @@ import {
 import { PreviewImportUseCase } from './preview-import-use-case';
 import type { ImportTransactionsParser } from '../../interfaces/transactions.parser.interface';
 import type { AssetRepository } from '../../../../portfolio/application/repositories/asset.repository';
+import type { DailyBrokerTaxRepository } from '../../repositories/daily-broker-tax.repository';
 import { mock } from 'jest-mock-extended';
-import { TaxApportioner } from '../../../domain/services/tax-apportioner.service';
+import { TransactionFeeAllocator } from '../../../../portfolio/domain/services/transaction-fee-allocator.service';
 import { Asset } from '../../../../portfolio/domain/entities/asset.entity';
+import { DailyBrokerTax } from '../../../domain/entities/daily-broker-tax.entity';
+import { Uuid } from '../../../../shared/domain/value-objects/uuid.vo';
+import { Money } from '../../../../portfolio/domain/value-objects/money.vo';
 
 describe('PreviewImportUseCase', () => {
+  const brokerId = '019cece0-4a22-75b8-95c4-45eb6f4cb2f4';
   const mockParser = mock<ImportTransactionsParser>();
   const assetRepository = mock<AssetRepository>();
+  const dailyBrokerTaxRepository = mock<DailyBrokerTaxRepository>();
 
   beforeEach(() => {
     mockParser.parse.mockReset();
     assetRepository.findByTickersList.mockReset();
+    dailyBrokerTaxRepository.findByDateAndBroker.mockReset();
     assetRepository.findByTickersList.mockResolvedValue([]);
+    dailyBrokerTaxRepository.findByDateAndBroker.mockResolvedValue(null);
   });
+
+  function createDailyTax(input: { date: string; brokerId: string; fees: number }) {
+    return DailyBrokerTax.create({
+      date: input.date,
+      brokerId: Uuid.from(input.brokerId),
+      fees: Money.from(input.fees),
+      irrf: Money.from(0),
+    });
+  }
 
   it('parses and apportions fees without persisting', async () => {
     mockParser.parse.mockResolvedValue({
       batches: [
         {
           tradeDate: '2025-04-01',
-          brokerId: 'broker-xp',
+          brokerId,
           totalOperationalCosts: 1,
           operations: [
             {
@@ -57,9 +74,21 @@ describe('PreviewImportUseCase', () => {
         resolutionSource: AssetTypeSource.Manual,
       }),
     ]);
-    const taxApportioner = new TaxApportioner();
+    dailyBrokerTaxRepository.findByDateAndBroker.mockResolvedValue(
+      createDailyTax({
+        date: '2025-04-01',
+        brokerId,
+        fees: 1,
+      }),
+    );
+    const transactionFeeAllocator = new TransactionFeeAllocator();
 
-    const useCase = new PreviewImportUseCase(mockParser, taxApportioner, assetRepository);
+    const useCase = new PreviewImportUseCase(
+      mockParser,
+      transactionFeeAllocator,
+      dailyBrokerTaxRepository,
+      assetRepository,
+    );
 
     const result = await useCase.execute({ filePath: '/tmp/ops.csv' });
 
@@ -72,7 +101,7 @@ describe('PreviewImportUseCase', () => {
       quantity: 10,
       unitPrice: 20,
       fees: 0.33,
-      brokerId: 'broker-xp',
+      brokerId,
       sourceAssetType: AssetType.Stock,
       resolvedAssetType: AssetType.Stock,
       resolutionStatus: 'resolved_from_file',
@@ -97,7 +126,7 @@ describe('PreviewImportUseCase', () => {
       batches: [
         {
           tradeDate: '2025-04-01',
-          brokerId: 'broker-xp',
+          brokerId,
           totalOperationalCosts: 0,
           operations: [
             {
@@ -113,8 +142,13 @@ describe('PreviewImportUseCase', () => {
       ],
       unsupportedRows: [],
     });
-    const taxApportioner = new TaxApportioner();
-    const useCase = new PreviewImportUseCase(mockParser, taxApportioner, assetRepository);
+    const transactionFeeAllocator = new TransactionFeeAllocator();
+    const useCase = new PreviewImportUseCase(
+      mockParser,
+      transactionFeeAllocator,
+      dailyBrokerTaxRepository,
+      assetRepository,
+    );
 
     const result = await useCase.execute({ filePath: '/tmp/ops.csv' });
 
@@ -131,7 +165,7 @@ describe('PreviewImportUseCase', () => {
       batches: [
         {
           tradeDate: '2025-04-01',
-          brokerId: 'broker-xp',
+          brokerId,
           totalOperationalCosts: 0,
           operations: [
             {
@@ -147,8 +181,13 @@ describe('PreviewImportUseCase', () => {
       ],
       unsupportedRows: [],
     });
-    const taxApportioner = new TaxApportioner();
-    const useCase = new PreviewImportUseCase(mockParser, taxApportioner, assetRepository);
+    const transactionFeeAllocator = new TransactionFeeAllocator();
+    const useCase = new PreviewImportUseCase(
+      mockParser,
+      transactionFeeAllocator,
+      dailyBrokerTaxRepository,
+      assetRepository,
+    );
 
     const result = await useCase.execute({ filePath: '/tmp/ops.csv' });
 
@@ -184,8 +223,13 @@ describe('PreviewImportUseCase', () => {
         },
       ],
     });
-    const taxApportioner = new TaxApportioner();
-    const useCase = new PreviewImportUseCase(mockParser, taxApportioner, assetRepository);
+    const transactionFeeAllocator = new TransactionFeeAllocator();
+    const useCase = new PreviewImportUseCase(
+      mockParser,
+      transactionFeeAllocator,
+      dailyBrokerTaxRepository,
+      assetRepository,
+    );
 
     const result = await useCase.execute({ filePath: '/tmp/ops.csv' });
 

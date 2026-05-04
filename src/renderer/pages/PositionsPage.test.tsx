@@ -23,6 +23,10 @@ function createElectronApiMock(electronApiBaseMock: MockProxy<ElectronApi>): Ele
     importSelectFile: electronApiBaseMock.importSelectFile,
     previewImportTransactions: electronApiBaseMock.previewImportTransactions,
     confirmImportTransactions: electronApiBaseMock.confirmImportTransactions,
+    listDailyBrokerTaxes: electronApiBaseMock.listDailyBrokerTaxes,
+    saveDailyBrokerTax: electronApiBaseMock.saveDailyBrokerTax,
+    importDailyBrokerTaxes: electronApiBaseMock.importDailyBrokerTaxes,
+    deleteDailyBrokerTax: electronApiBaseMock.deleteDailyBrokerTax,
     saveInitialBalanceDocument: electronApiBaseMock.saveInitialBalanceDocument,
     listInitialBalanceDocuments: electronApiBaseMock.listInitialBalanceDocuments,
     deleteInitialBalanceDocument: electronApiBaseMock.deleteInitialBalanceDocument,
@@ -150,6 +154,87 @@ describe('PositionsPage', () => {
       expect.objectContaining({ ticker: 'VALE3', year: expect.any(Number) }),
     );
     expect(electronApi.listPositions).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows include fees as the default average price mode', async () => {
+    electronApi.listPositions.mockResolvedValue(createPositionsResult());
+
+    render(<PositionsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('PETR4')).toBeTruthy();
+    });
+
+    expect(getButton('Considerar').getAttribute('aria-pressed')).toBe('true');
+    expect(getButton('Ignorar').getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('recalculates all positions with ignored fees when selected', async () => {
+    jest
+      .mocked(electronApi.listPositions)
+      .mockResolvedValueOnce(createPositionsResult())
+      .mockResolvedValueOnce(createPositionsResult());
+    jest.mocked(electronApi.recalculatePosition).mockResolvedValue({ ok: true, data: undefined });
+
+    const user = userEvent.setup();
+    render(<PositionsPage />);
+
+    const recalculateAllButton = getButton('Recalcular todas');
+    await waitFor(() => {
+      expect(recalculateAllButton.disabled).toBe(false);
+    });
+
+    await user.click(getButton('Ignorar'));
+    await user.click(recalculateAllButton);
+
+    await waitFor(() => {
+      expect(electronApi.recalculatePosition).toHaveBeenCalledTimes(2);
+    });
+    expect(electronApi.recalculatePosition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ticker: 'PETR4',
+        year: expect.any(Number),
+        averagePriceFeeMode: 'ignore',
+      }),
+    );
+    expect(electronApi.recalculatePosition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ticker: 'VALE3',
+        year: expect.any(Number),
+        averagePriceFeeMode: 'ignore',
+      }),
+    );
+  });
+
+  it('recalculates an individual position with ignored fees when selected', async () => {
+    jest
+      .mocked(electronApi.listPositions)
+      .mockResolvedValueOnce(createPositionsResult())
+      .mockResolvedValueOnce(createPositionsResult());
+    jest.mocked(electronApi.recalculatePosition).mockResolvedValue({ ok: true, data: undefined });
+
+    const user = userEvent.setup();
+    render(<PositionsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('PETR4')).toBeTruthy();
+    });
+
+    await user.click(getButton('Ignorar'));
+    const recalculateButton = screen.getAllByRole('button', { name: 'Recalcular' })[0];
+    if (!(recalculateButton instanceof HTMLButtonElement)) {
+      throw new Error('Expected recalculate control to be a button element.');
+    }
+
+    await user.click(recalculateButton);
+
+    await waitFor(() => {
+      expect(electronApi.recalculatePosition).toHaveBeenCalledWith({
+        ticker: 'PETR4',
+        year: expect.any(Number),
+        averagePriceFeeMode: 'ignore',
+      });
+    });
   });
 
   it('deletes a position after confirmation and reloads the list', async () => {

@@ -3,10 +3,13 @@ import type { Knex } from 'knex';
 import { KnexBrokerRepository } from '../../../portfolio/infra/repositories/knex-broker.repository';
 import { KnexPositionRepository } from '../../../portfolio/infra/repositories/knex-position.repository';
 import { KnexTransactionRepository } from '../../../portfolio/infra/repositories/knex-transaction.repository';
+import { KnexTransactionFeeRepository } from '../../../portfolio/infra/repositories/knex-transaction-fee.repository';
 import { KnexAssetRepository } from '../../../portfolio/infra/repositories/knex-asset.repository';
+import { KnexDailyBrokerTaxRepository } from '../../../ingestion/infra/repositories/knex-daily-broker-tax.repository';
 import { MemoryQueueAdapter } from '../../../shared/infra/events/memory-queue.adapter';
-import { TaxApportioner } from '../../../ingestion/domain/services/tax-apportioner.service';
+import { TransactionFeeAllocator } from '../../../portfolio/domain/services/transaction-fee-allocator.service';
 import { SheetjsSpreadsheetFileReader } from '../../../ingestion/infra/file-readers/sheetjs.spreadsheet.file-reader';
+import { CsvXlsxDailyBrokerTaxParser } from '../../../ingestion/infra/parsers/csv-xlsx-daily-broker-tax.parser';
 import { CsvXlsxTransactionParser } from '../../../ingestion/infra/parsers/csv-xlsx-transaction.parser';
 import { CsvXlsxConsolidatedPositionParser } from '../../../ingestion/infra/parsers/csv-xlsx-consolidated-position.parser';
 import { RecalculatePositionHandler } from '../../../portfolio/infra/handlers/recalculate-position.handler';
@@ -20,6 +23,11 @@ import { ToggleActiveBrokerUseCase } from '../../../portfolio/application/use-ca
 import { RecalculatePositionUseCase } from '../../../portfolio/application/use-cases/recalculate-position/recalculate-position.use-case';
 import { ImportTransactionsUseCase } from '../../../ingestion/application/use-cases/import-transactions/import-transactions-use-case';
 import { PreviewImportUseCase } from '../../../ingestion/application/use-cases/preview-import/preview-import-use-case';
+import { ReallocateTransactionFeesService } from '../../../ingestion/application/services/reallocate-transaction-fees.service';
+import { DeleteDailyBrokerTaxUseCase } from '../../../ingestion/application/use-cases/delete-daily-broker-tax/delete-daily-broker-tax.use-case';
+import { ImportDailyBrokerTaxesUseCase } from '../../../ingestion/application/use-cases/import-daily-broker-taxes/import-daily-broker-taxes.use-case';
+import { ListDailyBrokerTaxesUseCase } from '../../../ingestion/application/use-cases/list-daily-broker-taxes/list-daily-broker-taxes.use-case';
+import { SaveDailyBrokerTaxUseCase } from '../../../ingestion/application/use-cases/save-daily-broker-tax/save-daily-broker-tax.use-case';
 import { DeleteInitialBalanceDocumentUseCase } from '../../../portfolio/application/use-cases/delete-initial-balance-document/delete-initial-balance-document.use-case';
 import { ListPositionsUseCase } from '../../../portfolio/application/use-cases/list-positions/list-positions-use-case';
 import { ListInitialBalanceDocumentsUseCase } from '../../../portfolio/application/use-cases/list-initial-balance-documents/list-initial-balance-documents.use-case';
@@ -46,11 +54,14 @@ export interface AppCradle {
   brokerRepository: KnexBrokerRepository;
   positionRepository: KnexPositionRepository;
   transactionRepository: KnexTransactionRepository;
+  transactionFeeRepository: KnexTransactionFeeRepository;
   assetRepository: KnexAssetRepository;
+  dailyBrokerTaxRepository: KnexDailyBrokerTaxRepository;
   queue: MemoryQueueAdapter;
-  taxApportioner: TaxApportioner;
+  transactionFeeAllocator: TransactionFeeAllocator;
   spreadsheetFileReader: SheetjsSpreadsheetFileReader;
   transactionParser: CsvXlsxTransactionParser;
+  dailyBrokerTaxesParser: CsvXlsxDailyBrokerTaxParser;
   consolidatedPositionParser: CsvXlsxConsolidatedPositionParser;
   recalculatePositionHandler: RecalculatePositionHandler;
 
@@ -63,6 +74,11 @@ export interface AppCradle {
   recalculatePositionUseCase: RecalculatePositionUseCase;
   importTransactionsUseCase: ImportTransactionsUseCase;
   previewImportUseCase: PreviewImportUseCase;
+  reallocateTransactionFeesService: ReallocateTransactionFeesService;
+  listDailyBrokerTaxesUseCase: ListDailyBrokerTaxesUseCase;
+  saveDailyBrokerTaxUseCase: SaveDailyBrokerTaxUseCase;
+  importDailyBrokerTaxesUseCase: ImportDailyBrokerTaxesUseCase;
+  deleteDailyBrokerTaxUseCase: DeleteDailyBrokerTaxUseCase;
   initialBalanceDocumentPositionSyncService: InitialBalanceDocumentPositionSyncService;
   reprocessTickerYearsService: ReprocessTickerYearsService;
   saveInitialBalanceDocumentUseCase: SaveInitialBalanceDocumentUseCase;
@@ -96,11 +112,18 @@ export function registerDependencies(db: Knex) {
     brokerRepository: asClass(KnexBrokerRepository).singleton(),
     positionRepository: asClass(KnexPositionRepository).singleton(),
     transactionRepository: asClass(KnexTransactionRepository).singleton(),
+    transactionFeeRepository: asClass(KnexTransactionFeeRepository).singleton(),
     assetRepository: asClass(KnexAssetRepository).singleton(),
+    dailyBrokerTaxRepository: asClass(KnexDailyBrokerTaxRepository).singleton(),
     queue: asClass(MemoryQueueAdapter).singleton(),
-    taxApportioner: asClass(TaxApportioner).singleton(),
+    transactionFeeAllocator: asClass(TransactionFeeAllocator).singleton(),
     spreadsheetFileReader: asClass(SheetjsSpreadsheetFileReader).singleton(),
     transactionParser: asClass(CsvXlsxTransactionParser)
+      .inject(() => ({
+        fileReader: container.resolve('spreadsheetFileReader'),
+      }))
+      .singleton(),
+    dailyBrokerTaxesParser: asClass(CsvXlsxDailyBrokerTaxParser)
       .inject(() => ({
         fileReader: container.resolve('spreadsheetFileReader'),
       }))
@@ -128,18 +151,33 @@ export function registerDependencies(db: Knex) {
       () =>
         new ImportTransactionsUseCase(
           container.resolve('transactionParser'),
-          container.resolve('taxApportioner'),
           container.resolve('assetRepository'),
           container.resolve('transactionRepository'),
+          container.resolve('reallocateTransactionFeesService'),
           container.resolve('queue'),
         ),
     ).singleton(),
     previewImportUseCase: asClass(PreviewImportUseCase)
       .inject(() => ({
         parser: container.resolve('transactionParser'),
+        transactionFeeAllocator: container.resolve('transactionFeeAllocator'),
+        dailyBrokerTaxRepository: container.resolve('dailyBrokerTaxRepository'),
         assetRepository: container.resolve('assetRepository'),
       }))
       .singleton(),
+    reallocateTransactionFeesService: asFunction(
+      () =>
+        new ReallocateTransactionFeesService(
+          container.resolve('dailyBrokerTaxRepository'),
+          container.resolve('transactionRepository'),
+          container.resolve('transactionFeeRepository'),
+          container.resolve('transactionFeeAllocator'),
+        ),
+    ).singleton(),
+    listDailyBrokerTaxesUseCase: asClass(ListDailyBrokerTaxesUseCase).singleton(),
+    saveDailyBrokerTaxUseCase: asClass(SaveDailyBrokerTaxUseCase).singleton(),
+    importDailyBrokerTaxesUseCase: asClass(ImportDailyBrokerTaxesUseCase).singleton(),
+    deleteDailyBrokerTaxUseCase: asClass(DeleteDailyBrokerTaxUseCase).singleton(),
     initialBalanceDocumentPositionSyncService: asClass(
       InitialBalanceDocumentPositionSyncService,
     ).singleton(),

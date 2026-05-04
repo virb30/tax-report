@@ -8,19 +8,22 @@ import type { AssetType } from '../../../../../shared/types/domain';
 import { Transaction } from '../../../../portfolio/domain/entities/transaction.entity';
 import { Uuid } from '../../../../shared/domain/value-objects/uuid.vo';
 import { Asset } from '../../../../portfolio/domain/entities/asset.entity';
-import type { TaxApportioner } from '../../../domain/services/tax-apportioner.service';
 import type { ImportTransactionsParser } from '../../interfaces/transactions.parser.interface';
 import type { AssetRepository } from '../../../../portfolio/application/repositories/asset.repository';
 import type { TransactionRepository } from '../../../../portfolio/application/repositories/transaction.repository';
-import type { Queue } from '../../../../shared/application/events/queue.interface';
 import type {
   ConfirmImportTransactionsCommand,
   ConfirmImportTransactionsResult,
 } from '../../../../../preload/contracts/ingestion/preview-import.contract';
-import { TransactionsImportedEvent } from '../../../../shared/domain/events/transactions-imported.event';
 import { ImportConfirmReviewResolver } from '../../../domain/services/import-confirm-review-resolver.service';
 import { Money } from '../../../../portfolio/domain/value-objects/money.vo';
 import { Quantity } from '../../../../portfolio/domain/value-objects/quantity.vo';
+import type {
+  ReallocatedTransactionFeePosition,
+  ReallocateTransactionFeesService,
+} from '../../services/reallocate-transaction-fees.service';
+import type { Queue } from '../../../../shared/application/events/queue.interface';
+import { TransactionsImportedEvent } from '../../../../shared/domain/events/transactions-imported.event';
 
 type ParsedTransactionImportFile = Awaited<ReturnType<ImportTransactionsParser['parse']>>;
 
@@ -30,7 +33,6 @@ type AcceptedTransactionImport = {
   ticker: string;
   quantity: number;
   unitPrice: number;
-  fees: number;
   brokerId: string;
   resolvedAssetType: AssetType;
   resolutionStatus: AssetResolutionStatus;
@@ -44,9 +46,9 @@ type ResolveAcceptedRowsResult = {
 export class ImportTransactionsUseCase {
   constructor(
     private readonly parser: ImportTransactionsParser,
-    private readonly taxApportioner: TaxApportioner,
     private readonly assetRepository: AssetRepository,
     private readonly transactionRepository: TransactionRepository,
+    private readonly reallocateTransactionFeesService: ReallocateTransactionFeesService,
     private readonly queue: Queue,
     private readonly reviewResolver: ImportConfirmReviewResolver = new ImportConfirmReviewResolver(),
   ) {}
@@ -70,11 +72,12 @@ export class ImportTransactionsUseCase {
       await this.transactionRepository.saveMany(newTransactions);
     }
 
-    const tickerYears = await this.publishImportedEvents(newTransactions);
+    const affectedPositions = await this.reallocateAffectedFees(newTransactions);
+    await this.publishTransactionsImported(affectedPositions);
 
     return {
       importedCount: newTransactions.length,
-      recalculatedTickers: [...tickerYears.keys()],
+      recalculatedTickers: [...new Set(affectedPositions.map((position) => position.ticker))],
       skippedUnsupportedRows,
     };
   }
@@ -95,18 +98,8 @@ export class ImportTransactionsUseCase {
     let skippedUnsupportedRows = parsedFile.unsupportedRows.length;
 
     for (const batch of parsedFile.batches) {
-      const allocatedFees = this.taxApportioner.allocate({
-        totalOperationalCosts: batch.totalOperationalCosts,
-        operations: batch.operations.map((op) => ({
-          ticker: op.ticker,
-          quantity: op.quantity,
-          unitPrice: op.unitPrice,
-        })),
-      });
-
       for (let i = 0; i < batch.operations.length; i += 1) {
         const op = batch.operations[i];
-        const fees = allocatedFees[i] ?? 0;
         if (!op) {
           continue;
         }
@@ -135,7 +128,6 @@ export class ImportTransactionsUseCase {
           ticker: op.ticker,
           quantity: op.quantity,
           unitPrice: op.unitPrice,
-          fees,
           brokerId: batch.brokerId,
           resolvedAssetType: reviewState.resolvedAssetType,
           resolutionStatus: reviewState.resolutionStatus,
@@ -158,7 +150,7 @@ export class ImportTransactionsUseCase {
       ticker: row.ticker,
       quantity: Quantity.from(row.quantity),
       unitPrice: Money.from(row.unitPrice),
-      fees: Money.from(row.fees),
+      fees: Money.from(0),
       brokerId: Uuid.from(row.brokerId),
       sourceType: SourceType.Csv,
       externalRef: createExternalRef({
@@ -167,7 +159,6 @@ export class ImportTransactionsUseCase {
         ticker: row.ticker,
         quantity: row.quantity,
         unitPrice: row.unitPrice,
-        fees: row.fees,
         brokerId: row.brokerId,
         sourceType: SourceType.Csv,
       }),
@@ -183,28 +174,6 @@ export class ImportTransactionsUseCase {
     );
 
     return transactions.filter((transaction) => !existingRefs.has(transaction.externalRef ?? ''));
-  }
-
-  private async publishImportedEvents(
-    newTransactions: Transaction[],
-  ): Promise<Map<string, Set<number>>> {
-    const tickerYears = new Map<string, Set<number>>();
-
-    for (const tx of newTransactions) {
-      const year = parseInt(tx.date.slice(0, 4), 10);
-      if (!tickerYears.has(tx.ticker)) {
-        tickerYears.set(tx.ticker, new Set());
-      }
-      tickerYears.get(tx.ticker)!.add(year);
-    }
-    for (const [ticker, years] of tickerYears) {
-      for (const year of years) {
-        const event = new TransactionsImportedEvent({ ticker, year });
-        await this.queue.publish(event);
-      }
-    }
-
-    return tickerYears;
   }
 
   private async loadAssetCatalogMap(
@@ -285,6 +254,37 @@ export class ImportTransactionsUseCase {
 
     return null;
   }
+
+  private async reallocateAffectedFees(
+    newTransactions: Transaction[],
+  ): Promise<ReallocatedTransactionFeePosition[]> {
+    const affectedDatesByBroker = new Map<string, { date: string; brokerId: string }>();
+    const affectedPositions = new Map<string, ReallocatedTransactionFeePosition>();
+
+    for (const transaction of newTransactions) {
+      affectedDatesByBroker.set(`${transaction.date}::${transaction.brokerId.value}`, {
+        date: transaction.date,
+        brokerId: transaction.brokerId.value,
+      });
+    }
+
+    for (const affectedDate of affectedDatesByBroker.values()) {
+      const reallocation = await this.reallocateTransactionFeesService.execute(affectedDate);
+      for (const position of reallocation.affectedPositions) {
+        affectedPositions.set(`${position.ticker}::${position.year}`, position);
+      }
+    }
+
+    return [...affectedPositions.values()];
+  }
+
+  private async publishTransactionsImported(
+    affectedPositions: ReallocatedTransactionFeePosition[],
+  ): Promise<void> {
+    for (const position of affectedPositions) {
+      await this.queue.publish(new TransactionsImportedEvent(position));
+    }
+  }
 }
 
 function createExternalRef(input: {
@@ -293,7 +293,6 @@ function createExternalRef(input: {
   ticker: string;
   quantity: number;
   unitPrice: number;
-  fees: number;
   brokerId: string;
   sourceType: SourceType;
 }): string {
@@ -303,7 +302,6 @@ function createExternalRef(input: {
     input.ticker,
     input.quantity.toString(),
     input.unitPrice.toFixed(8),
-    input.fees.toFixed(8),
     input.brokerId,
     input.sourceType,
   ].join('|');

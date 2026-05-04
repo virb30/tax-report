@@ -1,7 +1,9 @@
 import type { Knex } from 'knex';
 import { createDatabaseConnection, initializeDatabase } from '../../../app/infra/database/database';
 import { KnexTransactionRepository } from './knex-transaction.repository';
+import { KnexTransactionFeeRepository } from './knex-transaction-fee.repository';
 import { Transaction } from '../../domain/entities/transaction.entity';
+import { TransactionFee } from '../../domain/entities/transaction-fee.entity';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import { SourceType, TransactionType } from '../../../../shared/types/domain';
 import { Quantity } from '../../domain/value-objects/quantity.vo';
@@ -10,11 +12,13 @@ import { Money } from '../../domain/value-objects/money.vo';
 describe('KnexTransactionRepository', () => {
   let database: Knex;
   let repository: KnexTransactionRepository;
+  let feeRepository: KnexTransactionFeeRepository;
 
   beforeEach(async () => {
     database = createDatabaseConnection(':memory:');
     await initializeDatabase(database, false);
     repository = new KnexTransactionRepository(database);
+    feeRepository = new KnexTransactionFeeRepository(database);
   });
 
   afterEach(async () => {
@@ -109,6 +113,185 @@ describe('KnexTransactionRepository', () => {
     ]);
   });
 
+  it('saves transactions without storing fees on the transactions table', async () => {
+    const brokerId = Uuid.create();
+    await insertBroker(brokerId);
+
+    await repository.save(
+      Transaction.create({
+        date: '2025-04-01',
+        type: TransactionType.Buy,
+        ticker: 'PETR4',
+        quantity: Quantity.from(1),
+        unitPrice: Money.from(10),
+        fees: Money.from(2),
+        brokerId,
+        sourceType: SourceType.Manual,
+      }),
+    );
+
+    const columns = (await database.raw("PRAGMA table_info('transactions')")) as Array<{
+      name: string;
+    }>;
+    const rows = await database('transactions').select('*');
+
+    expect(columns.map((column) => column.name)).not.toContain('fees');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).not.toHaveProperty('fees');
+  });
+
+  it('reads fees from transaction_fees projection', async () => {
+    const brokerId = Uuid.create();
+    await insertBroker(brokerId);
+    const transaction = Transaction.create({
+      date: '2025-04-01',
+      type: TransactionType.Buy,
+      ticker: 'PETR4',
+      quantity: Quantity.from(1),
+      unitPrice: Money.from(10),
+      fees: Money.from(0),
+      brokerId,
+      sourceType: SourceType.Manual,
+    });
+    await repository.save(transaction);
+    await feeRepository.replaceForTransactions({
+      transactionIds: [transaction.id],
+      fees: [
+        TransactionFee.create({
+          transactionId: transaction.id,
+          totalFees: Money.from(1.23),
+        }),
+      ],
+    });
+
+    const [storedTransaction] = await repository.findByTicker('PETR4');
+
+    expect(storedTransaction?.fees.getAmount()).toBe('1.23');
+  });
+
+  it('falls back to zero fees when projection is missing', async () => {
+    const brokerId = Uuid.create();
+    await insertBroker(brokerId);
+    await repository.save(
+      Transaction.create({
+        date: '2025-04-01',
+        type: TransactionType.Buy,
+        ticker: 'PETR4',
+        quantity: Quantity.from(1),
+        unitPrice: Money.from(10),
+        fees: Money.from(9),
+        brokerId,
+        sourceType: SourceType.Manual,
+      }),
+    );
+
+    const [storedTransaction] = await repository.findByTicker('PETR4');
+
+    expect(storedTransaction?.fees.getAmount()).toBe('0');
+  });
+
+  it('replaces transaction fee projections for a transaction set', async () => {
+    const brokerId = Uuid.create();
+    await insertBroker(brokerId);
+    const firstTransaction = Transaction.create({
+      date: '2025-04-01',
+      type: TransactionType.Buy,
+      ticker: 'PETR4',
+      quantity: Quantity.from(1),
+      unitPrice: Money.from(10),
+      fees: Money.from(0),
+      brokerId,
+      sourceType: SourceType.Manual,
+    });
+    const secondTransaction = Transaction.create({
+      date: '2025-04-01',
+      type: TransactionType.Buy,
+      ticker: 'VALE3',
+      quantity: Quantity.from(1),
+      unitPrice: Money.from(10),
+      fees: Money.from(0),
+      brokerId,
+      sourceType: SourceType.Manual,
+    });
+    await repository.saveMany([firstTransaction, secondTransaction]);
+
+    await feeRepository.replaceForTransactions({
+      transactionIds: [firstTransaction.id, secondTransaction.id],
+      fees: [
+        TransactionFee.create({
+          transactionId: firstTransaction.id,
+          totalFees: Money.from(1),
+        }),
+        TransactionFee.create({
+          transactionId: secondTransaction.id,
+          totalFees: Money.from(2),
+        }),
+      ],
+    });
+    await feeRepository.replaceForTransactions({
+      transactionIds: [firstTransaction.id, secondTransaction.id],
+      fees: [
+        TransactionFee.create({
+          transactionId: secondTransaction.id,
+          totalFees: Money.from(3),
+        }),
+      ],
+    });
+
+    const rows = await database('transaction_fees')
+      .orderBy('transaction_id', 'asc')
+      .select('transaction_id', 'total_fees');
+
+    expect(rows).toEqual([
+      {
+        transaction_id: secondTransaction.id.value,
+        total_fees: '3',
+      },
+    ]);
+  });
+
+  it('does nothing when replacing projections for an empty transaction set', async () => {
+    await expect(
+      feeRepository.replaceForTransactions({
+        transactionIds: [],
+        fees: [],
+      }),
+    ).resolves.toBeUndefined();
+  });
+
+  it('deletes existing projections when replacement fees are empty', async () => {
+    const brokerId = Uuid.create();
+    await insertBroker(brokerId);
+    const transaction = Transaction.create({
+      date: '2025-04-01',
+      type: TransactionType.Buy,
+      ticker: 'PETR4',
+      quantity: Quantity.from(1),
+      unitPrice: Money.from(10),
+      fees: Money.from(0),
+      brokerId,
+      sourceType: SourceType.Manual,
+    });
+    await repository.save(transaction);
+    await feeRepository.replaceForTransactions({
+      transactionIds: [transaction.id],
+      fees: [
+        TransactionFee.create({
+          transactionId: transaction.id,
+          totalFees: Money.from(1),
+        }),
+      ],
+    });
+
+    await feeRepository.replaceForTransactions({
+      transactionIds: [transaction.id],
+      fees: [],
+    });
+
+    const rows = await database('transaction_fees').select('*');
+    expect(rows).toEqual([]);
+  });
+
   it('lists grouped initial-balance documents for a year', async () => {
     const firstBrokerId = Uuid.create();
     const secondBrokerId = Uuid.create();
@@ -167,4 +350,14 @@ describe('KnexTransactionRepository', () => {
     });
     expect(document?.allocations).toHaveLength(2);
   });
+
+  async function insertBroker(brokerId: Uuid): Promise<void> {
+    await database('brokers').insert({
+      id: brokerId.value,
+      name: 'Broker A',
+      cnpj: '00.000.000/0001-00',
+      code: 'BRKA',
+      active: 1,
+    });
+  }
 });

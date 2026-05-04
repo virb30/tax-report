@@ -1,4 +1,5 @@
 import type { JSX } from 'react';
+import { DailyBrokerTaxesSection } from './import-page/DailyBrokerTaxesSection';
 import { ImportTemplateTable } from './import-page/ImportTemplateTable';
 import { TransactionsPreviewTable } from './import-page/TransactionsPreviewTable';
 import { useTransactionImport } from './import-page/use-transaction-import';
@@ -74,6 +75,8 @@ export function ImportPage(): JSX.Element {
         brokers={transactionImport.brokers}
         previewTransactions={transactionImport.previewTransactions}
       />
+
+      <DailyBrokerTaxesSection brokers={transactionImport.brokers} />
     </section>
   );
 }
