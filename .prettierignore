@@ -3,3 +3,8 @@ out
 .vite
 coverage
 package-lock.json
+.agents/
+.compozy/
+.cursor/
+docs/
+scripts/

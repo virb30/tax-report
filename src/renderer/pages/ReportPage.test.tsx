@@ -1,12 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AssetType, PendingIssueCode, ReportItemStatus } from '../../shared/types/domain';
-import type { GenerateAssetsReportResult } from '../../shared/contracts/assets-report.contract';
-import type { ElectronApi } from '../../shared/types/electron-api';
+import type { GenerateAssetsReportResult } from '../../preload/contracts/tax-reporting/assets-report.contract';
+import type { ElectronApi } from '../../preload/renderer/electron-api';
 import { ReportPage } from './ReportPage';
 import { mockReset } from 'jest-mock-extended';
 import mock, { type MockProxy } from 'jest-mock-extended/lib/Mock';
-import type { AssetCatalogItem } from '../../shared/contracts/assets.contract';
+import type { AssetCatalogItem } from '../../preload/contracts/portfolio/assets.contract';
 
 function createElectronApiMock(electronApiBaseMock: MockProxy<ElectronApi>): ElectronApi {
   mockReset(electronApiBaseMock);
@@ -55,7 +55,13 @@ function createReportResult(): GenerateAssetsReportResult {
         canCopy: true,
         description: '100 acoes de PETR4...',
         brokersSummary: [
-          { brokerId: 'xp', brokerName: 'XP', cnpj: '00.000.000/0001-00', quantity: 100, totalCost: 3550 }
+          {
+            brokerId: 'xp',
+            brokerName: 'XP',
+            cnpj: '00.000.000/0001-00',
+            quantity: 100,
+            totalCost: 3550,
+          },
         ],
       },
       {
@@ -69,11 +75,19 @@ function createReportResult(): GenerateAssetsReportResult {
         revenueClassification: { group: '03', code: '01' },
         status: ReportItemStatus.Pending,
         eligibilityReason: 'Falta CNPJ',
-        pendingIssues: [{ code: PendingIssueCode.MissingIssuerCnpj, message: 'Falta CNPJ do emissor' }],
+        pendingIssues: [
+          { code: PendingIssueCode.MissingIssuerCnpj, message: 'Falta CNPJ do emissor' },
+        ],
         canCopy: false,
         description: null,
         brokersSummary: [
-          { brokerId: 'xp', brokerName: 'XP', cnpj: '00.000.000/0001-00', quantity: 50, totalCost: 4000 }
+          {
+            brokerId: 'xp',
+            brokerName: 'XP',
+            cnpj: '00.000.000/0001-00',
+            quantity: 50,
+            totalCost: 4000,
+          },
         ],
       },
     ],
@@ -88,7 +102,7 @@ describe('ReportPage', () => {
     mockReset(electronApi);
     windowElectronApi = createElectronApiMock(electronApi);
     window.electronApi = windowElectronApi;
-    
+
     // Mock clipboard
     const mockClipboard = {
       writeText: jest.fn().mockResolvedValue(undefined),
@@ -136,10 +150,20 @@ describe('ReportPage', () => {
     electronApi.generateAssetsReport.mockResolvedValue(createReportResult());
     electronApi.listAssets.mockResolvedValue({
       items: [
-        { ticker: 'VALE3', assetType: AssetType.Stock, name: 'Vale S.A.', cnpj: null, resolutionSource: null, isReportReadyMetadata: false }
-      ]
+        {
+          ticker: 'VALE3',
+          assetType: AssetType.Stock,
+          name: 'Vale S.A.',
+          cnpj: null,
+          resolutionSource: null,
+          isReportReadyMetadata: false,
+        },
+      ],
     });
-    electronApi.updateAsset.mockResolvedValue({ success: true, asset: {} as unknown as AssetCatalogItem });
+    electronApi.updateAsset.mockResolvedValue({
+      success: true,
+      asset: {} as unknown as AssetCatalogItem,
+    });
 
     const user = userEvent.setup();
     render(<ReportPage />);

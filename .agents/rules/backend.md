@@ -22,3 +22,16 @@ Use esta regra ao alterar codigo em `src/main/**`.
 - Evite dependencias circulares.
 - Use tipos utilitarios do TypeScript quando eles deixarem a intencao mais clara.
 - Garanta tipagem explicita nas fronteiras do backend, como handlers, repositories, services e use cases.
+
+## Padrões de nomenclatura
+
+Utilize o formato `[nome-da-classe].[tipo].ts`
+Exemplos:
+
+- `asset.entity.ts` entidade de domínio que representa o ativo
+- `asset.repository.ts` interface do repositório que lida com ativos
+- `asset-knex-database.repository.ts` implementação concreta do repositorio de ativos usando banco de dados
+- `asset-type.vo.ts` value-object que representa tipo de ativo
+- `assets.query.ts` interface para queries que lidam com assets (CQS)
+- `create-broker.use-case.ts` use case de criação de corretora
+- `create-broker.dto.ts` DTOs de entrada e saída do use case

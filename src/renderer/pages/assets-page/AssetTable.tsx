@@ -1,5 +1,5 @@
 ﻿import type { JSX } from 'react';
-import type { AssetCatalogItem } from '../../../shared/contracts/assets.contract';
+import type { AssetCatalogItem } from '../../../preload/contracts/portfolio/assets.contract';
 import { AssetType } from '../../../shared/types/domain';
 
 interface AssetTableProps {
@@ -21,7 +21,11 @@ export function AssetTable({ assets, isLoading, onEdit }: AssetTableProps): JSX.
   }
 
   if (assets.length === 0) {
-    return <p className="mt-8 text-center text-slate-500 text-sm">Nenhum ativo encontrado no catalogo.</p>;
+    return (
+      <p className="mt-8 text-center text-slate-500 text-sm">
+        Nenhum ativo encontrado no catalogo.
+      </p>
+    );
   }
 
   return (
@@ -42,7 +46,9 @@ export function AssetTable({ assets, isLoading, onEdit }: AssetTableProps): JSX.
             <tr key={asset.ticker} className="hover:bg-slate-50">
               <td className="px-3 py-2 font-medium">{asset.ticker}</td>
               <td className="px-3 py-2">
-                {asset.assetType ? ASSET_TYPE_LABELS[asset.assetType] : (
+                {asset.assetType ? (
+                  ASSET_TYPE_LABELS[asset.assetType]
+                ) : (
                   <span className="text-amber-600 font-medium">Pendente</span>
                 )}
               </td>

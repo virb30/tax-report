@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import type { JSX } from 'react';
-import type { PositionListItem } from '../../../shared/contracts/list-positions.contract';
+import type { PositionListItem } from '../../../preload/contracts/portfolio/list-positions.contract';
 
 type PositionsTableProps = {
   deletingTicker: string | null;
@@ -107,10 +107,7 @@ export function PositionsTable({
                           </thead>
                           <tbody>
                             {position.brokerBreakdown.map((brokerBreakdown) => (
-                              <tr
-                                key={brokerBreakdown.brokerId}
-                                className="border-b last:border-0"
-                              >
+                              <tr key={brokerBreakdown.brokerId} className="border-b last:border-0">
                                 <td className="py-1">{brokerBreakdown.brokerName}</td>
                                 <td className="py-1 font-mono text-xs">
                                   {brokerBreakdown.brokerCnpj}

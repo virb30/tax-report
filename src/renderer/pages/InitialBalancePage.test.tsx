@@ -5,13 +5,13 @@ import userEvent from '@testing-library/user-event';
 import type {
   InitialBalanceDocument,
   ListInitialBalanceDocumentsResult,
-} from '../../shared/contracts/initial-balance.contract';
+} from '../../preload/contracts/portfolio/initial-balance.contract';
 import type {
   ListPositionsResult,
   PositionListItem,
-} from '../../shared/contracts/list-positions.contract';
+} from '../../preload/contracts/portfolio/list-positions.contract';
 import { AssetType } from '../../shared/types/domain';
-import type { ElectronApi } from '../../shared/types/electron-api';
+import type { ElectronApi } from '../../preload/renderer/electron-api';
 import { listActiveBrokers } from '../services/api/list-brokers';
 import { InitialBalancePage } from './InitialBalancePage';
 import mock, { mockReset } from 'jest-mock-extended/lib/Mock';
@@ -179,10 +179,10 @@ describe('InitialBalancePage', () => {
       assetType: AssetType.Stock,
       name: 'iShares Core S&P 500',
       cnpj: '11.111.111/0001-11',
-      averagePrice: 300,
+      averagePrice: '300',
       allocations: [
-        { brokerId: 'broker-xp', quantity: 2 },
-        { brokerId: 'broker-rico', quantity: 1 },
+        { brokerId: 'broker-xp', quantity: '2' },
+        { brokerId: 'broker-rico', quantity: '1' },
       ],
     });
     expect(getInput('Ticker').value).toBe('');
@@ -249,10 +249,10 @@ describe('InitialBalancePage', () => {
       assetType: AssetType.Etf,
       name: 'iShares Core S&P 500',
       cnpj: '11.111.111/0001-11',
-      averagePrice: 320,
+      averagePrice: '320',
       allocations: [
-        { brokerId: 'broker-xp', quantity: 5 },
-        { brokerId: 'broker-rico', quantity: 2 },
+        { brokerId: 'broker-xp', quantity: '5' },
+        { brokerId: 'broker-rico', quantity: '2' },
       ],
     });
     expect(screen.getByText('XP: 5.00')).toBeInTheDocument();

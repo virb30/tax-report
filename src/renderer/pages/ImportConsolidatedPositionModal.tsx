@@ -91,8 +91,7 @@ export function ImportConsolidatedPositionModal({
                 </tbody>
               </table>
               <p className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                {modal.previewRows.length} linha(s) — mesmo ticker+corretora: última linha
-                prevalece
+                {modal.previewRows.length} linha(s) — mesmo ticker+corretora: última linha prevalece
               </p>
             </div>
           ) : null}

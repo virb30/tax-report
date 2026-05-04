@@ -2,14 +2,19 @@ import '@testing-library/jest-dom';
 
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AssetType, ReportItemStatus, TransactionType, AssetResolutionStatus } from '../shared/types/domain';
-import type { ElectronApi } from '../shared/types/electron-api';
-import type { GenerateAssetsReportResult } from '../shared/contracts/assets-report.contract';
+import {
+  AssetType,
+  ReportItemStatus,
+  TransactionType,
+  AssetResolutionStatus,
+} from '../shared/types/domain';
+import type { ElectronApi } from '../preload/renderer/electron-api';
+import type { GenerateAssetsReportResult } from '../preload/contracts/tax-reporting/assets-report.contract';
 import type {
   InitialBalanceDocument,
   SaveInitialBalanceDocumentResult,
-} from '../shared/contracts/initial-balance.contract';
-import type { ListPositionsResult } from '../shared/contracts/list-positions.contract';
+} from '../preload/contracts/portfolio/initial-balance.contract';
+import type { ListPositionsResult } from '../preload/contracts/portfolio/list-positions.contract';
 import { App } from './App';
 import mock, { mockReset } from 'jest-mock-extended/lib/Mock';
 
@@ -91,21 +96,21 @@ describe('App critical UI flows (E2E)', () => {
           {
             ticker: 'IVVB11',
             assetType: AssetType.Etf,
-            totalQuantity: 3,
-            averagePrice: 300,
-            totalCost: 900,
+            totalQuantity: '3',
+            averagePrice: '300',
+            totalCost: '900',
             brokerBreakdown: [
               {
                 brokerId: 'broker-xp',
                 brokerName: 'XP',
                 brokerCnpj: '00.000.000/0001-00',
-                quantity: 2,
+                quantity: '2',
               },
               {
                 brokerId: 'broker-rico',
                 brokerName: 'Rico',
                 brokerCnpj: '11.111.111/0001-11',
-                quantity: 1,
+                quantity: '1',
               },
             ],
           },
@@ -122,15 +127,15 @@ describe('App critical UI flows (E2E)', () => {
             {
               ticker: 'IVVB11',
               assetType: AssetType.Etf,
-              totalQuantity: 5,
-              averagePrice: 320,
-              totalCost: 1600,
+              totalQuantity: '5',
+              averagePrice: '320',
+              totalCost: '1600',
               brokerBreakdown: [
                 {
                   brokerId: 'broker-xp',
                   brokerName: 'XP',
                   brokerCnpj: '00.000.000/0001-00',
-                  quantity: 5,
+                  quantity: '5',
                 },
               ],
             },
@@ -298,8 +303,10 @@ describe('App critical UI flows (E2E)', () => {
       ticker: 'IVVB11',
       year: 2025,
       assetType: AssetType.Etf,
-      averagePrice: 320,
-      allocations: [{ brokerId: 'broker-xp', quantity: 5 }],
+      name: undefined,
+      cnpj: undefined,
+      averagePrice: '320',
+      allocations: [{ brokerId: 'broker-xp', quantity: '5' }],
     });
     expect(electronApi.generateAssetsReport).toHaveBeenCalledWith({ baseYear: 2025 });
   });

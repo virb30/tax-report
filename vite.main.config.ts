@@ -21,7 +21,7 @@ export default defineConfig({
         'mysql2',
         'oracledb',
         'pg-query-stream',
-        'xlsx'
+        'xlsx',
       ],
     },
   },

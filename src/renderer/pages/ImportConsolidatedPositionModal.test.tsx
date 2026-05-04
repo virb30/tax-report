@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ElectronApi } from '../../shared/types/electron-api';
+import type { ElectronApi } from '../../preload/renderer/electron-api';
 import { ImportConsolidatedPositionModal } from './ImportConsolidatedPositionModal';
 import { AssetType, AssetResolutionStatus } from '../../shared/types/domain';
 
@@ -64,22 +64,24 @@ describe('ImportConsolidatedPositionModal', () => {
     jest.mocked(electronApi.previewConsolidatedPosition).mockResolvedValue({
       ok: true,
       data: {
-        rows: [{ 
-          ticker: 'PETR4',
-          quantity: 10, 
-          averagePrice: 30, 
-          brokerCode: 'XP', 
-          sourceAssetType: AssetType.Stock,
-          resolvedAssetType: AssetType.Stock,
-          resolutionStatus: AssetResolutionStatus.ResolvedFromFile,
-          needsReview: false,
-          unsupportedReason: null,
-        }],
+        rows: [
+          {
+            ticker: 'PETR4',
+            quantity: 10,
+            averagePrice: 30,
+            brokerCode: 'XP',
+            sourceAssetType: AssetType.Stock,
+            resolvedAssetType: AssetType.Stock,
+            resolutionStatus: AssetResolutionStatus.ResolvedFromFile,
+            needsReview: false,
+            unsupportedReason: null,
+          },
+        ],
         summary: {
           supportedRows: 1,
           pendingRows: 1,
           unsupportedRows: 0,
-        }
+        },
       },
     });
     jest.mocked(electronApi.importConsolidatedPosition).mockResolvedValue({

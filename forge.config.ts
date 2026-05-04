@@ -13,12 +13,7 @@ const config: ForgeConfig = {
   rebuildConfig: {
     onlyModules: ['better-sqlite3'],
   },
-  makers: [
-    new MakerSquirrel({}),
-    new MakerZIP({}, ['darwin']),
-    new MakerRpm({}),
-    new MakerDeb({}),
-  ],
+  makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerRpm({}), new MakerDeb({})],
   plugins: [
     new AutoUnpackNativesPlugin({}),
     new VitePlugin({
@@ -28,7 +23,7 @@ const config: ForgeConfig = {
           config: 'vite.main.config.ts',
         },
         {
-          entry: 'src/preload.ts',
+          entry: 'src/preload/preload.ts',
           config: 'vite.preload.config.ts',
         },
       ],

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import type { InitialBalanceDocument } from '../../../shared/contracts/initial-balance.contract';
+import type { InitialBalanceDocument } from '../../../preload/contracts/portfolio/initial-balance.contract';
 import { AssetType } from '../../../shared/types/domain';
-import type { PositionListItem } from '../../../shared/contracts/list-positions.contract';
+import type { PositionListItem } from '../../../preload/contracts/portfolio/list-positions.contract';
 import { buildYearOptions, getDefaultBaseYear } from '../../../shared/utils/year';
 import { buildErrorMessage } from '../../errors/build-error-message';
 import { unwrapIpcResult } from '../../ipc/unwrap-ipc-result';

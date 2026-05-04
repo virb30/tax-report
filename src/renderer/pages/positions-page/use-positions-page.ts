@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { PositionListItem } from '../../../shared/contracts/list-positions.contract';
+import type { PositionListItem } from '../../../preload/contracts/portfolio/list-positions.contract';
 import { buildYearOptions, getDefaultBaseYear } from '../../../shared/utils/year';
 import { buildErrorMessage } from '../../errors/build-error-message';
 import { unwrapIpcResult } from '../../ipc/unwrap-ipc-result';
@@ -87,9 +87,7 @@ export function usePositionsPage() {
 
   async function deleteAllPositions(): Promise<void> {
     if (
-      !window.confirm(
-        `Excluir todos os ativos e transações vinculadas da posição de ${baseYear}?`,
-      )
+      !window.confirm(`Excluir todos os ativos e transações vinculadas da posição de ${baseYear}?`)
     ) {
       return;
     }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { PreviewTransactionItem } from '../../../shared/contracts/preview-import.contract';
+import type { PreviewTransactionItem } from '../../../preload/contracts/ingestion/preview-import.contract';
 import { buildErrorMessage } from '../../errors/build-error-message';
 import { listActiveBrokers } from '../../services/api/list-brokers';
 import type { Broker } from '../../types/broker.types';

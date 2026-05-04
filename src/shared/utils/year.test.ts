@@ -1,4 +1,3 @@
-
 import { assertSupportedYear, buildYearOptions, getDefaultBaseYear, YEAR_RANGE } from './year';
 
 describe('year utils', () => {
