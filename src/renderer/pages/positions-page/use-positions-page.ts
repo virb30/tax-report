@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { PositionListItem } from '../../../preload/contracts/portfolio/list-positions.contract';
+import type {
+  RecalculatePositionCommand,
+} from '../../../preload/contracts/portfolio/recalculate.contract';
+import type { AveragePriceFeeMode } from '../../../shared/types/domain';
 import { buildYearOptions, getDefaultBaseYear } from '../../../shared/utils/year';
 import { buildErrorMessage } from '../../errors/build-error-message';
 import { unwrapIpcResult } from '../../ipc/unwrap-ipc-result';
@@ -18,6 +22,7 @@ export function usePositionsPage() {
   const [importConsolidatedModalOpen, setImportConsolidatedModalOpen] = useState(false);
   const [deletingTicker, setDeletingTicker] = useState<string | null>(null);
   const [deletingAll, setDeletingAll] = useState(false);
+  const [averagePriceFeeMode, setAveragePriceFeeMode] = useState<AveragePriceFeeMode>('include');
 
   useEffect(() => {
     void loadPositions();
@@ -40,7 +45,9 @@ export function usePositionsPage() {
     setRecalculatingTicker(ticker);
     setErrorMessage('');
     try {
-      unwrapIpcResult(await window.electronApi.recalculatePosition({ ticker, year: baseYear }));
+      unwrapIpcResult(
+        await window.electronApi.recalculatePosition(buildRecalculateCommand(ticker)),
+      );
       await loadPositions();
     } catch (error: unknown) {
       setErrorMessage(buildErrorMessage(error));
@@ -55,7 +62,7 @@ export function usePositionsPage() {
     try {
       for (const position of positions) {
         unwrapIpcResult(
-          await window.electronApi.recalculatePosition({ ticker: position.ticker, year: baseYear }),
+          await window.electronApi.recalculatePosition(buildRecalculateCommand(position.ticker)),
         );
       }
       await loadPositions();
@@ -128,7 +135,20 @@ export function usePositionsPage() {
     void loadPositions();
   }
 
+  function buildRecalculateCommand(ticker: string): RecalculatePositionCommand {
+    const baseCommand = { ticker, year: baseYear };
+    if (averagePriceFeeMode === 'include') {
+      return baseCommand;
+    }
+
+    return {
+      ...baseCommand,
+      averagePriceFeeMode,
+    };
+  }
+
   return {
+    averagePriceFeeMode,
     baseYear,
     deletingAll,
     deletingTicker,
@@ -148,6 +168,7 @@ export function usePositionsPage() {
     recalculatingTicker,
     refreshPositions: () => void loadPositions(),
     setBaseYear,
+    setAveragePriceFeeMode,
     setImportConsolidatedModalOpen,
     setMigrateModalOpen,
     toggleExpand,

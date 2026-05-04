@@ -52,6 +52,39 @@ describe('RecalculatePositionUseCase', () => {
     });
   });
 
+  it('ignores buy fees in average price when requested and preserves transaction fees', async () => {
+    const brokerId = Uuid.create();
+    const transaction = Transaction.create({
+      date: '2024-06-15',
+      type: TransactionType.Buy,
+      ticker: 'PETR4',
+      quantity: Quantity.from(50),
+      unitPrice: Money.from(25),
+      fees: Money.from(5),
+      brokerId,
+      sourceType: SourceType.Manual,
+    });
+    transactionRepository.findByTicker.mockResolvedValue([transaction]);
+
+    const result = await useCase.execute({
+      ticker: 'PETR4',
+      year: 2024,
+      averagePriceFeeMode: 'ignore',
+    });
+
+    expect(positionRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        totalQuantity: Quantity.from(50),
+        averagePrice: Money.from(25),
+      }),
+    );
+    expect(result).toEqual({
+      totalQuantity: '50',
+      averagePrice: '25',
+    });
+    expect(transaction.fees.getAmount()).toBe('5');
+  });
+
   it('does not compound an already persisted calculated position', async () => {
     const brokerId = Uuid.create();
     positionRepository.findByTickerAndYear.mockResolvedValue(

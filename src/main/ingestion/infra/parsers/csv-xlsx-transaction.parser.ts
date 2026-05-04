@@ -21,7 +21,6 @@ import { UnsupportedImportClassifier } from '../../domain/services/unsupported-i
 type GroupedRawBatch = {
   tradeDate: string;
   broker: string;
-  totalOperationalCosts: number;
   operations: Array<{
     ticker: string;
     operationType: OperationType;
@@ -120,7 +119,7 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
         continue;
       }
 
-      const { tradeDate, broker, operationalCost, operation } = groupableRow;
+      const { tradeDate, broker, operation } = groupableRow;
       const groupKey = `${tradeDate}::${broker}`;
       const existingBatch = batchesByDateAndBroker.get(groupKey);
 
@@ -128,13 +127,11 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
         batchesByDateAndBroker.set(groupKey, {
           tradeDate,
           broker,
-          totalOperationalCosts: operationalCost,
           operations: [operation],
         });
         continue;
       }
 
-      existingBatch.totalOperationalCosts += operationalCost;
       existingBatch.operations.push(operation);
     }
 
@@ -167,7 +164,7 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
       batches.push({
         tradeDate: batch.tradeDate,
         brokerId: broker.id.value,
-        totalOperationalCosts: batch.totalOperationalCosts,
+        totalOperationalCosts: 0,
         operations,
       });
     }
@@ -199,7 +196,6 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
     | {
         tradeDate: string;
         broker: string;
-        operationalCost: number;
         operation: GroupedRawBatch['operations'][number];
       }
     | UnsupportedRawRow
@@ -237,9 +233,6 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
     return {
       tradeDate,
       broker,
-      operationalCost: this.hasColumn(row, 'Taxas Totais')
-        ? this.parseOptionalNumber(row['Taxas Totais'], 0)
-        : 0,
       operation: {
         ticker: String(row.Ticker).trim(),
         operationType,
@@ -266,9 +259,6 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
     }
     if (normalizedValue === 'tipo ativo') {
       return 'Tipo Ativo';
-    }
-    if (normalizedValue === 'irrf') {
-      return 'IRRF';
     }
     for (const requiredColumn of CsvXlsxTransactionParser.REQUIRED_COLUMNS) {
       if (this.normalizeHeader(requiredColumn) === normalizedValue) {
@@ -334,6 +324,8 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
         return TransactionType.TransferIn;
       case OperationType.TransferOut:
         return TransactionType.TransferOut;
+      case OperationType.FractionAuction:
+        return TransactionType.FractionAuction;
       default:
         return TransactionType.Buy;
     }
@@ -382,10 +374,6 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
         throw new Error(`Invalid template: missing column "${requiredColumn}".`);
       }
     }
-  }
-
-  private hasColumn(row: SpreadsheetRow, column: string): boolean {
-    return Object.keys(row).some((key) => this.toCanonicalHeader(key) === column);
   }
 
   private toDateString(value: unknown): string {

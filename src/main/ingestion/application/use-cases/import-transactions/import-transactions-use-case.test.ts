@@ -7,26 +7,31 @@ import { ImportTransactionsUseCase } from './import-transactions-use-case';
 import type { ImportTransactionsParser } from '../../interfaces/transactions.parser.interface';
 import type { AssetRepository } from '../../../../portfolio/application/repositories/asset.repository';
 import type { TransactionRepository } from '../../../../portfolio/application/repositories/transaction.repository';
-import type { Queue } from '../../../../shared/application/events/queue.interface';
-import { TransactionsImportedEvent } from '../../../../shared/domain/events/transactions-imported.event';
-import type { TaxApportioner } from '../../../domain/services/tax-apportioner.service';
 import { mock, mockReset } from 'jest-mock-extended';
 import type { ParsedTransactionFile } from '../../../../../preload/contracts/ingestion/import-transactions.contract';
+import type { ReallocateTransactionFeesService } from '../../services/reallocate-transaction-fees.service';
+import type { Queue } from '../../../../shared/application/events/queue.interface';
+import { TransactionsImportedEvent } from '../../../../shared/domain/events/transactions-imported.event';
 
 describe('ImportTransactionsUseCase', () => {
   const mockParser = mock<ImportTransactionsParser>();
   const mockAssetRepo = mock<AssetRepository>();
   const mockTransactionRepo = mock<TransactionRepository>();
+  const mockReallocator = mock<ReallocateTransactionFeesService>();
   const mockQueue = mock<Queue>();
-  const mockTaxApportioner = mock<TaxApportioner>();
 
   beforeEach(() => {
     mockReset(mockParser);
     mockReset(mockAssetRepo);
     mockReset(mockTransactionRepo);
+    mockReset(mockReallocator);
     mockReset(mockQueue);
-    mockReset(mockTaxApportioner);
     mockAssetRepo.findByTickersList.mockResolvedValue([]);
+    mockReallocator.execute.mockResolvedValue({
+      recalculatedTickers: ['PETR4'],
+      affectedPositions: [{ ticker: 'PETR4', year: 2025 }],
+    });
+    mockQueue.publish.mockResolvedValue(undefined);
   });
 
   function parsedFileWithBatches(batches: ParsedTransactionFile['batches']): ParsedTransactionFile {
@@ -36,7 +41,17 @@ describe('ImportTransactionsUseCase', () => {
     };
   }
 
-  it('parses, apportions fees, persists and recalculates positions', async () => {
+  function createUseCase(): ImportTransactionsUseCase {
+    return new ImportTransactionsUseCase(
+      mockParser,
+      mockAssetRepo,
+      mockTransactionRepo,
+      mockReallocator,
+      mockQueue,
+    );
+  }
+
+  it('parses, persists transactions, reallocates fee projections and recalculates positions', async () => {
     const brokerId = '019cece0-4a22-75b8-95c4-45eb6f4cb2f4';
     mockParser.parse.mockResolvedValue(
       parsedFileWithBatches([
@@ -65,18 +80,16 @@ describe('ImportTransactionsUseCase', () => {
         },
       ]),
     );
-    mockTaxApportioner.allocate.mockReturnValue([0.33, 0.67]);
     mockTransactionRepo.saveMany.mockResolvedValue(undefined);
     mockTransactionRepo.findExistingExternalRefs.mockResolvedValue(new Set<string>());
-    mockQueue.publish.mockResolvedValue(undefined);
-
-    const useCase = new ImportTransactionsUseCase(
-      mockParser,
-      mockTaxApportioner,
-      mockAssetRepo,
-      mockTransactionRepo,
-      mockQueue,
-    );
+    mockReallocator.execute.mockResolvedValue({
+      recalculatedTickers: ['PETR4', 'VALE3'],
+      affectedPositions: [
+        { ticker: 'PETR4', year: 2025 },
+        { ticker: 'VALE3', year: 2025 },
+      ],
+    });
+    const useCase = createUseCase();
 
     const result = await useCase.execute({ filePath: '/tmp/ops.csv', assetTypeOverrides: [] });
 
@@ -86,9 +99,17 @@ describe('ImportTransactionsUseCase', () => {
     const savedTransactions = mockTransactionRepo.saveMany.mock.calls[0]?.[0];
     expect(savedTransactions).toHaveLength(2);
     expect(savedTransactions[0]?.ticker).toBe('PETR4');
-    expect(savedTransactions[0]?.fees.getAmount()).toBe('0.33');
+    expect(savedTransactions[0]?.fees.getAmount()).toBe('0');
     expect(savedTransactions[1]?.ticker).toBe('VALE3');
-    expect(savedTransactions[1]?.fees.getAmount()).toBe('0.67');
+    expect(savedTransactions[1]?.fees.getAmount()).toBe('0');
+    expect(mockReallocator.execute).toHaveBeenCalledWith({
+      date: '2025-04-01',
+      brokerId,
+    });
+    expect(result.importedCount).toBe(2);
+    expect(result.recalculatedTickers).toContain('PETR4');
+    expect(result.recalculatedTickers).toContain('VALE3');
+    expect(result.skippedUnsupportedRows).toBe(0);
     expect(mockQueue.publish).toHaveBeenCalledWith(
       expect.objectContaining({
         name: TransactionsImportedEvent.name,
@@ -103,10 +124,6 @@ describe('ImportTransactionsUseCase', () => {
         year: 2025,
       }),
     );
-    expect(result.importedCount).toBe(2);
-    expect(result.recalculatedTickers).toContain('PETR4');
-    expect(result.recalculatedTickers).toContain('VALE3');
-    expect(result.skippedUnsupportedRows).toBe(0);
   });
 
   it('persists manual overrides before saving accepted transactions', async () => {
@@ -130,18 +147,9 @@ describe('ImportTransactionsUseCase', () => {
         },
       ]),
     );
-    mockTaxApportioner.allocate.mockReturnValue([0]);
     mockTransactionRepo.saveMany.mockResolvedValue(undefined);
     mockTransactionRepo.findExistingExternalRefs.mockResolvedValue(new Set<string>());
-    mockQueue.publish.mockResolvedValue(undefined);
-
-    const useCase = new ImportTransactionsUseCase(
-      mockParser,
-      mockTaxApportioner,
-      mockAssetRepo,
-      mockTransactionRepo,
-      mockQueue,
-    );
+    const useCase = createUseCase();
 
     const result = await useCase.execute({
       filePath: '/tmp/ops.csv',
@@ -187,15 +195,7 @@ describe('ImportTransactionsUseCase', () => {
         },
       ]),
     );
-    mockTaxApportioner.allocate.mockReturnValue([0]);
-
-    const useCase = new ImportTransactionsUseCase(
-      mockParser,
-      mockTaxApportioner,
-      mockAssetRepo,
-      mockTransactionRepo,
-      mockQueue,
-    );
+    const useCase = createUseCase();
 
     await expect(
       useCase.execute({ filePath: '/tmp/ops.csv', assetTypeOverrides: [] }),
@@ -203,7 +203,7 @@ describe('ImportTransactionsUseCase', () => {
 
     expect(mockAssetRepo.save).not.toHaveBeenCalled();
     expect(mockTransactionRepo.saveMany).not.toHaveBeenCalled();
-    expect(mockQueue.publish).not.toHaveBeenCalled();
+    expect(mockReallocator.execute).not.toHaveBeenCalled();
   });
 
   it('skips unsupported rows and recalculates only accepted supported rows', async () => {
@@ -248,18 +248,9 @@ describe('ImportTransactionsUseCase', () => {
         },
       ],
     });
-    mockTaxApportioner.allocate.mockReturnValue([0.75, 0.25]);
     mockTransactionRepo.saveMany.mockResolvedValue(undefined);
     mockTransactionRepo.findExistingExternalRefs.mockResolvedValue(new Set<string>());
-    mockQueue.publish.mockResolvedValue(undefined);
-
-    const useCase = new ImportTransactionsUseCase(
-      mockParser,
-      mockTaxApportioner,
-      mockAssetRepo,
-      mockTransactionRepo,
-      mockQueue,
-    );
+    const useCase = createUseCase();
 
     const result = await useCase.execute({ filePath: '/tmp/ops.csv', assetTypeOverrides: [] });
 
@@ -271,15 +262,8 @@ describe('ImportTransactionsUseCase', () => {
     const savedTransactions = mockTransactionRepo.saveMany.mock.calls[0]?.[0];
     expect(savedTransactions).toHaveLength(1);
     expect(savedTransactions?.[0]?.ticker).toBe('PETR4');
-    expect(savedTransactions?.[0]?.fees.getAmount()).toBe('0.75');
-    expect(mockQueue.publish).toHaveBeenCalledTimes(1);
-    expect(mockQueue.publish).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: TransactionsImportedEvent.name,
-        ticker: 'PETR4',
-        year: 2025,
-      }),
-    );
+    expect(savedTransactions?.[0]?.fees.getAmount()).toBe('0');
+    expect(mockReallocator.execute).toHaveBeenCalledTimes(1);
     expect(mockAssetRepo.save).toHaveBeenCalledTimes(1);
     expect(mockAssetRepo.save).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -309,9 +293,7 @@ describe('ImportTransactionsUseCase', () => {
         },
       ]),
     );
-    mockTaxApportioner.allocate.mockReturnValue([0]);
     mockTransactionRepo.saveMany.mockResolvedValue(undefined);
-    mockQueue.publish.mockResolvedValue(undefined);
 
     let existingRefs = new Set<string>();
     mockTransactionRepo.findExistingExternalRefs.mockImplementation(async (refs: string[]) => {
@@ -320,13 +302,7 @@ describe('ImportTransactionsUseCase', () => {
       });
     });
 
-    const useCase = new ImportTransactionsUseCase(
-      mockParser,
-      mockTaxApportioner,
-      mockAssetRepo,
-      mockTransactionRepo,
-      mockQueue,
-    );
+    const useCase = createUseCase();
 
     const firstResult = await useCase.execute({ filePath: '/tmp/ops.csv', assetTypeOverrides: [] });
     expect(firstResult.importedCount).toBe(1);
@@ -348,5 +324,6 @@ describe('ImportTransactionsUseCase', () => {
       skippedUnsupportedRows: 0,
     });
     expect(mockTransactionRepo.saveMany).toHaveBeenCalledTimes(1);
+    expect(mockQueue.publish).toHaveBeenCalledTimes(1);
   });
 });

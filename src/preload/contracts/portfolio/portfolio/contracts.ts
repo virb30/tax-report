@@ -96,6 +96,7 @@ export const recalculatePositionSchema = z.object({
   year: z
     .number({ message: 'Invalid year for recalculate position.' })
     .int('Invalid year for recalculate position.'),
+  averagePriceFeeMode: z.enum(['include', 'ignore']).optional(),
 });
 
 export const migrateYearSchema = z.object({

@@ -47,6 +47,23 @@ describe('GenerateAssetsReportUseCase', () => {
     );
   });
 
+  function mockPositionsByYear(input: {
+    baseYearPositions: AssetPosition[];
+    previousYearPositions?: AssetPosition[];
+  }): void {
+    positionRepository.findAllByYear.mockImplementation((year) => {
+      if (year === 2025) {
+        return Promise.resolve(input.baseYearPositions);
+      }
+
+      if (year === 2024) {
+        return Promise.resolve(input.previousYearPositions ?? []);
+      }
+
+      return Promise.resolve([]);
+    });
+  }
+
   it('consolidates a multi-broker holding into one declaration item', async () => {
     const broker2 = Broker.create({
       name: 'Clear',
@@ -54,19 +71,21 @@ describe('GenerateAssetsReportUseCase', () => {
       code: 'CLR1',
     });
     brokerRepository.findAll.mockResolvedValue([broker, broker2]);
-    positionRepository.findAllByYear.mockResolvedValue([
-      AssetPosition.create({
-        ticker: 'PETR4',
-        year: 2025,
-        assetType: AssetType.Stock,
-        totalQuantity: Quantity.from(150),
-        averagePrice: Money.from(10),
-        brokerBreakdown: [
-          { brokerId: broker.id, quantity: Quantity.from(100) },
-          { brokerId: broker2.id, quantity: Quantity.from(50) },
-        ],
-      }),
-    ]);
+    mockPositionsByYear({
+      baseYearPositions: [
+        AssetPosition.create({
+          ticker: 'PETR4',
+          year: 2025,
+          assetType: AssetType.Stock,
+          totalQuantity: Quantity.from(150),
+          averagePrice: Money.from(10),
+          brokerBreakdown: [
+            { brokerId: broker.id, quantity: Quantity.from(100) },
+            { brokerId: broker2.id, quantity: Quantity.from(50) },
+          ],
+        }),
+      ],
+    });
     assetRepository.findByTickersList.mockResolvedValue([
       Asset.create({
         ticker: 'PETR4',
@@ -103,24 +122,26 @@ describe('GenerateAssetsReportUseCase', () => {
   });
 
   it('keeps stock and BDR values below 1000.00 under threshold and requires 1000.00', async () => {
-    positionRepository.findAllByYear.mockResolvedValue([
-      AssetPosition.create({
-        ticker: 'ABEV3',
-        year: 2025,
-        assetType: AssetType.Stock,
-        totalQuantity: Quantity.from(1),
-        averagePrice: Money.from(999.99),
-        brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(1) }],
-      }),
-      AssetPosition.create({
-        ticker: 'BOVA34',
-        year: 2025,
-        assetType: AssetType.Bdr,
-        totalQuantity: Quantity.from(1),
-        averagePrice: Money.from(1000),
-        brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(1) }],
-      }),
-    ]);
+    mockPositionsByYear({
+      baseYearPositions: [
+        AssetPosition.create({
+          ticker: 'ABEV3',
+          year: 2025,
+          assetType: AssetType.Stock,
+          totalQuantity: Quantity.from(1),
+          averagePrice: Money.from(999.99),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(1) }],
+        }),
+        AssetPosition.create({
+          ticker: 'BOVA34',
+          year: 2025,
+          assetType: AssetType.Bdr,
+          totalQuantity: Quantity.from(1),
+          averagePrice: Money.from(1000),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(1) }],
+        }),
+      ],
+    });
     assetRepository.findByTickersList.mockResolvedValue([
       Asset.create({
         ticker: 'ABEV3',
@@ -149,24 +170,26 @@ describe('GenerateAssetsReportUseCase', () => {
   });
 
   it('keeps FII and ETF values at 140.00 below threshold and requires values above it', async () => {
-    positionRepository.findAllByYear.mockResolvedValue([
-      AssetPosition.create({
-        ticker: 'HGLG11',
-        year: 2025,
-        assetType: AssetType.Fii,
-        totalQuantity: Quantity.from(1),
-        averagePrice: Money.from(140),
-        brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(1) }],
-      }),
-      AssetPosition.create({
-        ticker: 'IVVB11',
-        year: 2025,
-        assetType: AssetType.Etf,
-        totalQuantity: Quantity.from(1),
-        averagePrice: Money.from(140.01),
-        brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(1) }],
-      }),
-    ]);
+    mockPositionsByYear({
+      baseYearPositions: [
+        AssetPosition.create({
+          ticker: 'HGLG11',
+          year: 2025,
+          assetType: AssetType.Fii,
+          totalQuantity: Quantity.from(1),
+          averagePrice: Money.from(140),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(1) }],
+        }),
+        AssetPosition.create({
+          ticker: 'IVVB11',
+          year: 2025,
+          assetType: AssetType.Etf,
+          totalQuantity: Quantity.from(1),
+          averagePrice: Money.from(140.01),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(1) }],
+        }),
+      ],
+    });
     assetRepository.findByTickersList.mockResolvedValue([
       Asset.create({
         ticker: 'HGLG11',
@@ -195,16 +218,18 @@ describe('GenerateAssetsReportUseCase', () => {
   });
 
   it('surfaces pending metadata and disables copy even when valuations are available', async () => {
-    positionRepository.findAllByYear.mockResolvedValue([
-      AssetPosition.create({
-        ticker: 'PETR4',
-        year: 2025,
-        assetType: AssetType.Stock,
-        totalQuantity: Quantity.from(100),
-        averagePrice: Money.from(50),
-        brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(100) }],
-      }),
-    ]);
+    mockPositionsByYear({
+      baseYearPositions: [
+        AssetPosition.create({
+          ticker: 'PETR4',
+          year: 2025,
+          assetType: AssetType.Stock,
+          totalQuantity: Quantity.from(100),
+          averagePrice: Money.from(50),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(100) }],
+        }),
+      ],
+    });
     assetRepository.findByTickersList.mockResolvedValue([
       Asset.create({
         ticker: 'PETR4',
@@ -229,16 +254,18 @@ describe('GenerateAssetsReportUseCase', () => {
   });
 
   it('derives previous and current year values from the selected base-year cutoffs', async () => {
-    positionRepository.findAllByYear.mockResolvedValue([
-      AssetPosition.create({
-        ticker: 'PETR4',
-        year: 2025,
-        assetType: AssetType.Stock,
-        totalQuantity: Quantity.from(15),
-        averagePrice: Money.from(10),
-        brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(15) }],
-      }),
-    ]);
+    mockPositionsByYear({
+      baseYearPositions: [
+        AssetPosition.create({
+          ticker: 'PETR4',
+          year: 2025,
+          assetType: AssetType.Stock,
+          totalQuantity: Quantity.from(15),
+          averagePrice: Money.from(10),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(15) }],
+        }),
+      ],
+    });
     assetRepository.findByTickersList.mockResolvedValue([
       Asset.create({
         ticker: 'PETR4',
@@ -277,6 +304,113 @@ describe('GenerateAssetsReportUseCase', () => {
       previousYearValue: 100,
       currentYearValue: 150,
       acquiredInYear: false,
+    });
+  });
+
+  it('prefers persisted previous-year positions over reconstructed history', async () => {
+    mockPositionsByYear({
+      baseYearPositions: [
+        AssetPosition.create({
+          ticker: 'PETR4',
+          year: 2025,
+          assetType: AssetType.Stock,
+          totalQuantity: Quantity.from(15),
+          averagePrice: Money.from(10),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(15) }],
+        }),
+      ],
+      previousYearPositions: [
+        AssetPosition.create({
+          ticker: 'PETR4',
+          year: 2024,
+          assetType: AssetType.Stock,
+          totalQuantity: Quantity.from(10),
+          averagePrice: Money.from(9),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(10) }],
+        }),
+      ],
+    });
+    assetRepository.findByTickersList.mockResolvedValue([
+      Asset.create({
+        ticker: 'PETR4',
+        assetType: AssetType.Stock,
+        resolutionSource: AssetTypeSource.File,
+        issuerCnpj: new Cnpj('33.000.167/0001-01'),
+        name: 'Petrobras',
+      }),
+    ]);
+    transactionRepository.findByTicker.mockResolvedValue([
+      Transaction.create({
+        date: '2024-06-01',
+        type: TransactionType.Buy,
+        ticker: 'PETR4',
+        quantity: Quantity.from(10),
+        unitPrice: Money.from(10),
+        fees: Money.from(5),
+        brokerId: broker.id,
+        sourceType: SourceType.Csv,
+      }),
+    ]);
+
+    const result = await useCase.execute({ baseYear: 2025 });
+
+    expect(result.items[0]).toMatchObject({
+      previousYearValue: 90,
+      currentYearValue: 150,
+    });
+  });
+
+  it('includes fully sold previous-year positions with zero current-year value', async () => {
+    mockPositionsByYear({
+      baseYearPositions: [],
+      previousYearPositions: [
+        AssetPosition.create({
+          ticker: 'PETR4',
+          year: 2024,
+          assetType: AssetType.Stock,
+          totalQuantity: Quantity.from(10),
+          averagePrice: Money.from(25),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(10) }],
+        }),
+      ],
+    });
+    assetRepository.findByTickersList.mockResolvedValue([
+      Asset.create({
+        ticker: 'PETR4',
+        assetType: AssetType.Stock,
+        resolutionSource: AssetTypeSource.File,
+        issuerCnpj: new Cnpj('33.000.167/0001-01'),
+        name: 'Petrobras',
+      }),
+    ]);
+    transactionRepository.findByTicker.mockResolvedValue([
+      Transaction.create({
+        date: '2025-02-01',
+        type: TransactionType.Sell,
+        ticker: 'PETR4',
+        quantity: Quantity.from(10),
+        unitPrice: Money.from(30),
+        fees: Money.from(0),
+        brokerId: broker.id,
+        sourceType: SourceType.Csv,
+      }),
+    ]);
+
+    const result = await useCase.execute({ baseYear: 2025 });
+
+    expect(assetRepository.findByTickersList).toHaveBeenCalledWith(['PETR4']);
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]).toMatchObject({
+      ticker: 'PETR4',
+      totalQuantity: 0,
+      averagePrice: 0,
+      previousYearValue: 250,
+      currentYearValue: 0,
+      acquiredInYear: false,
+      status: ReportItemStatus.Optional,
+      canCopy: false,
+      description: null,
+      brokersSummary: [],
     });
   });
 });

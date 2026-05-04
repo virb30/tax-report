@@ -26,7 +26,12 @@ export class RecalculatePositionUseCase {
     const basePositions = [this.createRecalculationBasePosition(input, currentPosition)];
 
     const positionCalculator = new PositionCalculatorService();
-    const positions = positionCalculator.compute(transactions, basePositions, input.year);
+    const positions = positionCalculator.compute({
+      transactions,
+      basePositions,
+      year: input.year,
+      averagePriceFeeMode: input.averagePriceFeeMode ?? 'include',
+    });
 
     if (positions.length === 0) {
       return {

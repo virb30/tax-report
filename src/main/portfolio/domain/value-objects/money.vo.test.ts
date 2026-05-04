@@ -68,5 +68,11 @@ describe('Money', () => {
       expect(Money.from('10.1').toCurrency()).toBe('10.10');
       expect(Money.from('10').toCurrency()).toBe('10.00');
     });
+
+    it('rounds and floors to currency precision', () => {
+      expect(Money.from('10.125').roundToCurrency().getAmount()).toBe('10.13');
+      expect(Money.from('10.129').floorToCurrency().getAmount()).toBe('10.12');
+      expect(Money.minimumCurrencyUnit().getAmount()).toBe('0.01');
+    });
   });
 });

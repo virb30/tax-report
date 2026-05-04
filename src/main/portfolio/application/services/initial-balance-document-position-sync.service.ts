@@ -51,7 +51,11 @@ export class InitialBalanceDocumentPositionSyncService {
       assetType: input.assetType ?? existingPosition?.assetType ?? AssetType.Stock,
       year: input.year,
     });
-    const [position] = this.positionCalculator.compute(transactions, [basePosition], input.year);
+    const [position] = this.positionCalculator.compute({
+      transactions,
+      basePositions: [basePosition],
+      year: input.year,
+    });
 
     if (!position || position.totalQuantity.isZero()) {
       await this.positionRepository.delete(input.ticker, input.year);

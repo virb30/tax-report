@@ -45,6 +45,37 @@ export function PositionsPage(): JSX.Element {
           >
             Migrar posições entre anos
           </button>
+          <div
+            role="group"
+            aria-label="Taxas no PM"
+            className="flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-700"
+          >
+            <span>Taxas no PM:</span>
+            <button
+              type="button"
+              aria-pressed={positionsPage.averagePriceFeeMode === 'include'}
+              className={`rounded px-2 py-1 text-xs font-medium ${
+                positionsPage.averagePriceFeeMode === 'include'
+                  ? 'bg-slate-800 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+              onClick={() => positionsPage.setAveragePriceFeeMode('include')}
+            >
+              Considerar
+            </button>
+            <button
+              type="button"
+              aria-pressed={positionsPage.averagePriceFeeMode === 'ignore'}
+              className={`rounded px-2 py-1 text-xs font-medium ${
+                positionsPage.averagePriceFeeMode === 'ignore'
+                  ? 'bg-slate-800 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+              onClick={() => positionsPage.setAveragePriceFeeMode('ignore')}
+            >
+              Ignorar
+            </button>
+          </div>
           <button
             type="button"
             className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"

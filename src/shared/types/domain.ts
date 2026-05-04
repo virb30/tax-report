@@ -13,6 +13,7 @@ export enum OperationType {
   ReverseSplit = 'reverse_split',
   TransferIn = 'transfer_in',
   TransferOut = 'transfer_out',
+  FractionAuction = 'fraction_auction',
 }
 
 export enum TransactionType {
@@ -24,6 +25,7 @@ export enum TransactionType {
   TransferIn = 'transfer_in',
   TransferOut = 'transfer_out',
   InitialBalance = 'initial_balance',
+  FractionAuction = 'fraction_auction',
 }
 
 export enum SourceType {
@@ -31,6 +33,8 @@ export enum SourceType {
   Csv = 'csv',
   Manual = 'manual',
 }
+
+export type AveragePriceFeeMode = 'include' | 'ignore';
 
 export enum AssetTypeSource {
   File = 'file',

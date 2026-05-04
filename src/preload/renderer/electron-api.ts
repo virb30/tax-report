@@ -58,6 +58,15 @@ import type {
   PreviewImportTransactionsCommand,
   PreviewImportTransactionsResult,
 } from '../contracts/ingestion/preview-import.contract';
+import type {
+  DeleteDailyBrokerTaxCommand,
+  DeleteDailyBrokerTaxResult,
+  ImportDailyBrokerTaxesCommand,
+  ImportDailyBrokerTaxesResult,
+  ListDailyBrokerTaxesResult,
+  SaveDailyBrokerTaxCommand,
+  SaveDailyBrokerTaxResult,
+} from '../contracts/ingestion/daily-broker-tax.contract';
 
 export type ElectronApi = {
   appName: string;
@@ -68,6 +77,12 @@ export type ElectronApi = {
   confirmImportTransactions: (
     input: ConfirmImportTransactionsCommand,
   ) => Promise<ConfirmImportTransactionsResult>;
+  listDailyBrokerTaxes: () => Promise<ListDailyBrokerTaxesResult>;
+  saveDailyBrokerTax: (input: SaveDailyBrokerTaxCommand) => Promise<SaveDailyBrokerTaxResult>;
+  importDailyBrokerTaxes: (
+    input: ImportDailyBrokerTaxesCommand,
+  ) => Promise<ImportDailyBrokerTaxesResult>;
+  deleteDailyBrokerTax: (input: DeleteDailyBrokerTaxCommand) => Promise<DeleteDailyBrokerTaxResult>;
   saveInitialBalanceDocument: (
     input: SaveInitialBalanceDocumentCommand,
   ) => Promise<SaveInitialBalanceDocumentResult>;

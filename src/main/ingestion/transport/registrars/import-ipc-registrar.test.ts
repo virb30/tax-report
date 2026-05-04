@@ -2,11 +2,19 @@ import { jest } from '@jest/globals';
 import { mock, mockReset } from 'jest-mock-extended';
 import type { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions/import-transactions-use-case';
 import type { PreviewImportUseCase } from '../../application/use-cases/preview-import/preview-import-use-case';
+import type { DeleteDailyBrokerTaxUseCase } from '../../application/use-cases/delete-daily-broker-tax/delete-daily-broker-tax.use-case';
+import type { ImportDailyBrokerTaxesUseCase } from '../../application/use-cases/import-daily-broker-taxes/import-daily-broker-taxes.use-case';
+import type { ListDailyBrokerTaxesUseCase } from '../../application/use-cases/list-daily-broker-taxes/list-daily-broker-taxes.use-case';
+import type { SaveDailyBrokerTaxUseCase } from '../../application/use-cases/save-daily-broker-tax/save-daily-broker-tax.use-case';
 import {
   confirmImportTransactionsContract,
+  deleteDailyBrokerTaxContract,
+  importDailyBrokerTaxesContract,
   importIpcContracts,
   importSelectFileContract,
+  listDailyBrokerTaxesContract,
   previewImportTransactionsContract,
+  saveDailyBrokerTaxContract,
 } from '../../../../preload/contracts/ingestion/import';
 import type { IpcMainHandleRegistry } from '../../../../preload/main/registry/ipc-registrar';
 
@@ -26,11 +34,19 @@ type IpcHandler = (_event: Electron.IpcMainInvokeEvent, input?: unknown) => Prom
 describe('ImportIpcRegistrar', () => {
   const previewImportUseCase = mock<PreviewImportUseCase>();
   const importTransactionsUseCase = mock<ImportTransactionsUseCase>();
+  const listDailyBrokerTaxesUseCase = mock<ListDailyBrokerTaxesUseCase>();
+  const saveDailyBrokerTaxUseCase = mock<SaveDailyBrokerTaxUseCase>();
+  const importDailyBrokerTaxesUseCase = mock<ImportDailyBrokerTaxesUseCase>();
+  const deleteDailyBrokerTaxUseCase = mock<DeleteDailyBrokerTaxUseCase>();
   const ipcEvent = {} as Electron.IpcMainInvokeEvent;
 
   beforeEach(() => {
     mockReset(previewImportUseCase);
     mockReset(importTransactionsUseCase);
+    mockReset(listDailyBrokerTaxesUseCase);
+    mockReset(saveDailyBrokerTaxUseCase);
+    mockReset(importDailyBrokerTaxesUseCase);
+    mockReset(deleteDailyBrokerTaxUseCase);
     showOpenDialog.mockReset();
   });
 
@@ -42,7 +58,14 @@ describe('ImportIpcRegistrar', () => {
       },
     };
 
-    const registrar = new ImportIpcRegistrar(previewImportUseCase, importTransactionsUseCase);
+    const registrar = new ImportIpcRegistrar(
+      previewImportUseCase,
+      importTransactionsUseCase,
+      listDailyBrokerTaxesUseCase,
+      saveDailyBrokerTaxUseCase,
+      importDailyBrokerTaxesUseCase,
+      deleteDailyBrokerTaxUseCase,
+    );
 
     expect(registrar.register(ipcMain)).toEqual(
       importIpcContracts.map((contract) => contract.channel),
@@ -138,6 +161,62 @@ describe('ImportIpcRegistrar', () => {
       importedCount: 2,
       recalculatedTickers: ['PETR4', 'VALE3'],
       skippedUnsupportedRows: 1,
+    });
+  });
+
+  it('delegates daily broker tax handlers', async () => {
+    listDailyBrokerTaxesUseCase.execute.mockResolvedValue({ items: [] });
+    saveDailyBrokerTaxUseCase.execute.mockResolvedValue({
+      tax: {
+        date: '2025-04-01',
+        brokerId: 'broker-id',
+        brokerCode: 'XP',
+        brokerName: 'XP',
+        fees: 1,
+        irrf: 0.01,
+      },
+      recalculatedTickers: [],
+    });
+    importDailyBrokerTaxesUseCase.execute.mockResolvedValue({
+      importedCount: 1,
+      recalculatedTickers: ['PETR4'],
+    });
+    deleteDailyBrokerTaxUseCase.execute.mockResolvedValue({
+      deleted: true,
+      recalculatedTickers: ['PETR4'],
+    });
+    const handlers = registerRegistrar();
+
+    await expect(handlers.get(listDailyBrokerTaxesContract.channel)?.(ipcEvent)).resolves.toEqual({
+      items: [],
+    });
+    await expect(
+      handlers.get(saveDailyBrokerTaxContract.channel)?.(ipcEvent, {
+        date: '2025-04-01',
+        brokerId: 'broker-id',
+        fees: 1,
+        irrf: 0.01,
+      }),
+    ).resolves.toEqual({
+      tax: expect.objectContaining({ brokerCode: 'XP' }),
+      recalculatedTickers: [],
+    });
+    await expect(
+      handlers.get(importDailyBrokerTaxesContract.channel)?.(ipcEvent, {
+        filePath: 'C:/imports/taxes.csv',
+      }),
+    ).resolves.toEqual({
+      importedCount: 1,
+      recalculatedTickers: ['PETR4'],
+    });
+    await expect(
+      handlers.get(deleteDailyBrokerTaxContract.channel)?.(ipcEvent, {
+        date: '2025-04-01',
+        brokerId: 'broker-id',
+      }),
+    ).resolves.toEqual({
+      deleted: true,
+      recalculatedTickers: ['PETR4'],
     });
   });
 });

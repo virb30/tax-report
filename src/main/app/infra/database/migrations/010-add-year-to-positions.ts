@@ -33,7 +33,6 @@ export const addYearToPositionsMigration = {
       table.text('asset_type').notNullable().checkIn(['stock', 'fii', 'etf', 'bdr']);
       table.float('total_quantity').notNullable().defaultTo(0);
       table.float('average_price').notNullable().defaultTo(0);
-      table.integer('average_price_cents').notNullable().defaultTo(0);
       table.primary(['ticker', 'year']);
     });
 
@@ -46,7 +45,6 @@ export const addYearToPositionsMigration = {
           asset_type: row.asset_type,
           total_quantity: row.total_quantity,
           average_price: row.average_price,
-          average_price_cents: row.average_price_cents,
         })),
       );
     }
@@ -102,7 +100,6 @@ export const addYearToPositionsMigration = {
       table.text('asset_type').notNullable().checkIn(['stock', 'fii', 'etf', 'bdr']);
       table.float('total_quantity').notNullable().defaultTo(0);
       table.float('average_price').notNullable().defaultTo(0);
-      table.integer('average_price_cents').notNullable().defaultTo(0);
     });
 
     const yearGroups = new Map<string, { row: Record<string, unknown>; year: number }>();
@@ -117,7 +114,6 @@ export const addYearToPositionsMigration = {
             asset_type: row.asset_type,
             total_quantity: row.total_quantity,
             average_price: row.average_price,
-            average_price_cents: row.average_price_cents,
           },
           year: row.year as number,
         });

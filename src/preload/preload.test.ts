@@ -5,7 +5,11 @@ import {
 } from './contracts/portfolio/assets';
 import {
   confirmImportTransactionsContract,
+  deleteDailyBrokerTaxContract,
+  importDailyBrokerTaxesContract,
+  listDailyBrokerTaxesContract,
   previewImportTransactionsContract,
+  saveDailyBrokerTaxContract,
 } from './contracts/ingestion/import';
 import {
   deleteInitialBalanceDocumentContract,
@@ -47,6 +51,20 @@ describe('preload', () => {
       filePath: '/tmp/operations.csv',
       assetTypeOverrides: [],
     });
+    await electronApi.listDailyBrokerTaxes();
+    await electronApi.saveDailyBrokerTax({
+      date: '2025-04-01',
+      brokerId: 'broker-xp',
+      fees: 1.23,
+      irrf: 0.01,
+    });
+    await electronApi.importDailyBrokerTaxes({
+      filePath: '/tmp/daily-broker-taxes.csv',
+    });
+    await electronApi.deleteDailyBrokerTax({
+      date: '2025-04-01',
+      brokerId: 'broker-xp',
+    });
     await electronApi.saveInitialBalanceDocument({
       ticker: 'IVVB11',
       year: 2025,
@@ -78,7 +96,21 @@ describe('preload', () => {
       filePath: '/tmp/operations.csv',
       assetTypeOverrides: [],
     });
-    expect(invoke).toHaveBeenNthCalledWith(3, saveInitialBalanceDocumentContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(3, listDailyBrokerTaxesContract.channel);
+    expect(invoke).toHaveBeenNthCalledWith(4, saveDailyBrokerTaxContract.channel, {
+      date: '2025-04-01',
+      brokerId: 'broker-xp',
+      fees: 1.23,
+      irrf: 0.01,
+    });
+    expect(invoke).toHaveBeenNthCalledWith(5, importDailyBrokerTaxesContract.channel, {
+      filePath: '/tmp/daily-broker-taxes.csv',
+    });
+    expect(invoke).toHaveBeenNthCalledWith(6, deleteDailyBrokerTaxContract.channel, {
+      date: '2025-04-01',
+      brokerId: 'broker-xp',
+    });
+    expect(invoke).toHaveBeenNthCalledWith(7, saveInitialBalanceDocumentContract.channel, {
       ticker: 'IVVB11',
       year: 2025,
       assetType: AssetType.Etf,
@@ -87,28 +119,28 @@ describe('preload', () => {
       averagePrice: '300',
       allocations: [{ brokerId: 'broker-xp', quantity: '2' }],
     });
-    expect(invoke).toHaveBeenNthCalledWith(4, listInitialBalanceDocumentsContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(8, listInitialBalanceDocumentsContract.channel, {
       year: 2025,
     });
-    expect(invoke).toHaveBeenNthCalledWith(5, deleteInitialBalanceDocumentContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(9, deleteInitialBalanceDocumentContract.channel, {
       ticker: 'IVVB11',
       year: 2025,
     });
-    expect(invoke).toHaveBeenNthCalledWith(6, listPositionsContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(10, listPositionsContract.channel, {
       baseYear: 2025,
     });
-    expect(invoke).toHaveBeenNthCalledWith(7, generateAssetsReportContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(11, generateAssetsReportContract.channel, {
       baseYear: 2025,
     });
-    expect(invoke).toHaveBeenNthCalledWith(8, listAssetsContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(12, listAssetsContract.channel, {
       pendingOnly: true,
     });
-    expect(invoke).toHaveBeenNthCalledWith(9, updateAssetContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(13, updateAssetContract.channel, {
       ticker: 'IVVB11',
       assetType: AssetType.Etf,
       name: 'iShares Core S&P 500',
     });
-    expect(invoke).toHaveBeenNthCalledWith(10, repairAssetTypeContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(14, repairAssetTypeContract.channel, {
       ticker: 'IVVB11',
       assetType: AssetType.Etf,
     });
@@ -121,13 +153,16 @@ describe('preload', () => {
       'confirmImportTransactions',
       'createBroker',
       'deleteAllPositions',
+      'deleteDailyBrokerTax',
       'deleteInitialBalanceDocument',
       'deletePosition',
       'generateAssetsReport',
       'importConsolidatedPosition',
+      'importDailyBrokerTaxes',
       'importSelectFile',
       'listAssets',
       'listBrokers',
+      'listDailyBrokerTaxes',
       'listInitialBalanceDocuments',
       'listPositions',
       'migrateYear',
@@ -135,6 +170,7 @@ describe('preload', () => {
       'previewImportTransactions',
       'recalculatePosition',
       'repairAssetType',
+      'saveDailyBrokerTax',
       'saveInitialBalanceDocument',
       'toggleBrokerActive',
       'updateAsset',

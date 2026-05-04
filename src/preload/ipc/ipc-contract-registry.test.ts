@@ -137,11 +137,9 @@ describe('ipc contract registry', () => {
 
   it('does not broadly migrate non-portfolio contract groups to result mode', () => {
     expect(appIpcContracts.map((contract) => contract.errorMode)).toEqual(['throw']);
-    expect(importIpcContracts.map((contract) => contract.errorMode)).toEqual([
-      'throw',
-      'throw',
-      'throw',
-    ]);
+    expect(importIpcContracts.map((contract) => contract.errorMode)).toEqual(
+      importIpcContracts.map(() => 'throw'),
+    );
     expect(reportIpcContracts.map((contract) => contract.errorMode)).toEqual(['throw']);
     expect(brokerIpcContracts.map((contract) => contract.errorMode)).toEqual([
       'throw',
