@@ -175,9 +175,32 @@ export function registerDependencies(db: Knex) {
         ),
     ).singleton(),
     listDailyBrokerTaxesUseCase: asClass(ListDailyBrokerTaxesUseCase).singleton(),
-    saveDailyBrokerTaxUseCase: asClass(SaveDailyBrokerTaxUseCase).singleton(),
-    importDailyBrokerTaxesUseCase: asClass(ImportDailyBrokerTaxesUseCase).singleton(),
-    deleteDailyBrokerTaxUseCase: asClass(DeleteDailyBrokerTaxUseCase).singleton(),
+    saveDailyBrokerTaxUseCase: asFunction(
+      () => 
+        new SaveDailyBrokerTaxUseCase(
+          container.resolve('dailyBrokerTaxRepository'),
+          container.resolve('brokerRepository'),
+          container.resolve('reallocateTransactionFeesService'),
+          container.resolve('queue'),
+        )
+    ).singleton(),
+    importDailyBrokerTaxesUseCase: asFunction(
+      () => 
+        new ImportDailyBrokerTaxesUseCase(
+          container.resolve('dailyBrokerTaxesParser'),
+          container.resolve('dailyBrokerTaxRepository'),
+          container.resolve('reallocateTransactionFeesService'),
+          container.resolve('queue'),
+        )
+    ).singleton(),
+    deleteDailyBrokerTaxUseCase: asFunction(
+      () => 
+        new DeleteDailyBrokerTaxUseCase(
+          container.resolve('dailyBrokerTaxRepository'),
+          container.resolve('reallocateTransactionFeesService'),
+          container.resolve('queue'),
+        )
+    ).singleton(),
     initialBalanceDocumentPositionSyncService: asClass(
       InitialBalanceDocumentPositionSyncService,
     ).singleton(),
