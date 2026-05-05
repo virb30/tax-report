@@ -140,7 +140,7 @@ describe('ipc contract registry', () => {
     expect(importIpcContracts.map((contract) => contract.errorMode)).toEqual(
       importIpcContracts.map(() => 'throw'),
     );
-    expect(reportIpcContracts.map((contract) => contract.errorMode)).toEqual(['throw']);
+    expect(reportIpcContracts.map((contract) => contract.errorMode)).toEqual(['throw', 'throw']);
     expect(brokerIpcContracts.map((contract) => contract.errorMode)).toEqual([
       'throw',
       'result',

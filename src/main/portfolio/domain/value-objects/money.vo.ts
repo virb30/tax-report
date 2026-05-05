@@ -55,6 +55,10 @@ export class Money {
     return Number(this.amount.toFixed(2));
   }
 
+  toPreciseNumber(): number {
+    return this.amount.toNumber();
+  }
+
   floorToCurrency(): Money {
     const result = this.amount.toDecimalPlaces(2, Decimal.ROUND_FLOOR);
     return new Money(result.toString());

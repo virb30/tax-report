@@ -61,6 +61,36 @@ export enum ReportItemStatus {
   Unsupported = 'unsupported',
 }
 
+export enum CapitalGainsAssessmentStatus {
+  Ready = 'ready',
+  Pending = 'pending',
+  Unsupported = 'unsupported',
+  Mixed = 'mixed',
+}
+
+export enum CapitalGainsAssetCategory {
+  Stock = 'stock',
+  Fii = 'fii',
+  Etf = 'etf',
+}
+
+export enum CapitalGainsBlockerCode {
+  MissingAssetCategory = 'missing_asset_category',
+  MissingCostBasis = 'missing_cost_basis',
+  AmbiguousCostBasis = 'ambiguous_cost_basis',
+  DayTradeUnsupported = 'day_trade_unsupported',
+  UnsupportedAssetType = 'unsupported_asset_type',
+  UnsupportedOperation = 'unsupported_operation',
+  MissingTransactionData = 'missing_transaction_data',
+}
+
+export enum CapitalGainsTraceClassification {
+  ExemptStockGain = 'exempt_stock_gain',
+  TaxableGain = 'taxable_gain',
+  Loss = 'loss',
+  CompensatedGain = 'compensated_gain',
+}
+
 export enum PendingIssueCode {
   MissingAssetType = 'missing_asset_type',
   MissingIssuerName = 'missing_issuer_name',

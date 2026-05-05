@@ -69,6 +69,13 @@ describe('Money', () => {
       expect(Money.from('10').toCurrency()).toBe('10.00');
     });
 
+    it('keeps explicit precise number conversion separate from currency rounding', () => {
+      const money = Money.from('10').divideBy('3');
+
+      expect(money.toNumber()).toBe(3.33);
+      expect(money.toPreciseNumber()).toBeCloseTo(10 / 3, 12);
+    });
+
     it('rounds and floors to currency precision', () => {
       expect(Money.from('10.125').roundToCurrency().getAmount()).toBe('10.13');
       expect(Money.from('10.129').floorToCurrency().getAmount()).toBe('10.12');

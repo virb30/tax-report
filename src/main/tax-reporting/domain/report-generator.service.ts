@@ -29,11 +29,19 @@ const REVENUE_CLASSIFICATIONS: Record<AssetType, { group: string; code: string }
   [AssetType.Etf]: ETF_CLASSIFICATION,
   [AssetType.Bdr]: BDR_CLASSIFICATION,
 };
+const AVERAGE_PRICE_FRACTION_DIGITS = 6;
 
 export function formatBrl(value: number): string {
   return value.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
+  });
+}
+
+function formatAveragePrice(value: number): string {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: AVERAGE_PRICE_FRACTION_DIGITS,
+    maximumFractionDigits: AVERAGE_PRICE_FRACTION_DIGITS,
   });
 }
 
@@ -73,7 +81,7 @@ export function buildDeclarationDescriptionText(input: {
   }>;
 }): string {
   const unitLabel = getAssetUnitLabel(input.assetType);
-  const avgFormatted = formatBrl(input.averagePrice);
+  const avgFormatted = formatAveragePrice(input.averagePrice);
   const totalFormatted = formatBrl(input.currentYearValue);
   const quantityFormatted = formatQuantity(input.quantity);
   const brokersSummary = input.brokersSummary
@@ -168,7 +176,7 @@ export class ReportGenerator {
       ticker: position.ticker,
       assetType: reportAssetType,
       totalQuantity: totalQuantity.toNumber(),
-      averagePrice: averagePrice.toNumber(),
+      averagePrice: averagePrice.toPreciseNumber(),
       previousYearValue: previousYearValue.toNumber(),
       currentYearValue: currentYearValue.toNumber(),
       acquiredInYear: previousYearValue.isZero() && currentYearValue.isGreaterThan(0),
@@ -184,7 +192,7 @@ export class ReportGenerator {
               ticker: position.ticker,
               assetType: reportAssetType,
               issuerCnpj: asset.issuerCnpj,
-              averagePrice: averagePrice.toNumber(),
+              averagePrice: averagePrice.toPreciseNumber(),
               currentYearValue: currentYearValue.toNumber(),
               fractionInfo: projectedPosition.fractionInfo,
               brokersSummary,

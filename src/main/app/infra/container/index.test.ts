@@ -32,6 +32,10 @@ describe('Awilix Container', () => {
     expect(container.resolve('importConsolidatedPositionUseCase')).toBeDefined();
     expect(container.resolve('deletePositionUseCase')).toBeDefined();
     expect(container.resolve('generateAssetsReportUseCase')).toBeDefined();
+    expect(container.resolve('generateCapitalGainsAssessmentUseCase')).toBeDefined();
+    expect(container.resolve('capitalGainsAssessmentQuery')).toBeDefined();
+    expect(container.resolve('capitalGainsAssessmentService')).toBeDefined();
+    expect(container.resolve('capitalGainsLossCompensationService')).toBeDefined();
     expect(container.resolve('repairAssetTypeUseCase')).toBeDefined();
 
     expect(container.resolve('recalculatePositionHandler')).toBeDefined();

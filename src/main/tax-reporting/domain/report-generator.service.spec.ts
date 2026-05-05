@@ -69,6 +69,7 @@ describe('ReportGenerator', () => {
 
       expect(description).toContain('100 cotas PETR4.');
       expect(description).toContain('Corretoras: XP Investimentos');
+      expect(description).toContain('Custo medio: R$ 35,200000.');
       expect(description).toContain('Custo total: R$ 3.520,00.');
     });
   });
@@ -319,14 +320,15 @@ describe('ReportGenerator', () => {
 
       expect(result[0]).toMatchObject({
         totalQuantity: 10.5,
-        averagePrice: 9.52,
         currentYearValue: 100,
       });
+      expect(result[0]?.averagePrice).toBeCloseTo(100 / 10.5, 12);
       expect(result[0]?.brokersSummary[0]).toMatchObject({
         quantity: 10.5,
         totalCost: 100,
       });
       expect(result[0]?.description).toContain('10,5 cotas PETR4.');
+      expect(result[0]?.description).toContain('Custo medio: R$ 9,523810.');
       expect(result[0]?.description).toContain(
         'Sendo 0,5 cotas decorrentes de bonificacao em 2025-06-01.',
       );

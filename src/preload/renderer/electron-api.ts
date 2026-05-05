@@ -11,6 +11,10 @@ import type {
   GenerateAssetsReportResult,
 } from '../contracts/tax-reporting/assets-report.contract';
 import type {
+  GenerateCapitalGainsAssessmentQuery,
+  GenerateCapitalGainsAssessmentResult,
+} from '../contracts/tax-reporting/capital-gains-assessment.contract';
+import type {
   ListPositionsQuery,
   ListPositionsResult,
 } from '../contracts/portfolio/list-positions.contract';
@@ -94,6 +98,9 @@ export type ElectronApi = {
   ) => Promise<DeleteInitialBalanceDocumentResult>;
   listPositions: (input: ListPositionsQuery) => Promise<ListPositionsResult>;
   generateAssetsReport: (input: GenerateAssetsReportQuery) => Promise<GenerateAssetsReportResult>;
+  generateCapitalGainsAssessment: (
+    input: GenerateCapitalGainsAssessmentQuery,
+  ) => Promise<GenerateCapitalGainsAssessmentResult>;
   listAssets: (input?: ListAssetsQuery) => Promise<ListAssetsResult>;
   updateAsset: (input: UpdateAssetCommand) => Promise<UpdateAssetResult>;
   repairAssetType: (input: RepairAssetTypeCommand) => Promise<RepairAssetTypeResult>;

@@ -34,11 +34,15 @@ import {
   previewConsolidatedPositionContract,
   saveInitialBalanceDocumentContract,
 } from '../../../../preload/contracts/portfolio/portfolio';
-import { generateAssetsReportContract } from '../../../../preload/contracts/tax-reporting/report';
+import {
+  generateAssetsReportContract,
+  generateCapitalGainsAssessmentContract,
+} from '../../../../preload/contracts/tax-reporting/report';
 import { CreateBrokerUseCase } from '../../../portfolio/application/use-cases/create-broker/create-broker.use-case';
 import { DeleteInitialBalanceDocumentUseCase } from '../../../portfolio/application/use-cases/delete-initial-balance-document/delete-initial-balance-document.use-case';
 import { DeletePositionUseCase } from '../../../portfolio/application/use-cases/delete-position/delete-position.use-case';
 import { GenerateAssetsReportUseCase } from '../../../tax-reporting/application/use-cases/generate-asset-report/generate-assets-report.use-case';
+import { GenerateCapitalGainsAssessmentUseCase } from '../../../tax-reporting/application/use-cases/generate-capital-gains-assessment/generate-capital-gains-assessment.use-case';
 import { ImportConsolidatedPositionUseCase } from '../../../ingestion/application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
 import { ImportTransactionsUseCase } from '../../../ingestion/application/use-cases/import-transactions/import-transactions-use-case';
 import { DeleteDailyBrokerTaxUseCase } from '../../../ingestion/application/use-cases/delete-daily-broker-tax/delete-daily-broker-tax.use-case';
@@ -87,6 +91,9 @@ import { CsvXlsxTransactionParser } from '../../../ingestion/infra/parsers/csv-x
 import { MemoryQueueAdapter } from '../../../shared/infra/events/memory-queue.adapter';
 import { RecalculatePositionHandler } from '../../../portfolio/infra/handlers/recalculate-position.handler';
 import { CsvXlsxConsolidatedPositionParser } from '../../../ingestion/infra/parsers/csv-xlsx-consolidated-position.parser';
+import { KnexCapitalGainsAssessmentQuery } from '../../../tax-reporting/infra/queries/knex-capital-gains-assessment.query';
+import { CapitalGainsAssessmentService } from '../../../tax-reporting/domain/capital-gains-assessment.service';
+import { CapitalGainsLossCompensationService } from '../../../tax-reporting/domain/capital-gains-loss-compensation.service';
 
 type IpcHandler = (_event: Electron.IpcMainInvokeEvent, ...args: unknown[]) => unknown;
 type IpcMainHandleRegistry = Pick<Electron.IpcMain, 'handle'>;
@@ -152,6 +159,11 @@ describe('IPC handlers integration', () => {
       brokerRepository,
       tickerDataRepository,
       knexTransactionRepository,
+    );
+    const generateCapitalGainsAssessmentUseCase = new GenerateCapitalGainsAssessmentUseCase(
+      new KnexCapitalGainsAssessmentQuery(database),
+      new CapitalGainsAssessmentService(),
+      new CapitalGainsLossCompensationService(),
     );
     const spreadsheetFileReader = new SheetjsSpreadsheetFileReader();
     const transactionParser = new CsvXlsxTransactionParser(spreadsheetFileReader, brokerRepository);
@@ -269,7 +281,10 @@ describe('IPC handlers integration', () => {
       importConsolidatedPositionUseCase,
       deletePositionUseCase,
     );
-    const reportRegistrar = new ReportIpcRegistrar(generateAssetsReportUseCase);
+    const reportRegistrar = new ReportIpcRegistrar(
+      generateAssetsReportUseCase,
+      generateCapitalGainsAssessmentUseCase,
+    );
 
     appRegistrar.register(ipcMain);
     importRegistrar.register(ipcMain);
@@ -291,6 +306,7 @@ describe('IPC handlers integration', () => {
     );
     const listPositionsHandler = handlers.get(listPositionsContract.channel);
     const reportHandler = handlers.get(generateAssetsReportContract.channel);
+    const capitalGainsHandler = handlers.get(generateCapitalGainsAssessmentContract.channel);
 
     if (
       !healthHandler ||
@@ -301,7 +317,8 @@ describe('IPC handlers integration', () => {
       !listInitialBalanceDocumentsHandler ||
       !deleteInitialBalanceDocumentHandler ||
       !listPositionsHandler ||
-      !reportHandler
+      !reportHandler ||
+      !capitalGainsHandler
     ) {
       throw new Error('Some IPC handlers are missing.');
     }
@@ -428,6 +445,13 @@ describe('IPC handlers integration', () => {
         currentYearValue: expect.any(Number),
       }),
     );
+
+    const capitalGainsResult = (await capitalGainsHandler(ipcEvent, { baseYear: 2025 })) as {
+      baseYear: number;
+      months: any[];
+    };
+    expect(capitalGainsResult.baseYear).toBe(2025);
+    expect(capitalGainsResult.months).toBeInstanceOf(Array);
 
     await expect(
       deleteInitialBalanceDocumentHandler(ipcEvent, { ticker: 'IVVB11', year: 2025 }),

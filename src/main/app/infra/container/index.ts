@@ -39,6 +39,10 @@ import { SaveInitialBalanceDocumentUseCase } from '../../../portfolio/applicatio
 import { InitialBalanceDocumentPositionSyncService } from '../../../portfolio/application/services/initial-balance-document-position-sync.service';
 import { ReprocessTickerYearsService } from '../../../portfolio/application/services/reprocess-ticker-years.service';
 import { RepairAssetTypeUseCase } from '../../../portfolio/application/use-cases/repair-asset-type/repair-asset-type.use-case';
+import { GenerateCapitalGainsAssessmentUseCase } from '../../../tax-reporting/application/use-cases/generate-capital-gains-assessment/generate-capital-gains-assessment.use-case';
+import { KnexCapitalGainsAssessmentQuery } from '../../../tax-reporting/infra/queries/knex-capital-gains-assessment.query';
+import { CapitalGainsAssessmentService } from '../../../tax-reporting/domain/capital-gains-assessment.service';
+import { CapitalGainsLossCompensationService } from '../../../tax-reporting/domain/capital-gains-loss-compensation.service';
 
 import { BrokersIpcRegistrar } from '../../../portfolio/transport/registrars/brokers-ipc-registrar';
 import { AssetsIpcRegistrar } from '../../../portfolio/transport/registrars/assets-ipc-registrar';
@@ -89,6 +93,10 @@ export interface AppCradle {
   importConsolidatedPositionUseCase: ImportConsolidatedPositionUseCase;
   deletePositionUseCase: DeletePositionUseCase;
   generateAssetsReportUseCase: GenerateAssetsReportUseCase;
+  generateCapitalGainsAssessmentUseCase: GenerateCapitalGainsAssessmentUseCase;
+  capitalGainsAssessmentQuery: KnexCapitalGainsAssessmentQuery;
+  capitalGainsAssessmentService: CapitalGainsAssessmentService;
+  capitalGainsLossCompensationService: CapitalGainsLossCompensationService;
   repairAssetTypeUseCase: RepairAssetTypeUseCase;
 
   brokersIpcRegistrar: BrokersIpcRegistrar;
@@ -222,6 +230,16 @@ export function registerDependencies(db: Knex) {
     ).singleton(),
     deletePositionUseCase: asClass(DeletePositionUseCase).singleton(),
     generateAssetsReportUseCase: asClass(GenerateAssetsReportUseCase).singleton(),
+    capitalGainsAssessmentQuery: asClass(KnexCapitalGainsAssessmentQuery).singleton(),
+    capitalGainsAssessmentService: asClass(CapitalGainsAssessmentService).singleton(),
+    capitalGainsLossCompensationService: asClass(CapitalGainsLossCompensationService).singleton(),
+    generateCapitalGainsAssessmentUseCase: asClass(GenerateCapitalGainsAssessmentUseCase)
+      .inject(() => ({
+        query: container.resolve('capitalGainsAssessmentQuery'),
+        assessmentService: container.resolve('capitalGainsAssessmentService'),
+        lossCompensationService: container.resolve('capitalGainsLossCompensationService'),
+      }))
+      .singleton(),
     repairAssetTypeUseCase: asClass(RepairAssetTypeUseCase).singleton(),
 
     // IPC registrars
@@ -230,7 +248,14 @@ export function registerDependencies(db: Knex) {
     appIpcRegistrar: asClass(AppIpcRegistrar).singleton(),
     importIpcRegistrar: asClass(ImportIpcRegistrar).singleton(),
     portfolioIpcRegistrar: asClass(PortfolioIpcRegistrar).singleton(),
-    reportIpcRegistrar: asClass(ReportIpcRegistrar).singleton(),
+    reportIpcRegistrar: asClass(ReportIpcRegistrar)
+      .inject(() => ({
+        generateAssetsReportUseCase: container.resolve('generateAssetsReportUseCase'),
+        generateCapitalGainsAssessmentUseCase: container.resolve(
+          'generateCapitalGainsAssessmentUseCase',
+        ),
+      }))
+      .singleton(),
 
     // IPC
     ipcRegistrars: asFunction(

@@ -6,14 +6,16 @@ import { InitialBalancePage } from './pages/InitialBalancePage';
 import { PositionsPage } from './pages/PositionsPage';
 import { ReportPage } from './pages/ReportPage';
 import { AssetsPage } from './pages/AssetsPage';
+import { CapitalGainsPage } from './pages/capital-gains-page/capital-gains-page';
 
-type MainTab = 'import' | 'initial-balance' | 'positions' | 'report' | 'brokers' | 'assets';
+type MainTab = 'import' | 'initial-balance' | 'positions' | 'report' | 'capital-gains' | 'assets' | 'brokers';
 
 const tabItems: Array<{ id: MainTab; label: string }> = [
   { id: 'import', label: 'Importacao e Conferencia' },
   { id: 'initial-balance', label: 'Saldo Inicial' },
   { id: 'positions', label: 'Posicoes' },
   { id: 'report', label: 'Relatorio Bens e Direitos' },
+  { id: 'capital-gains', label: 'Ganhos de Capital' },
   { id: 'assets', label: 'Ativos' },
   { id: 'brokers', label: 'Corretoras' },
 ];
@@ -52,6 +54,7 @@ export function App(): JSX.Element {
         {activeTab === 'initial-balance' ? <InitialBalancePage /> : null}
         {activeTab === 'positions' ? <PositionsPage /> : null}
         {activeTab === 'report' ? <ReportPage /> : null}
+        {activeTab === 'capital-gains' ? <CapitalGainsPage /> : null}
         {activeTab === 'assets' ? <AssetsPage /> : null}
         {activeTab === 'brokers' ? <BrokersPage /> : null}
       </main>

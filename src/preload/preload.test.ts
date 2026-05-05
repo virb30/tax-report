@@ -17,7 +17,10 @@ import {
   listPositionsContract,
   saveInitialBalanceDocumentContract,
 } from './contracts/portfolio/portfolio';
-import { generateAssetsReportContract } from './contracts/tax-reporting/report';
+import {
+  generateAssetsReportContract,
+  generateCapitalGainsAssessmentContract,
+} from './contracts/tax-reporting/report';
 import { ipcContracts, rendererExposedIpcContracts } from './ipc/ipc-contract-registry';
 
 const exposeInMainWorld = jest.fn();
@@ -78,6 +81,7 @@ describe('preload', () => {
     await electronApi.deleteInitialBalanceDocument({ ticker: 'IVVB11', year: 2025 });
     await electronApi.listPositions({ baseYear: 2025 });
     await electronApi.generateAssetsReport({ baseYear: 2025 });
+    await electronApi.generateCapitalGainsAssessment({ baseYear: 2025 });
     await electronApi.listAssets({ pendingOnly: true });
     await electronApi.updateAsset({
       ticker: 'IVVB11',
@@ -132,15 +136,18 @@ describe('preload', () => {
     expect(invoke).toHaveBeenNthCalledWith(11, generateAssetsReportContract.channel, {
       baseYear: 2025,
     });
-    expect(invoke).toHaveBeenNthCalledWith(12, listAssetsContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(12, generateCapitalGainsAssessmentContract.channel, {
+      baseYear: 2025,
+    });
+    expect(invoke).toHaveBeenNthCalledWith(13, listAssetsContract.channel, {
       pendingOnly: true,
     });
-    expect(invoke).toHaveBeenNthCalledWith(13, updateAssetContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(14, updateAssetContract.channel, {
       ticker: 'IVVB11',
       assetType: AssetType.Etf,
       name: 'iShares Core S&P 500',
     });
-    expect(invoke).toHaveBeenNthCalledWith(14, repairAssetTypeContract.channel, {
+    expect(invoke).toHaveBeenNthCalledWith(15, repairAssetTypeContract.channel, {
       ticker: 'IVVB11',
       assetType: AssetType.Etf,
     });
@@ -157,6 +164,7 @@ describe('preload', () => {
       'deleteInitialBalanceDocument',
       'deletePosition',
       'generateAssetsReport',
+      'generateCapitalGainsAssessment',
       'importConsolidatedPosition',
       'importDailyBrokerTaxes',
       'importSelectFile',
