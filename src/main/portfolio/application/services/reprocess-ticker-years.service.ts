@@ -1,5 +1,5 @@
 import type { AssetType } from '../../../../shared/types/domain';
-import type { RecalculatePositionUseCase } from '../use-cases/recalculate-position/recalculate-position.use-case';
+import type { RecalculatePositionUseCase } from '../use-cases/recalculate-position.use-case';
 
 export class ReprocessTickerYearsService {
   constructor(private readonly recalculatePositionUseCase: RecalculatePositionUseCase) {}

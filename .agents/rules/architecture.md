@@ -25,7 +25,23 @@ A arquitetura deve ser separada em camadas claras dentro do contexto delimitado.
 Casos de uso devem ter uma responsabilidade clara e bem definida, representando a intenção do usuário.
 Um caso de uso não pode depender diretamente de outro caso de uso.
 Siga `@.agents/rules/folder-structure.md` para localizacao e arquivos do use case.
-Use cases devem ter apenas um método: `execute(input: InputType): Promise<OutputType>`
+Use cases devem ter apenas um método: `execute(input: InputType): Promise<OutputType>`, InputType e OutputType devem ser exportados no mesmo arquivo
+Exemplo:
+```ts
+export interface InputType {
+ property: Type
+}
+
+export interface OutputType {
+ property: Type
+}
+
+async execute(input: InputType): Promise<OutputType> {
+ // use-case logics
+}
+
+```
+
 Injeção de dependências (repositories, portas) via construtor
 
 ## Infrastructure Layer

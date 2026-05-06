@@ -7,6 +7,19 @@ import { Money } from '../../portfolio/domain/value-objects/money.vo';
 import { Quantity } from '../../portfolio/domain/value-objects/quantity.vo';
 import { Uuid } from '../../shared/domain/value-objects/uuid.vo';
 
+const FRACTION_SOURCE_LABELS = new Map<TransactionType, string>([
+  [TransactionType.Bonus, 'bonificacao'],
+  [TransactionType.Split, 'split'],
+  [TransactionType.ReverseSplit, 'grupamento'],
+]);
+
+const PROJECTION_RELEVANT_TYPES = new Set<TransactionType>([
+  TransactionType.Bonus,
+  TransactionType.Split,
+  TransactionType.ReverseSplit,
+  TransactionType.FractionAuction,
+]);
+
 export type ReportFractionSource = {
   eventType: string;
   date: string;
@@ -88,29 +101,16 @@ export class ReportPositionProjectionService {
   }
 
   private toFractionSource(transaction: Transaction): ReportFractionSource | null {
-    if (transaction.type === TransactionType.Bonus) {
-      return { eventType: 'bonificacao', date: transaction.date };
+    const eventType = FRACTION_SOURCE_LABELS.get(transaction.type);
+    if (!eventType) {
+      return null;
     }
 
-    if (transaction.type === TransactionType.Split) {
-      return { eventType: 'split', date: transaction.date };
-    }
-
-    if (transaction.type === TransactionType.ReverseSplit) {
-      return { eventType: 'grupamento', date: transaction.date };
-    }
-
-    return null;
+    return { eventType, date: transaction.date };
   }
 
   private hasProjectionRelevantTransaction(transactions: Transaction[]): boolean {
-    return transactions.some(
-      (transaction) =>
-        transaction.type === TransactionType.Bonus ||
-        transaction.type === TransactionType.Split ||
-        transaction.type === TransactionType.ReverseSplit ||
-        transaction.type === TransactionType.FractionAuction,
-    );
+    return transactions.some((transaction) => PROJECTION_RELEVANT_TYPES.has(transaction.type));
   }
 
   private appendUniqueSource(
@@ -201,6 +201,7 @@ class ReportPositionProjectionState {
         break;
       case TransactionType.FractionAuction:
         break;
+      /* istanbul ignore next -- compile-time exhaustiveness guard for future enum expansion. */
       default: {
         const _exhaustive: never = transaction.type;
         throw new Error(`Unsupported transaction type: ${String(_exhaustive)}`);
