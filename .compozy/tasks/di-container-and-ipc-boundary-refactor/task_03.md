@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: "Clean Shared Domain Types Boundary"
 type: refactor
 complexity: high
@@ -30,11 +30,11 @@ This task dismantles `src/shared/types/domain.ts` as a mixed public/internal bou
 </requirements>
 
 ## Subtasks
-- [ ] 3.1 Audit the enums and types in `src/shared/types/domain.ts` and assign each one to either IPC public ownership or backend internal ownership.
-- [ ] 3.2 Move renderer-facing boundary types into `src/ipc/contracts/**` and update the contract modules that expose them publicly.
-- [ ] 3.3 Move backend-only type ownership into `src/main/**` where application/domain code can depend on them without leaking to renderer.
-- [ ] 3.4 Rewrite renderer imports so pages, hooks, components, and tests stop depending on `src/shared/types/domain.ts`.
-- [ ] 3.5 Remove or empty obsolete exports from `src/shared/types/domain.ts` once all approved consumers have been migrated.
+- [x] 3.1 Audit the enums and types in `src/shared/types/domain.ts` and assign each one to either IPC public ownership or backend internal ownership.
+- [x] 3.2 Move renderer-facing boundary types into `src/ipc/contracts/**` and update the contract modules that expose them publicly.
+- [x] 3.3 Move backend-only type ownership into `src/main/**` where application/domain code can depend on them without leaking to renderer.
+- [x] 3.4 Rewrite renderer imports so pages, hooks, components, and tests stop depending on `src/shared/types/domain.ts`.
+- [x] 3.5 Remove or empty obsolete exports from `src/shared/types/domain.ts` once all approved consumers have been migrated.
 
 ## Implementation Details
 Use the TechSpec "Data Models", "Impact Analysis", and "Development Sequencing" steps 4, 5, and 8 as the authoritative migration boundary. This task should not reintroduce a second public entrypoint; public types belong in the IPC module, not back in `src/shared`.
@@ -73,13 +73,13 @@ The task must keep transport/application seams clear: if a type is part of the p
 
 ## Tests
 - Unit tests:
-  - [ ] Asset-related renderer-facing enums remain usable from the IPC public boundary without importing `src/shared/types/domain.ts`.
-  - [ ] Reporting public status and pending-issue codes remain available from IPC-owned types with unchanged serialized values.
-  - [ ] Import preview/public resolution-state types remain stable after being moved out of the shared boundary.
-  - [ ] Backend internal modules that still need transaction/source semantics compile against internal ownership rather than public boundary ownership.
+  - [x] Asset-related renderer-facing enums remain usable from the IPC public boundary without importing `src/shared/types/domain.ts`.
+  - [x] Reporting public status and pending-issue codes remain available from IPC-owned types with unchanged serialized values.
+  - [x] Import preview/public resolution-state types remain stable after being moved out of the shared boundary.
+  - [x] Backend internal modules that still need transaction/source semantics compile against internal ownership rather than public boundary ownership.
 - Integration tests:
-  - [ ] Renderer page and component tests for assets, positions, initial balance, imports, and reports pass without importing `src/shared/types/domain.ts`.
-  - [ ] Main-side transport/application tests continue to pass after the type-ownership split.
+  - [x] Renderer page and component tests for assets, positions, initial balance, imports, and reports pass without importing `src/shared/types/domain.ts`.
+  - [x] Main-side transport/application tests continue to pass after the type-ownership split.
 - Test coverage target: >=80%
 - All tests must pass
 

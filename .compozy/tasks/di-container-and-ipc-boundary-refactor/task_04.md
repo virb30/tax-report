@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: "Modularize Main Container Bootstrap"
 type: backend
 complexity: critical
@@ -29,11 +29,11 @@ This task breaks the monolithic main-process composition root into bounded-conte
 </requirements>
 
 ## Subtasks
-- [ ] 4.1 Define the root bootstrap contract and root/shared registration responsibilities in `src/main/app/infra/container`.
-- [ ] 4.2 Create context-owned registration modules under `src/main/app`, `src/main/portfolio`, `src/main/ingestion`, and `src/main/tax-reporting`.
-- [ ] 4.3 Move repository, service, use-case, handler, and registrar registrations out of the monolithic container file into the correct context registrars.
-- [ ] 4.4 Assemble `ipcRegistrars` and `ipcRegistry` from the modular context registrations via the new bootstrap root.
-- [ ] 4.5 Replace global-container-oriented bootstrap tests with tests that exercise the new per-start bootstrap factory and modular registration ownership.
+- [x] 4.1 Define the root bootstrap contract and root/shared registration responsibilities in `src/main/app/infra/container`.
+- [x] 4.2 Create context-owned registration modules under `src/main/app`, `src/main/portfolio`, `src/main/ingestion`, and `src/main/tax-reporting`.
+- [x] 4.3 Move repository, service, use-case, handler, and registrar registrations out of the monolithic container file into the correct context registrars.
+- [x] 4.4 Assemble `ipcRegistrars` and `ipcRegistry` from the modular context registrations via the new bootstrap root.
+- [x] 4.5 Replace global-container-oriented bootstrap tests with tests that exercise the new per-start bootstrap factory and modular registration ownership.
 
 ## Implementation Details
 Use the TechSpec "System Architecture", "Impact Analysis", and "Development Sequencing" steps 6 and 7 together with ADR-001 as the governing design. This task is about composition ownership and bootstrap shape, not about renderer import cleanup or final lint enforcement.
@@ -72,13 +72,13 @@ Keep Awilix as the DI framework baseline. The refactor should make ownership exp
 
 ## Tests
 - Unit tests:
-  - [ ] Root bootstrap creates a fresh container per invocation and returns an `ipcRegistry`.
-  - [ ] Shared infrastructure registration exposes database, queue, and other cross-context dependencies without duplicate ownership.
-  - [ ] Portfolio, ingestion, app, and reporting registration modules resolve their expected use cases and registrars.
-  - [ ] Container tests no longer depend on a global exported singleton.
+  - [x] Root bootstrap creates a fresh container per invocation and returns an `ipcRegistry`.
+  - [x] Shared infrastructure registration exposes database, queue, and other cross-context dependencies without duplicate ownership.
+  - [x] Portfolio, ingestion, app, and reporting registration modules resolve their expected use cases and registrars.
+  - [x] Container tests no longer depend on a global exported singleton.
 - Integration tests:
-  - [ ] Main startup wiring can assemble and register IPC handlers through the modular bootstrap output.
-  - [ ] Existing handler integration tests for app, portfolio, ingestion, and reporting continue to pass after the composition split.
+  - [x] Main startup wiring can assemble and register IPC handlers through the modular bootstrap output.
+  - [x] Existing handler integration tests for app, portfolio, ingestion, and reporting continue to pass after the composition split.
 - Test coverage target: >=80%
 - All tests must pass
 

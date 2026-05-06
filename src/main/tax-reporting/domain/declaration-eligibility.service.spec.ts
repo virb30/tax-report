@@ -1,4 +1,4 @@
-import { AssetType, ReportItemStatus } from '../../../shared/types/domain';
+import { AssetType, ReportItemStatus } from '../../shared/types/domain';
 import { Money } from '../../portfolio/domain/value-objects/money.vo';
 import { DeclarationEligibilityService } from './declaration-eligibility.service';
 

@@ -1,4 +1,4 @@
-import { AssetType, PendingIssueCode, ReportItemStatus } from '../../../shared/types/domain';
+import { AssetType, PendingIssueCode, ReportItemStatus } from '../../shared/types/domain';
 import type { AssetPosition } from '../../portfolio/domain/entities/asset-position.entity';
 
 import type { Asset } from '../../portfolio/domain/entities/asset.entity';

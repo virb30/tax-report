@@ -1,5 +1,5 @@
 import { mock } from 'jest-mock-extended';
-import { AssetType, AssetTypeSource } from '../../../../shared/types/domain';
+import { AssetType, AssetTypeSource } from '../../../shared/types/domain';
 import type { AssetPositionRepository } from '../repositories/asset-position.repository';
 import type { AssetRepository } from '../repositories/asset.repository';
 import type { BrokerRepository } from '../repositories/broker.repository';

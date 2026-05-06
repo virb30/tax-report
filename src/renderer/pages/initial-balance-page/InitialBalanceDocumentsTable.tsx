@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import type { InitialBalanceDocument } from '../../../preload/contracts/portfolio/initial-balance.contract';
+import type { InitialBalanceDocument } from '../../../ipc/public';
 import type { Broker } from '../../types/broker.types';
 
 type InitialBalanceDocumentsTableProps = {

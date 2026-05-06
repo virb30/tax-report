@@ -1,4 +1,4 @@
-import type { AssetType } from '../../../../shared/types/domain';
+import type { AssetType } from '../../../shared/types/domain';
 import { YEAR_RANGE } from '../../../../shared/utils/year';
 import type { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import { AveragePriceService } from '../services/average-price.service';

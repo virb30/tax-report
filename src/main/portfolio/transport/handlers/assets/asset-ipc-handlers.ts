@@ -1,12 +1,12 @@
 import type { ListAssetsUseCase } from '../../../application/use-cases/list-assets.use-case';
 import type { RepairAssetTypeUseCase } from '../../../application/use-cases/repair-asset-type.use-case';
 import type { UpdateAssetUseCase } from '../../../application/use-cases/update-asset.use-case';
-import type { IpcContractHandler } from '../../../../../preload/main/binding/bind-ipc-contract';
+import type { IpcContractHandler } from '../../../../../ipc/main/binding/bind-ipc-contract';
 import type {
   listAssetsContract,
   repairAssetTypeContract,
   updateAssetContract,
-} from '../../../../../preload/contracts/portfolio/assets';
+} from '../../../../../ipc/contracts/portfolio/assets';
 
 export type AssetIpcHandlers = {
   list: IpcContractHandler<typeof listAssetsContract>;

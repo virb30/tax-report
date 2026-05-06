@@ -1,4 +1,4 @@
-import { OperationType } from '../../../../shared/types/domain';
+import { OperationType } from '../../../shared/types/domain';
 
 export interface SpreadsheetTransactionMapper {
   mapRowType(direction: string, movementType: string): OperationType | null;

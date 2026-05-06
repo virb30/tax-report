@@ -1,7 +1,7 @@
 import { AssetPosition } from '../../portfolio/domain/entities/asset-position.entity';
 import type { Transaction } from '../../portfolio/domain/entities/transaction.entity';
 import { PositionCalculatorService } from '../../portfolio/domain/services/position-calculator.service';
-import type { AssetType } from '../../../shared/types/domain';
+import type { AssetType } from '../../shared/types/domain';
 
 export class HistoricalPositionService {
   private readonly positionCalculator = new PositionCalculatorService();

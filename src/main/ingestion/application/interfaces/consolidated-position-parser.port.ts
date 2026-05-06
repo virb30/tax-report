@@ -1,4 +1,4 @@
-import type { AssetType } from '../../../../shared/types/domain';
+import type { AssetType } from '../../../shared/types/domain';
 
 export type ConsolidatedPositionRow = {
   ticker: string;

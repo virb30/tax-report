@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AssetType } from '../../shared/types/domain';
-import type { ElectronApi } from '../../preload/renderer/electron-api';
+import { AssetType } from '../../ipc/public';
+import type { ElectronApi } from '../../ipc/public';
 import { AssetsPage } from './AssetsPage';
 import { mockReset } from 'jest-mock-extended';
 import mock, { type MockProxy } from 'jest-mock-extended/lib/Mock';
-import type { AssetCatalogItem } from '../../preload/contracts/portfolio/assets.contract';
+import type { AssetCatalogItem } from '../../ipc/public';
 
 function createElectronApiMock(electronApiBaseMock: MockProxy<ElectronApi>): ElectronApi {
   mockReset(electronApiBaseMock);

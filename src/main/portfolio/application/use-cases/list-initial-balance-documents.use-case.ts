@@ -1,9 +1,12 @@
-import type { ListInitialBalanceDocumentsQuery } from '../../../../preload/contracts/portfolio/initial-balance.contract';
-import { AssetType } from '../../../../shared/types/domain';
+import { AssetType } from '../../../shared/types/domain';
 import { assertSupportedYear } from '../../../../shared/utils/year';
 import type { AssetRepository } from '../repositories/asset.repository';
 import type { AssetPositionRepository } from '../repositories/asset-position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
+
+export interface ListInitialBalanceDocumentsInput {
+  year: number;
+}
 
 export class ListInitialBalanceDocumentsUseCase {
   constructor(
@@ -12,7 +15,7 @@ export class ListInitialBalanceDocumentsUseCase {
     private readonly assetRepository: AssetRepository,
   ) {}
 
-  async execute(input: ListInitialBalanceDocumentsQuery) {
+  async execute(input: ListInitialBalanceDocumentsInput) {
     assertSupportedYear(input.year, {
       invalidTypeMessage: 'Ano inválido.',
       outOfRangeMessage: 'Ano deve estar entre 2000 e 2100.',

@@ -1,4 +1,4 @@
-import { AssetType, SourceType, TransactionType } from '../../../shared/types/domain';
+import { AssetType, SourceType, TransactionType } from '../../shared/types/domain';
 import { Transaction } from '../../portfolio/domain/entities/transaction.entity';
 import { Money } from '../../portfolio/domain/value-objects/money.vo';
 import { Quantity } from '../../portfolio/domain/value-objects/quantity.vo';

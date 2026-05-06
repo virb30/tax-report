@@ -1,5 +1,5 @@
-import { TransactionType } from '../../../shared/types/domain';
-import type { AssetType } from '../../../shared/types/domain';
+import { TransactionType } from '../../shared/types/domain';
+import type { AssetType } from '../../shared/types/domain';
 import { AssetPosition } from '../../portfolio/domain/entities/asset-position.entity';
 import type { BrokerAllocation } from '../../portfolio/domain/entities/asset-position.entity';
 import type { Transaction } from '../../portfolio/domain/entities/transaction.entity';

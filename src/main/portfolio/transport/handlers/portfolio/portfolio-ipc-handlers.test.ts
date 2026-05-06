@@ -7,7 +7,7 @@ import type { ListPositionsUseCase } from '../../../application/use-cases/list-p
 import type { MigrateYearUseCase } from '../../../application/use-cases/migrate-year.use-case';
 import type { RecalculatePositionUseCase } from '../../../application/use-cases/recalculate-position.use-case';
 import type { SaveInitialBalanceDocumentUseCase } from '../../../application/use-cases/save-initial-balance-document.use-case';
-import { AssetResolutionStatus, AssetType } from '../../../../../shared/types/domain';
+import { AssetResolutionStatus, AssetType } from '../../../../shared/types/domain';
 import { createPortfolioIpcHandlers } from './portfolio-ipc-handlers';
 
 describe('createPortfolioIpcHandlers', () => {

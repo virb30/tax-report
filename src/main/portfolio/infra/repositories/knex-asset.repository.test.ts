@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import { AssetType, AssetTypeSource } from '../../../../shared/types/domain';
+import { AssetType, AssetTypeSource } from '../../../shared/types/domain';
 import { createDatabaseConnection, initializeDatabase } from '../../../app/infra/database/database';
 import { Asset } from '../../domain/entities/asset.entity';
 import { Cnpj } from '../../../shared/domain/value-objects/cnpj.vo';

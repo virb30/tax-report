@@ -5,7 +5,7 @@ import {
   ReportItemStatus,
   SourceType,
   TransactionType,
-} from '../../../shared/types/domain';
+} from '../../shared/types/domain';
 import { Asset } from '../../portfolio/domain/entities/asset.entity';
 import { AssetPosition } from '../../portfolio/domain/entities/asset-position.entity';
 import { Broker } from '../../portfolio/domain/entities/broker.entity';

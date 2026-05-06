@@ -1,5 +1,5 @@
-import { AssetType } from '../../../../shared/types/domain';
-import { SourceType, TransactionType } from '../../../../shared/types/domain';
+import { AssetType } from '../../../shared/types/domain';
+import { SourceType, TransactionType } from '../../../shared/types/domain';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import { AssetPosition } from '../entities/asset-position.entity';
 import { Transaction } from '../entities/transaction.entity';

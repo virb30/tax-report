@@ -1,4 +1,4 @@
-import { SourceType, TransactionType } from '../../../../shared/types/domain';
+import { SourceType, TransactionType } from '../../../shared/types/domain';
 import { Transaction } from './transaction.entity';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import { Quantity } from '../value-objects/quantity.vo';

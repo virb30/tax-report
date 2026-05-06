@@ -6,8 +6,8 @@ import type { ListPositionsUseCase } from '../../../application/use-cases/list-p
 import type { MigrateYearUseCase } from '../../../application/use-cases/migrate-year.use-case';
 import type { RecalculatePositionUseCase } from '../../../application/use-cases/recalculate-position.use-case';
 import type { SaveInitialBalanceDocumentUseCase } from '../../../application/use-cases/save-initial-balance-document.use-case';
-import type { IpcContractHandler } from '../../../../../preload/main/binding/bind-ipc-contract';
-import type { AssetType } from '../../../../../shared/types/domain';
+import type { IpcContractHandler } from '../../../../../ipc/main/binding/bind-ipc-contract';
+import type { AssetType } from '../../../../shared/types/domain';
 import type {
   deleteInitialBalanceDocumentContract,
   deleteAllPositionsContract,
@@ -19,8 +19,8 @@ import type {
   previewConsolidatedPositionContract,
   recalculatePositionContract,
   saveInitialBalanceDocumentContract,
-} from '../../../../../preload/contracts/portfolio/portfolio';
-import { ipcSuccess } from '../../../../../preload/ipc/ipc-result';
+} from '../../../../../ipc/contracts/portfolio/portfolio';
+import { ipcSuccess } from '../../../../../ipc/ipc-result';
 
 export type PortfolioIpcHandlers = {
   saveInitialBalanceDocument: IpcContractHandler<typeof saveInitialBalanceDocumentContract>;

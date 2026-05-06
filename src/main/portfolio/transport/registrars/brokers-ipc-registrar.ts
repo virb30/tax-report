@@ -1,13 +1,13 @@
 import type {
   IpcMainHandleRegistry,
   IpcRegistrar,
-} from '../../../../preload/main/registry/ipc-registrar';
+} from '../../../../ipc/main/registry/ipc-registrar';
 import type { CreateBrokerUseCase } from '../../application/use-cases/create-broker.use-case';
 import type { ListBrokersUseCase } from '../../application/use-cases/list-brokers.use-case';
 import type { UpdateBrokerUseCase } from '../../application/use-cases/update-broker.use-case';
 import type { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker.use-case';
-import { bindIpcContract } from '../../../../preload/main/binding/bind-ipc-contract';
-import { toIpcFailureResult } from '../../../../preload/main/binding/ipc-error-mapper';
+import { bindIpcContract } from '../../../../ipc/main/binding/bind-ipc-contract';
+import { toIpcFailureResult } from '../../../../ipc/main/binding/ipc-error-mapper';
 import { createBrokerIpcHandlers } from '../handlers/brokers/broker-ipc-handlers';
 import {
   brokerIpcContracts,
@@ -15,7 +15,7 @@ import {
   listBrokersContract,
   toggleBrokerActiveContract,
   updateBrokerContract,
-} from '../../../../preload/contracts/portfolio/brokers';
+} from '../../../../ipc/contracts/portfolio/brokers';
 
 export class BrokersIpcRegistrar implements IpcRegistrar {
   constructor(

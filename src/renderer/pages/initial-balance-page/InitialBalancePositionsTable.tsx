@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import type { PositionListItem } from '../../../preload/contracts/portfolio/list-positions.contract';
+import type { PositionListItem } from '../../../ipc/public';
 
 type InitialBalancePositionsTableProps = {
   isLoading: boolean;

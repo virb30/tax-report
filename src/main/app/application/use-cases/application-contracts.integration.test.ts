@@ -8,7 +8,7 @@ import {
   AssetTypeSource,
   SourceType,
   TransactionType,
-} from '../../../../shared/types/domain';
+} from '../../../shared/types/domain';
 import { createDatabaseConnection, initializeDatabase } from '../../infra/database/database';
 import { KnexBrokerRepository } from '../../../portfolio/infra/repositories/knex-broker.repository';
 import { KnexPositionRepository } from '../../../portfolio/infra/repositories/knex-position.repository';

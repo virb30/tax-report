@@ -1,7 +1,7 @@
 import type { AssetPositionRepository } from '../repositories/asset-position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
-import { AssetType } from '../../../../shared/types/domain';
-import type { AveragePriceFeeMode } from '../../../../shared/types/domain';
+import { AssetType } from '../../../shared/types/domain';
+import type { AveragePriceFeeMode } from '../../../shared/types/domain';
 import { AssetPosition } from '../../domain/entities/asset-position.entity';
 import { PositionCalculatorService } from '../../domain/services/position-calculator.service';
 

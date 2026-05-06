@@ -5,7 +5,7 @@ import { Asset } from '../../domain/entities/asset.entity';
 import { AssetPosition } from '../../domain/entities/asset-position.entity';
 import { Cnpj } from '../../../shared/domain/value-objects/cnpj.vo';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
-import { AssetType, AssetTypeSource } from '../../../../shared/types/domain';
+import { AssetType, AssetTypeSource } from '../../../shared/types/domain';
 import type { AssetRepository } from '../repositories/asset.repository';
 import type { AssetPositionRepository } from '../repositories/asset-position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';

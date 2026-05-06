@@ -2,16 +2,10 @@ import '@testing-library/jest-dom';
 
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type {
-  InitialBalanceDocument,
-  ListInitialBalanceDocumentsResult,
-} from '../../preload/contracts/portfolio/initial-balance.contract';
-import type {
-  ListPositionsResult,
-  PositionListItem,
-} from '../../preload/contracts/portfolio/list-positions.contract';
-import { AssetType } from '../../shared/types/domain';
-import type { ElectronApi } from '../../preload/renderer/electron-api';
+import type { InitialBalanceDocument, ListInitialBalanceDocumentsResult } from '../../ipc/public';
+import type { ListPositionsResult, PositionListItem } from '../../ipc/public';
+import { AssetType } from '../../ipc/public';
+import type { ElectronApi } from '../../ipc/public';
 import { listActiveBrokers } from '../services/api/list-brokers';
 import { InitialBalancePage } from './InitialBalancePage';
 import mock, { mockReset } from 'jest-mock-extended/lib/Mock';
@@ -77,7 +71,7 @@ describe('InitialBalancePage', () => {
   beforeEach(() => {
     mockReset(electronApi);
     (electronApi as ElectronApi).appName = 'tax-report';
-    window.electronApi = electronApi as ElectronApi;
+    window.electronApi = electronApi;
 
     mockedListActiveBrokers.mockResolvedValue([
       { id: 'broker-xp', name: 'XP', cnpj: '00.000.000/0001-00', code: 'XP', active: true },

@@ -5,8 +5,8 @@ import type {
 } from '../../application/repositories/transaction.repository';
 import { Transaction } from '../../domain/entities/transaction.entity';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
-import { TransactionType } from '../../../../shared/types/domain';
-import type { SourceType } from '../../../../shared/types/domain';
+import { TransactionType } from '../../../shared/types/domain';
+import type { SourceType } from '../../../shared/types/domain';
 import { Quantity } from '../../domain/value-objects/quantity.vo';
 import { Money } from '../../domain/value-objects/money.vo';
 

@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import type { JSX } from 'react';
-import { AssetType } from '../../../shared/types/domain';
-import type { AssetCatalogItem } from '../../../preload/contracts/portfolio/assets.contract';
+import { AssetType } from '../../../ipc/public';
+import type { AssetCatalogItem } from '../../../ipc/public';
 
 interface EditAssetModalProps {
   asset: AssetCatalogItem | null;

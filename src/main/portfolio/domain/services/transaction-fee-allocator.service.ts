@@ -1,4 +1,4 @@
-import { TransactionType } from '../../../../shared/types/domain';
+import { TransactionType } from '../../../shared/types/domain';
 import type { Transaction } from '../entities/transaction.entity';
 import { TransactionFee } from '../entities/transaction-fee.entity';
 import { Money } from '../value-objects/money.vo';

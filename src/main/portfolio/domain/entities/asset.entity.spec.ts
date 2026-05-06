@@ -1,4 +1,4 @@
-import { AssetType, AssetTypeSource } from '../../../../shared/types/domain';
+import { AssetType, AssetTypeSource } from '../../../shared/types/domain';
 import { Cnpj } from '../../../shared/domain/value-objects/cnpj.vo';
 import { Asset } from './asset.entity';
 

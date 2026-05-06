@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: "Adjust Public IPC Contracts"
 type: refactor
 complexity: critical
@@ -28,11 +28,11 @@ This task moves the public process-boundary contracts out of `src/preload/contra
 </requirements>
 
 ## Subtasks
-- [ ] 1.1 Move the public contract definitions and grouped contract exports from `src/preload/contracts/**` into `src/ipc/contracts/**` by bounded context.
-- [ ] 1.2 Rehome renderer-facing DTO enums and result payload types so the IPC module owns the public contract surface.
-- [ ] 1.3 Update contract consumers in main-side registrars, handlers, preload tests, and contract tests to the new paths.
-- [ ] 1.4 Preserve all public channel IDs and renderer API names while removing legacy contract ownership from `src/preload/contracts/**`.
-- [ ] 1.5 Verify contract registry and payload validation behavior through focused regression tests.
+- [x] 1.1 Move the public contract definitions and grouped contract exports from `src/preload/contracts/**` into `src/ipc/contracts/**` by bounded context.
+- [x] 1.2 Rehome renderer-facing DTO enums and result payload types so the IPC module owns the public contract surface.
+- [x] 1.3 Update contract consumers in main-side registrars, handlers, preload tests, and contract tests to the new paths.
+- [x] 1.4 Preserve all public channel IDs and renderer API names while removing legacy contract ownership from `src/preload/contracts/**`.
+- [x] 1.5 Verify contract registry and payload validation behavior through focused regression tests.
 
 ## Implementation Details
 This task is driven by the TechSpec sections "System Architecture", "Data Models", and "Development Sequencing" steps 1 and 2. Keep the migration as a direct cut: no parallel legacy export surface should remain under `src/preload/contracts/**` once the new IPC contract ownership is in place.
@@ -70,14 +70,14 @@ Because there is no `_prd.md` for this feature, derive scope from the TechSpec p
 
 ## Tests
 - Unit tests:
-  - [ ] Contract registry still rejects duplicate renderer API names after the contract move.
-  - [ ] Contract registry still rejects duplicate IPC channels after the contract move.
-  - [ ] Portfolio contract schemas still validate `saveInitialBalanceDocument`, `listPositions`, and `recalculatePosition` payloads with the same channel names.
-  - [ ] Ingestion contract schemas still validate preview/import payloads and preserve current result/error modes.
-  - [ ] Reporting and app contract exports still expose the same public contract IDs and channel strings.
+  - [x] Contract registry still rejects duplicate renderer API names after the contract move.
+  - [x] Contract registry still rejects duplicate IPC channels after the contract move.
+  - [x] Portfolio contract schemas still validate `saveInitialBalanceDocument`, `listPositions`, and `recalculatePosition` payloads with the same channel names.
+  - [x] Ingestion contract schemas still validate preview/import payloads and preserve current result/error modes.
+  - [x] Reporting and app contract exports still expose the same public contract IDs and channel strings.
 - Integration tests:
-  - [ ] Preload contract exposure test still proves every renderer-exposed contract channel is registered.
-  - [ ] Main integration tests can import moved contracts and still bind the same channel names for app, portfolio, ingestion, and reporting flows.
+  - [x] Preload contract exposure test still proves every renderer-exposed contract channel is registered.
+  - [x] Main integration tests can import moved contracts and still bind the same channel names for app, portfolio, ingestion, and reporting flows.
 - Test coverage target: >=80%
 - All tests must pass
 

@@ -1,7 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { ElectronApi } from './renderer/electron-api';
-import { buildElectronApi } from './renderer/build-electron-api';
-import { rendererExposedIpcContracts } from './ipc/ipc-contract-registry';
+import { buildElectronApi, type ElectronApi, rendererExposedIpcContracts } from '../ipc/public';
 
 export const electronApi = buildElectronApi(
   ipcRenderer,

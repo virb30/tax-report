@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { AssetType } from '../../../../shared/types/domain';
+import { AssetType } from '../../../shared/types/domain';
 import { CsvXlsxConsolidatedPositionParser } from './csv-xlsx-consolidated-position.parser';
 
 async function createTempFile(fileName: string, content: string): Promise<string> {

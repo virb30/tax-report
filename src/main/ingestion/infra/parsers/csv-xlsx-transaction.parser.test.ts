@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx';
 import { SheetjsSpreadsheetFileReader } from '../file-readers/sheetjs.spreadsheet.file-reader';
 import { CsvXlsxTransactionParser } from './csv-xlsx-transaction.parser';
 import type { BrokerRepository } from '../../../portfolio/application/repositories/broker.repository';
-import { AssetType, TransactionType } from '../../../../shared/types/domain';
+import { AssetType, TransactionType } from '../../../shared/types/domain';
 import { Broker } from '../../../portfolio/domain/entities/broker.entity';
 import { Cnpj } from '../../../shared/domain/value-objects/cnpj.vo';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';

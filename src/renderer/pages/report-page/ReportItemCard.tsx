@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
-import { AssetType, ReportItemStatus } from '../../../shared/types/domain';
-import type { AssetsReportItem } from '../../../preload/contracts/tax-reporting/assets-report.contract';
+import { AssetType, ReportItemStatus } from '../../../ipc/public';
+import type { AssetsReportItem } from '../../../ipc/public';
 
 interface ReportItemCardProps {
   item: AssetsReportItem;

@@ -1,5 +1,8 @@
-import { AssetResolutionStatus, type AssetType } from '../../../../shared/types/domain';
-import type { ImportPreviewReviewState } from '../../../../preload/contracts/ingestion/import-preview-review.contract';
+import {
+  AssetResolutionStatus,
+  type AssetType,
+  type ImportPreviewReviewState,
+} from '../../../shared/types/domain';
 import { AssetTypeResolverService } from './asset-type-resolver.service';
 import { UnsupportedImportClassifier } from './unsupported-import-classifier.service';
 

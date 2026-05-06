@@ -1,5 +1,5 @@
 import { mock, mockReset } from 'jest-mock-extended';
-import { AssetType, AssetTypeSource } from '../../../../shared/types/domain';
+import { AssetType, AssetTypeSource } from '../../../shared/types/domain';
 import { Asset } from '../../domain/entities/asset.entity';
 import { Cnpj } from '../../../shared/domain/value-objects/cnpj.vo';
 import type { AssetRepository } from '../repositories/asset.repository';

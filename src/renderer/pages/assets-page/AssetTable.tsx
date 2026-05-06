@@ -1,6 +1,6 @@
 ﻿import type { JSX } from 'react';
-import type { AssetCatalogItem } from '../../../preload/contracts/portfolio/assets.contract';
-import { AssetType } from '../../../shared/types/domain';
+import type { AssetCatalogItem } from '../../../ipc/public';
+import { AssetType } from '../../../ipc/public';
 
 interface AssetTableProps {
   assets: AssetCatalogItem[];

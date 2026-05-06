@@ -1,4 +1,4 @@
-import { AssetType, UnsupportedImportReason } from '../../../../shared/types/domain';
+import { AssetType, UnsupportedImportReason } from '../../../shared/types/domain';
 
 type ClassifyInput = {
   sourceAssetType: AssetType | null;

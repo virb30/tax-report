@@ -1,14 +1,12 @@
 import {
   OperationType,
+  type ParsedTransactionBatch,
+  type ParsedTransactionFile,
+  type ParsedTransactionOperation,
   TransactionType,
+  type UnsupportedParsedTransactionRow,
   UnsupportedImportReason,
-} from '../../../../shared/types/domain';
-import type {
-  ParsedTransactionBatch,
-  ParsedTransactionFile,
-  ParsedTransactionOperation,
-  UnsupportedParsedTransactionRow,
-} from '../../../../preload/contracts/ingestion/import-transactions.contract';
+} from '../../../shared/types/domain';
 import type { ImportTransactionsParser } from '../../application/interfaces/transactions.parser.interface';
 import type {
   SpreadsheetFileReader,

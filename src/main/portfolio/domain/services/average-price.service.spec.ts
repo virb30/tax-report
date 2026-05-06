@@ -1,5 +1,5 @@
 import { AveragePriceService } from './average-price.service';
-import { AssetType } from '../../../../shared/types/domain';
+import { AssetType } from '../../../shared/types/domain';
 import { AssetPosition } from '../entities/asset-position.entity';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import { Money } from '../value-objects/money.vo';

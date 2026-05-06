@@ -2,13 +2,13 @@ import type { CreateBrokerUseCase } from '../../../application/use-cases/create-
 import type { ListBrokersUseCase } from '../../../application/use-cases/list-brokers.use-case';
 import type { ToggleActiveBrokerUseCase } from '../../../application/use-cases/toggle-active-broker.use-case';
 import type { UpdateBrokerUseCase } from '../../../application/use-cases/update-broker.use-case';
-import type { IpcContractHandler } from '../../../../../preload/main/binding/bind-ipc-contract';
+import type { IpcContractHandler } from '../../../../../ipc/main/binding/bind-ipc-contract';
 import type {
   createBrokerContract,
   listBrokersContract,
   toggleBrokerActiveContract,
   updateBrokerContract,
-} from '../../../../../preload/contracts/portfolio/brokers';
+} from '../../../../../ipc/contracts/portfolio/brokers';
 
 export type BrokerIpcHandlers = {
   list: IpcContractHandler<typeof listBrokersContract>;

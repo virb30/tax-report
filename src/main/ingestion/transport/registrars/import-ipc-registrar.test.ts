@@ -15,8 +15,8 @@ import {
   listDailyBrokerTaxesContract,
   previewImportTransactionsContract,
   saveDailyBrokerTaxContract,
-} from '../../../../preload/contracts/ingestion/import';
-import type { IpcMainHandleRegistry } from '../../../../preload/main/registry/ipc-registrar';
+} from '../../../../ipc/contracts/ingestion/import';
+import type { IpcMainHandleRegistry } from '../../../../ipc/main/registry/ipc-registrar';
 
 const showOpenDialog =
   jest.fn<(options: Electron.OpenDialogOptions) => Promise<Electron.OpenDialogReturnValue>>();
@@ -78,7 +78,7 @@ describe('ImportIpcRegistrar', () => {
     showOpenDialog.mockResolvedValue({
       canceled: true,
       filePaths: [],
-    } as Electron.OpenDialogReturnValue);
+    });
     const handlers = registerRegistrar();
     const selectFileHandler = handlers.get(importSelectFileContract.channel);
 
@@ -89,7 +89,7 @@ describe('ImportIpcRegistrar', () => {
     showOpenDialog.mockResolvedValue({
       canceled: false,
       filePaths: ['C:/imports/operations.csv', 'C:/imports/ignored.csv'],
-    } as Electron.OpenDialogReturnValue);
+    });
     const handlers = registerRegistrar();
     const selectFileHandler = handlers.get(importSelectFileContract.channel);
 
@@ -102,7 +102,7 @@ describe('ImportIpcRegistrar', () => {
     showOpenDialog.mockResolvedValue({
       canceled: false,
       filePaths: [],
-    } as Electron.OpenDialogReturnValue);
+    });
     const handlers = registerRegistrar();
     const selectFileHandler = handlers.get(importSelectFileContract.channel);
 

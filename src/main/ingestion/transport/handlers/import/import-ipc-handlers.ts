@@ -5,7 +5,7 @@ import type { DeleteDailyBrokerTaxUseCase } from '../../../application/use-cases
 import type { ImportDailyBrokerTaxesUseCase } from '../../../application/use-cases/import-daily-broker-taxes.use-case';
 import type { ListDailyBrokerTaxesUseCase } from '../../../application/use-cases/list-daily-broker-taxes.use-case';
 import type { SaveDailyBrokerTaxUseCase } from '../../../application/use-cases/save-daily-broker-tax.use-case';
-import type { IpcContractHandler } from '../../../../../preload/main/binding/bind-ipc-contract';
+import type { IpcContractHandler } from '../../../../../ipc/main/binding/bind-ipc-contract';
 import type {
   confirmImportTransactionsContract,
   deleteDailyBrokerTaxContract,
@@ -14,7 +14,7 @@ import type {
   listDailyBrokerTaxesContract,
   previewImportTransactionsContract,
   saveDailyBrokerTaxContract,
-} from '../../../../../preload/contracts/ingestion/import';
+} from '../../../../../ipc/contracts/ingestion/import';
 
 export type ImportIpcHandlers = {
   selectFile: IpcContractHandler<typeof importSelectFileContract>;
