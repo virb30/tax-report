@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { JSX } from 'react';
 import { buildErrorMessage } from '../errors/build-error-message';
-import { unwrapIpcResult } from '../ipc/unwrap-ipc-result';
+import { unwrapIpcResult } from '../../ipc/public';
 import { assertSupportedYear, buildYearOptions, getDefaultBaseYear } from '../../shared/utils/year';
 
 const defaultBaseYear = getDefaultBaseYear();

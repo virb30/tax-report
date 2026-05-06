@@ -1,4 +1,6 @@
 import { mock, mockReset } from 'jest-mock-extended';
+import { Money } from '../../domain/value-objects/money.vo';
+import { Quantity } from '../../domain/value-objects/quantity.vo';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import type { InitialBalanceDocumentPositionSyncService } from '../services/initial-balance-document-position-sync.service';
 import { DeleteInitialBalanceDocumentUseCase } from './delete-initial-balance-document.use-case';
@@ -17,14 +19,14 @@ describe('DeleteInitialBalanceDocumentUseCase', () => {
     transactionRepository.findInitialBalanceDocumentByTickerAndYear.mockResolvedValue({
       ticker: 'PETR4',
       year: 2025,
-      averagePrice: 21,
-      totalQuantity: 10,
-      allocations: [{ brokerId: 'broker-xp', quantity: 10 }],
+      averagePrice: '21',
+      totalQuantity: '10',
+      allocations: [{ brokerId: 'broker-xp', quantity: '10' }],
     });
     transactionRepository.deleteInitialBalanceByTickerAndYear.mockResolvedValue(undefined);
     positionSyncService.sync.mockResolvedValue({
-      totalQuantity: 0,
-      averagePrice: 0,
+      totalQuantity: Quantity.from(0),
+      averagePrice: Money.from(0),
     });
     useCase = new DeleteInitialBalanceDocumentUseCase(transactionRepository, positionSyncService);
   });

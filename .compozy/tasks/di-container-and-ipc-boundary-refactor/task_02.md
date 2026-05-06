@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: "Extract Public IPC API"
 type: refactor
 complexity: high
@@ -29,11 +29,11 @@ This task extracts the public IPC API mechanics from `src/preload/**` into the d
 </requirements>
 
 ## Subtasks
-- [ ] 2.1 Move IPC main binding and registry infrastructure into `src/ipc/main/**`.
-- [ ] 2.2 Move renderer API types and builder modules into `src/ipc/renderer/**`.
-- [ ] 2.3 Create and curate `src/ipc/public` so renderer-facing imports converge on one stable entrypoint.
-- [ ] 2.4 Reduce `src/preload/preload.ts` to bridge runtime only and update preload tests accordingly.
-- [ ] 2.5 Update main, renderer, and test imports that still point to deep preload API infrastructure paths.
+- [x] 2.1 Move IPC main binding and registry infrastructure into `src/ipc/main/**`.
+- [x] 2.2 Move renderer API types and builder modules into `src/ipc/renderer/**`.
+- [x] 2.3 Create and curate `src/ipc/public` so renderer-facing imports converge on one stable entrypoint.
+- [x] 2.4 Reduce `src/preload/preload.ts` to bridge runtime only and update preload tests accordingly.
+- [x] 2.5 Update main, renderer, and test imports that still point to deep preload API infrastructure paths.
 
 ## Implementation Details
 Use the TechSpec "System Architecture" and "Development Sequencing" steps 2 through 4 as the authoritative shape for the split. This task is about public API extraction and import convergence, not about moving application DTO ownership or container wiring.
@@ -71,13 +71,13 @@ Because the repository still has rule text that describes contracts under `src/s
 
 ## Tests
 - Unit tests:
-  - [ ] `buildElectronApi` still exposes the same public methods and rejects duplicate API metadata after relocation.
-  - [ ] `bindIpcContract` still validates payloads and maps handler success/error behavior exactly as before.
-  - [ ] `IpcRegistry` still registers every registrar against the provided `ipcMain` registry.
-  - [ ] `ElectronApi` public typing remains compatible with the existing renderer contract surface.
+  - [x] `buildElectronApi` still exposes the same public methods and rejects duplicate API metadata after relocation.
+  - [x] `bindIpcContract` still validates payloads and maps handler success/error behavior exactly as before.
+  - [x] `IpcRegistry` still registers every registrar against the provided `ipcMain` registry.
+  - [x] `ElectronApi` public typing remains compatible with the existing renderer contract surface.
 - Integration tests:
-  - [ ] `preload.test.ts` still proves `contextBridge.exposeInMainWorld('electronApi', ...)` exposes the expected methods and no raw `ipcRenderer`.
-  - [ ] Runtime registration still accepts the relocated `IpcRegistry` and binds handlers without changing channel exposure.
+  - [x] `preload.test.ts` still proves `contextBridge.exposeInMainWorld('electronApi', ...)` exposes the expected methods and no raw `ipcRenderer`.
+  - [x] Runtime registration still accepts the relocated `IpcRegistry` and binds handlers without changing channel exposure.
 - Test coverage target: >=80%
 - All tests must pass
 

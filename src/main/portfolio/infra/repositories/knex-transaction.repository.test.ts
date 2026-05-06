@@ -133,7 +133,7 @@ describe('KnexTransactionRepository', () => {
     const columns = await database.raw("PRAGMA table_info('transactions')");
     const rows = await database('transactions').select('*');
 
-    expect(columns.map((column) => column.name)).not.toContain('fees');
+    expect(columns.map((column: { name: string }) => column.name)).not.toContain('fees');
     expect(rows).toHaveLength(1);
     expect(rows[0]).not.toHaveProperty('fees');
   });

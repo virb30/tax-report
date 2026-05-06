@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: "Complete Wiring and Boundary Cleanup"
 type: refactor
 complexity: critical
@@ -31,11 +31,11 @@ This task closes the refactor by removing legacy wiring paths, eliminating servi
 </requirements>
 
 ## Subtasks
-- [ ] 5.1 Replace remaining startup and bootstrap call sites with the new root bootstrap API and remove global-container access.
-- [ ] 5.2 Remove leftover legacy imports, dead exports, and obsolete preload/shared boundary files made redundant by earlier tasks.
-- [ ] 5.3 Add `no-restricted-imports` or equivalent lint enforcement for renderer and application boundary rules.
-- [ ] 5.4 Update any remaining tests, typings, or support utilities that still assume the old preload/shared/container layout.
-- [ ] 5.5 Run and fix the final task validation, lint, and Jest regressions required to prove the new boundaries hold.
+- [x] 5.1 Replace remaining startup and bootstrap call sites with the new root bootstrap API and remove global-container access.
+- [x] 5.2 Remove leftover legacy imports, dead exports, and obsolete preload/shared boundary files made redundant by earlier tasks.
+- [x] 5.3 Add `no-restricted-imports` or equivalent lint enforcement for renderer and application boundary rules.
+- [x] 5.4 Update any remaining tests, typings, or support utilities that still assume the old preload/shared/container layout.
+- [x] 5.5 Run and fix the final task validation, lint, and Jest regressions required to prove the new boundaries hold.
 
 ## Implementation Details
 Use the TechSpec "Impact Analysis", "Testing Approach", and "Development Sequencing" steps 7 through 9 as the final source of truth. This task should assume the new contract, public API, type ownership, and bootstrap layers already exist and should focus on deleting escape hatches and enforcing the target architecture.

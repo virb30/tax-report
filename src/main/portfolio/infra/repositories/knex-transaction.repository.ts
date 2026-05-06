@@ -176,7 +176,8 @@ export class KnexTransactionRepository implements TransactionRepository {
     return [`${year}-01-01`, `${year}-12-31`];
   }
 
-  private transactionReadQuery(): Knex.QueryBuilder<unknown, TransactionRow[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private transactionReadQuery(): Knex.QueryBuilder<any, TransactionRow[]> {
     return this.database('transactions')
       .leftJoin('transaction_fees', 'transaction_fees.transaction_id', 'transactions.id')
       .select([
