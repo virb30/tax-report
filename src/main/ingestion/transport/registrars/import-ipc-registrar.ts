@@ -2,12 +2,12 @@ import type {
   IpcMainHandleRegistry,
   IpcRegistrar,
 } from '../../../../preload/main/registry/ipc-registrar';
-import type { PreviewImportUseCase } from '../../application/use-cases/preview-import/preview-import-use-case';
-import type { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions/import-transactions-use-case';
-import type { DeleteDailyBrokerTaxUseCase } from '../../application/use-cases/delete-daily-broker-tax/delete-daily-broker-tax.use-case';
-import type { ImportDailyBrokerTaxesUseCase } from '../../application/use-cases/import-daily-broker-taxes/import-daily-broker-taxes.use-case';
-import type { ListDailyBrokerTaxesUseCase } from '../../application/use-cases/list-daily-broker-taxes/list-daily-broker-taxes.use-case';
-import type { SaveDailyBrokerTaxUseCase } from '../../application/use-cases/save-daily-broker-tax/save-daily-broker-tax.use-case';
+import type { PreviewImportUseCase } from '../../application/use-cases/preview-import.use-case';
+import type { ImportTransactionsUseCase } from '../../application/use-cases/import-transactions.use-case';
+import type { DeleteDailyBrokerTaxUseCase } from '../../application/use-cases/delete-daily-broker-tax.use-case';
+import type { ImportDailyBrokerTaxesUseCase } from '../../application/use-cases/import-daily-broker-taxes.use-case';
+import type { ListDailyBrokerTaxesUseCase } from '../../application/use-cases/list-daily-broker-taxes.use-case';
+import type { SaveDailyBrokerTaxUseCase } from '../../application/use-cases/save-daily-broker-tax.use-case';
 import { bindIpcContract } from '../../../../preload/main/binding/bind-ipc-contract';
 import { createImportIpcHandlers } from '../handlers/import/import-ipc-handlers';
 import {

@@ -121,18 +121,11 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
 
       const { tradeDate, broker, operation } = groupableRow;
       const groupKey = `${tradeDate}::${broker}`;
-      const existingBatch = batchesByDateAndBroker.get(groupKey);
-
-      if (!existingBatch) {
-        batchesByDateAndBroker.set(groupKey, {
-          tradeDate,
-          broker,
-          operations: [operation],
-        });
-        continue;
-      }
-
-      existingBatch.operations.push(operation);
+      this.appendOperationToBatch(batchesByDateAndBroker, groupKey, {
+        tradeDate,
+        broker,
+        operation,
+      });
     }
 
     return {
@@ -150,16 +143,8 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
     const batches: ParsedTransactionBatch[] = [];
 
     for (const batch of groupedBatches) {
-      const broker = brokersMap.get(batch.broker.trim().toUpperCase())!;
-
-      const operations: ParsedTransactionOperation[] = batch.operations.map((op) => ({
-        ticker: op.ticker,
-        type: this.mapOperationTypeToTransactionType(op.operationType),
-        quantity: op.quantity,
-        unitPrice: op.unitPrice,
-        sourceAssetType: op.sourceAssetType,
-        sourceAssetTypeLabel: op.sourceAssetTypeLabel,
-      }));
+      const broker = brokersMap.get(this.normalizeBrokerCode(batch.broker))!;
+      const operations = batch.operations.map((op) => this.toParsedOperation(op));
 
       batches.push({
         tradeDate: batch.tradeDate,
@@ -182,7 +167,7 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
       ticker: row.ticker,
       quantity: row.quantity,
       unitPrice: row.unitPrice,
-      brokerId: brokersMap.get(row.broker.trim().toUpperCase())!.id.value,
+      brokerId: brokersMap.get(this.normalizeBrokerCode(row.broker))!.id.value,
       sourceAssetType: row.sourceAssetType,
       sourceAssetTypeLabel: row.sourceAssetTypeLabel,
       unsupportedReason: row.unsupportedReason,
@@ -215,31 +200,105 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
     const sourceAssetType = this.classifier.normalizeAssetType(sourceAssetTypeLabel);
 
     if (!operationType) {
-      return {
-        row: rowNumber,
-        date: tradeDate,
+      return this.toUnsupportedRawRow({
+        row,
+        rowNumber,
+        tradeDate,
         broker,
-        ticker: String(row.Ticker).trim(),
-        quantity: this.parseNumber(row.Quantidade, 'Quantidade'),
-        unitPrice: this.parseOptionalNumber(row['Preco Unitario'], 0),
         sourceAssetType,
         sourceAssetTypeLabel,
-        unsupportedReason: UnsupportedImportReason.UnsupportedEvent,
-      };
+      });
     }
 
     this.mapper.validateRowIntegrity(row, operationType);
 
-    return {
+    return this.toSupportedGroupableRow({
+      row,
       tradeDate,
       broker,
+      operationType,
+      sourceAssetType,
+      sourceAssetTypeLabel,
+    });
+  }
+
+  private appendOperationToBatch(
+    batchesByDateAndBroker: Map<string, GroupedRawBatch>,
+    groupKey: string,
+    input: {
+      tradeDate: string;
+      broker: string;
+      operation: GroupedRawBatch['operations'][number];
+    },
+  ): void {
+    const existingBatch = batchesByDateAndBroker.get(groupKey);
+
+    if (!existingBatch) {
+      batchesByDateAndBroker.set(groupKey, {
+        tradeDate: input.tradeDate,
+        broker: input.broker,
+        operations: [input.operation],
+      });
+      return;
+    }
+
+    existingBatch.operations.push(input.operation);
+  }
+
+  private toParsedOperation(op: GroupedRawBatch['operations'][number]): ParsedTransactionOperation {
+    return {
+      ticker: op.ticker,
+      type: this.mapOperationTypeToTransactionType(op.operationType),
+      quantity: op.quantity,
+      unitPrice: op.unitPrice,
+      sourceAssetType: op.sourceAssetType,
+      sourceAssetTypeLabel: op.sourceAssetTypeLabel,
+    };
+  }
+
+  private toUnsupportedRawRow(input: {
+    row: NormalizedTransactionRow;
+    rowNumber: number;
+    tradeDate: string;
+    broker: string;
+    sourceAssetType: ParsedTransactionOperation['sourceAssetType'];
+    sourceAssetTypeLabel: ParsedTransactionOperation['sourceAssetTypeLabel'];
+  }): UnsupportedRawRow {
+    return {
+      row: input.rowNumber,
+      date: input.tradeDate,
+      broker: input.broker,
+      ticker: String(input.row.Ticker).trim(),
+      quantity: this.parseNumber(input.row.Quantidade, 'Quantidade'),
+      unitPrice: this.parseOptionalNumber(input.row['Preco Unitario'], 0),
+      sourceAssetType: input.sourceAssetType,
+      sourceAssetTypeLabel: input.sourceAssetTypeLabel,
+      unsupportedReason: UnsupportedImportReason.UnsupportedEvent,
+    };
+  }
+
+  private toSupportedGroupableRow(input: {
+    row: NormalizedTransactionRow;
+    tradeDate: string;
+    broker: string;
+    operationType: OperationType;
+    sourceAssetType: ParsedTransactionOperation['sourceAssetType'];
+    sourceAssetTypeLabel: ParsedTransactionOperation['sourceAssetTypeLabel'];
+  }): {
+    tradeDate: string;
+    broker: string;
+    operation: GroupedRawBatch['operations'][number];
+  } {
+    return {
+      tradeDate: input.tradeDate,
+      broker: input.broker,
       operation: {
-        ticker: String(row.Ticker).trim(),
-        operationType,
-        quantity: this.parseNumber(row.Quantidade, 'Quantidade'),
-        unitPrice: this.parseOptionalNumber(row['Preco Unitario'], 0),
-        sourceAssetType,
-        sourceAssetTypeLabel,
+        ticker: String(input.row.Ticker).trim(),
+        operationType: input.operationType,
+        quantity: this.parseNumber(input.row.Quantidade, 'Quantidade'),
+        unitPrice: this.parseOptionalNumber(input.row['Preco Unitario'], 0),
+        sourceAssetType: input.sourceAssetType,
+        sourceAssetTypeLabel: input.sourceAssetTypeLabel,
       },
     };
   }
@@ -336,7 +395,7 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
     for (const row of rows) {
       const rowBroker = String(row.Corretora).trim();
       if (rowBroker && rowBroker !== 'undefined') {
-        codes.add(rowBroker.toUpperCase());
+        codes.add(this.normalizeBrokerCode(rowBroker));
       }
     }
     return codes;
@@ -349,9 +408,13 @@ export class CsvXlsxTransactionParser implements ImportTransactionsParser {
     const brokers = await this.brokerRepository.findAllByCodes(codeArray);
     const map = new Map<string, Awaited<ReturnType<BrokerRepository['findAllByCodes']>>[number]>();
     for (const broker of brokers) {
-      map.set(broker.code, broker);
+      map.set(this.normalizeBrokerCode(broker.code), broker);
     }
     return map;
+  }
+
+  private normalizeBrokerCode(code: string): string {
+    return code.trim().toUpperCase();
   }
 
   private validateAllBrokersExist(

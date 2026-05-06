@@ -1,4 +1,4 @@
-import type { GenerateAssetsReportUseCase } from '../../../application/use-cases/generate-asset-report/generate-assets-report.use-case';
+import type { GenerateAssetsReportUseCase } from '../../../application/use-cases/generate-assets-report.use-case';
 import type { IpcContractHandler } from '../../../../../preload/main/binding/bind-ipc-contract';
 import type { generateAssetsReportContract } from '../../../../../preload/contracts/tax-reporting/report';
 

@@ -1,4 +1,4 @@
-import type { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position/recalculate-position.use-case';
+import type { RecalculatePositionUseCase } from '../../application/use-cases/recalculate-position.use-case';
 import { RecalculatePositionHandler } from './recalculate-position.handler';
 import { ConsolidatedPositionImportedEvent } from '../../../shared/domain/events/consolidated-position-imported.event';
 import { TransactionFeesReallocatedEvent } from '../../../shared/domain/events/transaction-fees-reallocated.event';

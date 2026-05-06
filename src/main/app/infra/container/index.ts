@@ -14,31 +14,31 @@ import { CsvXlsxTransactionParser } from '../../../ingestion/infra/parsers/csv-x
 import { CsvXlsxConsolidatedPositionParser } from '../../../ingestion/infra/parsers/csv-xlsx-consolidated-position.parser';
 import { RecalculatePositionHandler } from '../../../portfolio/infra/handlers/recalculate-position.handler';
 
-import { CreateBrokerUseCase } from '../../../portfolio/application/use-cases/create-broker/create-broker.use-case';
-import { ListAssetsUseCase } from '../../../portfolio/application/use-cases/list-assets/list-assets.use-case';
-import { UpdateBrokerUseCase } from '../../../portfolio/application/use-cases/update-broker/update-broker.use-case';
-import { UpdateAssetUseCase } from '../../../portfolio/application/use-cases/update-asset/update-asset.use-case';
-import { ListBrokersUseCase } from '../../../portfolio/application/use-cases/list-brokers/list-brokers.use-case';
-import { ToggleActiveBrokerUseCase } from '../../../portfolio/application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
-import { RecalculatePositionUseCase } from '../../../portfolio/application/use-cases/recalculate-position/recalculate-position.use-case';
-import { ImportTransactionsUseCase } from '../../../ingestion/application/use-cases/import-transactions/import-transactions-use-case';
-import { PreviewImportUseCase } from '../../../ingestion/application/use-cases/preview-import/preview-import-use-case';
+import { CreateBrokerUseCase } from '../../../portfolio/application/use-cases/create-broker.use-case';
+import { ListAssetsUseCase } from '../../../portfolio/application/use-cases/list-assets.use-case';
+import { UpdateBrokerUseCase } from '../../../portfolio/application/use-cases/update-broker.use-case';
+import { UpdateAssetUseCase } from '../../../portfolio/application/use-cases/update-asset.use-case';
+import { ListBrokersUseCase } from '../../../portfolio/application/use-cases/list-brokers.use-case';
+import { ToggleActiveBrokerUseCase } from '../../../portfolio/application/use-cases/toggle-active-broker.use-case';
+import { RecalculatePositionUseCase } from '../../../portfolio/application/use-cases/recalculate-position.use-case';
+import { ImportTransactionsUseCase } from '../../../ingestion/application/use-cases/import-transactions.use-case';
+import { PreviewImportUseCase } from '../../../ingestion/application/use-cases/preview-import.use-case';
 import { ReallocateTransactionFeesService } from '../../../ingestion/application/services/reallocate-transaction-fees.service';
-import { DeleteDailyBrokerTaxUseCase } from '../../../ingestion/application/use-cases/delete-daily-broker-tax/delete-daily-broker-tax.use-case';
-import { ImportDailyBrokerTaxesUseCase } from '../../../ingestion/application/use-cases/import-daily-broker-taxes/import-daily-broker-taxes.use-case';
-import { ListDailyBrokerTaxesUseCase } from '../../../ingestion/application/use-cases/list-daily-broker-taxes/list-daily-broker-taxes.use-case';
-import { SaveDailyBrokerTaxUseCase } from '../../../ingestion/application/use-cases/save-daily-broker-tax/save-daily-broker-tax.use-case';
-import { DeleteInitialBalanceDocumentUseCase } from '../../../portfolio/application/use-cases/delete-initial-balance-document/delete-initial-balance-document.use-case';
-import { ListPositionsUseCase } from '../../../portfolio/application/use-cases/list-positions/list-positions-use-case';
-import { ListInitialBalanceDocumentsUseCase } from '../../../portfolio/application/use-cases/list-initial-balance-documents/list-initial-balance-documents.use-case';
-import { MigrateYearUseCase } from '../../../portfolio/application/use-cases/migrate-year/migrate-year.use-case';
-import { ImportConsolidatedPositionUseCase } from '../../../ingestion/application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
-import { DeletePositionUseCase } from '../../../portfolio/application/use-cases/delete-position/delete-position.use-case';
-import { GenerateAssetsReportUseCase } from '../../../tax-reporting/application/use-cases/generate-asset-report/generate-assets-report.use-case';
-import { SaveInitialBalanceDocumentUseCase } from '../../../portfolio/application/use-cases/save-initial-balance-document/save-initial-balance-document.use-case';
+import { DeleteDailyBrokerTaxUseCase } from '../../../ingestion/application/use-cases/delete-daily-broker-tax.use-case';
+import { ImportDailyBrokerTaxesUseCase } from '../../../ingestion/application/use-cases/import-daily-broker-taxes.use-case';
+import { ListDailyBrokerTaxesUseCase } from '../../../ingestion/application/use-cases/list-daily-broker-taxes.use-case';
+import { SaveDailyBrokerTaxUseCase } from '../../../ingestion/application/use-cases/save-daily-broker-tax.use-case';
+import { DeleteInitialBalanceDocumentUseCase } from '../../../portfolio/application/use-cases/delete-initial-balance-document.use-case';
+import { ListPositionsUseCase } from '../../../portfolio/application/use-cases/list-positions.use-case';
+import { ListInitialBalanceDocumentsUseCase } from '../../../portfolio/application/use-cases/list-initial-balance-documents.use-case';
+import { MigrateYearUseCase } from '../../../portfolio/application/use-cases/migrate-year.use-case';
+import { ImportConsolidatedPositionUseCase } from '../../../ingestion/application/use-cases/import-consolidated-position.use-case';
+import { DeletePositionUseCase } from '../../../portfolio/application/use-cases/delete-position.use-case';
+import { GenerateAssetsReportUseCase } from '../../../tax-reporting/application/use-cases/generate-assets-report.use-case';
+import { SaveInitialBalanceDocumentUseCase } from '../../../portfolio/application/use-cases/save-initial-balance-document.use-case';
 import { InitialBalanceDocumentPositionSyncService } from '../../../portfolio/application/services/initial-balance-document-position-sync.service';
 import { ReprocessTickerYearsService } from '../../../portfolio/application/services/reprocess-ticker-years.service';
-import { RepairAssetTypeUseCase } from '../../../portfolio/application/use-cases/repair-asset-type/repair-asset-type.use-case';
+import { RepairAssetTypeUseCase } from '../../../portfolio/application/use-cases/repair-asset-type.use-case';
 
 import { BrokersIpcRegistrar } from '../../../portfolio/transport/registrars/brokers-ipc-registrar';
 import { AssetsIpcRegistrar } from '../../../portfolio/transport/registrars/assets-ipc-registrar';
@@ -176,30 +176,30 @@ export function registerDependencies(db: Knex) {
     ).singleton(),
     listDailyBrokerTaxesUseCase: asClass(ListDailyBrokerTaxesUseCase).singleton(),
     saveDailyBrokerTaxUseCase: asFunction(
-      () => 
+      () =>
         new SaveDailyBrokerTaxUseCase(
           container.resolve('dailyBrokerTaxRepository'),
           container.resolve('brokerRepository'),
           container.resolve('reallocateTransactionFeesService'),
           container.resolve('queue'),
-        )
+        ),
     ).singleton(),
     importDailyBrokerTaxesUseCase: asFunction(
-      () => 
+      () =>
         new ImportDailyBrokerTaxesUseCase(
           container.resolve('dailyBrokerTaxesParser'),
           container.resolve('dailyBrokerTaxRepository'),
           container.resolve('reallocateTransactionFeesService'),
           container.resolve('queue'),
-        )
+        ),
     ).singleton(),
     deleteDailyBrokerTaxUseCase: asFunction(
-      () => 
+      () =>
         new DeleteDailyBrokerTaxUseCase(
           container.resolve('dailyBrokerTaxRepository'),
           container.resolve('reallocateTransactionFeesService'),
           container.resolve('queue'),
-        )
+        ),
     ).singleton(),
     initialBalanceDocumentPositionSyncService: asClass(
       InitialBalanceDocumentPositionSyncService,

@@ -39,6 +39,7 @@ Estas regras existem para guiar implementação e revisão de código com consis
 4. Declare variáveis o mais próximo possível do ponto de uso.
 5. Evite comentários óbvios; use comentários apenas para explicar intenção, contexto ou trade-off.
 6. Use sufixos de arquivo consistentes: `*.entity.ts`, `*.vo.ts`, `*.service.ts`, `*.use-case.ts`, `*.contract.ts` e `*.repository.ts`.
+7. Mantenha a definição do tipo de entrada/saída de um método no mesmo arquivo da classe.
 
 ## Exemplos rápidos
 

@@ -1,8 +1,8 @@
 import { mock, mockReset } from 'jest-mock-extended';
-import type { CreateBrokerUseCase } from '../../application/use-cases/create-broker/create-broker.use-case';
-import type { ListBrokersUseCase } from '../../application/use-cases/list-brokers/list-brokers.use-case';
-import type { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker/toggle-active-broker.use-case';
-import type { UpdateBrokerUseCase } from '../../application/use-cases/update-broker/update-broker.use-case';
+import type { CreateBrokerUseCase } from '../../application/use-cases/create-broker.use-case';
+import type { ListBrokersUseCase } from '../../application/use-cases/list-brokers.use-case';
+import type { ToggleActiveBrokerUseCase } from '../../application/use-cases/toggle-active-broker.use-case';
+import type { UpdateBrokerUseCase } from '../../application/use-cases/update-broker.use-case';
 import {
   brokerIpcContracts,
   createBrokerContract,

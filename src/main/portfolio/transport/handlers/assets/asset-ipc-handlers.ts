@@ -1,6 +1,6 @@
-import type { ListAssetsUseCase } from '../../../application/use-cases/list-assets/list-assets.use-case';
-import type { RepairAssetTypeUseCase } from '../../../application/use-cases/repair-asset-type/repair-asset-type.use-case';
-import type { UpdateAssetUseCase } from '../../../application/use-cases/update-asset/update-asset.use-case';
+import type { ListAssetsUseCase } from '../../../application/use-cases/list-assets.use-case';
+import type { RepairAssetTypeUseCase } from '../../../application/use-cases/repair-asset-type.use-case';
+import type { UpdateAssetUseCase } from '../../../application/use-cases/update-asset.use-case';
 import type { IpcContractHandler } from '../../../../../preload/main/binding/bind-ipc-contract';
 import type {
   listAssetsContract,

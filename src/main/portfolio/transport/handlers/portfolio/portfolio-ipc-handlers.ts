@@ -1,11 +1,11 @@
-import type { DeleteInitialBalanceDocumentUseCase } from '../../../application/use-cases/delete-initial-balance-document/delete-initial-balance-document.use-case';
-import type { DeletePositionUseCase } from '../../../application/use-cases/delete-position/delete-position.use-case';
-import type { ImportConsolidatedPositionUseCase } from '../../../../ingestion/application/use-cases/import-consolidated-position/import-consolidated-position-use-case';
-import type { ListInitialBalanceDocumentsUseCase } from '../../../application/use-cases/list-initial-balance-documents/list-initial-balance-documents.use-case';
-import type { ListPositionsUseCase } from '../../../application/use-cases/list-positions/list-positions-use-case';
-import type { MigrateYearUseCase } from '../../../application/use-cases/migrate-year/migrate-year.use-case';
-import type { RecalculatePositionUseCase } from '../../../application/use-cases/recalculate-position/recalculate-position.use-case';
-import type { SaveInitialBalanceDocumentUseCase } from '../../../application/use-cases/save-initial-balance-document/save-initial-balance-document.use-case';
+import type { DeleteInitialBalanceDocumentUseCase } from '../../../application/use-cases/delete-initial-balance-document.use-case';
+import type { DeletePositionUseCase } from '../../../application/use-cases/delete-position.use-case';
+import type { ImportConsolidatedPositionUseCase } from '../../../../ingestion/application/use-cases/import-consolidated-position.use-case';
+import type { ListInitialBalanceDocumentsUseCase } from '../../../application/use-cases/list-initial-balance-documents.use-case';
+import type { ListPositionsUseCase } from '../../../application/use-cases/list-positions.use-case';
+import type { MigrateYearUseCase } from '../../../application/use-cases/migrate-year.use-case';
+import type { RecalculatePositionUseCase } from '../../../application/use-cases/recalculate-position.use-case';
+import type { SaveInitialBalanceDocumentUseCase } from '../../../application/use-cases/save-initial-balance-document.use-case';
 import type { IpcContractHandler } from '../../../../../preload/main/binding/bind-ipc-contract';
 import type { AssetType } from '../../../../../shared/types/domain';
 import type {

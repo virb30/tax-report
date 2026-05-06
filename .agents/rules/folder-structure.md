@@ -29,9 +29,8 @@ src/main/
       repositories/
     application/
       use-cases/
-        [use-case]/
           [use-case].use-case.ts
-          [use-case].dto.ts
+          [use-case].use-case.spec.ts
       services/
     infra/
       database/
@@ -56,8 +55,7 @@ src/main/
 
 - `application/use-cases`: use cases do contexto.
 - `application/use-cases/[use-case]`: pasta de um use case especifico, nomeada pela intencao do usuario.
-- `application/use-cases/[use-case]/[use-case].use-case.ts`: implementacao do use case.
-- `application/use-cases/[use-case]/[use-case].dto.ts`: DTOs de input e output do use case.
+- `application/use-cases/[use-case]/[use-case].ts`: implementacao do use case. Todo use-case deve definir e exportar seus tipos de input e output.
 - `application/services`: servicos de aplicacao.
 
 ### Infra

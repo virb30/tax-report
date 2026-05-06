@@ -1,6 +1,5 @@
 import { AssetType, PendingIssueCode, ReportItemStatus } from '../../../shared/types/domain';
 import type { AssetPosition } from '../../portfolio/domain/entities/asset-position.entity';
-import type { ReportItemOutput } from './report-generator.output';
 
 import type { Asset } from '../../portfolio/domain/entities/asset.entity';
 import type { Broker } from '../../portfolio/domain/entities/broker.entity';
@@ -12,6 +11,36 @@ import {
   ReportPositionProjectionService,
   type ReportFractionInfo,
 } from './report-position-projection.service';
+
+export interface ReportItemPendingIssueOutput {
+  code: PendingIssueCode;
+  message: string;
+}
+
+export interface ReportItemBrokerSummaryOutput {
+  brokerId: string;
+  brokerName: string;
+  cnpj: string;
+  quantity: number;
+  totalCost: number;
+}
+
+export interface ReportItemOutput {
+  ticker: string;
+  assetType: AssetType;
+  totalQuantity: number;
+  averagePrice: number;
+  previousYearValue: number;
+  currentYearValue: number;
+  acquiredInYear: boolean;
+  revenueClassification: { group: string; code: string };
+  status: ReportItemStatus;
+  eligibilityReason: string;
+  pendingIssues: ReportItemPendingIssueOutput[];
+  canCopy: boolean;
+  description: string | null;
+  brokersSummary: ReportItemBrokerSummaryOutput[];
+}
 
 const STOCK_CLASSIFICATION = { group: '03', code: '01' } as const;
 const FII_CLASSIFICATION = { group: '07', code: '03' } as const;
@@ -102,6 +131,15 @@ type ReportGeneratorDependencies = {
   reportPositionProjectionService?: ReportPositionProjectionService;
 };
 
+type ReportItemContext = {
+  asset: Asset | null;
+  reportAssetType: AssetType;
+  reportPosition: AssetPosition;
+  fractionInfo: ReportFractionInfo | null;
+  currentYearValue: Money;
+  previousYearValue: Money;
+};
+
 export class ReportGenerator {
   private readonly brokersMap: Map<string, Broker>;
   private readonly assetsMap: Map<string, Asset>;
@@ -131,19 +169,8 @@ export class ReportGenerator {
   }
 
   private buildReportItem(position: AssetPosition): ReportItemOutput | null {
-    const asset = this.assetsMap.get(position.ticker) ?? null;
-    const reportAssetType = asset?.assetType ?? position.assetType;
-    const projectedPosition = this.reportPositionProjectionService.project({
-      persistedPosition: position,
-      assetType: reportAssetType,
-      year: this.dependencies.baseYear,
-      transactions: this.dependencies.transactionsByTicker.get(position.ticker) ?? [],
-    });
-    const reportPosition = projectedPosition.position;
-
-    const { totalQuantity, averagePrice } = reportPosition;
-    const currentYearValue = averagePrice.multiplyBy(totalQuantity.getAmount());
-    const previousYearValue = this.calculatePreviousYearValue(reportPosition, reportAssetType);
+    const context = this.buildReportItemContext(position);
+    const { reportPosition, reportAssetType, currentYearValue, previousYearValue, asset } = context;
 
     if (currentYearValue.isZero() && previousYearValue.isZero()) {
       return null;
@@ -158,17 +185,18 @@ export class ReportGenerator {
       isSupported: this.isSupportedAssetType(reportAssetType),
     });
     const brokersSummary = this.buildBrokersSummary(reportPosition);
-    const hasCurrentPosition = totalQuantity.isLessThanOrEqualTo(0) === false;
-    const canCopy =
-      hasCurrentPosition &&
-      brokersSummary.length > 0 &&
-      this.canCopyReportItem(pendingIssues, eligibility.status);
+    const canCopy = this.canCopyReportItem({
+      position: reportPosition,
+      pendingIssues,
+      status: eligibility.status,
+      brokersSummary,
+    });
 
     return {
       ticker: position.ticker,
       assetType: reportAssetType,
-      totalQuantity: totalQuantity.toNumber(),
-      averagePrice: averagePrice.toNumber(),
+      totalQuantity: reportPosition.totalQuantity.toNumber(),
+      averagePrice: reportPosition.averagePrice.toNumber(),
       previousYearValue: previousYearValue.toNumber(),
       currentYearValue: currentYearValue.toNumber(),
       acquiredInYear: previousYearValue.isZero() && currentYearValue.isGreaterThan(0),
@@ -177,21 +205,53 @@ export class ReportGenerator {
       eligibilityReason: eligibility.reason,
       pendingIssues,
       canCopy,
-      description:
-        canCopy && asset?.issuerCnpj
-          ? buildDeclarationDescriptionText({
-              quantity: totalQuantity.toNumber(),
-              ticker: position.ticker,
-              assetType: reportAssetType,
-              issuerCnpj: asset.issuerCnpj,
-              averagePrice: averagePrice.toNumber(),
-              currentYearValue: currentYearValue.toNumber(),
-              fractionInfo: projectedPosition.fractionInfo,
-              brokersSummary,
-            })
-          : null,
+      description: this.buildDescription(context, brokersSummary, canCopy),
       brokersSummary,
     };
+  }
+
+  private buildReportItemContext(position: AssetPosition): ReportItemContext {
+    const asset = this.assetsMap.get(position.ticker) ?? null;
+    const reportAssetType = asset?.assetType ?? position.assetType;
+    const projectedPosition = this.reportPositionProjectionService.project({
+      persistedPosition: position,
+      assetType: reportAssetType,
+      year: this.dependencies.baseYear,
+      transactions: this.dependencies.transactionsByTicker.get(position.ticker) ?? [],
+    });
+    const reportPosition = projectedPosition.position;
+
+    return {
+      asset,
+      reportAssetType,
+      reportPosition,
+      fractionInfo: projectedPosition.fractionInfo,
+      currentYearValue: reportPosition.averagePrice.multiplyBy(
+        reportPosition.totalQuantity.getAmount(),
+      ),
+      previousYearValue: this.calculatePreviousYearValue(reportPosition, reportAssetType),
+    };
+  }
+
+  private buildDescription(
+    context: ReportItemContext,
+    brokersSummary: ReportItemBrokerSummaryOutput[],
+    canCopy: boolean,
+  ): string | null {
+    if (!canCopy || !context.asset?.issuerCnpj) {
+      return null;
+    }
+
+    return buildDeclarationDescriptionText({
+      quantity: context.reportPosition.totalQuantity.toNumber(),
+      ticker: context.reportPosition.ticker,
+      assetType: context.reportAssetType,
+      issuerCnpj: context.asset.issuerCnpj,
+      averagePrice: context.reportPosition.averagePrice.toNumber(),
+      currentYearValue: context.currentYearValue.toNumber(),
+      fractionInfo: context.fractionInfo,
+      brokersSummary,
+    });
   }
 
   private calculatePreviousYearValue(position: AssetPosition, assetType: AssetType): Money {
@@ -236,22 +296,28 @@ export class ReportGenerator {
       });
   }
 
-  private canCopyReportItem(
-    pendingIssues: Array<{ code: PendingIssueCode; message: string }>,
-    status: ReportItemStatus,
-  ): boolean {
+  private canCopyReportItem(input: {
+    position: AssetPosition;
+    pendingIssues: ReportItemPendingIssueOutput[];
+    status: ReportItemStatus;
+    brokersSummary: ReportItemBrokerSummaryOutput[];
+  }): boolean {
+    const hasCurrentPosition = input.position.totalQuantity.isLessThanOrEqualTo(0) === false;
+
     return (
-      pendingIssues.length === 0 &&
-      status !== ReportItemStatus.Pending &&
-      status !== ReportItemStatus.Unsupported
+      hasCurrentPosition &&
+      input.brokersSummary.length > 0 &&
+      input.pendingIssues.length === 0 &&
+      input.status !== ReportItemStatus.Pending &&
+      input.status !== ReportItemStatus.Unsupported
     );
   }
 
   private buildPendingIssues(
     asset: Asset | null,
     positionAssetType: AssetType,
-  ): Array<{ code: PendingIssueCode; message: string }> {
-    const issues: Array<{ code: PendingIssueCode; message: string }> = [];
+  ): ReportItemPendingIssueOutput[] {
+    const issues: ReportItemPendingIssueOutput[] = [];
 
     if (!this.isSupportedAssetType(positionAssetType)) {
       issues.push({
