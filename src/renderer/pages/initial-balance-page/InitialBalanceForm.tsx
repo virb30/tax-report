@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { AssetType } from '../../../shared/types/domain';
+import { AssetType } from '../../../ipc/public';
 import type { Broker } from '../../types/broker.types';
 import type { InitialBalanceAllocationDraft } from './use-initial-balance';
 

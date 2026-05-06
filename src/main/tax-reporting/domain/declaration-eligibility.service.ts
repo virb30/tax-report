@@ -1,4 +1,4 @@
-import { AssetType, ReportItemStatus } from '../../../shared/types/domain';
+import { AssetType, ReportItemStatus } from '../../shared/types/domain';
 import type { Money } from '../../portfolio/domain/value-objects/money.vo';
 
 const STOCK_AND_BDR_THRESHOLD = 1000;

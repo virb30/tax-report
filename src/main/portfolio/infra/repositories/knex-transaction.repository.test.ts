@@ -5,7 +5,7 @@ import { KnexTransactionFeeRepository } from './knex-transaction-fee.repository'
 import { Transaction } from '../../domain/entities/transaction.entity';
 import { TransactionFee } from '../../domain/entities/transaction-fee.entity';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
-import { SourceType, TransactionType } from '../../../../shared/types/domain';
+import { SourceType, TransactionType } from '../../../shared/types/domain';
 import { Quantity } from '../../domain/value-objects/quantity.vo';
 import { Money } from '../../domain/value-objects/money.vo';
 
@@ -130,9 +130,7 @@ describe('KnexTransactionRepository', () => {
       }),
     );
 
-    const columns = (await database.raw("PRAGMA table_info('transactions')")) as Array<{
-      name: string;
-    }>;
+    const columns = await database.raw("PRAGMA table_info('transactions')");
     const rows = await database('transactions').select('*');
 
     expect(columns.map((column) => column.name)).not.toContain('fees');

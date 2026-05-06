@@ -2,7 +2,7 @@ import { mock } from 'jest-mock-extended';
 import { DeletePositionUseCase } from './delete-position.use-case';
 import type { AssetPositionRepository } from '../repositories/asset-position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
-import { AssetType } from '../../../../shared/types/domain';
+import { AssetType } from '../../../shared/types/domain';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import { AssetPosition } from '../../domain/entities/asset-position.entity';
 import { Quantity } from '../../domain/value-objects/quantity.vo';

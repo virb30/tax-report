@@ -1,7 +1,7 @@
 import type { Knex } from 'knex';
 import type { AssetPositionRepository } from '../../application/repositories/asset-position.repository';
 import { AssetPosition, type BrokerAllocation } from '../../domain/entities/asset-position.entity';
-import { AssetType } from '../../../../shared/types/domain';
+import { AssetType } from '../../../shared/types/domain';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import { Quantity } from '../../domain/value-objects/quantity.vo';
 import { Money } from '../../domain/value-objects/money.vo';

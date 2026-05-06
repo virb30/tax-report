@@ -1,5 +1,5 @@
-import { AssetTypeSource } from '../../../../shared/types/domain';
-import type { AssetType } from '../../../../shared/types/domain';
+import { AssetTypeSource } from '../../../shared/types/domain';
+import type { AssetType } from '../../../shared/types/domain';
 import { Cnpj } from '../../../shared/domain/value-objects/cnpj.vo';
 import type { AssetRepository } from '../repositories/asset.repository';
 

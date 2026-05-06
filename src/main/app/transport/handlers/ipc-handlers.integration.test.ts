@@ -8,24 +8,24 @@ import {
   AssetTypeSource,
   SourceType,
   TransactionType,
-} from '../../../../shared/types/domain';
-import { healthCheckContract } from '../../../../preload/contracts/app';
+} from '../../../shared/types/domain';
+import { healthCheckContract } from '../../../../ipc/contracts/app';
 import {
   listAssetsContract,
   repairAssetTypeContract,
   updateAssetContract,
-} from '../../../../preload/contracts/portfolio/assets';
+} from '../../../../ipc/contracts/portfolio/assets';
 import {
   createBrokerContract,
   listBrokersContract,
   toggleBrokerActiveContract,
   updateBrokerContract,
-} from '../../../../preload/contracts/portfolio/brokers';
+} from '../../../../ipc/contracts/portfolio/brokers';
 import {
   confirmImportTransactionsContract,
   importDailyBrokerTaxesContract,
   previewImportTransactionsContract,
-} from '../../../../preload/contracts/ingestion/import';
+} from '../../../../ipc/contracts/ingestion/import';
 import {
   deleteInitialBalanceDocumentContract,
   importConsolidatedPositionContract,
@@ -33,8 +33,8 @@ import {
   listPositionsContract,
   previewConsolidatedPositionContract,
   saveInitialBalanceDocumentContract,
-} from '../../../../preload/contracts/portfolio/portfolio';
-import { generateAssetsReportContract } from '../../../../preload/contracts/tax-reporting/report';
+} from '../../../../ipc/contracts/portfolio/portfolio';
+import { generateAssetsReportContract } from '../../../../ipc/contracts/tax-reporting/report';
 import { CreateBrokerUseCase } from '../../../portfolio/application/use-cases/create-broker.use-case';
 import { DeleteInitialBalanceDocumentUseCase } from '../../../portfolio/application/use-cases/delete-initial-balance-document.use-case';
 import { DeletePositionUseCase } from '../../../portfolio/application/use-cases/delete-position.use-case';

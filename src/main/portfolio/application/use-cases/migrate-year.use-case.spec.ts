@@ -1,6 +1,6 @@
 import { mock, mockReset } from 'jest-mock-extended';
-import { AssetType, TransactionType } from '../../../../shared/types/domain';
-import { SourceType } from '../../../../shared/types/domain';
+import { AssetType, TransactionType } from '../../../shared/types/domain';
+import { SourceType } from '../../../shared/types/domain';
 import type { AssetPositionRepository } from '../repositories/asset-position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import { MigrateYearUseCase } from './migrate-year.use-case';

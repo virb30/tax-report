@@ -1,8 +1,8 @@
 ﻿import { useState, useCallback, useMemo } from 'react';
 import type { JSX } from 'react';
-import { ReportItemStatus, type AssetType } from '../../shared/types/domain';
-import type { GenerateAssetsReportResult } from '../../preload/contracts/tax-reporting/assets-report.contract';
-import type { AssetCatalogItem } from '../../preload/contracts/portfolio/assets.contract';
+import { ReportItemStatus, type AssetType } from '../../ipc/public';
+import type { GenerateAssetsReportResult } from '../../ipc/public';
+import type { AssetCatalogItem } from '../../ipc/public';
 import { buildErrorMessage } from '../errors/build-error-message';
 import { buildYearOptions, getDefaultBaseYear } from '../../shared/utils/year';
 import { ReportItemCard } from './report-page/ReportItemCard';

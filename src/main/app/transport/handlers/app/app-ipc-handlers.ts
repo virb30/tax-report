@@ -1,5 +1,5 @@
-import type { IpcContractHandler } from '../../../../../preload/main/binding/bind-ipc-contract';
-import type { healthCheckContract } from '../../../../../preload/contracts/app';
+import type { IpcContractHandler } from '../../../../../ipc/main/binding/bind-ipc-contract';
+import type { healthCheckContract } from '../../../../../ipc/contracts/app';
 
 export type AppIpcHandlers = {
   healthCheck: IpcContractHandler<typeof healthCheckContract>;

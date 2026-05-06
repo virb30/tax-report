@@ -1,4 +1,4 @@
-import type { IpcResult } from '../../preload/ipc/ipc-result';
+import type { IpcResult } from '../../ipc/public';
 
 export function unwrapIpcResult<T>(result: IpcResult<T>): T {
   if (result.ok) {

@@ -1,4 +1,4 @@
-import type { IpcRegistry } from '../../../../preload/main/registry/ipc-registry';
+import type { IpcRegistry } from '../../../../ipc/main/registry/ipc-registry';
 
 export interface Runtime {
   getUserDataPath(): string;

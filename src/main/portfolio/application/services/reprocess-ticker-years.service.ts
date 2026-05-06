@@ -1,4 +1,4 @@
-import type { AssetType } from '../../../../shared/types/domain';
+import type { AssetType } from '../../../shared/types/domain';
 import type { RecalculatePositionUseCase } from '../use-cases/recalculate-position.use-case';
 
 export class ReprocessTickerYearsService {

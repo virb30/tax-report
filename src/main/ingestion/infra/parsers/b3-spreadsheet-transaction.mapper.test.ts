@@ -1,4 +1,4 @@
-import { OperationType } from '../../../../shared/types/domain';
+import { OperationType } from '../../../shared/types/domain';
 import { B3SpreadsheetTransactionMapper } from './b3-spreadsheet-transaction.mapper';
 
 describe('B3SpreadsheetTransactionMapper', () => {

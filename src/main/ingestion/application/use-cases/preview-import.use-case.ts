@@ -4,14 +4,42 @@ import type { AssetRepository } from '../../../portfolio/application/repositorie
 import type { DailyBrokerTaxRepository } from '../repositories/daily-broker-tax.repository';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import type {
-  PreviewImportTransactionsCommand,
-  PreviewImportTransactionsResult,
-  PreviewTransactionItem,
-  PreviewImportWarning,
-} from '../../../../preload/contracts/ingestion/preview-import.contract';
-import { TransactionType } from '../../../../shared/types/domain';
+  AssetType,
+  ImportPreviewReviewState,
+  ImportPreviewSummary,
+  ParsedTransactionBatch,
+} from '../../../shared/types/domain';
+import { TransactionType } from '../../../shared/types/domain';
 import { ImportPreviewReviewResolver } from '../../domain/services/import-preview-review-resolver.service';
 import { Money } from '../../../portfolio/domain/value-objects/money.vo';
+
+export type PreviewImportTransactionsInput = {
+  filePath: string;
+};
+
+export type PreviewTransactionItem = ImportPreviewReviewState & {
+  date: string;
+  ticker: string;
+  type: TransactionType | null;
+  quantity: number;
+  unitPrice: number;
+  fees: number;
+  brokerId: string;
+  sourceAssetType: AssetType | null;
+};
+
+export type PreviewImportWarning = {
+  row: number;
+  message: string;
+  type: string;
+};
+
+export type PreviewImportTransactionsOutput = {
+  batches: ParsedTransactionBatch[];
+  transactionsPreview: PreviewTransactionItem[];
+  summary: ImportPreviewSummary;
+  warnings?: PreviewImportWarning[];
+};
 
 export class PreviewImportUseCase {
   constructor(
@@ -22,7 +50,7 @@ export class PreviewImportUseCase {
     private readonly reviewResolver: ImportPreviewReviewResolver = new ImportPreviewReviewResolver(),
   ) {}
 
-  async execute(input: PreviewImportTransactionsCommand): Promise<PreviewImportTransactionsResult> {
+  async execute(input: PreviewImportTransactionsInput): Promise<PreviewImportTransactionsOutput> {
     const parsedFile = await this.parser.parse(input.filePath);
     const batches = parsedFile.batches;
     const assetCatalogMap = await this.loadAssetCatalogMap(parsedFile);
@@ -187,7 +215,7 @@ export class PreviewImportUseCase {
   }
 
   private updateSummary(
-    summary: PreviewImportTransactionsResult['summary'],
+    summary: PreviewImportTransactionsOutput['summary'],
     item: PreviewTransactionItem,
   ): void {
     if (item.unsupportedReason) {

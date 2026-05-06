@@ -1,4 +1,4 @@
-import type { AssetType, AssetTypeSource } from '../../../../shared/types/domain';
+import type { AssetType, AssetTypeSource } from '../../../shared/types/domain';
 import type { Asset } from '../../domain/entities/asset.entity';
 import type { AssetRepository } from '../repositories/asset.repository';
 

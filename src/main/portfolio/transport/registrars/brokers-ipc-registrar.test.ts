@@ -9,8 +9,8 @@ import {
   listBrokersContract,
   toggleBrokerActiveContract,
   updateBrokerContract,
-} from '../../../../preload/contracts/portfolio/brokers';
-import type { IpcMainHandleRegistry } from '../../../../preload/main/registry/ipc-registrar';
+} from '../../../../ipc/contracts/portfolio/brokers';
+import type { IpcMainHandleRegistry } from '../../../../ipc/main/registry/ipc-registrar';
 import { BrokersIpcRegistrar } from './brokers-ipc-registrar';
 
 type IpcHandler = (_event: Electron.IpcMainInvokeEvent, input?: unknown) => Promise<unknown>;

@@ -1,9 +1,6 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
-import type {
-  AssetCatalogItem,
-  ListAssetsQuery,
-} from '../../../preload/contracts/portfolio/assets.contract';
-import type { AssetType } from '../../../shared/types/domain';
+import type { AssetCatalogItem, ListAssetsQuery } from '../../../ipc/public';
+import type { AssetType } from '../../../ipc/public';
 import { buildErrorMessage } from '../../errors/build-error-message';
 
 export function useAssetCatalog() {

@@ -1,14 +1,14 @@
 import {
   AssetType,
+  type ParsedTransactionFile,
   TransactionType,
   UnsupportedImportReason,
-} from '../../../../shared/types/domain';
+} from '../../../shared/types/domain';
 import { ImportTransactionsUseCase } from './import-transactions.use-case';
 import type { ImportTransactionsParser } from '../interfaces/transactions.parser.interface';
 import type { AssetRepository } from '../../../portfolio/application/repositories/asset.repository';
 import type { TransactionRepository } from '../../../portfolio/application/repositories/transaction.repository';
 import { mock, mockReset } from 'jest-mock-extended';
-import type { ParsedTransactionFile } from '../../../../preload/contracts/ingestion/import-transactions.contract';
 import type { ReallocateTransactionFeesService } from '../services/reallocate-transaction-fees.service';
 import type { Queue } from '../../../shared/application/events/queue.interface';
 import { TransactionsImportedEvent } from '../../../shared/domain/events/transactions-imported.event';

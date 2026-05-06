@@ -4,7 +4,7 @@ import {
   AssetTypeSource,
   SourceType,
   TransactionType,
-} from '../../../../shared/types/domain';
+} from '../../../shared/types/domain';
 import { Asset } from '../../domain/entities/asset.entity';
 import { Transaction } from '../../domain/entities/transaction.entity';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
@@ -12,6 +12,8 @@ import type { AssetRepository } from '../repositories/asset.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import type { ReprocessTickerYearsService } from '../services/reprocess-ticker-years.service';
 import { RepairAssetTypeUseCase } from './repair-asset-type.use-case';
+import { Quantity } from '../../domain/value-objects/quantity.vo';
+import { Money } from '../../domain/value-objects/money.vo';
 
 describe('RepairAssetTypeUseCase', () => {
   const assetRepository = mock<AssetRepository>();
@@ -45,9 +47,9 @@ describe('RepairAssetTypeUseCase', () => {
         date: '2025-01-10',
         type: TransactionType.Buy,
         ticker: 'PETR4',
-        quantity: 1,
-        unitPrice: 10,
-        fees: 0,
+        quantity: Quantity.from(1),
+        unitPrice: Money.from(10),
+        fees: Money.from(0),
         brokerId: Uuid.create(),
         sourceType: SourceType.Csv,
       }),
@@ -55,9 +57,9 @@ describe('RepairAssetTypeUseCase', () => {
         date: '2023-01-10',
         type: TransactionType.Buy,
         ticker: 'PETR4',
-        quantity: 1,
-        unitPrice: 10,
-        fees: 0,
+        quantity: Quantity.from(1),
+        unitPrice: Money.from(10),
+        fees: Money.from(0),
         brokerId: Uuid.create(),
         sourceType: SourceType.Csv,
       }),
@@ -65,9 +67,9 @@ describe('RepairAssetTypeUseCase', () => {
         date: '2024-01-10',
         type: TransactionType.Buy,
         ticker: 'PETR4',
-        quantity: 1,
-        unitPrice: 10,
-        fees: 0,
+        quantity: Quantity.from(1),
+        unitPrice: Money.from(10),
+        fees: Money.from(0),
         brokerId: Uuid.create(),
         sourceType: SourceType.Csv,
       }),

@@ -3,7 +3,7 @@ import {
   AssetTypeSource,
   TransactionType,
   UnsupportedImportReason,
-} from '../../../../shared/types/domain';
+} from '../../../shared/types/domain';
 import { PreviewImportUseCase } from './preview-import.use-case';
 import type { ImportTransactionsParser } from '../interfaces/transactions.parser.interface';
 import type { AssetRepository } from '../../../portfolio/application/repositories/asset.repository';

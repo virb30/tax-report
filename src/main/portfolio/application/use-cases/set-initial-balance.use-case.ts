@@ -1,12 +1,14 @@
 import { AssetPosition } from '../../domain/entities/asset-position.entity';
 import type { AssetPositionRepository } from '../repositories/asset-position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
-import { TransactionType } from '../../../../shared/types/domain';
-import { SourceType } from '../../../../shared/types/domain';
-import type { AssetType } from '../../../../shared/types/domain';
+import { TransactionType } from '../../../shared/types/domain';
+import { SourceType } from '../../../shared/types/domain';
+import type { AssetType } from '../../../shared/types/domain';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import { Transaction } from '../../domain/entities/transaction.entity';
 import { assertSupportedYear } from '../../../../shared/utils/year';
+import { Quantity } from '../../domain/value-objects/quantity.vo';
+import { Money } from '../../domain/value-objects/money.vo';
 
 export interface SetInitialBalanceInput {
   ticker: string;
@@ -44,8 +46,8 @@ export class SetInitialBalanceUseCase {
     }
 
     position.applyInitialBalance({
-      quantity: input.quantity,
-      averagePrice: input.averagePrice,
+      quantity: Quantity.from(input.quantity),
+      averagePrice: Money.from(input.averagePrice),
       brokerId: Uuid.from(input.brokerId),
     });
 
@@ -54,9 +56,9 @@ export class SetInitialBalanceUseCase {
       date: transactionDate,
       type: TransactionType.InitialBalance,
       ticker: input.ticker,
-      quantity: input.quantity,
-      unitPrice: input.averagePrice,
-      fees: 0,
+      quantity: Quantity.from(input.quantity),
+      unitPrice: Money.from(input.averagePrice),
+      fees: Money.from(0),
       brokerId: Uuid.from(input.brokerId),
       sourceType: SourceType.Manual,
     });
@@ -67,8 +69,8 @@ export class SetInitialBalanceUseCase {
     return {
       ticker: input.ticker,
       brokerId: input.brokerId,
-      quantity: position.totalQuantity,
-      averagePrice: position.averagePrice,
+      quantity: position.totalQuantity.toNumber(),
+      averagePrice: position.averagePrice.toNumber(),
     };
   }
 

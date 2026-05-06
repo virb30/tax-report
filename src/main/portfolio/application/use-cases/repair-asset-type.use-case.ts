@@ -1,5 +1,5 @@
-import { AssetTypeSource } from '../../../../shared/types/domain';
-import type { AssetType } from '../../../../shared/types/domain';
+import { AssetTypeSource } from '../../../shared/types/domain';
+import type { AssetType } from '../../../shared/types/domain';
 import { Asset } from '../../domain/entities/asset.entity';
 import type { AssetRepository } from '../repositories/asset.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';

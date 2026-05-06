@@ -11,9 +11,9 @@ import type { SaveInitialBalanceDocumentUseCase } from '../../application/use-ca
 import {
   portfolioIpcContracts,
   saveInitialBalanceDocumentContract,
-} from '../../../../preload/contracts/portfolio/portfolio';
-import { AssetType } from '../../../../shared/types/domain';
-import type { IpcMainHandleRegistry } from '../../../../preload/main/registry/ipc-registrar';
+} from '../../../../ipc/contracts/portfolio/portfolio';
+import { AssetType } from '../../../shared/types/domain';
+import type { IpcMainHandleRegistry } from '../../../../ipc/main/registry/ipc-registrar';
 import { PortfolioIpcRegistrar } from './portfolio-ipc-registrar';
 
 type IpcHandler = (_event: Electron.IpcMainInvokeEvent, input?: unknown) => Promise<unknown>;

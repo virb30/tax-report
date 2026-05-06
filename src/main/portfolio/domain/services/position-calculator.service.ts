@@ -1,8 +1,4 @@
-import {
-  AssetType,
-  type AveragePriceFeeMode,
-  TransactionType,
-} from '../../../../shared/types/domain';
+import { AssetType, type AveragePriceFeeMode, TransactionType } from '../../../shared/types/domain';
 import { AssetPosition } from '../entities/asset-position.entity';
 import type { Transaction } from '../entities/transaction.entity';
 import { Money } from '../value-objects/money.vo';

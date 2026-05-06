@@ -1,20 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import {
   AssetResolutionStatus,
+  type AssetTypeOverrideDecision,
   AssetTypeSource,
   SourceType,
-} from '../../../../shared/types/domain';
-import type { AssetType } from '../../../../shared/types/domain';
+} from '../../../shared/types/domain';
+import type { AssetType } from '../../../shared/types/domain';
 import { Transaction } from '../../../portfolio/domain/entities/transaction.entity';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import { Asset } from '../../../portfolio/domain/entities/asset.entity';
 import type { ImportTransactionsParser } from '../interfaces/transactions.parser.interface';
 import type { AssetRepository } from '../../../portfolio/application/repositories/asset.repository';
 import type { TransactionRepository } from '../../../portfolio/application/repositories/transaction.repository';
-import type {
-  ConfirmImportTransactionsCommand,
-  ConfirmImportTransactionsResult,
-} from '../../../../preload/contracts/ingestion/preview-import.contract';
 import { ImportConfirmReviewResolver } from '../../domain/services/import-confirm-review-resolver.service';
 import { Money } from '../../../portfolio/domain/value-objects/money.vo';
 import { Quantity } from '../../../portfolio/domain/value-objects/quantity.vo';
@@ -48,6 +45,17 @@ type AssetCatalogMap = Map<
   NonNullable<Awaited<ReturnType<AssetRepository['findByTickersList']>>[number]>
 >;
 
+export type ConfirmImportTransactionsInput = {
+  filePath: string;
+  assetTypeOverrides: AssetTypeOverrideDecision[];
+};
+
+export type ConfirmImportTransactionsOutput = {
+  importedCount: number;
+  recalculatedTickers: string[];
+  skippedUnsupportedRows: number;
+};
+
 export class ImportTransactionsUseCase {
   constructor(
     private readonly parser: ImportTransactionsParser,
@@ -58,7 +66,7 @@ export class ImportTransactionsUseCase {
     private readonly reviewResolver: ImportConfirmReviewResolver = new ImportConfirmReviewResolver(),
   ) {}
 
-  async execute(input: ConfirmImportTransactionsCommand): Promise<ConfirmImportTransactionsResult> {
+  async execute(input: ConfirmImportTransactionsInput): Promise<ConfirmImportTransactionsOutput> {
     const parsedFile = await this.parser.parse(input.filePath);
     const assetCatalogMap = await this.loadAssetCatalogMap(parsedFile);
     const { acceptedRows, skippedUnsupportedRows } = this.resolveAcceptedRows(
@@ -90,7 +98,7 @@ export class ImportTransactionsUseCase {
   private resolveAcceptedRows(
     parsedFile: ParsedTransactionImportFile,
     assetCatalogMap: AssetCatalogMap,
-    overrides: ConfirmImportTransactionsCommand['assetTypeOverrides'],
+    overrides: ConfirmImportTransactionsInput['assetTypeOverrides'],
   ): ResolveAcceptedRowsResult {
     const overridesByTicker = this.buildOverridesMap(overrides);
     const acceptedRows: AcceptedTransactionImport[] = [];
@@ -130,7 +138,7 @@ export class ImportTransactionsUseCase {
   }
 
   private buildOverridesMap(
-    overrides: ConfirmImportTransactionsCommand['assetTypeOverrides'],
+    overrides: ConfirmImportTransactionsInput['assetTypeOverrides'],
   ): Map<string, AssetType> {
     return new Map(overrides.map((override) => [override.ticker, override.assetType]));
   }

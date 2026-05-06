@@ -1,16 +1,13 @@
-import type {
-  ImportConsolidatedPositionCommand,
-  ImportConsolidatedPositionData,
-  PreviewConsolidatedPositionCommand,
-  PreviewConsolidatedPositionData,
-} from '../../../../preload/contracts/ingestion/import-consolidated-position.contract';
 import {
   AssetResolutionStatus,
+  type AssetTypeOverrideDecision,
   AssetTypeSource,
+  type ImportPreviewReviewState,
+  type ImportPreviewSummary,
   SourceType,
   TransactionType,
-} from '../../../../shared/types/domain';
-import type { AssetType } from '../../../../shared/types/domain';
+} from '../../../shared/types/domain';
+import type { AssetType } from '../../../shared/types/domain';
 import type { ConsolidatedPositionParserPort } from '../interfaces/consolidated-position-parser.port';
 import type { AssetRepository } from '../../../portfolio/application/repositories/asset.repository';
 import type { BrokerRepository } from '../../../portfolio/application/repositories/broker.repository';
@@ -45,6 +42,35 @@ type AssetCatalogMap = Map<
   NonNullable<Awaited<ReturnType<AssetRepository['findByTickersList']>>[number]>
 >;
 
+export type ImportConsolidatedPositionInput = {
+  filePath: string;
+  year: number;
+  assetTypeOverrides: AssetTypeOverrideDecision[];
+};
+
+export type ImportConsolidatedPositionOutput = {
+  importedCount: number;
+  recalculatedTickers: string[];
+  skippedUnsupportedRows: number;
+};
+
+export type PreviewConsolidatedPositionInput = {
+  filePath: string;
+};
+
+export type ConsolidatedPositionPreviewRow = ImportPreviewReviewState & {
+  ticker: string;
+  quantity: number;
+  averagePrice: number;
+  brokerCode: string;
+  sourceAssetType: AssetType | null;
+};
+
+export type PreviewConsolidatedPositionOutput = {
+  rows: ConsolidatedPositionPreviewRow[];
+  summary: ImportPreviewSummary;
+};
+
 export class ImportConsolidatedPositionUseCase {
   constructor(
     private readonly parser: ConsolidatedPositionParserPort,
@@ -57,8 +83,8 @@ export class ImportConsolidatedPositionUseCase {
   ) {}
 
   async preview(
-    input: PreviewConsolidatedPositionCommand,
-  ): Promise<PreviewConsolidatedPositionData> {
+    input: PreviewConsolidatedPositionInput,
+  ): Promise<PreviewConsolidatedPositionOutput> {
     this.validatePreviewInput(input);
     const rows = await this.parser.parse(input.filePath);
     const assetCatalogMap = await this.loadAssetCatalogMap(rows);
@@ -75,7 +101,7 @@ export class ImportConsolidatedPositionUseCase {
     };
   }
 
-  async execute(input: ImportConsolidatedPositionCommand): Promise<ImportConsolidatedPositionData> {
+  async execute(input: ImportConsolidatedPositionInput): Promise<ImportConsolidatedPositionOutput> {
     this.validateExecuteInput(input);
 
     const rows = await this.parser.parse(input.filePath);
@@ -133,13 +159,13 @@ export class ImportConsolidatedPositionUseCase {
     });
   }
 
-  private validatePreviewInput(input: PreviewConsolidatedPositionCommand): void {
+  private validatePreviewInput(input: PreviewConsolidatedPositionInput): void {
     if (typeof input.filePath !== 'string' || input.filePath.trim().length === 0) {
       throw new Error('Caminho do arquivo inválido.');
     }
   }
 
-  private validateExecuteInput(input: ImportConsolidatedPositionCommand): void {
+  private validateExecuteInput(input: ImportConsolidatedPositionInput): void {
     assertSupportedYear(input.year, {
       invalidTypeMessage: 'Ano inválido.',
       outOfRangeMessage: 'Ano deve estar entre 2000 e 2100.',
@@ -150,7 +176,7 @@ export class ImportConsolidatedPositionUseCase {
   private resolveSupportedRows(
     rows: ConsolidatedPositionRow[],
     assetCatalogMap: AssetCatalogMap,
-    overrides: ImportConsolidatedPositionCommand['assetTypeOverrides'],
+    overrides: ImportConsolidatedPositionInput['assetTypeOverrides'],
   ): {
     acceptedRows: AcceptedConsolidatedRow[];
     skippedUnsupportedRows: number;
@@ -191,8 +217,8 @@ export class ImportConsolidatedPositionUseCase {
   private buildPreviewRow(
     row: ConsolidatedPositionRow,
     assetCatalogMap: AssetCatalogMap,
-    summary: PreviewConsolidatedPositionData['summary'],
-  ): PreviewConsolidatedPositionData['rows'][number] {
+    summary: PreviewConsolidatedPositionOutput['summary'],
+  ): PreviewConsolidatedPositionOutput['rows'][number] {
     const previewRow = {
       ticker: row.ticker,
       quantity: row.quantity,
@@ -212,7 +238,7 @@ export class ImportConsolidatedPositionUseCase {
   }
 
   private buildOverridesMap(
-    overrides: ImportConsolidatedPositionCommand['assetTypeOverrides'],
+    overrides: ImportConsolidatedPositionInput['assetTypeOverrides'],
   ): Map<string, AssetType> {
     return new Map(overrides.map((override) => [override.ticker, override.assetType]));
   }
@@ -351,8 +377,8 @@ export class ImportConsolidatedPositionUseCase {
   }
 
   private updateSummary(
-    summary: PreviewConsolidatedPositionData['summary'],
-    row: PreviewConsolidatedPositionData['rows'][number],
+    summary: PreviewConsolidatedPositionOutput['summary'],
+    row: PreviewConsolidatedPositionOutput['rows'][number],
   ): void {
     if (row.unsupportedReason) {
       summary.unsupportedRows += 1;

@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import { AssetType } from '../../../../shared/types/domain';
+import { AssetType } from '../../../shared/types/domain';
 import { initializeDatabase, createDatabaseConnection } from '../../../app/infra/database/database';
 import { AssetPosition } from '../../domain/entities/asset-position.entity';
 import { Broker } from '../../domain/entities/broker.entity';

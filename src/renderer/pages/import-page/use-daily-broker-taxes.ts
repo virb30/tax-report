@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { DailyBrokerTaxItem } from '../../../preload/contracts/ingestion/daily-broker-tax.contract';
+import type { DailyBrokerTaxItem } from '../../../ipc/public';
 import { buildErrorMessage } from '../../errors/build-error-message';
 import type { Broker } from '../../types/broker.types';
 

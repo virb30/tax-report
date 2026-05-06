@@ -1,8 +1,4 @@
-import {
-  listAssetsContract,
-  repairAssetTypeContract,
-  updateAssetContract,
-} from './contracts/portfolio/assets';
+import { listAssetsContract, repairAssetTypeContract, updateAssetContract } from '../ipc/public';
 import {
   confirmImportTransactionsContract,
   deleteDailyBrokerTaxContract,
@@ -10,15 +6,15 @@ import {
   listDailyBrokerTaxesContract,
   previewImportTransactionsContract,
   saveDailyBrokerTaxContract,
-} from './contracts/ingestion/import';
+} from '../ipc/public';
 import {
   deleteInitialBalanceDocumentContract,
   listInitialBalanceDocumentsContract,
   listPositionsContract,
   saveInitialBalanceDocumentContract,
-} from './contracts/portfolio/portfolio';
-import { generateAssetsReportContract } from './contracts/tax-reporting/report';
-import { ipcContracts, rendererExposedIpcContracts } from './ipc/ipc-contract-registry';
+} from '../ipc/public';
+import { generateAssetsReportContract } from '../ipc/public';
+import { ipcContracts, rendererExposedIpcContracts } from '../ipc/public';
 
 const exposeInMainWorld = jest.fn();
 const invoke = jest.fn();
@@ -32,7 +28,7 @@ jest.mock('electron', () => ({
   },
 }));
 import { electronApi } from './preload';
-import { AssetType } from '../shared/types/domain';
+import { AssetType } from '../ipc/public';
 
 describe('preload', () => {
   it('exposes electron API to renderer', () => {

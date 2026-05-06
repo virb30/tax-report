@@ -1,7 +1,7 @@
 import type {
   IpcMainHandleRegistry,
   IpcRegistrar,
-} from '../../../../preload/main/registry/ipc-registrar';
+} from '../../../../ipc/main/registry/ipc-registrar';
 import type { DeleteInitialBalanceDocumentUseCase } from '../../application/use-cases/delete-initial-balance-document.use-case';
 import type { ListInitialBalanceDocumentsUseCase } from '../../application/use-cases/list-initial-balance-documents.use-case';
 import type { ListPositionsUseCase } from '../../application/use-cases/list-positions.use-case';
@@ -10,8 +10,8 @@ import type { MigrateYearUseCase } from '../../application/use-cases/migrate-yea
 import type { ImportConsolidatedPositionUseCase } from '../../../ingestion/application/use-cases/import-consolidated-position.use-case';
 import type { DeletePositionUseCase } from '../../application/use-cases/delete-position.use-case';
 import type { SaveInitialBalanceDocumentUseCase } from '../../application/use-cases/save-initial-balance-document.use-case';
-import { bindIpcContract } from '../../../../preload/main/binding/bind-ipc-contract';
-import { toIpcResultFailure } from '../../../../preload/main/binding/ipc-error-mapper';
+import { bindIpcContract } from '../../../../ipc/main/binding/bind-ipc-contract';
+import { toIpcResultFailure } from '../../../../ipc/main/binding/ipc-error-mapper';
 import { createPortfolioIpcHandlers } from '../handlers/portfolio/portfolio-ipc-handlers';
 import {
   deleteInitialBalanceDocumentContract,
@@ -25,7 +25,7 @@ import {
   previewConsolidatedPositionContract,
   recalculatePositionContract,
   saveInitialBalanceDocumentContract,
-} from '../../../../preload/contracts/portfolio/portfolio/contracts';
+} from '../../../../ipc/contracts/portfolio/portfolio/contracts';
 
 export class PortfolioIpcRegistrar implements IpcRegistrar {
   constructor(

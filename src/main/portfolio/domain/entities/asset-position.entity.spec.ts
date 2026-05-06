@@ -1,4 +1,4 @@
-import { AssetType } from '../../../../shared/types/domain';
+import { AssetType } from '../../../shared/types/domain';
 import { AssetPosition, MIN_SUPPORTED_YEAR } from './asset-position.entity';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import { Quantity } from '../value-objects/quantity.vo';

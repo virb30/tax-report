@@ -1,5 +1,9 @@
-import type { SaveInitialBalanceDocumentCommand } from '../../../../preload/contracts/portfolio/initial-balance.contract';
-import { AssetTypeSource, SourceType, TransactionType } from '../../../../shared/types/domain';
+import {
+  type AssetType,
+  AssetTypeSource,
+  SourceType,
+  TransactionType,
+} from '../../../shared/types/domain';
 import { assertSupportedYear } from '../../../../shared/utils/year';
 import { Asset } from '../../domain/entities/asset.entity';
 import type { TransactionRepository } from '../repositories/transaction.repository';
@@ -11,6 +15,21 @@ import { Quantity } from '../../domain/value-objects/quantity.vo';
 import { Money } from '../../domain/value-objects/money.vo';
 import { Cnpj } from '../../../shared/domain/value-objects/cnpj.vo';
 
+export interface InitialBalanceAllocationInput {
+  brokerId: string;
+  quantity: string;
+}
+
+export interface SaveInitialBalanceDocumentInput {
+  ticker: string;
+  year: number;
+  assetType: AssetType;
+  name?: string;
+  cnpj?: string;
+  averagePrice: string;
+  allocations: InitialBalanceAllocationInput[];
+}
+
 export interface InitialBalanceAllocationOutput {
   brokerId: string;
   quantity: string;
@@ -19,7 +38,7 @@ export interface InitialBalanceAllocationOutput {
 export interface SaveInitialBalanceDocumentOutput {
   ticker: string;
   year: number;
-  assetType: SaveInitialBalanceDocumentCommand['assetType'];
+  assetType: AssetType;
   name?: string | null;
   cnpj?: string | null;
   averagePrice: string;
@@ -34,9 +53,7 @@ export class SaveInitialBalanceDocumentUseCase {
     private readonly assetRepository: AssetRepository,
   ) {}
 
-  async execute(
-    input: SaveInitialBalanceDocumentCommand,
-  ): Promise<SaveInitialBalanceDocumentOutput> {
+  async execute(input: SaveInitialBalanceDocumentInput): Promise<SaveInitialBalanceDocumentOutput> {
     this.validate(input);
 
     const averagePrice = Money.from(input.averagePrice);
@@ -78,7 +95,7 @@ export class SaveInitialBalanceDocumentUseCase {
     };
   }
 
-  private async persistAssetCatalog(input: SaveInitialBalanceDocumentCommand): Promise<Asset> {
+  private async persistAssetCatalog(input: SaveInitialBalanceDocumentInput): Promise<Asset> {
     const asset =
       (await this.assetRepository.findByTicker(input.ticker)) ??
       Asset.create({
@@ -111,7 +128,7 @@ export class SaveInitialBalanceDocumentUseCase {
     return normalized && normalized.length > 0 ? normalized : undefined;
   }
 
-  private validate(input: SaveInitialBalanceDocumentCommand): void {
+  private validate(input: SaveInitialBalanceDocumentInput): void {
     if (typeof input.ticker !== 'string' || input.ticker.trim().length === 0) {
       throw new Error('Ticker é obrigatório.');
     }

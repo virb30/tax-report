@@ -1,9 +1,9 @@
 import { jest } from '@jest/globals';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ElectronApi } from '../../preload/renderer/electron-api';
+import type { ElectronApi } from '../../ipc/public';
 import { ImportConsolidatedPositionModal } from './ImportConsolidatedPositionModal';
-import { AssetType, AssetResolutionStatus } from '../../shared/types/domain';
+import { AssetType, AssetResolutionStatus } from '../../ipc/public';
 
 function getButton(name: string): HTMLButtonElement {
   const element = screen.getByRole('button', { name });

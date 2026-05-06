@@ -1,8 +1,4 @@
-import type {
-  AssetType,
-  PendingIssueCode,
-  ReportItemStatus,
-} from '../../../../shared/types/domain';
+import type { AssetType, PendingIssueCode, ReportItemStatus } from '../../../shared/types/domain';
 import type { BrokerRepository } from '../../../portfolio/application/repositories/broker.repository';
 import type { AssetPositionRepository } from '../../../portfolio/application/repositories/asset-position.repository';
 import type { AssetRepository } from '../../../portfolio/application/repositories/asset.repository';

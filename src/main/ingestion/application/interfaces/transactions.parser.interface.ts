@@ -1,4 +1,4 @@
-import type { ParsedTransactionFile } from '../../../../preload/contracts/ingestion/import-transactions.contract';
+import type { ParsedTransactionFile } from '../../../shared/types/domain';
 
 export interface ImportTransactionsParser {
   parse(filePath: string): Promise<ParsedTransactionFile>;

@@ -2,19 +2,11 @@ import '@testing-library/jest-dom';
 
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-  AssetType,
-  ReportItemStatus,
-  TransactionType,
-  AssetResolutionStatus,
-} from '../shared/types/domain';
-import type { ElectronApi } from '../preload/renderer/electron-api';
-import type { GenerateAssetsReportResult } from '../preload/contracts/tax-reporting/assets-report.contract';
-import type {
-  InitialBalanceDocument,
-  SaveInitialBalanceDocumentResult,
-} from '../preload/contracts/portfolio/initial-balance.contract';
-import type { ListPositionsResult } from '../preload/contracts/portfolio/list-positions.contract';
+import { AssetType, ReportItemStatus, TransactionType, AssetResolutionStatus } from '../ipc/public';
+import type { ElectronApi } from '../ipc/public';
+import type { GenerateAssetsReportResult } from '../ipc/public';
+import type { InitialBalanceDocument, SaveInitialBalanceDocumentResult } from '../ipc/public';
+import type { ListPositionsResult } from '../ipc/public';
 import { App } from './App';
 import mock, { mockReset } from 'jest-mock-extended/lib/Mock';
 
@@ -215,7 +207,7 @@ describe('App critical UI flows (E2E)', () => {
     });
 
     (electronApi as ElectronApi).appName = 'tax-report';
-    window.electronApi = electronApi as ElectronApi;
+    window.electronApi = electronApi;
 
     Object.defineProperty(navigator, 'clipboard', {
       value: {

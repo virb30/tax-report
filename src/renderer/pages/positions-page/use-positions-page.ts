@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
-import type { PositionListItem } from '../../../preload/contracts/portfolio/list-positions.contract';
-import type {
-  RecalculatePositionCommand,
-} from '../../../preload/contracts/portfolio/recalculate.contract';
-import type { AveragePriceFeeMode } from '../../../shared/types/domain';
+import type { PositionListItem } from '../../../ipc/public';
+import type { RecalculatePositionCommand } from '../../../ipc/public';
+import type { AveragePriceFeeMode } from '../../../ipc/public';
 import { buildYearOptions, getDefaultBaseYear } from '../../../shared/utils/year';
 import { buildErrorMessage } from '../../errors/build-error-message';
 import { unwrapIpcResult } from '../../ipc/unwrap-ipc-result';

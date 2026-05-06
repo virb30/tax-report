@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
-import type { IpcRegistry } from '../../../../preload/main/registry/ipc-registry';
+import type { IpcRegistry } from '../../../../ipc/main/registry/ipc-registry';
 import type { Runtime } from './runtime';
 
 declare const MAIN_WINDOW_VITE_NAME: string | undefined;

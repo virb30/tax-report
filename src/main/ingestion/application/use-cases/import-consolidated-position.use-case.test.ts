@@ -9,11 +9,7 @@ import { Broker } from '../../../portfolio/domain/entities/broker.entity';
 import { Cnpj } from '../../../shared/domain/value-objects/cnpj.vo';
 import { ConsolidatedPositionImportedEvent } from '../../../shared/domain/events/consolidated-position-imported.event';
 import { Asset } from '../../../portfolio/domain/entities/asset.entity';
-import {
-  AssetType,
-  AssetTypeSource,
-  UnsupportedImportReason,
-} from '../../../../shared/types/domain';
+import { AssetType, AssetTypeSource, UnsupportedImportReason } from '../../../shared/types/domain';
 
 describe('ImportConsolidatedPositionUseCase', () => {
   let parser: jest.Mocked<ConsolidatedPositionParserPort>;
