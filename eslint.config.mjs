@@ -35,6 +35,55 @@ export default defineConfig([
     },
   },
   {
+    files: ['src/renderer/**/*'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '**/main/**',
+                '**/preload/**',
+                '**/ipc/contracts/**',
+                '**/ipc/main/**',
+                '**/ipc/renderer/**',
+              ],
+              message: 'Renderer must only import from the public IPC boundary (src/ipc/public).',
+            },
+            {
+              group: ['**/shared/types/**'],
+              message: 'Renderer must not import from shared types. Use the public IPC boundary instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: [
+      'src/main/**/application/**/*',
+      'src/main/**/domain/**/*',
+      'src/main/**/infra/repositories/**/*',
+      'src/main/**/infra/parsers/**/*',
+      'src/main/**/infra/handlers/**/*',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/ipc/**'],
+              message:
+                'Application, Domain, and core Infrastructure layers must not import from the IPC module. Transport handlers should map IPC DTOs to application models.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx', '**/*.e2e.test.tsx'],
     plugins: {
       jest: jestPlugin,

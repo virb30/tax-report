@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import type { PositionListItem } from '../../../ipc/public';
-import type { RecalculatePositionCommand } from '../../../ipc/public';
-import type { AveragePriceFeeMode } from '../../../ipc/public';
+import { unwrapIpcResult } from '../../../ipc/public';
+import type {
+  PositionListItem,
+  RecalculatePositionCommand,
+  AveragePriceFeeMode,
+} from '../../../ipc/public';
 import { buildYearOptions, getDefaultBaseYear } from '../../../shared/utils/year';
 import { buildErrorMessage } from '../../errors/build-error-message';
-import { unwrapIpcResult } from '../../ipc/unwrap-ipc-result';
 
 const defaultBaseYear = getDefaultBaseYear();
 

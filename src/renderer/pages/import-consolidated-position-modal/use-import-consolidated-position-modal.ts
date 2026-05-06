@@ -1,8 +1,8 @@
 import { useState } from 'react';
+import { unwrapIpcResult } from '../../../ipc/public';
 import type { ConsolidatedPositionPreviewRow } from '../../../ipc/public';
 import { buildYearOptions, getDefaultBaseYear } from '../../../shared/utils/year';
 import { buildErrorMessage } from '../../errors/build-error-message';
-import { unwrapIpcResult } from '../../ipc/unwrap-ipc-result';
 
 const defaultBaseYear = getDefaultBaseYear();
 

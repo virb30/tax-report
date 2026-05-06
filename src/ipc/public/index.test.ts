@@ -18,12 +18,12 @@ import {
 
 describe('ipc public entrypoint', () => {
   it('exports renderer API builders, contracts, and public DTO values from one entrypoint', async () => {
-    const invoke = jest.fn<(channel: string, input?: unknown) => Promise<unknown>>();
+    const invoke = jest.fn();
     invoke.mockResolvedValue({ items: [] });
-    const api = buildElectronApi({ invoke }, [listAssetsContract]) as Pick<
-      ElectronApi,
-      'appName' | 'listAssets'
-    >;
+    const api = buildElectronApi(
+      { invoke },
+      [listAssetsContract],
+    ) as Pick<ElectronApi, 'appName' | 'listAssets'>;
 
     await api.listAssets({ pendingOnly: true });
 

@@ -2,25 +2,32 @@
 
 Keep only task-local execution context here. Do not duplicate facts that are obvious from the repository, task file, PRD documents, or git history.
 
+## Current State
+- Verified that Task 01 or a previous commit already moved most IPC API mechanics to `src/ipc/{main,renderer,public}`.
+- `src/preload/preload.ts` is already reduced to runtime bridge only.
+- All tests are passing with high coverage.
+
 ## Objective Snapshot
-- Extract remaining preload-owned IPC API mechanics into `src/ipc/{main,renderer,public}` while
-  preserving channel names, renderer method names, and handler binding semantics.
+- Final refinement: move `unwrapIpcResult` from `src/renderer/ipc` to `src/ipc/renderer` and export via `src/ipc/public` to fully centralize renderer-facing IPC imports.
 
 ## Important Decisions
-- Treat `src/preload/ipc/ipc-contract-registry.ts` and `ipc-channels.ts` as part of the public IPC
-  registry surface for this task; move them with renderer API mechanics so preload imports only
-  from the IPC public entrypoint.
+- Keep `unwrapIpcResult` as part of the public IPC API because it's a fundamental utility for consuming `IpcResult` in the renderer.
 
 ## Learnings
-- Task 01 already created `src/ipc/contracts/**` and deleted `src/preload/contracts/**`; this run
-  should not reopen application DTO ownership or shared-domain cleanup.
+- The repository state was more advanced than the task specification initially suggested, likely due to overlaps in Task 01 implementation.
 
 ## Files / Surfaces
-- Planned surfaces: `src/preload/main/**`, `src/preload/renderer/**`, `src/preload/ipc/**`,
-  `src/ipc/{main,renderer,public}/**`, preload/runtime imports, renderer type/test imports.
+- `src/renderer/ipc/unwrap-ipc-result.ts` (to be moved)
+- `src/ipc/renderer/unwrap-ipc-result.ts` (new location)
+- `src/ipc/public/index.ts` (to be updated)
+- Renderer components/pages (to be updated)
+
 
 ## Errors / Corrections
 - `CLAUDE.md` is absent at the repo root and no nested copy was found in the task directory file
   listing; the techspec states there is no `_prd.md`.
 
 ## Ready for Next Run
+- Task 02 is complete.
+- Task 05 (Complete Wiring and Boundary Cleanup) can now proceed with a solid public IPC API foundation.
+- Note: `unwrapIpcResult` is now part of the public IPC API entrypoint.

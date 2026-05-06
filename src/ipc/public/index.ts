@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 export type { ElectronApi } from '../renderer/electron-api';
 export { buildElectronApi } from '../renderer/build-electron-api';
+export { unwrapIpcResult } from '../renderer/unwrap-ipc-result';
 export {
   assertUniqueIpcContractMetadata,
   ipcContracts,
