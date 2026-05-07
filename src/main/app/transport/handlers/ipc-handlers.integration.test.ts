@@ -35,31 +35,7 @@ import {
   saveInitialBalanceDocumentContract,
 } from '../../../../ipc/contracts/portfolio/portfolio';
 import { generateAssetsReportContract } from '../../../../ipc/contracts/tax-reporting/report';
-import { CreateBrokerUseCase } from '../../../portfolio/application/use-cases/create-broker.use-case';
-import { DeleteInitialBalanceDocumentUseCase } from '../../../portfolio/application/use-cases/delete-initial-balance-document.use-case';
-import { DeletePositionUseCase } from '../../../portfolio/application/use-cases/delete-position.use-case';
-import { GenerateAssetsReportUseCase } from '../../../tax-reporting/application/use-cases/generate-assets-report.use-case';
-import { ImportConsolidatedPositionUseCase } from '../../../ingestion/application/use-cases/import-consolidated-position.use-case';
-import { ImportTransactionsUseCase } from '../../../ingestion/application/use-cases/import-transactions.use-case';
-import { DeleteDailyBrokerTaxUseCase } from '../../../ingestion/application/use-cases/delete-daily-broker-tax.use-case';
-import { ImportDailyBrokerTaxesUseCase } from '../../../ingestion/application/use-cases/import-daily-broker-taxes.use-case';
-import { ListDailyBrokerTaxesUseCase } from '../../../ingestion/application/use-cases/list-daily-broker-taxes.use-case';
-import { SaveDailyBrokerTaxUseCase } from '../../../ingestion/application/use-cases/save-daily-broker-tax.use-case';
-import { ReallocateTransactionFeesService } from '../../../ingestion/application/services/reallocate-transaction-fees.service';
-import { ListAssetsUseCase } from '../../../portfolio/application/use-cases/list-assets.use-case';
-import { ListBrokersUseCase } from '../../../portfolio/application/use-cases/list-brokers.use-case';
-import { ListInitialBalanceDocumentsUseCase } from '../../../portfolio/application/use-cases/list-initial-balance-documents.use-case';
-import { ListPositionsUseCase } from '../../../portfolio/application/use-cases/list-positions.use-case';
-import { MigrateYearUseCase } from '../../../portfolio/application/use-cases/migrate-year.use-case';
-import { PreviewImportUseCase } from '../../../ingestion/application/use-cases/preview-import.use-case';
-import { RecalculatePositionUseCase } from '../../../portfolio/application/use-cases/recalculate-position.use-case';
-import { RepairAssetTypeUseCase } from '../../../portfolio/application/use-cases/repair-asset-type.use-case';
-import { SaveInitialBalanceDocumentUseCase } from '../../../portfolio/application/use-cases/save-initial-balance-document.use-case';
-import { ToggleActiveBrokerUseCase } from '../../../portfolio/application/use-cases/toggle-active-broker.use-case';
-import { UpdateAssetUseCase } from '../../../portfolio/application/use-cases/update-asset.use-case';
-import { UpdateBrokerUseCase } from '../../../portfolio/application/use-cases/update-broker.use-case';
-import { InitialBalanceDocumentPositionSyncService } from '../../../portfolio/application/services/initial-balance-document-position-sync.service';
-import { ReprocessTickerYearsService } from '../../../portfolio/application/services/reprocess-ticker-years.service';
+import { createAppModule } from '../../infra/container/app-module';
 import { createDatabaseConnection, initializeDatabase } from '../../infra/database/database';
 import { TransactionFeeAllocator } from '../../../portfolio/domain/services/transaction-fee-allocator.service';
 import { Asset } from '../../../portfolio/domain/entities/asset.entity';
@@ -69,24 +45,10 @@ import { Transaction } from '../../../portfolio/domain/entities/transaction.enti
 import { Cnpj } from '../../../shared/domain/value-objects/cnpj.vo';
 import { Money } from '../../../portfolio/domain/value-objects/money.vo';
 import { Quantity } from '../../../portfolio/domain/value-objects/quantity.vo';
-import { SheetjsSpreadsheetFileReader } from '../../../ingestion/infra/file-readers/sheetjs.spreadsheet.file-reader';
-import { BrokersIpcRegistrar } from '../../../portfolio/transport/registrars/brokers-ipc-registrar';
-import { AssetsIpcRegistrar } from '../../../portfolio/transport/registrars/assets-ipc-registrar';
-import { AppIpcRegistrar } from '../registrars/app-ipc-registrar';
-import { ImportIpcRegistrar } from '../../../ingestion/transport/registrars/import-ipc-registrar';
-import { PortfolioIpcRegistrar } from '../../../portfolio/transport/registrars/portfolio-ipc-registrar';
-import { ReportIpcRegistrar } from '../../../tax-reporting/transport/registrars/report-ipc-registrar';
-import { KnexPositionRepository } from '../../../portfolio/infra/repositories/knex-position.repository';
-import { KnexTransactionFeeRepository } from '../../../portfolio/infra/repositories/knex-transaction-fee.repository';
-import { KnexTransactionRepository } from '../../../portfolio/infra/repositories/knex-transaction.repository';
-import { KnexBrokerRepository } from '../../../portfolio/infra/repositories/knex-broker.repository';
-import { KnexAssetRepository } from '../../../portfolio/infra/repositories/knex-asset.repository';
-import { KnexDailyBrokerTaxRepository } from '../../../ingestion/infra/repositories/knex-daily-broker-tax.repository';
-import { CsvXlsxDailyBrokerTaxParser } from '../../../ingestion/infra/parsers/csv-xlsx-daily-broker-tax.parser';
-import { CsvXlsxTransactionParser } from '../../../ingestion/infra/parsers/csv-xlsx-transaction.parser';
+import { createIngestionModule } from '../../../ingestion/infra/container';
+import { createPortfolioModule } from '../../../portfolio/infra/container';
 import { MemoryQueueAdapter } from '../../../shared/infra/events/memory-queue.adapter';
-import { RecalculatePositionHandler } from '../../../portfolio/infra/handlers/recalculate-position.handler';
-import { CsvXlsxConsolidatedPositionParser } from '../../../ingestion/infra/parsers/csv-xlsx-consolidated-position.parser';
+import { createTaxReportingModule } from '../../../tax-reporting/infra/container';
 
 type IpcHandler = (_event: Electron.IpcMainInvokeEvent, ...args: unknown[]) => unknown;
 type IpcMainHandleRegistry = Pick<Electron.IpcMain, 'handle'>;
@@ -108,110 +70,23 @@ describe('IPC handlers integration', () => {
   });
 
   it('runs transaction preview, confirm, initial balance document, list and report channels end-to-end', async () => {
-    const knexPositionRepository = new KnexPositionRepository(database);
-    const knexTransactionRepository = new KnexTransactionRepository(database);
-    const knexTransactionFeeRepository = new KnexTransactionFeeRepository(database);
-    const brokerRepository = new KnexBrokerRepository(database);
-    const dailyBrokerTaxRepository = new KnexDailyBrokerTaxRepository(database);
-    const tickerDataRepository = new KnexAssetRepository(database);
-    const positionSyncService = new InitialBalanceDocumentPositionSyncService(
-      knexPositionRepository,
-      knexTransactionRepository,
-    );
-    const saveInitialBalanceDocumentUseCase = new SaveInitialBalanceDocumentUseCase(
-      knexTransactionRepository,
-      positionSyncService,
-      tickerDataRepository,
-    );
-    const listInitialBalanceDocumentsUseCase = new ListInitialBalanceDocumentsUseCase(
-      knexTransactionRepository,
-      knexPositionRepository,
-      tickerDataRepository,
-    );
-    const deleteInitialBalanceDocumentUseCase = new DeleteInitialBalanceDocumentUseCase(
-      knexTransactionRepository,
-      positionSyncService,
-    );
-    const listPositionsUseCase = new ListPositionsUseCase(
-      knexPositionRepository,
-      brokerRepository,
-      tickerDataRepository,
-    );
-    const recalculatePositionUseCase = new RecalculatePositionUseCase(
-      knexPositionRepository,
-      knexTransactionRepository,
-    );
     const queue = new MemoryQueueAdapter();
-    new RecalculatePositionHandler(queue, recalculatePositionUseCase);
-    const migrateYearUseCase = new MigrateYearUseCase(
-      knexPositionRepository,
-      knexTransactionRepository,
-    );
-    const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
-      knexPositionRepository,
-      brokerRepository,
-      tickerDataRepository,
-      knexTransactionRepository,
-    );
-    const spreadsheetFileReader = new SheetjsSpreadsheetFileReader();
-    const transactionParser = new CsvXlsxTransactionParser(spreadsheetFileReader, brokerRepository);
-    const dailyBrokerTaxesParser = new CsvXlsxDailyBrokerTaxParser(
-      spreadsheetFileReader,
-      brokerRepository,
-    );
-    const consolidatedPositionParser = new CsvXlsxConsolidatedPositionParser();
     const transactionFeeAllocator = new TransactionFeeAllocator();
-    const previewImportUseCase = new PreviewImportUseCase(
-      transactionParser,
-      transactionFeeAllocator,
-      dailyBrokerTaxRepository,
-      tickerDataRepository,
-    );
-    const reallocateTransactionFeesService = new ReallocateTransactionFeesService(
-      dailyBrokerTaxRepository,
-      knexTransactionRepository,
-      knexTransactionFeeRepository,
-      transactionFeeAllocator,
-    );
-    const importTransactionsUseCase = new ImportTransactionsUseCase(
-      transactionParser,
-      tickerDataRepository,
-      knexTransactionRepository,
-      reallocateTransactionFeesService,
-      queue,
-    );
-    const listDailyBrokerTaxesUseCase = new ListDailyBrokerTaxesUseCase(
-      dailyBrokerTaxRepository,
-      brokerRepository,
-    );
-    const saveDailyBrokerTaxUseCase = new SaveDailyBrokerTaxUseCase(
-      dailyBrokerTaxRepository,
-      brokerRepository,
-      reallocateTransactionFeesService,
-      queue,
-    );
-    const importDailyBrokerTaxesUseCase = new ImportDailyBrokerTaxesUseCase(
-      dailyBrokerTaxesParser,
-      dailyBrokerTaxRepository,
-      reallocateTransactionFeesService,
-      queue,
-    );
-    const deleteDailyBrokerTaxUseCase = new DeleteDailyBrokerTaxUseCase(
-      dailyBrokerTaxRepository,
-      reallocateTransactionFeesService,
-      queue,
-    );
-    const importConsolidatedPositionUseCase = new ImportConsolidatedPositionUseCase(
-      consolidatedPositionParser,
-      tickerDataRepository,
-      brokerRepository,
-      knexTransactionRepository,
-      queue,
-    );
-    const deletePositionUseCase = new DeletePositionUseCase(
-      knexPositionRepository,
-      knexTransactionRepository,
-    );
+    const shared = { database, queue, transactionFeeAllocator };
+    const appModule = createAppModule();
+    const portfolioModule = createPortfolioModule(shared);
+    portfolioModule.startup?.initialize();
+    const ingestionModule = createIngestionModule({
+      shared,
+      portfolio: portfolioModule.exports,
+    });
+    const taxReportingModule = createTaxReportingModule({
+      portfolio: portfolioModule.exports,
+    });
+    const brokerRepository = portfolioModule.exports.brokerRepository;
+    const knexPositionRepository = portfolioModule.exports.positionRepository;
+    const knexTransactionRepository = portfolioModule.exports.transactionRepository;
+    const tickerDataRepository = portfolioModule.exports.assetRepository;
 
     const xpBroker = await brokerRepository.findByCode('XP');
     if (!xpBroker) {
@@ -250,31 +125,10 @@ describe('IPC handlers integration', () => {
       },
     };
 
-    const appRegistrar = new AppIpcRegistrar();
-    const importRegistrar = new ImportIpcRegistrar(
-      previewImportUseCase,
-      importTransactionsUseCase,
-      listDailyBrokerTaxesUseCase,
-      saveDailyBrokerTaxUseCase,
-      importDailyBrokerTaxesUseCase,
-      deleteDailyBrokerTaxUseCase,
-    );
-    const portfolioRegistrar = new PortfolioIpcRegistrar(
-      saveInitialBalanceDocumentUseCase,
-      listInitialBalanceDocumentsUseCase,
-      deleteInitialBalanceDocumentUseCase,
-      listPositionsUseCase,
-      recalculatePositionUseCase,
-      migrateYearUseCase,
-      importConsolidatedPositionUseCase,
-      deletePositionUseCase,
-    );
-    const reportRegistrar = new ReportIpcRegistrar(generateAssetsReportUseCase);
-
-    appRegistrar.register(ipcMain);
-    importRegistrar.register(ipcMain);
-    portfolioRegistrar.register(ipcMain);
-    reportRegistrar.register(ipcMain);
+    appModule.registerIpc(ipcMain);
+    ingestionModule.registerIpc(ipcMain);
+    portfolioModule.registerIpc(ipcMain);
+    taxReportingModule.registerIpc(ipcMain);
 
     const healthHandler = handlers.get(healthCheckContract.channel);
     const importDailyBrokerTaxesHandler = handlers.get(importDailyBrokerTaxesContract.channel);
@@ -438,45 +292,14 @@ describe('IPC handlers integration', () => {
   });
 
   it('runs consolidated preview and confirm through IPC while skipping unsupported rows', async () => {
-    const brokerRepository = new KnexBrokerRepository(database);
-    const knexPositionRepository = new KnexPositionRepository(database);
-    const knexTransactionRepository = new KnexTransactionRepository(database);
-    const tickerDataRepository = new KnexAssetRepository(database);
-    const recalculatePositionUseCase = new RecalculatePositionUseCase(
-      knexPositionRepository,
-      knexTransactionRepository,
-    );
     const queue = new MemoryQueueAdapter();
-    new RecalculatePositionHandler(queue, recalculatePositionUseCase);
-    const importConsolidatedPositionUseCase = new ImportConsolidatedPositionUseCase(
-      new CsvXlsxConsolidatedPositionParser(),
-      tickerDataRepository,
-      brokerRepository,
-      knexTransactionRepository,
+    const portfolioModule = createPortfolioModule({
+      database,
       queue,
-    );
-    const positionSyncService = new InitialBalanceDocumentPositionSyncService(
-      knexPositionRepository,
-      knexTransactionRepository,
-    );
-    const portfolioRegistrar = new PortfolioIpcRegistrar(
-      new SaveInitialBalanceDocumentUseCase(
-        knexTransactionRepository,
-        positionSyncService,
-        tickerDataRepository,
-      ),
-      new ListInitialBalanceDocumentsUseCase(
-        knexTransactionRepository,
-        knexPositionRepository,
-        tickerDataRepository,
-      ),
-      new DeleteInitialBalanceDocumentUseCase(knexTransactionRepository, positionSyncService),
-      new ListPositionsUseCase(knexPositionRepository, brokerRepository, tickerDataRepository),
-      recalculatePositionUseCase,
-      new MigrateYearUseCase(knexPositionRepository, knexTransactionRepository),
-      importConsolidatedPositionUseCase,
-      new DeletePositionUseCase(knexPositionRepository, knexTransactionRepository),
-    );
+      transactionFeeAllocator: new TransactionFeeAllocator(),
+    });
+    portfolioModule.startup?.initialize();
+    const tickerDataRepository = portfolioModule.exports.assetRepository;
 
     const handlers = new Map<string, IpcHandler>();
     const ipcMain: IpcMainHandleRegistry = {
@@ -484,7 +307,7 @@ describe('IPC handlers integration', () => {
         handlers.set(channel, listener);
       },
     };
-    portfolioRegistrar.register(ipcMain);
+    portfolioModule.registerIpc(ipcMain);
 
     const previewHandler = handlers.get(previewConsolidatedPositionContract.channel);
     const importHandler = handlers.get(importConsolidatedPositionContract.channel);
@@ -545,26 +368,18 @@ describe('IPC handlers integration', () => {
   });
 
   it('brokers:list, brokers:create, brokers:update, brokers:toggle-active work end-to-end', async () => {
-    const brokerRepository = new KnexBrokerRepository(database);
-    const createBrokerUseCase = new CreateBrokerUseCase(brokerRepository);
-    const updateBrokerUseCase = new UpdateBrokerUseCase(brokerRepository);
-    const listBrokersUseCase = new ListBrokersUseCase(brokerRepository);
-    const toggleActiveBrokerUseCase = new ToggleActiveBrokerUseCase(brokerRepository);
-
     const handlers = new Map<string, IpcHandler>();
     const ipcMain: IpcMainHandleRegistry = {
       handle: (channel: string, listener: IpcHandler) => {
         handlers.set(channel, listener);
       },
     };
-
-    const brokersRegistrar = new BrokersIpcRegistrar(
-      listBrokersUseCase,
-      createBrokerUseCase,
-      updateBrokerUseCase,
-      toggleActiveBrokerUseCase,
-    );
-    brokersRegistrar.register(ipcMain);
+    const portfolioModule = createPortfolioModule({
+      database,
+      queue: new MemoryQueueAdapter(),
+      transactionFeeAllocator: new TransactionFeeAllocator(),
+    });
+    portfolioModule.registerIpc(ipcMain);
 
     const listHandler = handlers.get(listBrokersContract.channel);
     const createHandler = handlers.get(createBrokerContract.channel);
@@ -617,21 +432,15 @@ describe('IPC handlers integration', () => {
   });
 
   it('assets:list, assets:update, and assets:repair-type work end-to-end', async () => {
-    const assetRepository = new KnexAssetRepository(database);
-    const listAssetsUseCase = new ListAssetsUseCase(assetRepository);
-    const updateAssetUseCase = new UpdateAssetUseCase(assetRepository);
-    const brokerRepository = new KnexBrokerRepository(database);
-    const positionRepository = new KnexPositionRepository(database);
-    const transactionRepository = new KnexTransactionRepository(database);
-    const recalculatePositionUseCase = new RecalculatePositionUseCase(
-      positionRepository,
-      transactionRepository,
-    );
-    const repairAssetTypeUseCase = new RepairAssetTypeUseCase(
-      assetRepository,
-      transactionRepository,
-      new ReprocessTickerYearsService(recalculatePositionUseCase),
-    );
+    const portfolioModule = createPortfolioModule({
+      database,
+      queue: new MemoryQueueAdapter(),
+      transactionFeeAllocator: new TransactionFeeAllocator(),
+    });
+    const assetRepository = portfolioModule.exports.assetRepository;
+    const brokerRepository = portfolioModule.exports.brokerRepository;
+    const positionRepository = portfolioModule.exports.positionRepository;
+    const transactionRepository = portfolioModule.exports.transactionRepository;
     const repairBroker = Broker.create({
       name: 'Repair Broker',
       cnpj: new Cnpj('44.444.444/0001-44'),
@@ -699,12 +508,7 @@ describe('IPC handlers integration', () => {
       },
     };
 
-    const assetsRegistrar = new AssetsIpcRegistrar(
-      listAssetsUseCase,
-      updateAssetUseCase,
-      repairAssetTypeUseCase,
-    );
-    assetsRegistrar.register(ipcMain);
+    portfolioModule.registerIpc(ipcMain);
 
     const listHandler = handlers.get(listAssetsContract.channel);
     const updateHandler = handlers.get(updateAssetContract.channel);

@@ -53,7 +53,8 @@ export default defineConfig([
             },
             {
               group: ['**/shared/types/**'],
-              message: 'Renderer must not import from shared types. Use the public IPC boundary instead.',
+              message:
+                'Renderer must not import from shared types. Use the public IPC boundary instead.',
             },
           ],
         },

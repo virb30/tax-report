@@ -1,8 +1,8 @@
-import type { IpcRegistry } from '../../../../ipc/main/registry/ipc-registry';
+import type { IpcMainHandleRegistry } from '../../../../ipc/main/binding/ipc-main-handle-registry';
 
 export interface Runtime {
   getUserDataPath(): string;
-  registerIpcHandlers(registry: IpcRegistry): void;
+  getIpcMain(): IpcMainHandleRegistry;
   start(): Promise<void>;
   quit(): void;
 }

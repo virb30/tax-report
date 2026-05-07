@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { AppError } from '../../../main/shared/app-error';
 import { defineIpcContract } from '../../define-ipc-contract';
 import type { IpcResult } from '../../ipc-result';
-import type { IpcMainHandleRegistry } from '../registry/ipc-registrar';
+import type { IpcMainHandleRegistry } from './ipc-main-handle-registry';
 import { bindIpcContract } from './bind-ipc-contract';
 import { toIpcFailureResult } from './ipc-error-mapper';
 
@@ -20,7 +20,7 @@ type ResultContractOutput =
 
 type TypedResultContractOutput = IpcResult<{ value: string }>;
 
-function createIpcRegistry(): {
+function createIpcMainDouble(): {
   ipcMain: IpcMainHandleRegistry;
   handlers: Map<string, RegisteredHandler>;
 } {
@@ -46,7 +46,7 @@ describe('bindIpcContract', () => {
       exposeToRenderer: true,
       api: { name: 'echo' },
     });
-    const { ipcMain, handlers } = createIpcRegistry();
+    const { ipcMain, handlers } = createIpcMainDouble();
 
     bindIpcContract(ipcMain, contract, (payload) => ({ receivedValue: payload.value }));
 
@@ -64,7 +64,7 @@ describe('bindIpcContract', () => {
       exposeToRenderer: true,
       api: { name: 'throwingEcho' },
     });
-    const { ipcMain, handlers } = createIpcRegistry();
+    const { ipcMain, handlers } = createIpcMainDouble();
 
     bindIpcContract(ipcMain, contract, (payload) => ({ receivedValue: payload.value }));
 
@@ -82,7 +82,7 @@ describe('bindIpcContract', () => {
       exposeToRenderer: true,
       api: { name: 'throwingHandlerEcho' },
     });
-    const { ipcMain, handlers } = createIpcRegistry();
+    const { ipcMain, handlers } = createIpcMainDouble();
 
     bindIpcContract(ipcMain, contract, () => {
       throw new Error('Handler failed.');
@@ -102,7 +102,7 @@ describe('bindIpcContract', () => {
       exposeToRenderer: true,
       api: { name: 'resultEcho' },
     });
-    const { ipcMain, handlers } = createIpcRegistry();
+    const { ipcMain, handlers } = createIpcMainDouble();
 
     bindIpcContract(
       ipcMain,
@@ -130,7 +130,7 @@ describe('bindIpcContract', () => {
       exposeToRenderer: true,
       api: { name: 'resultValidationEcho' },
     });
-    const { ipcMain, handlers } = createIpcRegistry();
+    const { ipcMain, handlers } = createIpcMainDouble();
 
     bindIpcContract(
       ipcMain,
@@ -158,7 +158,7 @@ describe('bindIpcContract', () => {
       exposeToRenderer: true,
       api: { name: 'typedResultValidationEcho' },
     });
-    const { ipcMain, handlers } = createIpcRegistry();
+    const { ipcMain, handlers } = createIpcMainDouble();
 
     bindIpcContract(ipcMain, contract, (payload) => ({
       ok: true as const,
@@ -187,7 +187,7 @@ describe('bindIpcContract', () => {
       exposeToRenderer: true,
       api: { name: 'typedResultAppErrorEcho' },
     });
-    const { ipcMain, handlers } = createIpcRegistry();
+    const { ipcMain, handlers } = createIpcMainDouble();
 
     bindIpcContract(ipcMain, contract, () => {
       throw new AppError('POSITION_NOT_FOUND', 'Position was not found.', 'not_found', details);
@@ -215,7 +215,7 @@ describe('bindIpcContract', () => {
       exposeToRenderer: true,
       api: { name: 'typedResultUnknownErrorEcho' },
     });
-    const { ipcMain, handlers } = createIpcRegistry();
+    const { ipcMain, handlers } = createIpcMainDouble();
 
     bindIpcContract(ipcMain, contract, () => {
       throw new Error('Database password leaked in stack trace.');

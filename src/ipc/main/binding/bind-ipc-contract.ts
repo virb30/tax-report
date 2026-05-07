@@ -4,7 +4,7 @@ import type {
   IpcContractInput,
   IpcContractOutput,
 } from '../../contract-types';
-import type { IpcMainHandleRegistry } from '../registry/ipc-registrar';
+import type { IpcMainHandleRegistry } from './ipc-main-handle-registry';
 import { toIpcResultFailure } from './ipc-error-mapper';
 import { parseIpcPayload } from './ipc-payload';
 
