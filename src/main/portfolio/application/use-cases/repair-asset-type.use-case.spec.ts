@@ -11,6 +11,8 @@ import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import type { AssetRepository } from '../repositories/asset.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import type { ReprocessTickerYearsService } from '../services/reprocess-ticker-years.service';
+import type { Queue } from '../../../shared/application/events/queue.interface';
+import { AssetTaxClassificationChangedEvent } from '../../../shared/domain/events/asset-tax-classification-changed.event';
 import { RepairAssetTypeUseCase } from './repair-asset-type.use-case';
 import { Quantity } from '../../domain/value-objects/quantity.vo';
 import { Money } from '../../domain/value-objects/money.vo';
@@ -19,18 +21,22 @@ describe('RepairAssetTypeUseCase', () => {
   const assetRepository = mock<AssetRepository>();
   const transactionRepository = mock<TransactionRepository>();
   const reprocessTickerYearsService = mock<ReprocessTickerYearsService>();
+  const queue = mock<Queue>();
   let useCase: RepairAssetTypeUseCase;
 
   beforeEach(() => {
     mockReset(assetRepository);
     mockReset(transactionRepository);
     mockReset(reprocessTickerYearsService);
+    mockReset(queue);
     assetRepository.save.mockResolvedValue(undefined);
     reprocessTickerYearsService.execute.mockResolvedValue({ reprocessedCount: 3 });
+    queue.publish.mockResolvedValue(undefined);
     useCase = new RepairAssetTypeUseCase(
       assetRepository,
       transactionRepository,
       reprocessTickerYearsService,
+      queue,
     );
   });
 
@@ -96,6 +102,51 @@ describe('RepairAssetTypeUseCase', () => {
       ticker: 'PETR4',
       assetType: AssetType.Bdr,
       affectedYears: [2023, 2024, 2025],
+      reprocessedCount: 3,
+    });
+  });
+
+  it('publishes asset classification changes with the earliest affected year and preserves output', async () => {
+    assetRepository.findByTicker.mockResolvedValue(null);
+    transactionRepository.findByTicker.mockResolvedValue([
+      Transaction.create({
+        date: '2025-07-10',
+        type: TransactionType.Buy,
+        ticker: 'MXRF11',
+        quantity: Quantity.from(1),
+        unitPrice: Money.from(10),
+        fees: Money.from(0),
+        brokerId: Uuid.create(),
+        sourceType: SourceType.Csv,
+      }),
+      Transaction.create({
+        date: '2024-03-20',
+        type: TransactionType.Sell,
+        ticker: 'MXRF11',
+        quantity: Quantity.from(1),
+        unitPrice: Money.from(11),
+        fees: Money.from(0),
+        brokerId: Uuid.create(),
+        sourceType: SourceType.Csv,
+      }),
+    ]);
+
+    const result = await useCase.execute({
+      ticker: 'MXRF11',
+      assetType: AssetType.Fii,
+    });
+
+    expect(queue.publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: AssetTaxClassificationChangedEvent.name,
+        ticker: 'MXRF11',
+        earliestYear: 2024,
+      }),
+    );
+    expect(result).toEqual({
+      ticker: 'MXRF11',
+      assetType: AssetType.Fii,
+      affectedYears: [2024, 2025],
       reprocessedCount: 3,
     });
   });

@@ -82,6 +82,7 @@ export function createPortfolioModule(shared: SharedInfrastructure): PortfolioMo
     assetRepository,
     transactionRepository,
     reprocessTickerYearsService,
+    shared.queue,
   );
   const saveInitialBalanceDocumentUseCase = new SaveInitialBalanceDocumentUseCase(
     transactionRepository,

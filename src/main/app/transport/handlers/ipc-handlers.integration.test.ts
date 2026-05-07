@@ -81,7 +81,9 @@ describe('IPC handlers integration', () => {
       portfolio: portfolioModule.exports,
     });
     const taxReportingModule = createTaxReportingModule({
+      shared,
       portfolio: portfolioModule.exports,
+      ingestion: ingestionModule.repositories,
     });
     const brokerRepository = portfolioModule.exports.brokerRepository;
     const knexPositionRepository = portfolioModule.exports.positionRepository;

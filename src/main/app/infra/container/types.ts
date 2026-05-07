@@ -15,6 +15,7 @@ import type { PreviewImportUseCase } from '../../../ingestion/application/use-ca
 import type { SaveDailyBrokerTaxUseCase } from '../../../ingestion/application/use-cases/save-daily-broker-tax.use-case';
 import type { Queue } from '../../../shared/application/events/queue.interface';
 import type { GenerateAssetsReportUseCase } from '../../../tax-reporting/application/use-cases/generate-assets-report.use-case';
+import type { MonthlyTaxCloseRepository } from '../../../tax-reporting/application/repositories/monthly-tax-close.repository';
 import type { AssetPositionRepository } from '../../../portfolio/application/repositories/asset-position.repository';
 import type { AssetRepository } from '../../../portfolio/application/repositories/asset.repository';
 import type { BrokerRepository } from '../../../portfolio/application/repositories/broker.repository';
@@ -91,10 +92,21 @@ export type TaxReportingPortfolioDependencies = Pick<
   'positionRepository' | 'brokerRepository' | 'assetRepository' | 'transactionRepository'
 >;
 
+export type TaxReportingIngestionDependencies = Pick<
+  IngestionModuleRepositories,
+  'dailyBrokerTaxRepository'
+>;
+
 export interface TaxReportingModuleUseCases {
   generateAssetsReportUseCase: GenerateAssetsReportUseCase;
 }
 
+export interface TaxReportingModuleRepositories {
+  monthlyTaxCloseRepository: MonthlyTaxCloseRepository;
+  dailyBrokerTaxRepository: IngestionDailyBrokerTaxRepository;
+}
+
 export interface TaxReportingModule extends MainProcessModule {
+  repositories: TaxReportingModuleRepositories;
   useCases: TaxReportingModuleUseCases;
 }

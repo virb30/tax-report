@@ -3,6 +3,7 @@ import type { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 
 export interface DailyBrokerTaxRepository {
   findAll(): Promise<DailyBrokerTax[]>;
+  findByPeriod(input: { startDate: string; endDate: string }): Promise<DailyBrokerTax[]>;
   findByDateAndBroker(input: { date: string; brokerId: Uuid }): Promise<DailyBrokerTax | null>;
   upsert(tax: DailyBrokerTax): Promise<void>;
   deleteByDateAndBroker(input: { date: string; brokerId: Uuid }): Promise<boolean>;

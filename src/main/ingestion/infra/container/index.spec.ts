@@ -22,7 +22,8 @@ import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import { CsvXlsxConsolidatedPositionParser } from '../parsers/csv-xlsx-consolidated-position.parser';
 import { CsvXlsxDailyBrokerTaxParser } from '../parsers/csv-xlsx-daily-broker-tax.parser';
 import { CsvXlsxTransactionParser } from '../parsers/csv-xlsx-transaction.parser';
-import { DailyBrokerTaxRow, KnexDailyBrokerTaxRepository } from '../repositories/knex-daily-broker-tax.repository';
+import type { DailyBrokerTaxRow } from '../repositories/knex-daily-broker-tax.repository';
+import { KnexDailyBrokerTaxRepository } from '../repositories/knex-daily-broker-tax.repository';
 import { createIngestionModule } from './index';
 import { Broker } from '../../../portfolio/domain/entities/broker.entity';
 import { mock, mockFn, mockReset } from 'jest-mock-extended';
@@ -76,13 +77,13 @@ function createShared(database: Knex = jest.fn() as unknown as Knex): SharedInfr
 }
 
 function createDailyBrokerTaxesDatabase(): Knex {
-  const rows = [
+  const rows: DailyBrokerTaxRow[] = [
     {
       date: '2026-01-02',
       broker_id: BROKER_ID,
       fees: '12.34',
       irrf: '1.23',
-    } as DailyBrokerTaxRow,
+    },
   ];
 
   const database = mockFn<(table: string) => unknown>().mockImplementation((table: string) => {
@@ -90,10 +91,10 @@ function createDailyBrokerTaxesDatabase(): Knex {
     return {
       select: () => ({
         orderBy: () => ({
-          orderBy: async () => rows,
+          orderBy: () => rows,
         }),
       }),
-    } as never;
+    };
   });
 
   return database as unknown as Knex;
@@ -109,7 +110,6 @@ describe('createIngestionModule', () => {
     mockBrokerRepository.findAllByCodes.mockResolvedValue([]);
     mockAssetRepository.findByTickersList.mockResolvedValue([]);
   });
-
 
   it('creates the expected use cases and IPC boundary without Awilix registration', () => {
     const module = createIngestionModule({
@@ -190,9 +190,9 @@ describe('createIngestionModule', () => {
         id: Uuid.from(BROKER_ID),
         code: 'XP',
         name: 'XP Investimentos',
-        cnpj: new Cnpj('27270525884131')
+        cnpj: new Cnpj('27270525884131'),
       }),
-    ])
+    ]);
     const handlers = new Map<string, IpcHandler>();
     const ipcMain: IpcMainHandleRegistry = {
       handle: (channel, listener) => {
