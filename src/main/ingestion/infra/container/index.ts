@@ -1,4 +1,3 @@
-import { asClass, asFunction } from 'awilix';
 import { ReallocateTransactionFeesService } from '../../application/services/reallocate-transaction-fees.service';
 import { DeleteDailyBrokerTaxUseCase } from '../../application/use-cases/delete-daily-broker-tax.use-case';
 import { ImportConsolidatedPositionUseCase } from '../../application/use-cases/import-consolidated-position.use-case';
@@ -12,113 +11,176 @@ import { CsvXlsxConsolidatedPositionParser } from '../parsers/csv-xlsx-consolida
 import { CsvXlsxDailyBrokerTaxParser } from '../parsers/csv-xlsx-daily-broker-tax.parser';
 import { CsvXlsxTransactionParser } from '../parsers/csv-xlsx-transaction.parser';
 import { KnexDailyBrokerTaxRepository } from '../repositories/knex-daily-broker-tax.repository';
-import { ImportIpcRegistrar } from '../../transport/registrars/import-ipc-registrar';
-import type { DailyBrokerTaxRepository } from '../../application/repositories/daily-broker-tax.repository';
-import type { DailyBrokerTaxesParser } from '../../application/interfaces/daily-broker-taxes.parser.interface';
-import type { ImportTransactionsParser } from '../../application/interfaces/transactions.parser.interface';
-import type { ConsolidatedPositionParserPort } from '../../application/interfaces/consolidated-position-parser.port';
-import type { SpreadsheetFileReader } from '../../application/interfaces/spreadsheet.file-reader';
-import type { AssetRepository } from '../../../portfolio/application/repositories/asset.repository';
-import type { BrokerRepository } from '../../../portfolio/application/repositories/broker.repository';
-import type { TransactionRepository } from '../../../portfolio/application/repositories/transaction.repository';
-import type { TransactionFeeRepository } from '../../../portfolio/application/repositories/transaction-fee.repository';
-import type { TransactionFeeAllocator } from '../../../portfolio/domain/services/transaction-fee-allocator.service';
-import type { Queue } from '../../../shared/application/events/queue.interface';
-import type { MainContainer } from '../../../app/infra/container';
+import { dialog } from 'electron';
+import { bindIpcContract } from '../../../../ipc/main/binding/bind-ipc-contract';
+import {
+  confirmImportTransactionsContract,
+  deleteDailyBrokerTaxContract,
+  importDailyBrokerTaxesContract,
+  importSelectFileContract,
+  listDailyBrokerTaxesContract,
+  previewImportTransactionsContract,
+  saveDailyBrokerTaxContract,
+} from '../../../../ipc/contracts/ingestion/import';
+import type { IpcMainHandleRegistry } from '../../../../ipc/main/binding/ipc-main-handle-registry';
+import type {
+  IngestionModule,
+  IngestionPortfolioDependencies,
+  SharedInfrastructure,
+} from '../../../app/infra/container';
 
-export function registerIngestionContext(container: MainContainer): void {
-  container.register({
-    dailyBrokerTaxRepository: asClass(KnexDailyBrokerTaxRepository).singleton(),
+export type CreateIngestionModuleInput = {
+  shared: SharedInfrastructure;
+  portfolio: IngestionPortfolioDependencies;
+};
 
-    spreadsheetFileReader: asClass(SheetjsSpreadsheetFileReader).singleton(),
-    transactionParser: asFunction(
-      (spreadsheetFileReader: SpreadsheetFileReader, brokerRepository: BrokerRepository) =>
-        new CsvXlsxTransactionParser(spreadsheetFileReader, brokerRepository),
-    ).singleton(),
-    dailyBrokerTaxesParser: asFunction(
-      (spreadsheetFileReader: SpreadsheetFileReader, brokerRepository: BrokerRepository) =>
-        new CsvXlsxDailyBrokerTaxParser(spreadsheetFileReader, brokerRepository),
-    ).singleton(),
-    consolidatedPositionParser: asClass(CsvXlsxConsolidatedPositionParser).singleton(),
+export function createIngestionModule(input: CreateIngestionModuleInput): IngestionModule {
+  const { shared, portfolio } = input;
 
-    reallocateTransactionFeesService: asFunction(
-      (
-        dailyBrokerTaxRepository: DailyBrokerTaxRepository,
-        transactionRepository: TransactionRepository,
-        transactionFeeRepository: TransactionFeeRepository,
-        transactionFeeAllocator: TransactionFeeAllocator,
-      ) =>
-        new ReallocateTransactionFeesService(
-          dailyBrokerTaxRepository,
-          transactionRepository,
-          transactionFeeRepository,
-          transactionFeeAllocator,
-        ),
-    ).singleton(),
-    importTransactionsUseCase: asFunction(
-      (
-        transactionParser: ImportTransactionsParser,
-        assetRepository: AssetRepository,
-        transactionRepository: TransactionRepository,
-        reallocateTransactionFeesService: ReallocateTransactionFeesService,
-        queue: Queue,
-      ) =>
-        new ImportTransactionsUseCase(
-          transactionParser,
-          assetRepository,
-          transactionRepository,
-          reallocateTransactionFeesService,
-          queue,
-        ),
-    ).singleton(),
-    previewImportUseCase: asFunction(
-      (
-        transactionParser: ImportTransactionsParser,
-        transactionFeeAllocator: TransactionFeeAllocator,
-        dailyBrokerTaxRepository: DailyBrokerTaxRepository,
-        assetRepository: AssetRepository,
-      ) =>
-        new PreviewImportUseCase(
-          transactionParser,
-          transactionFeeAllocator,
-          dailyBrokerTaxRepository,
-          assetRepository,
-        ),
-    ).singleton(),
-    listDailyBrokerTaxesUseCase: asClass(ListDailyBrokerTaxesUseCase).singleton(),
-    saveDailyBrokerTaxUseCase: asClass(SaveDailyBrokerTaxUseCase).singleton(),
-    importDailyBrokerTaxesUseCase: asFunction(
-      (
-        dailyBrokerTaxesParser: DailyBrokerTaxesParser,
-        dailyBrokerTaxRepository: DailyBrokerTaxRepository,
-        reallocateTransactionFeesService: ReallocateTransactionFeesService,
-        queue: Queue,
-      ) =>
-        new ImportDailyBrokerTaxesUseCase(
-          dailyBrokerTaxesParser,
-          dailyBrokerTaxRepository,
-          reallocateTransactionFeesService,
-          queue,
-        ),
-    ).singleton(),
-    deleteDailyBrokerTaxUseCase: asClass(DeleteDailyBrokerTaxUseCase).singleton(),
-    importConsolidatedPositionUseCase: asFunction(
-      (
-        consolidatedPositionParser: ConsolidatedPositionParserPort,
-        assetRepository: AssetRepository,
-        brokerRepository: BrokerRepository,
-        transactionRepository: TransactionRepository,
-        queue: Queue,
-      ) =>
-        new ImportConsolidatedPositionUseCase(
-          consolidatedPositionParser,
-          assetRepository,
-          brokerRepository,
-          transactionRepository,
-          queue,
-        ),
-    ).singleton(),
+  const dailyBrokerTaxRepository = new KnexDailyBrokerTaxRepository(shared.database);
+  const spreadsheetFileReader = new SheetjsSpreadsheetFileReader();
+  const transactionParser = new CsvXlsxTransactionParser(
+    spreadsheetFileReader,
+    portfolio.brokerRepository,
+  );
+  const dailyBrokerTaxesParser = new CsvXlsxDailyBrokerTaxParser(
+    spreadsheetFileReader,
+    portfolio.brokerRepository,
+  );
+  const consolidatedPositionParser = new CsvXlsxConsolidatedPositionParser();
+  const reallocateTransactionFeesService = new ReallocateTransactionFeesService(
+    dailyBrokerTaxRepository,
+    portfolio.transactionRepository,
+    portfolio.transactionFeeRepository,
+    shared.transactionFeeAllocator,
+  );
+  const importTransactionsUseCase = new ImportTransactionsUseCase(
+    transactionParser,
+    portfolio.assetRepository,
+    portfolio.transactionRepository,
+    reallocateTransactionFeesService,
+    shared.queue,
+  );
+  const previewImportUseCase = new PreviewImportUseCase(
+    transactionParser,
+    shared.transactionFeeAllocator,
+    dailyBrokerTaxRepository,
+    portfolio.assetRepository,
+  );
+  const listDailyBrokerTaxesUseCase = new ListDailyBrokerTaxesUseCase(
+    dailyBrokerTaxRepository,
+    portfolio.brokerRepository,
+  );
+  const saveDailyBrokerTaxUseCase = new SaveDailyBrokerTaxUseCase(
+    dailyBrokerTaxRepository,
+    portfolio.brokerRepository,
+    reallocateTransactionFeesService,
+    shared.queue,
+  );
+  const importDailyBrokerTaxesUseCase = new ImportDailyBrokerTaxesUseCase(
+    dailyBrokerTaxesParser,
+    dailyBrokerTaxRepository,
+    reallocateTransactionFeesService,
+    shared.queue,
+  );
+  const deleteDailyBrokerTaxUseCase = new DeleteDailyBrokerTaxUseCase(
+    dailyBrokerTaxRepository,
+    reallocateTransactionFeesService,
+    shared.queue,
+  );
+  const importConsolidatedPositionUseCase = new ImportConsolidatedPositionUseCase(
+    consolidatedPositionParser,
+    portfolio.assetRepository,
+    portfolio.brokerRepository,
+    portfolio.transactionRepository,
+    shared.queue,
+  );
+  const registerIpc = (ipcMain: IpcMainHandleRegistry): void =>
+    registerImportIpc(ipcMain, {
+      previewImportUseCase,
+      importTransactionsUseCase,
+      listDailyBrokerTaxesUseCase,
+      saveDailyBrokerTaxUseCase,
+      importDailyBrokerTaxesUseCase,
+      deleteDailyBrokerTaxUseCase,
+    });
 
-    importIpcRegistrar: asClass(ImportIpcRegistrar).singleton(),
+  return {
+    repositories: {
+      dailyBrokerTaxRepository,
+    },
+    parsers: {
+      spreadsheetFileReader,
+      transactionParser,
+      dailyBrokerTaxesParser,
+      consolidatedPositionParser,
+    },
+    services: {
+      reallocateTransactionFeesService,
+    },
+    useCases: {
+      importTransactionsUseCase,
+      previewImportUseCase,
+      listDailyBrokerTaxesUseCase,
+      saveDailyBrokerTaxUseCase,
+      importDailyBrokerTaxesUseCase,
+      deleteDailyBrokerTaxUseCase,
+      importConsolidatedPositionUseCase,
+    },
+    registerIpc,
+  };
+}
+
+type ImportIpcDependencies = {
+  previewImportUseCase: PreviewImportUseCase;
+  importTransactionsUseCase: ImportTransactionsUseCase;
+  listDailyBrokerTaxesUseCase: ListDailyBrokerTaxesUseCase;
+  saveDailyBrokerTaxUseCase: SaveDailyBrokerTaxUseCase;
+  importDailyBrokerTaxesUseCase: ImportDailyBrokerTaxesUseCase;
+  deleteDailyBrokerTaxUseCase: DeleteDailyBrokerTaxUseCase;
+};
+
+function registerImportIpc(
+  ipcMain: IpcMainHandleRegistry,
+  dependencies: ImportIpcDependencies,
+): void {
+  bindIpcContract(ipcMain, importSelectFileContract, async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: [
+        { name: 'Planilhas', extensions: ['csv', 'xlsx'] },
+        { name: 'Todos os arquivos', extensions: ['*'] },
+      ],
+    });
+
+    if (result.canceled) {
+      return { filePath: null };
+    }
+
+    return { filePath: result.filePaths[0] ?? null };
   });
+  bindIpcContract(ipcMain, previewImportTransactionsContract, (payload) =>
+    dependencies.previewImportUseCase.execute(payload),
+  );
+  bindIpcContract(ipcMain, confirmImportTransactionsContract, async (payload) => {
+    const result = await dependencies.importTransactionsUseCase.execute(payload);
+
+    return {
+      importedCount: result.importedCount,
+      recalculatedTickers: result.recalculatedTickers,
+      skippedUnsupportedRows: result.skippedUnsupportedRows,
+    };
+  });
+  bindIpcContract(ipcMain, listDailyBrokerTaxesContract, () =>
+    dependencies.listDailyBrokerTaxesUseCase.execute(),
+  );
+  bindIpcContract(ipcMain, saveDailyBrokerTaxContract, (payload) =>
+    dependencies.saveDailyBrokerTaxUseCase.execute(payload),
+  );
+  bindIpcContract(ipcMain, importDailyBrokerTaxesContract, (payload) =>
+    dependencies.importDailyBrokerTaxesUseCase.execute(payload),
+  );
+  bindIpcContract(ipcMain, deleteDailyBrokerTaxContract, (payload) =>
+    dependencies.deleteDailyBrokerTaxUseCase.execute(payload),
+  );
 }

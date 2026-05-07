@@ -1,11 +1,32 @@
-import { asClass } from 'awilix';
+import { generateAssetsReportContract } from '../../../../ipc/contracts/tax-reporting/report';
+import { bindIpcContract } from '../../../../ipc/main/binding/bind-ipc-contract';
 import { GenerateAssetsReportUseCase } from '../../application/use-cases/generate-assets-report.use-case';
-import { ReportIpcRegistrar } from '../../transport/registrars/report-ipc-registrar';
-import type { MainContainer } from '../../../app/infra/container';
+import type {
+  TaxReportingModule,
+  TaxReportingPortfolioDependencies,
+} from '../../../app/infra/container';
 
-export function registerTaxReportingContext(container: MainContainer): void {
-  container.register({
-    generateAssetsReportUseCase: asClass(GenerateAssetsReportUseCase).singleton(),
-    reportIpcRegistrar: asClass(ReportIpcRegistrar).singleton(),
-  });
+export type CreateTaxReportingModuleInput = {
+  portfolio: TaxReportingPortfolioDependencies;
+};
+
+export function createTaxReportingModule(input: CreateTaxReportingModuleInput): TaxReportingModule {
+  const { portfolio } = input;
+  const generateAssetsReportUseCase = new GenerateAssetsReportUseCase(
+    portfolio.positionRepository,
+    portfolio.brokerRepository,
+    portfolio.assetRepository,
+    portfolio.transactionRepository,
+  );
+
+  return {
+    useCases: {
+      generateAssetsReportUseCase,
+    },
+    registerIpc(ipcMain) {
+      bindIpcContract(ipcMain, generateAssetsReportContract, (payload) =>
+        generateAssetsReportUseCase.execute(payload),
+      );
+    },
+  };
 }

@@ -4,7 +4,7 @@ import { DailyBrokerTax } from '../../domain/entities/daily-broker-tax.entity';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import { Money } from '../../../portfolio/domain/value-objects/money.vo';
 
-type DailyBrokerTaxRow = {
+export type DailyBrokerTaxRow = {
   date: string;
   broker_id: string;
   fees: string;

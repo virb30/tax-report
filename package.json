@@ -26,7 +26,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "awilix": "^13.0.3",
     "better-sqlite3": "^12.6.2",
     "clsx": "^2.1.1",
     "decimal.js": "^10.6.0",

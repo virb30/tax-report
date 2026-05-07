@@ -1,4 +1,3 @@
-import { createContainer, InjectionMode } from 'awilix';
 import type { Knex } from 'knex';
 import { healthCheckContract } from '../../../../ipc/contracts/app';
 import { previewImportTransactionsContract } from '../../../../ipc/contracts/ingestion/import';
@@ -6,119 +5,76 @@ import { listAssetsContract } from '../../../../ipc/contracts/portfolio/assets';
 import { listBrokersContract } from '../../../../ipc/contracts/portfolio/brokers';
 import { listPositionsContract } from '../../../../ipc/contracts/portfolio/portfolio';
 import { generateAssetsReportContract } from '../../../../ipc/contracts/tax-reporting/report';
-import { registerIngestionContext } from '../../../ingestion/infra/container';
-import { registerPortfolioContext } from '../../../portfolio/infra/container';
-import { registerTaxReportingContext } from '../../../tax-reporting/infra/container';
+import type { IpcMainHandleRegistry } from '../../../../ipc/main/binding/ipc-main-handle-registry';
+import { createIngestionModule } from '../../../ingestion/infra/container';
+import { createPortfolioModule } from '../../../portfolio/infra/container';
+import { createTaxReportingModule } from '../../../tax-reporting/infra/container';
 import { MemoryQueueAdapter } from '../../../shared/infra/events/memory-queue.adapter';
-import { createMainBootstrap, registerAppContext } from './index';
-import { registerSharedInfrastructure } from './shared-infrastructure';
-import type { AppCradle, MainContainer } from './types';
+import { createAppModule } from './app-module';
+import { createSharedInfrastructure } from './shared-infrastructure';
 
 type IpcHandler = (_event: Electron.IpcMainInvokeEvent, ...args: unknown[]) => unknown;
 
-function createTestContainer(): MainContainer {
-  return createContainer<AppCradle>({
-    injectionMode: InjectionMode.CLASSIC,
-  });
-}
+function createIpcMain(): {
+  ipcMain: IpcMainHandleRegistry;
+  handlers: Map<string, IpcHandler>;
+} {
+  const handlers = new Map<string, IpcHandler>();
 
-function registrationKeys(container: MainContainer): string[] {
-  return Object.keys(container.registrations);
-}
-
-describe('main bootstrap container', () => {
-  it('creates a fresh container per bootstrap invocation and returns the ipc registry', () => {
-    const firstDatabase = {} as Knex;
-    const secondDatabase = {} as Knex;
-
-    const firstBootstrap = createMainBootstrap(firstDatabase);
-    const secondBootstrap = createMainBootstrap(secondDatabase);
-
-    expect(firstBootstrap.container).not.toBe(secondBootstrap.container);
-    expect(firstBootstrap.ipcRegistry).toBe(firstBootstrap.container.cradle.ipcRegistry);
-    expect(secondBootstrap.ipcRegistry).toBe(secondBootstrap.container.cradle.ipcRegistry);
-    expect(firstBootstrap.container.cradle.database).toBe(firstDatabase);
-    expect(secondBootstrap.container.cradle.database).toBe(secondDatabase);
-  });
-
-  it('registers shared infrastructure only from the root helper', () => {
-    const container = createTestContainer();
-    const database = {} as Knex;
-
-    registerSharedInfrastructure(container, database);
-
-    expect(container.resolve('database')).toBe(database);
-    expect(container.resolve('queue')).toBeInstanceOf(MemoryQueueAdapter);
-    expect(container.resolve('transactionFeeAllocator')).toBeDefined();
-    expect(registrationKeys(container)).toEqual(['database', 'queue', 'transactionFeeAllocator']);
-  });
-
-  it('keeps context-owned registration keys in each bounded context module', () => {
-    const appContainer = createTestContainer();
-    const portfolioContainer = createTestContainer();
-    const ingestionContainer = createTestContainer();
-    const reportingContainer = createTestContainer();
-
-    registerAppContext(appContainer);
-    registerPortfolioContext(portfolioContainer);
-    registerIngestionContext(ingestionContainer);
-    registerTaxReportingContext(reportingContainer);
-
-    expect(registrationKeys(appContainer)).toEqual(['appIpcRegistrar']);
-    expect(registrationKeys(portfolioContainer)).toEqual(
-      expect.arrayContaining([
-        'brokerRepository',
-        'assetRepository',
-        'createBrokerUseCase',
-        'listPositionsUseCase',
-        'recalculatePositionHandler',
-        'brokersIpcRegistrar',
-        'assetsIpcRegistrar',
-        'portfolioIpcRegistrar',
-      ]),
-    );
-    expect(registrationKeys(ingestionContainer)).toEqual(
-      expect.arrayContaining([
-        'dailyBrokerTaxRepository',
-        'transactionParser',
-        'importTransactionsUseCase',
-        'importConsolidatedPositionUseCase',
-        'importIpcRegistrar',
-      ]),
-    );
-    expect(registrationKeys(reportingContainer)).toEqual([
-      'generateAssetsReportUseCase',
-      'reportIpcRegistrar',
-    ]);
-  });
-
-  it('resolves expected use cases and registrars from the modular bootstrap', () => {
-    const bootstrap = createMainBootstrap({} as Knex);
-    const container = bootstrap.container;
-
-    expect(container.resolve('appIpcRegistrar')).toBeDefined();
-    expect(container.resolve('brokersIpcRegistrar')).toBeDefined();
-    expect(container.resolve('assetsIpcRegistrar')).toBeDefined();
-    expect(container.resolve('portfolioIpcRegistrar')).toBeDefined();
-    expect(container.resolve('importIpcRegistrar')).toBeDefined();
-    expect(container.resolve('reportIpcRegistrar')).toBeDefined();
-    expect(container.resolve('createBrokerUseCase')).toBeDefined();
-    expect(container.resolve('listAssetsUseCase')).toBeDefined();
-    expect(container.resolve('importTransactionsUseCase')).toBeDefined();
-    expect(container.resolve('previewImportUseCase')).toBeDefined();
-    expect(container.resolve('generateAssetsReportUseCase')).toBeDefined();
-  });
-
-  it('assembles all IPC registrars into a registry that can register startup handlers', () => {
-    const bootstrap = createMainBootstrap({} as Knex);
-    const handlers = new Map<string, IpcHandler>();
-    const ipcMain = {
-      handle: (channel: string, listener: IpcHandler) => {
+  return {
+    handlers,
+    ipcMain: {
+      handle: (channel, listener) => {
         handlers.set(channel, listener);
       },
-    };
+    },
+  };
+}
 
-    bootstrap.ipcRegistry.registerAll(ipcMain);
+describe('main process module composition', () => {
+  it('creates an app module that serves the health-check IPC contract directly', async () => {
+    const { handlers, ipcMain } = createIpcMain();
+
+    const module = createAppModule();
+    module.registerIpc(ipcMain);
+
+    const handler = handlers.get(healthCheckContract.channel);
+    await expect(handler?.({} as Electron.IpcMainInvokeEvent)).resolves.toEqual({
+      status: 'ok',
+    });
+    expect(module.startup).toBeUndefined();
+  });
+
+  it('creates shared infrastructure without registering an Awilix root container', () => {
+    const database = jest.fn() as unknown as Knex;
+
+    const shared = createSharedInfrastructure(database);
+
+    expect(shared.database).toBe(database);
+    expect(shared.queue).toBeInstanceOf(MemoryQueueAdapter);
+    expect(shared.transactionFeeAllocator).toBeDefined();
+  });
+
+  it('composes modules in the runtime bootstrap order and registers IPC directly', () => {
+    const shared = createSharedInfrastructure(jest.fn() as unknown as Knex);
+    const appModule = createAppModule();
+    const portfolioModule = createPortfolioModule(shared);
+    const ingestionModule = createIngestionModule({
+      shared,
+      portfolio: portfolioModule.exports,
+    });
+    const taxReportingModule = createTaxReportingModule({
+      portfolio: portfolioModule.exports,
+    });
+    const modules = [appModule, portfolioModule, ingestionModule, taxReportingModule];
+    const { handlers, ipcMain } = createIpcMain();
+
+    for (const module of modules) {
+      module.startup?.initialize();
+    }
+    for (const module of modules) {
+      module.registerIpc(ipcMain);
+    }
 
     expect(handlers.has(healthCheckContract.channel)).toBe(true);
     expect(handlers.has(listBrokersContract.channel)).toBe(true);

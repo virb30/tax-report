@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
-import type { IpcRegistry } from '../../../../ipc/main/registry/ipc-registry';
+import type { IpcMainHandleRegistry } from '../../../../ipc/main/binding/ipc-main-handle-registry';
 import type { Runtime } from './runtime';
 
 declare const MAIN_WINDOW_VITE_NAME: string | undefined;
@@ -37,16 +37,12 @@ export class ElectronRuntime implements Runtime {
     return this.app;
   }
 
-  getIpcMain(): Electron.IpcMain {
+  getIpcMain(): IpcMainHandleRegistry {
     return this.ipcMain;
   }
 
   getUserDataPath(): string {
     return this.app.getPath('userData');
-  }
-
-  registerIpcHandlers(registry: IpcRegistry): void {
-    registry.registerAll(this.ipcMain);
   }
 
   async start(): Promise<void> {
@@ -111,14 +107,20 @@ export class ElectronRuntime implements Runtime {
   }
 
   private setAppName(appName?: string) {
-    this.appName = appName ?? MAIN_WINDOW_VITE_NAME ?? process.env.MAIN_WINDOW_VITE_NAME;
+    const viteAppName =
+      typeof MAIN_WINDOW_VITE_NAME === 'undefined' ? undefined : MAIN_WINDOW_VITE_NAME;
+
+    this.appName = appName ?? viteAppName ?? process.env.MAIN_WINDOW_VITE_NAME;
   }
 
   private setDevServerUrl(devServerUrl?: string) {
+    const viteDevServerUrl =
+      typeof MAIN_WINDOW_VITE_DEV_SERVER_URL === 'undefined'
+        ? undefined
+        : MAIN_WINDOW_VITE_DEV_SERVER_URL;
+
     this.devServerUrl =
-      devServerUrl ??
-      MAIN_WINDOW_VITE_DEV_SERVER_URL ??
-      process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL;
+      devServerUrl ?? viteDevServerUrl ?? process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL;
   }
 
   private validate() {
