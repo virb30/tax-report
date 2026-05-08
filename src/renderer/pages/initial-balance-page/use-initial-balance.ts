@@ -144,8 +144,8 @@ export function useInitialBalance() {
       return null;
     }
 
-    if (Number.isNaN(parsedAveragePrice) || parsedAveragePrice <= 0) {
-      setErrorMessage('Preço médio deve ser maior que zero.');
+    if (Number.isNaN(parsedAveragePrice) || parsedAveragePrice < 0) {
+      setErrorMessage('Preço médio deve ser maior ou igual a zero.');
       return null;
     }
 

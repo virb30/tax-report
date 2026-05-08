@@ -60,8 +60,8 @@ export const saveInitialBalanceDocumentSchema = z.object({
     .trim()
     .refine((value) => {
       const parsed = Number(value);
-      return value.length > 0 && !Number.isNaN(parsed) && parsed > 0;
-    }, 'Initial balance average price must be greater than zero.'),
+      return value.length > 0 && !Number.isNaN(parsed) && parsed >= 0;
+    }, 'Initial balance average price must be zero or greater.'),
   name: optionalMetadataFieldSchema,
   cnpj: optionalMetadataFieldSchema,
   year: z

@@ -87,11 +87,6 @@ export class MonthlyTaxCalculatorService {
     const previousArtifactsByMonth = new Map(
       (input.previousArtifacts ?? []).map((artifact) => [artifact.month, artifact]),
     );
-    const allocationsBySaleId = this.mapIrrfAllocations(
-      orderedTransactions,
-      assetClassesByTicker,
-      input.dailyBrokerTaxes,
-    );
     const months = this.listMonths(orderedTransactions);
     const positions = new Map<string, PositionState>();
     const carryForward = this.createEmptyCarryForward();
@@ -113,9 +108,8 @@ export class MonthlyTaxCalculatorService {
         positions,
         monthState,
         assetClassesByTicker,
-        allocationsBySaleId,
       });
-      this.finalizeMonth(monthState, carryForward);
+      this.finalizeMonth(monthState, carryForward, orderedTransactions, input.dailyBrokerTaxes);
 
       const previousArtifact = previousArtifactsByMonth.get(month) ?? null;
       const detail = this.createDetail(monthState, carryForward);
@@ -155,7 +149,6 @@ export class MonthlyTaxCalculatorService {
       positions: Map<string, PositionState>;
       monthState: MonthWorkingState;
       assetClassesByTicker: Map<string, MonthlyTaxAssetClassResolution>;
-      allocationsBySaleId: Map<string, MonthlyTaxIrrfAllocation>;
     },
   ): void {
     transactions.forEach((transaction) => {
@@ -171,7 +164,6 @@ export class MonthlyTaxCalculatorService {
         assetClass,
         positions: input.positions,
         monthState: input.monthState,
-        allocationsBySaleId: input.allocationsBySaleId,
       });
     });
   }
@@ -182,7 +174,6 @@ export class MonthlyTaxCalculatorService {
       assetClass: Exclude<MonthlyTaxAssetClass, 'unsupported'>;
       positions: Map<string, PositionState>;
       monthState: MonthWorkingState;
-      allocationsBySaleId: Map<string, MonthlyTaxIrrfAllocation>;
     },
   ): void {
     switch (transaction.type) {
@@ -285,8 +276,6 @@ export class MonthlyTaxCalculatorService {
     const grossAmount = transaction.unitPrice.multiplyBy(soldQuantity.getAmount());
     const costBasis = position.averagePrice.multiplyBy(soldQuantity.getAmount());
     const realizedResult = grossAmount.subtract(transaction.fees).subtract(costBasis);
-    const allocatedIrrf =
-      input.allocationsBySaleId.get(transaction.id.value)?.allocatedIrrf ?? Money.from(0);
     const groupCode = this.resolvePreliminaryGroup(input.assetClass);
 
     input.monthState.groups[groupCode].grossSales =
@@ -305,7 +294,7 @@ export class MonthlyTaxCalculatorService {
       costBasis: costBasis.toCurrency(),
       fees: transaction.fees.toCurrency(),
       realizedResult: realizedResult.toCurrency(),
-      allocatedIrrf: allocatedIrrf.toCurrency(),
+      allocatedIrrf: '0.00',
     });
 
     input.positions.set(transaction.ticker, {
@@ -314,7 +303,12 @@ export class MonthlyTaxCalculatorService {
     });
   }
 
-  private finalizeMonth(monthState: MonthWorkingState, carryForward: CarryForwardState): void {
+  private finalizeMonth(
+    monthState: MonthWorkingState,
+    carryForward: CarryForwardState,
+    orderedTransactions: Transaction[],
+    dailyBrokerTaxes: DailyBrokerTax[],
+  ): void {
     this.reclassifyExemptStockSales(monthState);
     this.applyDisclosure(monthState);
     this.applyLossCarryForward(monthState.groups['geral-comum'], carryForward.commonLoss);
@@ -329,7 +323,8 @@ export class MonthlyTaxCalculatorService {
       monthState.groups.fii.taxDue,
     );
 
-    const availableCredit = this.sumIrrf(monthState).add(carryForward.irrfCredit);
+    const monthIrrf = this.sumMonthlyIrrf(orderedTransactions, dailyBrokerTaxes, monthState.month);
+    const availableCredit = monthIrrf.add(carryForward.irrfCredit);
     const openingBelowThresholdTax = carryForward.belowThresholdTax;
     const payableBeforeThreshold = monthState.taxBeforeCredits
       .add(openingBelowThresholdTax)
@@ -349,6 +344,23 @@ export class MonthlyTaxCalculatorService {
     carryForward.belowThresholdTax = this.isBelowThreshold(payableBeforeThreshold)
       ? payableBeforeThreshold
       : Money.from(0);
+  }
+
+  private sumMonthlyIrrf(
+    transactions: Transaction[],
+    dailyTaxes: DailyBrokerTax[],
+    month: string,
+  ): Money {
+    const monthTransactions = transactions.filter((tx) => tx.date.startsWith(month));
+    const datesWithSales = new Set(
+      monthTransactions
+        .filter((tx) => tx.type === TransactionType.Sell)
+        .map((tx) => tx.date),
+    );
+
+    return dailyTaxes
+      .filter((tax) => tax.date.startsWith(month) && datesWithSales.has(tax.date))
+      .reduce((total, tax) => total.add(tax.irrf), Money.from(0));
   }
 
   private reclassifyExemptStockSales(monthState: MonthWorkingState): void {
@@ -460,7 +472,7 @@ export class MonthlyTaxCalculatorService {
       taxableBase: group.taxableBase.toCurrency(),
       taxRate,
       taxDue: group.taxDue.toCurrency(),
-      irrfCreditUsed: group.irrfCreditUsed.toCurrency(),
+      irrfCreditUsed: '0.00',
     };
   }
 
@@ -543,21 +555,6 @@ export class MonthlyTaxCalculatorService {
           },
         });
       });
-  }
-
-  private mapIrrfAllocations(
-    transactions: Transaction[],
-    assetClassesByTicker: Map<string, MonthlyTaxAssetClassResolution>,
-    dailyBrokerTaxes: DailyBrokerTax[],
-  ): Map<string, MonthlyTaxIrrfAllocation> {
-    const result = this.irrfAllocator.allocate({
-      sales: this.createSaleInputs(transactions, assetClassesByTicker),
-      dailyBrokerTaxes,
-    });
-
-    return new Map(
-      result.allocations.map((allocation) => [allocation.saleOperationId, allocation]),
-    );
   }
 
   private createSaleInputs(
@@ -686,13 +683,6 @@ export class MonthlyTaxCalculatorService {
         quantity: Quantity.from(0),
         averagePrice: Money.from(0),
       }
-    );
-  }
-
-  private sumIrrf(monthState: MonthWorkingState): Money {
-    return monthState.saleLines.reduce(
-      (total, line) => total.add(Money.from(line.allocatedIrrf)),
-      Money.from(0),
     );
   }
 

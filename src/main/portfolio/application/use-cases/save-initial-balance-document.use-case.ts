@@ -137,8 +137,8 @@ export class SaveInitialBalanceDocumentUseCase {
       outOfRangeMessage: 'Ano deve estar entre 2000 e 2100.',
     });
     const averagePrice = Number(input.averagePrice);
-    if (input.averagePrice.trim().length === 0 || Number.isNaN(averagePrice) || averagePrice <= 0) {
-      throw new Error('Preço médio deve ser maior que zero.');
+    if (input.averagePrice.trim().length === 0 || Number.isNaN(averagePrice) || averagePrice < 0) {
+      throw new Error('Preço médio deve ser maior ou igual a zero.');
     }
     if (input.allocations.length === 0) {
       throw new Error('Documento deve conter ao menos uma alocação.');

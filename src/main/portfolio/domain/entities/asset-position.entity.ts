@@ -169,8 +169,8 @@ export class AssetPosition {
       input.quantity,
       'Initial balance quantity must be greater than zero.',
     );
-    if (input.averagePrice.isLessThanOrEqualTo(0)) {
-      throw new Error('Initial balance average price must be greater than zero.');
+    if (input.averagePrice.isNegative()) {
+      throw new Error('Initial balance average price cannot be negative.');
     }
 
     this.brokerBreakdownState.replaceWith(input.brokerId, input.quantity);
