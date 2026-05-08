@@ -21,7 +21,9 @@ void (async (runtime: Runtime): Promise<void> => {
       portfolio: portfolioModule.exports,
     });
     const taxReportingModule = createTaxReportingModule({
+      shared,
       portfolio: portfolioModule.exports,
+      ingestion: ingestionModule.repositories,
     });
     const modules = [appModule, portfolioModule, ingestionModule, taxReportingModule];
 

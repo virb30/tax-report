@@ -1,5 +1,9 @@
 import type { Knex } from 'knex';
-import { assetIpcContracts, listAssetsContract } from '../../../../ipc/contracts/portfolio/assets';
+import {
+  assetIpcContracts,
+  listAssetsContract,
+  repairAssetTypeContract,
+} from '../../../../ipc/contracts/portfolio/assets';
 import {
   brokerIpcContracts,
   createBrokerContract,
@@ -9,13 +13,28 @@ import {
   saveInitialBalanceDocumentContract,
 } from '../../../../ipc/contracts/portfolio/portfolio';
 import type { IpcMainHandleRegistry } from '../../../../ipc/main/binding/ipc-main-handle-registry';
+import { createDatabaseConnection, initializeDatabase } from '../../../app/infra/database/database';
 import type { SharedInfrastructure } from '../../../app/infra/container';
 import type { Queue } from '../../../shared/application/events/queue.interface';
+import {
+  AssetType,
+  AssetTypeSource,
+  SourceType,
+  TransactionType,
+} from '../../../shared/types/domain';
+import { AssetTaxClassificationChangedEvent } from '../../../shared/domain/events/asset-tax-classification-changed.event';
 import { ConsolidatedPositionImportedEvent } from '../../../shared/domain/events/consolidated-position-imported.event';
 import { TransactionFeesReallocatedEvent } from '../../../shared/domain/events/transaction-fees-reallocated.event';
 import { TransactionsImportedEvent } from '../../../shared/domain/events/transactions-imported.event';
 import { MemoryQueueAdapter } from '../../../shared/infra/events/memory-queue.adapter';
+import { Cnpj } from '../../../shared/domain/value-objects/cnpj.vo';
+import { Asset } from '../../domain/entities/asset.entity';
+import { AssetPosition } from '../../domain/entities/asset-position.entity';
+import { Broker } from '../../domain/entities/broker.entity';
+import { Transaction } from '../../domain/entities/transaction.entity';
 import { TransactionFeeAllocator } from '../../domain/services/transaction-fee-allocator.service';
+import { Money } from '../../domain/value-objects/money.vo';
+import { Quantity } from '../../domain/value-objects/quantity.vo';
 import { KnexAssetRepository } from '../repositories/knex-asset.repository';
 import { KnexBrokerRepository } from '../repositories/knex-broker.repository';
 import { KnexPositionRepository } from '../repositories/knex-position.repository';
@@ -27,8 +46,10 @@ type IpcHandler = (_event: Electron.IpcMainInvokeEvent, ...args: unknown[]) => u
 
 class RecordingQueue implements Queue {
   readonly subscriptions: Array<{ eventName: string; handler: unknown }> = [];
+  readonly publishedEvents: unknown[] = [];
 
-  async publish(): Promise<void> {
+  async publish(event: unknown): Promise<void> {
+    this.publishedEvents.push(event);
     return Promise.resolve();
   }
 
@@ -146,6 +167,91 @@ describe('createPortfolioModule', () => {
         .map((contract) => contract.channel)
         .sort(),
     );
+  });
+
+  it('composes the asset repair IPC path with queue-backed dependencies', () => {
+    const queue = new RecordingQueue();
+    const handlers = new Map<string, IpcHandler>();
+    const ipcMain: IpcMainHandleRegistry = {
+      handle: (channel, listener) => {
+        handlers.set(channel, listener);
+      },
+    };
+
+    const module = createPortfolioModule(createShared(jest.fn() as unknown as Knex, queue));
+    module.registerIpc(ipcMain);
+
+    expect(handlers.has(repairAssetTypeContract.channel)).toBe(true);
+    expect(queue.subscriptions).toEqual([]);
+  });
+
+  it('composes asset repair with queue publication support intact', async () => {
+    const database = createDatabaseConnection(':memory:');
+    await initializeDatabase(database, true);
+    const queue = new RecordingQueue();
+    const module = createPortfolioModule(createShared(database, queue));
+    const broker = Broker.create({
+      code: 'RPR1',
+      name: 'Repair Broker',
+      cnpj: new Cnpj('11.111.111/0001-00'),
+    });
+    await module.exports.brokerRepository.save(broker);
+    await module.exports.assetRepository.save(
+      Asset.create({
+        ticker: 'AAPL34',
+        assetType: AssetType.Stock,
+        resolutionSource: AssetTypeSource.File,
+      }),
+    );
+    await module.exports.transactionRepository.saveMany([
+      Transaction.create({
+        date: '2024-01-10',
+        type: TransactionType.Buy,
+        ticker: 'AAPL34',
+        quantity: Quantity.from(1),
+        unitPrice: Money.from(100),
+        fees: Money.from(0),
+        brokerId: broker.id,
+        sourceType: SourceType.Csv,
+      }),
+    ]);
+    await module.exports.positionRepository.save(
+      AssetPosition.create({
+        ticker: 'AAPL34',
+        assetType: AssetType.Stock,
+        year: 2024,
+      }),
+    );
+    const handlers = new Map<string, IpcHandler>();
+    const ipcMain: IpcMainHandleRegistry = {
+      handle: (channel, listener) => {
+        handlers.set(channel, listener);
+      },
+    };
+    module.registerIpc(ipcMain);
+
+    await expect(
+      handlers.get(repairAssetTypeContract.channel)?.({} as Electron.IpcMainInvokeEvent, {
+        ticker: 'AAPL34',
+        assetType: AssetType.Bdr,
+      }),
+    ).resolves.toEqual({
+      success: true,
+      repair: {
+        ticker: 'AAPL34',
+        assetType: AssetType.Bdr,
+        affectedYears: [2024],
+        reprocessedCount: 1,
+      },
+    });
+    expect(queue.publishedEvents).toEqual([
+      expect.objectContaining({
+        name: AssetTaxClassificationChangedEvent.name,
+        ticker: 'AAPL34',
+        earliestYear: 2024,
+      }),
+    ]);
+    await database.destroy();
   });
 
   it('preserves broker failure mapping on direct module bindings', async () => {

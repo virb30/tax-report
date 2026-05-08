@@ -11,6 +11,8 @@ export type {
   PortfolioModuleExports,
   SharedInfrastructure,
   TaxReportingModule,
+  TaxReportingIngestionDependencies,
+  TaxReportingModuleRepositories,
   TaxReportingModuleUseCases,
   TaxReportingPortfolioDependencies,
 } from './types';

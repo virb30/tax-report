@@ -318,6 +318,7 @@ describe('Application contracts integration', () => {
       tickerDataRepository,
       knexTransactionRepository,
       new ReprocessTickerYearsService(recalculatePositionUseCase),
+      new MemoryQueueAdapter(),
     );
     const broker = Broker.create({
       name: 'Repair Broker',

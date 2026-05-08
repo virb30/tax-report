@@ -14,7 +14,11 @@ import type { ListDailyBrokerTaxesUseCase } from '../../../ingestion/application
 import type { PreviewImportUseCase } from '../../../ingestion/application/use-cases/preview-import.use-case';
 import type { SaveDailyBrokerTaxUseCase } from '../../../ingestion/application/use-cases/save-daily-broker-tax.use-case';
 import type { Queue } from '../../../shared/application/events/queue.interface';
+import type { GetMonthlyTaxDetailUseCase } from '../../../tax-reporting/application/use-cases/get-monthly-tax-detail.use-case';
 import type { GenerateAssetsReportUseCase } from '../../../tax-reporting/application/use-cases/generate-assets-report.use-case';
+import type { ListMonthlyTaxHistoryUseCase } from '../../../tax-reporting/application/use-cases/list-monthly-tax-history.use-case';
+import type { RecalculateMonthlyTaxHistoryUseCase } from '../../../tax-reporting/application/use-cases/recalculate-monthly-tax-history.use-case';
+import type { MonthlyTaxCloseRepository } from '../../../tax-reporting/application/repositories/monthly-tax-close.repository';
 import type { AssetPositionRepository } from '../../../portfolio/application/repositories/asset-position.repository';
 import type { AssetRepository } from '../../../portfolio/application/repositories/asset.repository';
 import type { BrokerRepository } from '../../../portfolio/application/repositories/broker.repository';
@@ -91,10 +95,24 @@ export type TaxReportingPortfolioDependencies = Pick<
   'positionRepository' | 'brokerRepository' | 'assetRepository' | 'transactionRepository'
 >;
 
+export type TaxReportingIngestionDependencies = Pick<
+  IngestionModuleRepositories,
+  'dailyBrokerTaxRepository'
+>;
+
 export interface TaxReportingModuleUseCases {
   generateAssetsReportUseCase: GenerateAssetsReportUseCase;
+  listMonthlyTaxHistoryUseCase: ListMonthlyTaxHistoryUseCase;
+  getMonthlyTaxDetailUseCase: GetMonthlyTaxDetailUseCase;
+  recalculateMonthlyTaxHistoryUseCase: RecalculateMonthlyTaxHistoryUseCase;
+}
+
+export interface TaxReportingModuleRepositories {
+  monthlyTaxCloseRepository: MonthlyTaxCloseRepository;
+  dailyBrokerTaxRepository: IngestionDailyBrokerTaxRepository;
 }
 
 export interface TaxReportingModule extends MainProcessModule {
+  repositories: TaxReportingModuleRepositories;
   useCases: TaxReportingModuleUseCases;
 }

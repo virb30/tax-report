@@ -29,4 +29,6 @@ export * from '../contracts/portfolio/migrate-year.contract';
 export * from '../contracts/portfolio/portfolio';
 export * from '../contracts/portfolio/recalculate.contract';
 export * from '../contracts/tax-reporting/assets-report.contract';
+export * from '../contracts/tax-reporting/monthly-close';
+export * from '../contracts/tax-reporting/monthly-close.contract';
 export * from '../contracts/tax-reporting/report';

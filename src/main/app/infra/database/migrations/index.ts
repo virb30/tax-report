@@ -14,6 +14,7 @@ import { addActiveToBrokersMigration } from './012-add-active-to-brokers';
 import { extendTickerDataAssetCatalogMigration } from './013-extend-ticker-data-asset-catalog';
 import { createDailyBrokerTaxesMigration } from './014-create-daily-broker-taxes';
 import { createTransactionFeesMigration } from './015-create-transaction-fees';
+import { createMonthlyTaxClosesMigration } from './016-create-monthly-tax-closes';
 
 export type DatabaseMigration = {
   name: string;
@@ -37,4 +38,5 @@ export const databaseMigrations: DatabaseMigration[] = [
   extendTickerDataAssetCatalogMigration,
   createDailyBrokerTaxesMigration,
   createTransactionFeesMigration,
+  createMonthlyTaxClosesMigration,
 ];

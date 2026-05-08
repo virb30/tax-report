@@ -30,6 +30,11 @@ import {
   recalculatePositionContract,
   saveInitialBalanceDocumentContract,
 } from '../contracts/portfolio/portfolio/contracts';
+import {
+  monthlyTaxDetailContract,
+  monthlyTaxHistoryContract,
+  recalculateMonthlyTaxHistoryContract,
+} from '../contracts/tax-reporting/monthly-close/contracts';
 import { generateAssetsReportContract } from '../contracts/tax-reporting/report/contracts';
 import { ipcContracts } from './ipc-contract-registry';
 
@@ -48,6 +53,9 @@ export const ELECTRON_API_CHANNELS = {
   deleteInitialBalanceDocument: deleteInitialBalanceDocumentContract.channel,
   listPositions: listPositionsContract.channel,
   generateAssetsReport: generateAssetsReportContract.channel,
+  listMonthlyTaxHistory: monthlyTaxHistoryContract.channel,
+  getMonthlyTaxDetail: monthlyTaxDetailContract.channel,
+  recalculateMonthlyTaxHistory: recalculateMonthlyTaxHistoryContract.channel,
   listAssets: listAssetsContract.channel,
   updateAsset: updateAssetContract.channel,
   repairAssetType: repairAssetTypeContract.channel,

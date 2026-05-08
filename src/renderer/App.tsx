@@ -6,13 +6,27 @@ import { InitialBalancePage } from './pages/InitialBalancePage';
 import { PositionsPage } from './pages/PositionsPage';
 import { ReportPage } from './pages/ReportPage';
 import { AssetsPage } from './pages/AssetsPage';
+import { type MonthlyTaxRepairNavigation, MonthlyTaxPage } from './pages/MonthlyTaxPage';
 
-type MainTab = 'import' | 'initial-balance' | 'positions' | 'report' | 'brokers' | 'assets';
+type MainTab =
+  | 'import'
+  | 'initial-balance'
+  | 'positions'
+  | 'monthly-tax'
+  | 'report'
+  | 'brokers'
+  | 'assets';
+
+type RepairContext = {
+  targetTab: Extract<MainTab, 'import' | 'assets' | 'brokers'>;
+  message: string;
+};
 
 const tabItems: Array<{ id: MainTab; label: string }> = [
   { id: 'import', label: 'Importacao e Conferencia' },
   { id: 'initial-balance', label: 'Saldo Inicial' },
   { id: 'positions', label: 'Posicoes' },
+  { id: 'monthly-tax', label: 'Imposto Mensal' },
   { id: 'report', label: 'Relatorio Bens e Direitos' },
   { id: 'assets', label: 'Ativos' },
   { id: 'brokers', label: 'Corretoras' },
@@ -20,6 +34,15 @@ const tabItems: Array<{ id: MainTab; label: string }> = [
 
 export function App(): JSX.Element {
   const [activeTab, setActiveTab] = useState<MainTab>('import');
+  const [repairContext, setRepairContext] = useState<RepairContext | null>(null);
+
+  const handleRepairNavigate = (navigation: MonthlyTaxRepairNavigation): void => {
+    setRepairContext({
+      targetTab: navigation.tab,
+      message: navigation.message,
+    });
+    setActiveTab(navigation.tab);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 p-8 text-slate-900">
@@ -48,9 +71,21 @@ export function App(): JSX.Element {
           ))}
         </nav>
 
+        {repairContext && activeTab === repairContext.targetTab ? (
+          <p
+            role="status"
+            className="rounded-md border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-800"
+          >
+            Reparo mensal: {repairContext.message}
+          </p>
+        ) : null}
+
         {activeTab === 'import' ? <ImportPage /> : null}
         {activeTab === 'initial-balance' ? <InitialBalancePage /> : null}
         {activeTab === 'positions' ? <PositionsPage /> : null}
+        {activeTab === 'monthly-tax' ? (
+          <MonthlyTaxPage onRepairNavigate={handleRepairNavigate} />
+        ) : null}
         {activeTab === 'report' ? <ReportPage /> : null}
         {activeTab === 'assets' ? <AssetsPage /> : null}
         {activeTab === 'brokers' ? <BrokersPage /> : null}

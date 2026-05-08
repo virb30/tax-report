@@ -42,6 +42,17 @@ export class KnexDailyBrokerTaxRepository implements DailyBrokerTaxRepository {
     return rows.map(toDomain);
   }
 
+  async findByPeriod(input: { startDate: string; endDate: string }): Promise<DailyBrokerTax[]> {
+    const rows = await this.database<DailyBrokerTaxRow>('daily_broker_taxes')
+      .select('date', 'broker_id', 'fees', 'irrf')
+      .where('date', '>=', input.startDate)
+      .andWhere('date', '<=', input.endDate)
+      .orderBy('date', 'asc')
+      .orderBy('broker_id', 'asc');
+
+    return rows.map(toDomain);
+  }
+
   async findByDateAndBroker(input: {
     date: string;
     brokerId: Uuid;

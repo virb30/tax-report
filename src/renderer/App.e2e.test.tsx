@@ -7,6 +7,7 @@ import type { ElectronApi } from '../ipc/public';
 import type { GenerateAssetsReportResult } from '../ipc/public';
 import type { InitialBalanceDocument, SaveInitialBalanceDocumentResult } from '../ipc/public';
 import type { ListPositionsResult } from '../ipc/public';
+import type { MonthlyTaxCloseDetail, MonthlyTaxCloseSummary } from '../ipc/public';
 import { App } from './App';
 import mock, { mockReset } from 'jest-mock-extended/lib/Mock';
 
@@ -28,6 +29,82 @@ describe('App critical UI flows (E2E)', () => {
     };
   }
 
+  function createMonthlyDetail(
+    overrides: Partial<MonthlyTaxCloseDetail> = {},
+  ): MonthlyTaxCloseDetail {
+    return {
+      summary: {
+        month: '2025-04',
+        state: 'blocked',
+        outcome: 'blocked',
+        grossSales: '1000.00',
+        realizedResult: '100.00',
+        taxBeforeCredits: '15.00',
+        irrfCreditUsed: '0.00',
+        netTaxDue: '15.00',
+      },
+      groups: [
+        {
+          code: 'geral-comum',
+          label: 'Geral - Comum',
+          grossSales: '1000.00',
+          realizedResult: '100.00',
+          carriedLossIn: '0.00',
+          carriedLossOut: '0.00',
+          taxableBase: '100.00',
+          taxRate: '15.00',
+          taxDue: '15.00',
+          irrfCreditUsed: '0.00',
+        },
+        {
+          code: 'geral-isento',
+          label: 'Geral - Isento',
+          grossSales: '0.00',
+          realizedResult: '0.00',
+          carriedLossIn: '0.00',
+          carriedLossOut: '0.00',
+          taxableBase: '0.00',
+          taxRate: '0.00',
+          taxDue: '0.00',
+          irrfCreditUsed: '0.00',
+        },
+        {
+          code: 'fii',
+          label: 'FII',
+          grossSales: '0.00',
+          realizedResult: '0.00',
+          carriedLossIn: '0.00',
+          carriedLossOut: '0.00',
+          taxableBase: '0.00',
+          taxRate: '20.00',
+          taxDue: '0.00',
+          irrfCreditUsed: '0.00',
+        },
+      ],
+      blockedReasons: [
+        {
+          code: 'unsupported_asset_class',
+          message: 'Classificacao do ativo pendente.',
+          repairTarget: { tab: 'assets', hintCode: 'asset_type' },
+          metadata: { ticker: 'XPTO3' },
+        },
+      ],
+      disclosures: [],
+      carryForward: {
+        openingCommonLoss: '0.00',
+        closingCommonLoss: '0.00',
+        openingFiiLoss: '0.00',
+        closingFiiLoss: '0.00',
+        openingIrrfCredit: '0.00',
+        closingIrrfCredit: '0.00',
+        openingBelowThresholdTax: '0.00',
+        closingBelowThresholdTax: '0.00',
+      },
+      saleLines: [],
+      ...overrides,
+    };
+  }
+
   beforeEach(() => {
     mockReset(electronApi);
     jest.spyOn(window, 'confirm').mockReturnValue(true);
@@ -35,6 +112,100 @@ describe('App critical UI flows (E2E)', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it('switches from import to the monthly tax workspace and loads history', async () => {
+    const month: MonthlyTaxCloseSummary = {
+      month: '2025-04',
+      state: 'below_threshold',
+      outcome: 'below_threshold',
+      calculationVersion: 'v1',
+      inputFingerprint: 'fingerprint',
+      calculatedAt: '2026-05-07T10:00:00.000Z',
+      netTaxDue: '8.50',
+      carryForwardOut: '8.50',
+      changeSummary: null,
+    };
+
+    electronApi.listBrokers.mockResolvedValue({ items: [] });
+    electronApi.listDailyBrokerTaxes.mockResolvedValue({ items: [] });
+    electronApi.listMonthlyTaxHistory.mockResolvedValue({ months: [month] });
+
+    (electronApi as ElectronApi).appName = 'tax-report';
+    window.electronApi = electronApi;
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Selecionar' })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Imposto Mensal' }));
+
+    await waitFor(() => {
+      expect(electronApi.listMonthlyTaxHistory).toHaveBeenCalledTimes(1);
+      expect(screen.getByText('Imposto mensal')).toBeInTheDocument();
+      expect(screen.getByText('04/2025')).toBeInTheDocument();
+      expect(screen.getByText('Abaixo de R$ 10,00')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole('button', { name: 'Selecionar' })).not.toBeInTheDocument();
+  });
+
+  it('routes monthly repair CTAs to existing tabs and refreshes history on return', async () => {
+    const blockedMonth: MonthlyTaxCloseSummary = {
+      month: '2025-04',
+      state: 'blocked',
+      outcome: 'blocked',
+      calculationVersion: 'v1',
+      inputFingerprint: 'fingerprint-a',
+      calculatedAt: '2026-05-07T10:00:00.000Z',
+      netTaxDue: '0.00',
+      carryForwardOut: '0.00',
+      changeSummary: null,
+    };
+    const refreshedMonth: MonthlyTaxCloseSummary = {
+      ...blockedMonth,
+      state: 'closed',
+      outcome: 'tax_due',
+      inputFingerprint: 'fingerprint-b',
+      netTaxDue: '15.00',
+      changeSummary: 'Recalculo alterou o resultado.',
+    };
+
+    electronApi.listBrokers.mockResolvedValue({ items: [] });
+    electronApi.listDailyBrokerTaxes.mockResolvedValue({ items: [] });
+    electronApi.listAssets.mockResolvedValue({ items: [] });
+    electronApi.listMonthlyTaxHistory
+      .mockResolvedValueOnce({ months: [blockedMonth] })
+      .mockResolvedValueOnce({ months: [refreshedMonth] });
+    electronApi.getMonthlyTaxDetail.mockResolvedValue({ detail: createMonthlyDetail() });
+
+    (electronApi as ElectronApi).appName = 'tax-report';
+    window.electronApi = electronApi;
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'Imposto Mensal' }));
+    await user.click(await screen.findByRole('button', { name: 'Ver detalhe de 04/2025' }));
+    await user.click(await screen.findByRole('button', { name: 'Revisar ativo' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Catalogo de Ativos')).toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent('Classificacao do ativo pendente.');
+      expect(screen.getByRole('status')).toHaveTextContent('XPTO3');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Imposto Mensal' }));
+
+    await waitFor(() => {
+      expect(electronApi.listMonthlyTaxHistory).toHaveBeenCalledTimes(2);
+      expect(screen.getByText('Fechado')).toBeInTheDocument();
+      expect(screen.getByText('R$ 15.00')).toBeInTheDocument();
+      expect(screen.getByText('Recalculo alterou o resultado.')).toBeInTheDocument();
+    });
   });
 
   it('runs import, manual base and annual report flows through UI', async () => {

@@ -4,6 +4,8 @@ import { Asset } from '../../domain/entities/asset.entity';
 import type { AssetRepository } from '../repositories/asset.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import type { ReprocessTickerYearsService } from '../services/reprocess-ticker-years.service';
+import type { Queue } from '../../../shared/application/events/queue.interface';
+import { AssetTaxClassificationChangedEvent } from '../../../shared/domain/events/asset-tax-classification-changed.event';
 
 export interface RepairAssetTypeInput {
   ticker: string;
@@ -22,6 +24,7 @@ export class RepairAssetTypeUseCase {
     private readonly assetRepository: AssetRepository,
     private readonly transactionRepository: TransactionRepository,
     private readonly reprocessTickerYearsService: ReprocessTickerYearsService,
+    private readonly queue: Queue,
   ) {}
 
   async execute(input: RepairAssetTypeInput): Promise<RepairAssetTypeOutput> {
@@ -46,6 +49,12 @@ export class RepairAssetTypeUseCase {
       assetType: input.assetType,
       affectedYears,
     });
+    await this.queue.publish(
+      new AssetTaxClassificationChangedEvent({
+        ticker: input.ticker,
+        earliestYear: affectedYears[0],
+      }),
+    );
 
     return {
       ticker: input.ticker,

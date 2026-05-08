@@ -85,8 +85,8 @@ export class SetInitialBalanceUseCase {
     if (typeof input.quantity !== 'number' || input.quantity <= 0) {
       throw new Error('Quantidade deve ser maior que zero.');
     }
-    if (typeof input.averagePrice !== 'number' || input.averagePrice <= 0) {
-      throw new Error('Preço médio deve ser maior que zero.');
+    if (typeof input.averagePrice !== 'number' || input.averagePrice < 0) {
+      throw new Error('Preço médio deve ser maior ou igual a zero.');
     }
   }
 }

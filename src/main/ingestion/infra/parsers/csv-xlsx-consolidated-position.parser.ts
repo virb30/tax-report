@@ -142,8 +142,8 @@ export class CsvXlsxConsolidatedPositionParser implements ConsolidatedPositionPa
       if (quantity <= 0) {
         throw new Error(`Quantidade deve ser maior que zero (Ticker: ${ticker}).`);
       }
-      if (averagePrice <= 0) {
-        throw new Error(`Preço médio deve ser maior que zero (Ticker: ${ticker}).`);
+      if (averagePrice < 0) {
+        throw new Error(`Preço médio deve ser maior ou igual a zero (Ticker: ${ticker}).`);
       }
 
       result.push({

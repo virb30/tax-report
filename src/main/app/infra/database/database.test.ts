@@ -51,12 +51,14 @@ describe('database', () => {
     const hasOperationsTable = await tableExists(database, 'operations');
     const hasAccumulatedLossesTable = await tableExists(database, 'accumulated_losses');
     const hasTaxConfigTable = await tableExists(database, 'tax_config');
+    const hasMonthlyTaxClosesTable = await tableExists(database, 'monthly_tax_closes');
 
     expect(hasBrokersTable).toBe(true);
     expect(hasAssetsTable).toBe(true);
     expect(hasOperationsTable).toBe(true);
     expect(hasAccumulatedLossesTable).toBe(true);
     expect(hasTaxConfigTable).toBe(true);
+    expect(hasMonthlyTaxClosesTable).toBe(true);
 
     const tickerDataColumns = (await database.raw("PRAGMA table_info('ticker_data')")) as
       | TableInfoRow[]
@@ -112,6 +114,43 @@ describe('database', () => {
 
     const hasAssetsAfterUp = await tableExists(database, 'assets');
     expect(hasAssetsAfterUp).toBe(true);
+  });
+
+  it('creates monthly_tax_closes with columns required by history and detail queries', async () => {
+    database = createDatabaseConnection(':memory:');
+
+    await initializeDatabase(database, false);
+
+    const tableInfo: TableInfoRow[] | { rows: TableInfoRow[] } = await database.raw(
+      "PRAGMA table_info('monthly_tax_closes')",
+    );
+    const columns = Array.isArray(tableInfo) ? tableInfo : tableInfo.rows;
+
+    expect(columns.map((column) => column.name)).toEqual(
+      expect.arrayContaining([
+        'month',
+        'state',
+        'outcome',
+        'calculation_version',
+        'input_fingerprint',
+        'calculated_at',
+        'net_tax_due',
+        'carry_forward_out',
+        'change_summary',
+        'detail_json',
+        'created_at',
+        'updated_at',
+      ]),
+    );
+    expect(columns.find((column) => column.name === 'month')?.notnull).toBe(1);
+    expect(columns.find((column) => column.name === 'detail_json')?.notnull).toBe(1);
+  });
+
+  it('registers the monthly close migration after transaction fees', () => {
+    expect(databaseMigrations.map((migration) => migration.name).slice(-2)).toEqual([
+      '015-create-transaction-fees',
+      '016-create-monthly-tax-closes',
+    ]);
   });
 
   it('keeps rows created under the old ticker_data layout readable after migration 013', async () => {

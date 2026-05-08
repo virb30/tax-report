@@ -64,7 +64,9 @@ describe('main process module composition', () => {
       portfolio: portfolioModule.exports,
     });
     const taxReportingModule = createTaxReportingModule({
+      shared,
       portfolio: portfolioModule.exports,
+      ingestion: ingestionModule.repositories,
     });
     const modules = [appModule, portfolioModule, ingestionModule, taxReportingModule];
     const { handlers, ipcMain } = createIpcMain();
