@@ -3,9 +3,11 @@ import { SourceType } from '../../../shared/types/domain';
 import type { AssetPositionRepository } from '../repositories/asset-position.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import { Transaction } from '../../domain/entities/transaction.entity';
+import type { AssetPosition } from '../../domain/entities/asset-position.entity';
 import { PositionCalculatorService } from '../../domain/services/position-calculator.service';
 import { assertSupportedYear } from '../../../../shared/utils/year';
 import { Money } from '../../domain/value-objects/money.vo';
+import { AppError } from '../../../shared/app-error';
 
 export interface MigrateYearInput {
   sourceYear: number;
@@ -41,6 +43,8 @@ export class MigrateYearUseCase {
 
     const sourceYearPositions = await this.positionRepository.findAllByYear(input.sourceYear);
     const targetInitialBalanceTransactions: Transaction[] = [];
+    const sourceTickerSet = new Set(sourceYearPositions.map((position) => position.ticker));
+
     sourceYearPositions.forEach((position) => {
       if (tickersWithInitialBalance.has(position.ticker)) {
         return;
@@ -63,15 +67,27 @@ export class MigrateYearUseCase {
     });
 
     const positionCalculator = new PositionCalculatorService();
-    const targetYearTransactions = this.orderTargetYearTransactions([
-      ...existingTargetYearTransactions,
-      ...targetInitialBalanceTransactions,
-    ]);
-    const positionsAtYearEnd = positionCalculator.compute({
-      transactions: targetYearTransactions,
-      basePositions: [],
-      year: input.targetYear,
-    });
+    const relevantTargetYearTransactions = this.orderTargetYearTransactions(
+      [...existingTargetYearTransactions, ...targetInitialBalanceTransactions].filter((transaction) =>
+        sourceTickerSet.has(transaction.ticker),
+      ),
+    );
+
+    let positionsAtYearEnd: AssetPosition[];
+    try {
+      positionsAtYearEnd = positionCalculator.compute({
+        transactions: relevantTargetYearTransactions,
+        basePositions: [],
+        year: input.targetYear,
+      });
+    } catch (error: unknown) {
+      throw new AppError(
+        'MIGRATION_FAILED',
+        this.buildMigrationFailureMessage(error, input),
+        'business',
+        error,
+      );
+    }
 
     const positionsWithQuantity = positionsAtYearEnd.filter((p) => p.totalQuantity.toNumber() > 0);
 
@@ -123,5 +139,13 @@ export class MigrateYearUseCase {
     if (input.targetYear !== input.sourceYear + 1) {
       throw new Error('O ano de destino deve ser exatamente o ano de origem + 1.');
     }
+  }
+
+  private buildMigrationFailureMessage(error: unknown, input: MigrateYearInput): string {
+    if (error instanceof Error && error.message.length > 0) {
+      return `Falha ao migrar posições de ${input.sourceYear} para ${input.targetYear}: ${error.message}`;
+    }
+
+    return `Falha ao migrar posições de ${input.sourceYear} para ${input.targetYear}.`;
   }
 }

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Build the monthly tax calculator and workspace state resolver
 type: backend
 complexity: high
@@ -32,10 +32,10 @@ described by the TechSpec "Implementation Design" and ADR-003/ADR-004 decisions.
 </requirements>
 
 ## Subtasks
-- [ ] 4.1 Create the monthly tax calculator service and artifact output shape.
-- [ ] 4.2 Create the workspace state resolver and month outcome derivation rules.
-- [ ] 4.3 Encode carry-forward, exemption, below-threshold, and blocked-month behavior in calculator outputs.
-- [ ] 4.4 Add domain tests covering chronological replay, carry-forward propagation, blocked months, and change summaries.
+- [x] 4.1 Create the monthly tax calculator service and artifact output shape.
+- [x] 4.2 Create the workspace state resolver and month outcome derivation rules.
+- [x] 4.3 Encode carry-forward, exemption, below-threshold, and blocked-month behavior in calculator outputs.
+- [x] 4.4 Add domain tests covering chronological replay, carry-forward propagation, blocked months, and change summaries.
 
 ## Implementation Details
 Reference the TechSpec "Core Interfaces", "Data Models", and "Technical Considerations" sections. Keep month replay
@@ -66,13 +66,13 @@ recalculation.
 
 ## Tests
 - Unit tests:
-  - [ ] A month with regular stock sales below the BRL 20,000 exemption cap records `Geral - Isento` output and no tax due.
-  - [ ] A month with taxable FII gains records `FII` tax due and carries prior losses into the calculation.
-  - [ ] A month with final payable tax below BRL 10.00 is marked `below_threshold` and carries the amount forward to the next month.
-  - [ ] A month containing same-day opposing trades for the same ticker becomes blocked with a day-trade reason.
-  - [ ] Recomputing a month after upstream fact changes produces a change summary when the final outcome differs.
+  - [x] A month with regular stock sales below the BRL 20,000 exemption cap records `Geral - Isento` output and no tax due.
+  - [x] A month with taxable FII gains records `FII` tax due and carries prior losses into the calculation.
+  - [x] A month with final payable tax below BRL 10.00 is marked `below_threshold` and carries the amount forward to the next month.
+  - [x] A month containing same-day opposing trades for the same ticker becomes blocked with a day-trade reason.
+  - [x] Recomputing a month after upstream fact changes produces a change summary when the final outcome differs.
 - Integration tests:
-  - [ ] Chronological replay across multiple months propagates losses, IRRF credits, and below-threshold carry-forward into later artifacts.
+  - [x] Chronological replay across multiple months propagates losses, IRRF credits, and below-threshold carry-forward into later artifacts.
 - Test coverage target: >=80%
 - All tests must pass
 

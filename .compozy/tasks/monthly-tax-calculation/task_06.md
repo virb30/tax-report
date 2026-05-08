@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Expose monthly close through module wiring and IPC contracts
 type: backend
 complexity: medium
@@ -30,10 +30,10 @@ registering history, detail, and recalculation operations for renderer use.
 </requirements>
 
 ## Subtasks
-- [ ] 6.1 Expand `tax-reporting` container types and module creation inputs for monthly dependencies.
-- [ ] 6.2 Define monthly close IPC contracts and export them through the shared renderer/public registries.
-- [ ] 6.3 Register the new monthly handlers in `tax-reporting` and wire them into main-process module composition.
-- [ ] 6.4 Add contract and container tests for handler registration, API names, and startup behavior.
+- [x] 6.1 Expand `tax-reporting` container types and module creation inputs for monthly dependencies.
+- [x] 6.2 Define monthly close IPC contracts and export them through the shared renderer/public registries.
+- [x] 6.3 Register the new monthly handlers in `tax-reporting` and wire them into main-process module composition.
+- [x] 6.4 Add contract and container tests for handler registration, API names, and startup behavior.
 
 ## Implementation Details
 Reference the TechSpec "API Endpoints" and "Impact Analysis" sections. Keep the IPC surface coarse-grained and domain
@@ -64,12 +64,12 @@ oriented: history, detail, and recalculation only.
 
 ## Tests
 - Unit tests:
-  - [ ] Monthly close contracts reject invalid `month` and `startYear` payloads through existing schema validation rules.
-  - [ ] Renderer contract registry includes the monthly-close API names without duplicates.
-  - [ ] `buildElectronApi` exposes the new monthly methods with the expected channel bindings.
+  - [x] Monthly close contracts reject invalid `month` and `startYear` payloads through existing schema validation rules.
+  - [x] Renderer contract registry includes the monthly-close API names without duplicates.
+  - [x] `buildElectronApi` exposes the new monthly methods with the expected channel bindings.
 - Integration tests:
-  - [ ] `createTaxReportingModule` registers history, detail, and recalculation handlers against the IPC registry.
-  - [ ] Main-process composition can initialize the monthly startup handler and register the new IPC contracts together.
+  - [x] `createTaxReportingModule` registers history, detail, and recalculation handlers against the IPC registry.
+  - [x] Main-process composition can initialize the monthly startup handler and register the new IPC contracts together.
 - Test coverage target: >=80%
 - All tests must pass
 

@@ -1,6 +1,9 @@
 import type { Knex } from 'knex';
 import { createDatabaseConnection, initializeDatabase } from '../../../app/infra/database/database';
-import type { MonthlyTaxCloseArtifact } from '../../application/repositories/monthly-tax-close.repository';
+import type {
+  MonthlyTaxCloseArtifact,
+  MonthlyTaxCloseDetail,
+} from '../../application/repositories/monthly-tax-close.repository';
 import { KnexMonthlyTaxCloseRepository } from './knex-monthly-tax-close.repository';
 
 type MonthlyTaxCloseTestRow = {
@@ -16,6 +19,49 @@ type MonthlyTaxCloseTestRow = {
   detail_json: string;
 };
 
+function createDetail(overrides: Partial<MonthlyTaxCloseDetail> = {}): MonthlyTaxCloseDetail {
+  return {
+    summary: {
+      month: '2026-03',
+      state: 'closed',
+      outcome: 'tax_due',
+      grossSales: '32000.00',
+      realizedResult: '500.00',
+      taxBeforeCredits: '25.45',
+      irrfCreditUsed: '0.00',
+      netTaxDue: '25.45',
+    },
+    groups: [
+      {
+        code: 'geral-comum',
+        label: 'Geral - Comum',
+        grossSales: '32000.00',
+        realizedResult: '500.00',
+        carriedLossIn: '0.00',
+        carriedLossOut: '0.00',
+        taxableBase: '169.67',
+        taxRate: '0.15',
+        taxDue: '25.45',
+        irrfCreditUsed: '0.00',
+      },
+    ],
+    blockedReasons: [],
+    disclosures: [],
+    carryForward: {
+      openingCommonLoss: '0.00',
+      closingCommonLoss: '0.00',
+      openingFiiLoss: '0.00',
+      closingFiiLoss: '0.00',
+      openingIrrfCredit: '0.00',
+      closingIrrfCredit: '0.00',
+      openingBelowThresholdTax: '0.00',
+      closingBelowThresholdTax: '0.00',
+    },
+    saleLines: [],
+    ...overrides,
+  };
+}
+
 function createClose(overrides: Partial<MonthlyTaxCloseArtifact> = {}): MonthlyTaxCloseArtifact {
   return {
     month: '2026-03',
@@ -27,17 +73,7 @@ function createClose(overrides: Partial<MonthlyTaxCloseArtifact> = {}): MonthlyT
     netTaxDue: '25.45',
     carryForwardOut: '0',
     changeSummary: 'First monthly close',
-    detail: {
-      summary: {
-        grossSales: '32000',
-      },
-      groups: [
-        {
-          code: 'geral-comum',
-          netTaxDue: '25.45',
-        },
-      ],
-    },
+    detail: createDetail(),
     ...overrides,
   };
 }
@@ -84,6 +120,17 @@ describe('KnexMonthlyTaxCloseRepository', () => {
   });
 
   it('overwrites the current artifact for the same month without creating duplicates', async () => {
+    const replacementDetail = createDetail({
+      summary: {
+        ...createDetail().summary,
+        grossSales: '15000.00',
+        netTaxDue: '8.50',
+      },
+      carryForward: {
+        ...createDetail().carryForward,
+        closingBelowThresholdTax: '8.50',
+      },
+    });
     await repository.save(createClose());
 
     await repository.save(
@@ -94,14 +141,7 @@ describe('KnexMonthlyTaxCloseRepository', () => {
         netTaxDue: '8.50',
         carryForwardOut: '8.50',
         changeSummary: null,
-        detail: {
-          summary: {
-            grossSales: '15000',
-          },
-          carryForward: {
-            out: '8.50',
-          },
-        },
+        detail: replacementDetail,
       }),
     );
 
@@ -118,28 +158,23 @@ describe('KnexMonthlyTaxCloseRepository', () => {
       carryForwardOut: '8.50',
       changeSummary: null,
     });
-    expect(detail?.detail).toEqual({
-      summary: {
-        grossSales: '15000',
-      },
-      carryForward: {
-        out: '8.50',
-      },
-    });
+    expect(detail?.detail).toEqual(replacementDetail);
   });
 
   it('returns stored month details unchanged and null for a missing month', async () => {
-    const detailPayload = {
+    const detailPayload = createDetail({
       summary: {
+        ...createDetail().summary,
+        state: 'blocked',
         outcome: 'blocked',
       },
       blockedReasons: [
         {
-          code: 'daily_broker_tax',
+          code: 'missing_daily_broker_tax',
           message: 'Missing daily broker tax',
         },
       ],
-    };
+    });
     await repository.save(
       createClose({
         month: '2026-04',
@@ -163,9 +198,7 @@ describe('KnexMonthlyTaxCloseRepository', () => {
         month: '2026-01',
         outcome: 'no_tax',
         netTaxDue: '0',
-        detail: {
-          marker: 'first',
-        },
+        detail: createDetail(),
       }),
     );
     await repository.save(
@@ -173,9 +206,7 @@ describe('KnexMonthlyTaxCloseRepository', () => {
         month: '2026-02',
         outcome: 'exempt',
         netTaxDue: '0',
-        detail: {
-          marker: 'second',
-        },
+        detail: createDetail(),
       }),
     );
 

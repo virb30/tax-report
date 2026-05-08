@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Create the monthly tax workspace and history navigation
 type: frontend
 complexity: medium
@@ -30,10 +30,10 @@ task adds the new app tab, the initial history listing, and the minimal navigati
 </requirements>
 
 ## Subtasks
-- [ ] 7.1 Add the monthly tax tab and shared tab state needed by the new workspace.
-- [ ] 7.2 Create the monthly page, hook, and summary components for month history rendering.
-- [ ] 7.3 Add loading, empty-state, and error-state behavior for monthly history fetches.
-- [ ] 7.4 Add renderer tests for history rendering and tab navigation.
+- [x] 7.1 Add the monthly tax tab and shared tab state needed by the new workspace.
+- [x] 7.2 Create the monthly page, hook, and summary components for month history rendering.
+- [x] 7.3 Add loading, empty-state, and error-state behavior for monthly history fetches.
+- [x] 7.4 Add renderer tests for history rendering and tab navigation.
 
 ## Implementation Details
 Reference the TechSpec "User Experience" and "End-to-End UI" sections. Preserve the current tabbed shell in `App.tsx`
@@ -63,12 +63,12 @@ instead of introducing router-level abstractions for MVP.
 
 ## Tests
 - Unit tests:
-  - [ ] Opening the monthly tab triggers the monthly history IPC call and renders the returned months.
-  - [ ] An empty monthly history response shows a clear no-history message instead of a blank page.
-  - [ ] Months with `blocked`, `needs_review`, and `below_threshold` states render distinct labels or visual treatments.
+  - [x] Opening the monthly tab triggers the monthly history IPC call and renders the returned months.
+  - [x] An empty monthly history response shows a clear no-history message instead of a blank page.
+  - [x] Months with `blocked`, `needs_review`, and `below_threshold` states render distinct labels or visual treatments.
 - Integration tests:
-  - [ ] App-level tab interaction switches from an existing page to the monthly workspace without breaking current tab rendering.
-  - [ ] Monthly workspace surfaces backend fetch failures using the same renderer error messaging pattern as other pages.
+  - [x] App-level tab interaction switches from an existing page to the monthly workspace without breaking current tab rendering.
+  - [x] Monthly workspace surfaces backend fetch failures using the same renderer error messaging pattern as other pages.
 - Test coverage target: >=80%
 - All tests must pass
 

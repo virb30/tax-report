@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Add monthly history, detail, and recalculation use cases
 type: backend
 complexity: high
@@ -32,10 +32,10 @@ handler required by ADR-004 and ADR-005 so monthly artifacts stay current after 
 </requirements>
 
 ## Subtasks
-- [ ] 5.1 Create the monthly history, month detail, and recalculation use cases.
-- [ ] 5.2 Add the queue-driven handler that subscribes to supported upstream events.
-- [ ] 5.3 Implement bootstrap rebuild behavior for empty history requests.
-- [ ] 5.4 Add application and integration tests for manual recalculation, automatic recalculation, and history reads.
+- [x] 5.1 Create the monthly history, month detail, and recalculation use cases.
+- [x] 5.2 Add the queue-driven handler that subscribes to supported upstream events.
+- [x] 5.3 Implement bootstrap rebuild behavior for empty history requests.
+- [x] 5.4 Add application and integration tests for manual recalculation, automatic recalculation, and history reads.
 
 ## Implementation Details
 Follow the TechSpec "API Endpoints", "Development Sequencing", and "Monitoring and Observability" sections. Keep
@@ -66,13 +66,13 @@ application and transport layers.
 
 ## Tests
 - Unit tests:
-  - [ ] History use case triggers a bootstrap recalculation when no monthly artifacts exist yet.
-  - [ ] Detail use case returns the full persisted payload for a requested `YYYY-MM` month.
-  - [ ] Recalculation use case deletes and rebuilds months from the earliest affected year forward.
-  - [ ] Monthly recalculation handler reacts to the asset classification changed event with the expected start year.
+  - [x] History use case triggers a bootstrap recalculation when no monthly artifacts exist yet.
+  - [x] Detail use case returns the full persisted payload for a requested `YYYY-MM` month.
+  - [x] Recalculation use case deletes and rebuilds months from the earliest affected year forward.
+  - [x] Monthly recalculation handler reacts to the asset classification changed event with the expected start year.
 - Integration tests:
-  - [ ] Publishing a transactions-imported event refreshes downstream monthly artifacts before the queue flow completes.
-  - [ ] Publishing a transaction-fees-reallocated event updates later months affected by carry-forward calculations.
+  - [x] Publishing a transactions-imported event refreshes downstream monthly artifacts before the queue flow completes.
+  - [x] Publishing a transaction-fees-reallocated event updates later months affected by carry-forward calculations.
 - Test coverage target: >=80%
 - All tests must pass
 

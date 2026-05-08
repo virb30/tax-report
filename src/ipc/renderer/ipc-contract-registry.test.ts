@@ -9,6 +9,7 @@ import { assetIpcContracts } from '../contracts/portfolio/assets';
 import { brokerIpcContracts } from '../contracts/portfolio/brokers';
 import { importIpcContracts } from '../contracts/ingestion/import';
 import { portfolioIpcContracts } from '../contracts/portfolio/portfolio';
+import { monthlyCloseIpcContracts } from '../contracts/tax-reporting/monthly-close';
 import { reportIpcContracts } from '../contracts/tax-reporting/report';
 
 function expectUnique(values: string[]): void {
@@ -175,6 +176,11 @@ describe('ipc contract registry', () => {
       importIpcContracts.map(() => 'throw'),
     );
     expect(reportIpcContracts.map((contract) => contract.errorMode)).toEqual(['throw']);
+    expect(monthlyCloseIpcContracts.map((contract) => contract.errorMode)).toEqual([
+      'throw',
+      'throw',
+      'throw',
+    ]);
     expect(brokerIpcContracts.map((contract) => contract.errorMode)).toEqual([
       'throw',
       'result',
@@ -185,6 +191,32 @@ describe('ipc contract registry', () => {
       'throw',
       'result',
       'result',
+    ]);
+  });
+
+  it('exposes monthly close contracts through the shared registry', () => {
+    expect(
+      monthlyCloseIpcContracts.map((contract) => ({
+        apiName: contract.api?.name,
+        channel: contract.channel,
+        id: contract.id,
+      })),
+    ).toEqual([
+      {
+        apiName: 'listMonthlyTaxHistory',
+        channel: 'report:monthly-tax-history',
+        id: 'report.monthlyTaxHistory',
+      },
+      {
+        apiName: 'getMonthlyTaxDetail',
+        channel: 'report:monthly-tax-detail',
+        id: 'report.monthlyTaxDetail',
+      },
+      {
+        apiName: 'recalculateMonthlyTaxHistory',
+        channel: 'report:monthly-tax-recalculate',
+        id: 'report.monthlyTaxRecalculate',
+      },
     ]);
   });
 });

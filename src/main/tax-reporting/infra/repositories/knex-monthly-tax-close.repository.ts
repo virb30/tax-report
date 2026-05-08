@@ -56,7 +56,7 @@ function toSummary(row: MonthlyTaxCloseSummaryRow): MonthlyTaxCloseSummary {
 function toArtifact(row: MonthlyTaxCloseRow): MonthlyTaxCloseArtifact {
   return {
     ...toSummary(row),
-    detail: JSON.parse(row.detail_json) as unknown,
+    detail: JSON.parse(row.detail_json) as MonthlyTaxCloseArtifact['detail'],
   };
 }
 

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Implement month detail and guided repair CTAs
 type: frontend
 complexity: medium
@@ -31,10 +31,10 @@ experience while preserving ADR-006's read-only repair boundary.
 </requirements>
 
 ## Subtasks
-- [ ] 8.1 Add month selection and detail loading to the monthly workspace.
-- [ ] 8.2 Render grouped month outcomes, blocked reasons, disclosures, and carry-forward explanations.
-- [ ] 8.3 Implement repair CTA actions that switch the app to the correct existing tab with context-preserving feedback.
-- [ ] 8.4 Add renderer tests for detail rendering, blocked repairs, and post-repair refresh behavior.
+- [x] 8.1 Add month selection and detail loading to the monthly workspace.
+- [x] 8.2 Render grouped month outcomes, blocked reasons, disclosures, and carry-forward explanations.
+- [x] 8.3 Implement repair CTA actions that switch the app to the correct existing tab with context-preserving feedback.
+- [x] 8.4 Add renderer tests for detail rendering, blocked repairs, and post-repair refresh behavior.
 
 ## Implementation Details
 Use the TechSpec "User Experience", "API Endpoints", and "End-to-End UI" sections as the reference. Keep repair CTAs

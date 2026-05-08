@@ -167,6 +167,112 @@ describe('MigrateYearUseCase', () => {
     expect(transactionRepository.saveMany).not.toHaveBeenCalled();
   });
 
+  it('returns message when source year positions are fully sold and have no open quantity', async () => {
+    positionRepository.findAllByYear.mockResolvedValue([
+      AssetPosition.create({
+        ticker: 'PETR4',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: Quantity.from(0),
+        averagePrice: Money.from(0),
+        brokerBreakdown: [],
+      }),
+    ]);
+    transactionRepository.findByPeriod.mockResolvedValue([]);
+
+    const result = await useCase.execute({ sourceYear: 2025, targetYear: 2026 });
+
+    expect(result.migratedPositionsCount).toBe(0);
+    expect(result.createdTransactionsCount).toBe(0);
+    expect(result.message).toContain('Nenhuma posição');
+    expect(transactionRepository.saveMany).not.toHaveBeenCalled();
+    expect(positionRepository.saveMany).not.toHaveBeenCalled();
+  });
+
+  it('ignores unrelated inconsistent target-year transactions while migrating covered tickers', async () => {
+    const brokerId = Uuid.create();
+    const unrelatedBrokerId = Uuid.create();
+
+    positionRepository.findAllByYear.mockResolvedValue([
+      AssetPosition.create({
+        ticker: 'PETR4',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: Quantity.from(100),
+        averagePrice: Money.from(20),
+        brokerBreakdown: [{ brokerId, quantity: Quantity.from(100) }],
+      }),
+    ]);
+    transactionRepository.findByPeriod.mockResolvedValue([
+      Transaction.create({
+        date: '2026-02-10',
+        type: TransactionType.Sell,
+        ticker: 'VALE3',
+        quantity: Quantity.from(10),
+        unitPrice: Money.from(30),
+        fees: Money.from(0),
+        brokerId: unrelatedBrokerId,
+        sourceType: SourceType.Manual,
+      }),
+    ]);
+
+    const result = await useCase.execute({ sourceYear: 2025, targetYear: 2026 });
+
+    expect(result).toEqual({
+      migratedPositionsCount: 1,
+      createdTransactionsCount: 1,
+    });
+    expect(transactionRepository.saveMany).toHaveBeenCalledTimes(1);
+    const savedPositions = positionRepository.saveMany.mock.calls[0]?.[0] ?? [];
+    expect(savedPositions).toHaveLength(1);
+    expect(savedPositions[0]?.ticker).toBe('PETR4');
+  });
+
+  it('throws business error with context when a covered ticker has inconsistent target-year operations', async () => {
+    const brokerId = Uuid.create();
+
+    positionRepository.findAllByYear.mockResolvedValue([
+      AssetPosition.create({
+        ticker: 'PETR4',
+        assetType: AssetType.Stock,
+        year: 2025,
+        totalQuantity: Quantity.from(100),
+        averagePrice: Money.from(20),
+        brokerBreakdown: [{ brokerId, quantity: Quantity.from(100) }],
+      }),
+    ]);
+    transactionRepository.findByPeriod.mockResolvedValue([
+      Transaction.create({
+        date: '2026-02-10',
+        type: TransactionType.InitialBalance,
+        ticker: 'PETR4',
+        quantity: Quantity.from(20),
+        unitPrice: Money.from(20),
+        fees: Money.from(0),
+        brokerId,
+        sourceType: SourceType.Manual,
+      }),
+      Transaction.create({
+        date: '2026-03-10',
+        type: TransactionType.Sell,
+        ticker: 'PETR4',
+        quantity: Quantity.from(50),
+        unitPrice: Money.from(30),
+        fees: Money.from(0),
+        brokerId,
+        sourceType: SourceType.Manual,
+      }),
+    ]);
+
+    await expect(useCase.execute({ sourceYear: 2025, targetYear: 2026 })).rejects.toThrow(
+      'Falha ao migrar posições de 2025 para 2026',
+    );
+    await expect(useCase.execute({ sourceYear: 2025, targetYear: 2026 })).rejects.toMatchObject({
+      code: 'MIGRATION_FAILED',
+      kind: 'business',
+    });
+  });
+
   it('throws when target year is not source year + 1', async () => {
     await expect(useCase.execute({ sourceYear: 2024, targetYear: 2026 })).rejects.toThrow(
       'ano de destino deve ser exatamente',

@@ -2,6 +2,7 @@ import { appIpcContracts } from '../contracts/app/contracts';
 import { assetIpcContracts } from '../contracts/portfolio/assets/contracts';
 import { brokerIpcContracts } from '../contracts/portfolio/brokers/contracts';
 import { importIpcContracts } from '../contracts/ingestion/import/contracts';
+import { monthlyCloseIpcContracts } from '../contracts/tax-reporting/monthly-close/contracts';
 import { portfolioIpcContracts } from '../contracts/portfolio/portfolio/contracts';
 import { reportIpcContracts } from '../contracts/tax-reporting/report/contracts';
 import type { IpcContractDefinition } from '../contract-types';
@@ -58,6 +59,7 @@ export const ipcContracts: readonly IpcContract[] = [
   ...importIpcContracts,
   ...portfolioIpcContracts,
   ...reportIpcContracts,
+  ...monthlyCloseIpcContracts,
   ...brokerIpcContracts,
   ...assetIpcContracts,
 ] as const;

@@ -11,6 +11,14 @@ import type {
   GenerateAssetsReportResult,
 } from '../contracts/tax-reporting/assets-report.contract';
 import type {
+  MonthlyTaxDetailQuery,
+  MonthlyTaxDetailResult,
+  MonthlyTaxHistoryQuery,
+  MonthlyTaxHistoryResult,
+  RecalculateMonthlyTaxHistoryCommand,
+  RecalculateMonthlyTaxHistoryResult,
+} from '../contracts/tax-reporting/monthly-close.contract';
+import type {
   ListPositionsQuery,
   ListPositionsResult,
 } from '../contracts/portfolio/list-positions.contract';
@@ -94,6 +102,11 @@ export type ElectronApi = {
   ) => Promise<DeleteInitialBalanceDocumentResult>;
   listPositions: (input: ListPositionsQuery) => Promise<ListPositionsResult>;
   generateAssetsReport: (input: GenerateAssetsReportQuery) => Promise<GenerateAssetsReportResult>;
+  listMonthlyTaxHistory: (input?: MonthlyTaxHistoryQuery) => Promise<MonthlyTaxHistoryResult>;
+  getMonthlyTaxDetail: (input: MonthlyTaxDetailQuery) => Promise<MonthlyTaxDetailResult>;
+  recalculateMonthlyTaxHistory: (
+    input: RecalculateMonthlyTaxHistoryCommand,
+  ) => Promise<RecalculateMonthlyTaxHistoryResult>;
   listAssets: (input?: ListAssetsQuery) => Promise<ListAssetsResult>;
   updateAsset: (input: UpdateAssetCommand) => Promise<UpdateAssetResult>;
   repairAssetType: (input: RepairAssetTypeCommand) => Promise<RepairAssetTypeResult>;

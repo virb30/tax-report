@@ -9,7 +9,33 @@ export type MonthlyTaxOutcome = 'no_tax' | 'exempt' | 'tax_due' | 'below_thresho
 
 export type MonthlyTaxGroupCode = 'geral-comum' | 'geral-isento' | 'fii';
 
-export interface MonthlyTaxGroupDetail {
+export type MonthlyTaxRecalculationReason = 'manual';
+
+export type MonthlyTaxHistoryQuery = {
+  startYear?: number;
+};
+
+export type MonthlyTaxCloseSummary = {
+  month: string;
+  state: MonthlyTaxWorkspaceState;
+  outcome: MonthlyTaxOutcome;
+  calculationVersion: string;
+  inputFingerprint: string;
+  calculatedAt: string;
+  netTaxDue: string;
+  carryForwardOut: string;
+  changeSummary: string | null;
+};
+
+export type MonthlyTaxHistoryResult = {
+  months: MonthlyTaxCloseSummary[];
+};
+
+export type MonthlyTaxDetailQuery = {
+  month: string;
+};
+
+export type MonthlyTaxGroupDetail = {
   code: MonthlyTaxGroupCode;
   label: 'Geral - Comum' | 'Geral - Isento' | 'FII';
   grossSales: string;
@@ -20,9 +46,9 @@ export interface MonthlyTaxGroupDetail {
   taxRate: string;
   taxDue: string;
   irrfCreditUsed: string;
-}
+};
 
-export interface MonthlyTaxBlockedReason {
+export type MonthlyTaxBlockedReason = {
   code:
     | 'day_trade_not_supported'
     | 'missing_daily_broker_tax'
@@ -35,15 +61,15 @@ export interface MonthlyTaxBlockedReason {
     hintCode: 'daily_broker_tax' | 'irrf' | 'asset_type' | 'broker_metadata';
   };
   metadata?: Record<string, string | string[]>;
-}
+};
 
-export interface MonthlyTaxDisclosure {
+export type MonthlyTaxDisclosure = {
   code: 'unit_non_exempt_policy' | 'etf_non_exempt_policy' | 'manual_input_used';
   severity: 'info' | 'review';
   message: string;
-}
+};
 
-export interface MonthlyTaxCarryForwardDetail {
+export type MonthlyTaxCarryForwardDetail = {
   openingCommonLoss: string;
   closingCommonLoss: string;
   openingFiiLoss: string;
@@ -52,9 +78,9 @@ export interface MonthlyTaxCarryForwardDetail {
   closingIrrfCredit: string;
   openingBelowThresholdTax: string;
   closingBelowThresholdTax: string;
-}
+};
 
-export interface MonthlyTaxSaleLine {
+export type MonthlyTaxSaleLine = {
   id: string;
   date: string;
   ticker: string;
@@ -67,9 +93,9 @@ export interface MonthlyTaxSaleLine {
   fees: string;
   realizedResult: string;
   allocatedIrrf: string;
-}
+};
 
-export interface MonthlyTaxCloseDetail {
+export type MonthlyTaxCloseDetail = {
   summary: {
     month: string;
     state: MonthlyTaxWorkspaceState;
@@ -85,27 +111,21 @@ export interface MonthlyTaxCloseDetail {
   disclosures: MonthlyTaxDisclosure[];
   carryForward: MonthlyTaxCarryForwardDetail;
   saleLines: MonthlyTaxSaleLine[];
-}
+};
 
-export interface MonthlyTaxCloseSummary {
-  month: string;
-  state: MonthlyTaxWorkspaceState;
-  outcome: MonthlyTaxOutcome;
-  calculationVersion: string;
-  inputFingerprint: string;
-  calculatedAt: string;
-  netTaxDue: string;
-  carryForwardOut: string;
-  changeSummary: string | null;
-}
+export type MonthlyTaxDetailResult = {
+  detail: MonthlyTaxCloseDetail | null;
+};
 
-export interface MonthlyTaxCloseArtifact extends MonthlyTaxCloseSummary {
-  detail: MonthlyTaxCloseDetail;
-}
+export type RecalculateMonthlyTaxHistoryCommand = {
+  startYear: number;
+  reason: MonthlyTaxRecalculationReason;
+};
 
-export interface MonthlyTaxCloseRepository {
-  save(close: MonthlyTaxCloseArtifact): Promise<void>;
-  findHistory(): Promise<MonthlyTaxCloseSummary[]>;
-  findDetail(month: string): Promise<MonthlyTaxCloseArtifact | null>;
-  deleteFromYear(year: number): Promise<void>;
-}
+export type RecalculateMonthlyTaxHistoryResult = {
+  startMonth: string | null;
+  endMonth: string | null;
+  rebuiltMonths: string[];
+  changedMonthCount: number;
+  recalculatedAt: string;
+};
