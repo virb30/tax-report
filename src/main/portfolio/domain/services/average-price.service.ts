@@ -23,6 +23,15 @@ export class AveragePriceService {
     const buyTotalCost = buyUnitPrice.multiplyBy(buyQuantity.getAmount());
     const nextTotalCost = currentTotalCost.add(buyTotalCost).add(operationalCosts);
     const nextQuantity = currentQuantity.add(buyQuantity);
+    
+    console.log('buyUnitPrice', buyUnitPrice.getAmount());
+    console.log('buyQuantity', buyQuantity.getAmount())
+    console.log('operationalCosts', operationalCosts.getAmount());
+    console.log('currentAveragePrice', position.averagePrice.getAmount());
+    console.log('currentQuantity', currentQuantity.getAmount());
+    console.log('nextQuantity', nextQuantity.getAmount());
+    console.log('nextTotalCost', nextTotalCost.getAmount())
+
 
     return nextTotalCost.divideBy(nextQuantity.getAmount());
   }

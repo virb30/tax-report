@@ -275,6 +275,7 @@ export class MonthlyTaxCalculatorService {
     const soldQuantity = transaction.quantity;
     const grossAmount = transaction.unitPrice.multiplyBy(soldQuantity.getAmount());
     const costBasis = position.averagePrice.multiplyBy(soldQuantity.getAmount());
+    const netSaleValue = grossAmount.subtract(transaction.fees);
     const realizedResult = grossAmount.subtract(transaction.fees).subtract(costBasis);
     const groupCode = this.resolvePreliminaryGroup(input.assetClass);
 
@@ -293,6 +294,7 @@ export class MonthlyTaxCalculatorService {
       grossAmount: grossAmount.toCurrency(),
       costBasis: costBasis.toCurrency(),
       fees: transaction.fees.toCurrency(),
+      netSaleValue: netSaleValue.toCurrency(),
       realizedResult: realizedResult.toCurrency(),
       allocatedIrrf: '0.00',
     });

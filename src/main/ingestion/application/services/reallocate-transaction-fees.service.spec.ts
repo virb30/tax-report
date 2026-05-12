@@ -49,7 +49,7 @@ describe('ReallocateTransactionFeesService', () => {
     expect(replacement?.transactionIds.map((transactionId) => transactionId.value)).toEqual(
       transactions.map((transaction) => transaction.id.value),
     );
-    expect(replacement?.fees.map((fee) => fee.totalFees.toNumber())).toEqual([0.33, 0.67]);
+    expect(replacement?.fees.map((fee) => fee.totalFees.toNumber())).toEqual([0.333333, 0.666667]);
     expect(result).toEqual({
       recalculatedTickers: ['PETR4', 'VALE3'],
       affectedPositions: [

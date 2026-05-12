@@ -91,6 +91,7 @@ export type MonthlyTaxSaleLine = {
   grossAmount: string;
   costBasis: string;
   fees: string;
+  netSaleValue: string;
   realizedResult: string;
   allocatedIrrf: string;
 };

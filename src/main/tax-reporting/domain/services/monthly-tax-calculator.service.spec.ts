@@ -238,6 +238,39 @@ describe('MonthlyTaxCalculatorService', () => {
     );
   });
 
+  it('returns backend-derived net sale values in sale lines', () => {
+    const result = service.calculate({
+      transactions: [
+        createTransaction({
+          date: '2026-01-01',
+          type: TransactionType.InitialBalance,
+          ticker: 'PETR4',
+          quantity: '100',
+          unitPrice: '100',
+        }),
+        createTransaction({
+          date: '2026-01-10',
+          type: TransactionType.Sell,
+          ticker: 'PETR4',
+          quantity: '100',
+          unitPrice: '250',
+          fees: '12.34',
+        }),
+      ],
+      assetClasses: [createAssetClass('PETR4', 'stock')],
+      dailyBrokerTaxes: [createDailyTax('2026-01-10')],
+      calculatedAt: '2026-05-07T10:00:00.000Z',
+      inputFingerprint: 'fixture',
+    });
+
+    expect(result.artifacts[0].detail.saleLines[0]).toMatchObject({
+      grossAmount: '25000.00',
+      fees: '12.34',
+      netSaleValue: '24987.66',
+      realizedResult: '14987.66',
+    });
+  });
+
   it('produces a change summary when recomputing a month changes the final outcome', () => {
     const previousArtifact: MonthlyTaxCloseArtifact = {
       month: '2026-01',

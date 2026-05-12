@@ -69,7 +69,8 @@ describe('ReportGenerator', () => {
 
       expect(description).toContain('100 cotas PETR4.');
       expect(description).toContain('Corretoras: XP Investimentos');
-      expect(description).toContain('Custo total: R$ 3.520,00.');
+      expect(description).toContain('Custo medio: R$ 35,200000.');
+      expect(description).toContain('Custo total: R$ 3.520,000000.');
     });
   });
 
@@ -167,6 +168,42 @@ describe('ReportGenerator', () => {
         canCopy: true,
       });
       expect(result[0]?.description).toContain('PETR4');
+    });
+
+    it('keeps average price precision in the description while rounding report values to 2 decimals', () => {
+      const generator = new ReportGenerator({
+        brokers: [broker],
+        assets: [
+          Asset.create({
+            ticker: 'PETR4',
+            assetType: AssetType.Stock,
+            resolutionSource: AssetTypeSource.Manual,
+            issuerCnpj: new Cnpj('33.000.167/0001-01'),
+            name: 'Petrobras',
+          }),
+        ],
+        transactionsByTicker: new Map(),
+        baseYear: 2025,
+      });
+
+      const result = generator.generate([
+        AssetPosition.create({
+          ticker: 'PETR4',
+          assetType: AssetType.Stock,
+          totalQuantity: Quantity.from(3),
+          averagePrice: Money.from('10.1234567'),
+          brokerBreakdown: [{ brokerId: broker.id, quantity: Quantity.from(3) }],
+          year: 2025,
+        }),
+      ]);
+
+      expect(result[0]).toMatchObject({
+        averagePrice: 10.123457,
+        currentYearValue: 30.37,
+        previousYearValue: 0,
+      });
+      expect(result[0]?.description).toContain('Custo medio: R$ 10,123457.');
+      expect(result[0]?.description).toContain('Custo total: R$ 30,370370.');
     });
 
     it('uses persisted previous-year position when available', () => {
@@ -319,7 +356,7 @@ describe('ReportGenerator', () => {
 
       expect(result[0]).toMatchObject({
         totalQuantity: 10.5,
-        averagePrice: 9.52,
+        averagePrice: 9.52381,
         currentYearValue: 100,
       });
       expect(result[0]?.brokersSummary[0]).toMatchObject({

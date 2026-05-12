@@ -42,6 +42,8 @@ export interface ReportItemOutput {
   brokersSummary: ReportItemBrokerSummaryOutput[];
 }
 
+const CURRENCY_DECIMAL_PLACES = 2;
+const DESCRIPTION_DECIMAL_PLACES = 6;
 const STOCK_CLASSIFICATION = { group: '03', code: '01' } as const;
 const FII_CLASSIFICATION = { group: '07', code: '03' } as const;
 const ETF_CLASSIFICATION = { group: '07', code: '09' } as const;
@@ -59,10 +61,10 @@ const REVENUE_CLASSIFICATIONS: Record<AssetType, { group: string; code: string }
   [AssetType.Bdr]: BDR_CLASSIFICATION,
 };
 
-export function formatBrl(value: number): string {
+export function formatBrl(value: number, decimalPlaces = CURRENCY_DECIMAL_PLACES): string {
   return value.toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: decimalPlaces,
+    maximumFractionDigits: decimalPlaces,
   });
 }
 
@@ -102,8 +104,8 @@ export function buildDeclarationDescriptionText(input: {
   }>;
 }): string {
   const unitLabel = getAssetUnitLabel(input.assetType);
-  const avgFormatted = formatBrl(input.averagePrice);
-  const totalFormatted = formatBrl(input.currentYearValue);
+  const avgFormatted = formatBrl(input.averagePrice, DESCRIPTION_DECIMAL_PLACES);
+  const totalFormatted = formatBrl(input.currentYearValue, DESCRIPTION_DECIMAL_PLACES);
   const quantityFormatted = formatQuantity(input.quantity);
   const brokersSummary = input.brokersSummary
     .map(
@@ -196,9 +198,9 @@ export class ReportGenerator {
       ticker: position.ticker,
       assetType: reportAssetType,
       totalQuantity: reportPosition.totalQuantity.toNumber(),
-      averagePrice: reportPosition.averagePrice.toNumber(),
-      previousYearValue: previousYearValue.toNumber(),
-      currentYearValue: currentYearValue.toNumber(),
+      averagePrice: reportPosition.averagePrice.toRoundedNumber(DESCRIPTION_DECIMAL_PLACES),
+      previousYearValue: previousYearValue.toRoundedNumber(CURRENCY_DECIMAL_PLACES),
+      currentYearValue: currentYearValue.toRoundedNumber(CURRENCY_DECIMAL_PLACES),
       acquiredInYear: previousYearValue.isZero() && currentYearValue.isGreaterThan(0),
       revenueClassification: getRevenueClassification(reportAssetType),
       status: eligibility.status,
@@ -247,8 +249,8 @@ export class ReportGenerator {
       ticker: context.reportPosition.ticker,
       assetType: context.reportAssetType,
       issuerCnpj: context.asset.issuerCnpj,
-      averagePrice: context.reportPosition.averagePrice.toNumber(),
-      currentYearValue: context.currentYearValue.toNumber(),
+      averagePrice: context.reportPosition.averagePrice.toRoundedNumber(DESCRIPTION_DECIMAL_PLACES),
+      currentYearValue: context.currentYearValue.toRoundedNumber(DESCRIPTION_DECIMAL_PLACES),
       fractionInfo: context.fractionInfo,
       brokersSummary,
     });
@@ -291,7 +293,9 @@ export class ReportGenerator {
           brokerName: broker?.name ?? 'Corretora nao cadastrada',
           cnpj: broker?.cnpj?.value ?? 'N/A',
           quantity: brokerQuantity,
-          totalCost: position.averagePrice.multiplyBy(brokerQuantity).toNumber(),
+          totalCost: position.averagePrice
+            .multiplyBy(brokerQuantity)
+            .toRoundedNumber(CURRENCY_DECIMAL_PLACES),
         };
       });
   }

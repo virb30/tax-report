@@ -114,14 +114,25 @@ describe('CsvXlsxConsolidatedPositionParser', () => {
     await expect(parser.parse(filePath)).rejects.toThrow(/maior que zero/);
   });
 
-  it('throws when average price is zero', async () => {
+  it('accepts zero average price', async () => {
     const filePath = await createTempFile(
       'pos.csv',
       ['Ticker;Quantidade;Preco Medio;Corretora', 'PETR4;100;0;XP'].join('\n'),
     );
     createdDirs.push(path.dirname(filePath));
 
-    await expect(parser.parse(filePath)).rejects.toThrow(/maior que zero/);
+    const result = await parser.parse(filePath);
+
+    expect(result).toEqual([
+      {
+        ticker: 'PETR4',
+        quantity: 100,
+        averagePrice: 0,
+        brokerCode: 'XP',
+        sourceAssetType: null,
+        sourceAssetTypeLabel: null,
+      },
+    ]);
   });
 
   it('throws when file is empty', async () => {
