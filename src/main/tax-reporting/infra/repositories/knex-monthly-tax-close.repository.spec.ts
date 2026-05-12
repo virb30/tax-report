@@ -191,6 +191,54 @@ describe('KnexMonthlyTaxCloseRepository', () => {
     expect(missing).toBeNull();
   });
 
+  it('normalizes legacy sale lines by returning backend-derived net sale values', async () => {
+    const legacyDetail = createDetail({
+      saleLines: [
+        {
+          id: 'sale-1',
+          date: '2026-04-10',
+          ticker: 'PETR4',
+          brokerId: 'broker-xp',
+          groupCode: 'geral-comum',
+          assetClass: 'stock',
+          quantity: '100',
+          grossAmount: '25000.00',
+          costBasis: '24000.00',
+          fees: '12.34',
+          realizedResult: '987.66',
+          allocatedIrrf: '10.00',
+        } as MonthlyTaxCloseDetail['saleLines'][number],
+      ],
+    });
+    await repository.save(
+      createClose({
+        month: '2026-04',
+        detail: legacyDetail,
+      }),
+    );
+    await database('monthly_tax_closes')
+      .where({ month: '2026-04' })
+      .update({
+        detail_json: JSON.stringify({
+          ...legacyDetail,
+          saleLines: legacyDetail.saleLines.map((line) => {
+            const legacyLine = { ...line } as Partial<MonthlyTaxCloseDetail['saleLines'][number]>;
+            delete legacyLine.netSaleValue;
+
+            return legacyLine;
+          }),
+        }),
+      });
+
+    const found = await repository.findDetail('2026-04');
+
+    expect(found?.detail.saleLines[0]).toMatchObject({
+      grossAmount: '25000.00',
+      fees: '12.34',
+      netSaleValue: '24987.66',
+    });
+  });
+
   it('returns monthly history in chronological order without loading detail payloads', async () => {
     await repository.save(createClose({ month: '2026-03' }));
     await repository.save(

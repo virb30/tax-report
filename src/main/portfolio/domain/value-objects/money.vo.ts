@@ -1,6 +1,7 @@
 import { Decimal } from 'decimal.js';
 
 const DEFAULT_DECIMAL_PLACES = 8;
+const CURRENCY_DECIMAL_PLACES = 2;
 
 export class Money {
   public readonly amount: Decimal;
@@ -44,7 +45,7 @@ export class Money {
   }
 
   toCurrency(): string {
-    return this.amount.toFixed(2);
+    return this.toFixed(CURRENCY_DECIMAL_PLACES);
   }
 
   getAmount(): string {
@@ -52,20 +53,41 @@ export class Money {
   }
 
   toNumber(): number {
-    return Number(this.amount.toFixed(2));
+    return Number(this.getAmount());
+  }
+
+  toRoundedNumber(decimalPlaces: number): number {
+    return Number(this.toFixed(decimalPlaces));
   }
 
   floorToCurrency(): Money {
-    const result = this.amount.toDecimalPlaces(2, Decimal.ROUND_FLOOR);
-    return new Money(result.toString());
+    return this.floorToDecimalPlaces(CURRENCY_DECIMAL_PLACES);
   }
 
   roundToCurrency(): Money {
-    return new Money(this.toCurrency());
+    return this.roundToDecimalPlaces(CURRENCY_DECIMAL_PLACES);
   }
 
   static minimumCurrencyUnit(): Money {
-    return new Money('0.01');
+    return Money.minimumUnit(CURRENCY_DECIMAL_PLACES);
+  }
+
+  roundToDecimalPlaces(decimalPlaces: number): Money {
+    const result = this.amount.toDecimalPlaces(decimalPlaces);
+    return new Money(result.toString());
+  }
+
+  floorToDecimalPlaces(decimalPlaces: number): Money {
+    const result = this.amount.toDecimalPlaces(decimalPlaces, Decimal.ROUND_FLOOR);
+    return new Money(result.toString());
+  }
+
+  toFixed(decimalPlaces: number): string {
+    return this.amount.toFixed(decimalPlaces);
+  }
+
+  static minimumUnit(decimalPlaces: number): Money {
+    return new Money(new Decimal(1).dividedBy(new Decimal(10).pow(decimalPlaces)).toString());
   }
 
   isLessThanOrEqualTo(other: Money | string | number): boolean {

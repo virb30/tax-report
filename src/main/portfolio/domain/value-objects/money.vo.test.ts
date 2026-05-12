@@ -62,6 +62,11 @@ describe('Money', () => {
       expect(money.getAmount()).toBe('10.12345679');
     });
 
+    it('preserves precision in toNumber by default', () => {
+      const money = Money.from('10.123456789');
+      expect(money.toNumber()).toBe(10.12345679);
+    });
+
     it('formats to currency with 2 decimal places and proper rounding', () => {
       expect(Money.from('10.124').toCurrency()).toBe('10.12');
       expect(Money.from('10.125').toCurrency()).toBe('10.13');
@@ -69,10 +74,14 @@ describe('Money', () => {
       expect(Money.from('10').toCurrency()).toBe('10.00');
     });
 
-    it('rounds and floors to currency precision', () => {
+    it('rounds and floors to explicit precision', () => {
       expect(Money.from('10.125').roundToCurrency().getAmount()).toBe('10.13');
       expect(Money.from('10.129').floorToCurrency().getAmount()).toBe('10.12');
       expect(Money.minimumCurrencyUnit().getAmount()).toBe('0.01');
+      expect(Money.from('10.1234567').roundToDecimalPlaces(6).getAmount()).toBe('10.123457');
+      expect(Money.from('10.1234567').floorToDecimalPlaces(6).getAmount()).toBe('10.123456');
+      expect(Money.minimumUnit(6).getAmount()).toBe('0.000001');
+      expect(Money.from('10.1234567').toRoundedNumber(6)).toBe(10.123457);
     });
   });
 });

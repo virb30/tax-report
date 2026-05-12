@@ -134,8 +134,9 @@ function createDetail(overrides: Partial<MonthlyTaxCloseDetail> = {}): MonthlyTa
         quantity: '100',
         grossAmount: '25000.00',
         costBasis: '24000.00',
-        fees: '0.00',
-        realizedResult: '1000.00',
+        fees: '12.34',
+        netSaleValue: '24987.66',
+        realizedResult: '987.66',
         allocatedIrrf: '10.00',
       },
     ],
@@ -250,6 +251,11 @@ describe('MonthlyTaxPage', () => {
       expect(screen.getByText('FII')).toBeTruthy();
       expect(screen.getByText('Resultado usa dado manual informado pelo usuario.')).toBeTruthy();
       expect(screen.getByText('PETR4')).toBeTruthy();
+      expect(screen.getByText('Custo medio')).toBeTruthy();
+      expect(screen.getByText('R$ 24000.00')).toBeTruthy();
+      expect(screen.getByText('Valor liquido venda')).toBeTruthy();
+      expect(screen.getByText('R$ 24987.66')).toBeTruthy();
+      expect(screen.queryByText('IRRF')).toBeNull();
     });
   });
 

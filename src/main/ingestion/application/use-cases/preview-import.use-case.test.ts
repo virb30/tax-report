@@ -100,7 +100,7 @@ describe('PreviewImportUseCase', () => {
       type: TransactionType.Buy,
       quantity: 10,
       unitPrice: 20,
-      fees: 0.33,
+      fees: 0.333333,
       brokerId,
       sourceAssetType: AssetType.Stock,
       resolvedAssetType: AssetType.Stock,
@@ -108,7 +108,7 @@ describe('PreviewImportUseCase', () => {
       needsReview: false,
       unsupportedReason: null,
     });
-    expect(result.transactionsPreview[1]?.fees).toBe(0.67);
+    expect(result.transactionsPreview[1]?.fees).toBe(0.666667);
     expect(result.transactionsPreview[1]?.type).toBe(TransactionType.Sell);
     expect(result.transactionsPreview[1]?.resolvedAssetType).toBe(AssetType.Stock);
     expect(result.transactionsPreview[1]?.resolutionStatus).toBe('resolved_from_catalog');

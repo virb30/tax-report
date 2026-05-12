@@ -1,7 +1,10 @@
 import type { Knex } from 'knex';
+import { Money } from '../../../portfolio/domain/value-objects/money.vo';
 import type {
   MonthlyTaxCloseArtifact,
+  MonthlyTaxCloseDetail,
   MonthlyTaxCloseRepository,
+  MonthlyTaxSaleLine,
   MonthlyTaxCloseSummary,
   MonthlyTaxOutcome,
   MonthlyTaxWorkspaceState,
@@ -23,6 +26,14 @@ type MonthlyTaxCloseRow = {
 };
 
 type MonthlyTaxCloseSummaryRow = Omit<MonthlyTaxCloseRow, 'detail_json'>;
+
+type PersistedMonthlyTaxSaleLine = Omit<MonthlyTaxSaleLine, 'netSaleValue'> & {
+  netSaleValue?: string;
+};
+
+type PersistedMonthlyTaxCloseDetail = Omit<MonthlyTaxCloseDetail, 'saleLines'> & {
+  saleLines: PersistedMonthlyTaxSaleLine[];
+};
 
 function toPersistence(close: MonthlyTaxCloseArtifact): MonthlyTaxCloseRow {
   return {
@@ -54,9 +65,31 @@ function toSummary(row: MonthlyTaxCloseSummaryRow): MonthlyTaxCloseSummary {
 }
 
 function toArtifact(row: MonthlyTaxCloseRow): MonthlyTaxCloseArtifact {
+  const parsedDetail = JSON.parse(row.detail_json) as unknown;
+  const detail = parsedDetail as PersistedMonthlyTaxCloseDetail;
+
   return {
     ...toSummary(row),
-    detail: JSON.parse(row.detail_json) as MonthlyTaxCloseArtifact['detail'],
+    detail: normalizeDetail(detail),
+  };
+}
+
+function normalizeDetail(detail: PersistedMonthlyTaxCloseDetail): MonthlyTaxCloseDetail {
+  return {
+    ...detail,
+    saleLines: detail.saleLines.map(normalizeSaleLine),
+  };
+}
+
+function normalizeSaleLine(line: PersistedMonthlyTaxSaleLine): MonthlyTaxSaleLine {
+  const grossAmount = typeof line.grossAmount === 'string' ? line.grossAmount : '0.00';
+  const fees = typeof line.fees === 'string' ? line.fees : '0.00';
+
+  return {
+    ...line,
+    grossAmount,
+    fees,
+    netSaleValue: line.netSaleValue ?? Money.from(grossAmount).subtract(Money.from(fees)).toCurrency(),
   };
 }
 

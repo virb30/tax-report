@@ -339,7 +339,7 @@ describe('App critical UI flows (E2E)', () => {
           pendingIssues: [],
           canCopy: true,
           description:
-            '5 cotas IVVB11. CNPJ: 02.332.886/0001-04. Corretoras: XP Investimentos (CNPJ: 02.332.886/0001-04, 5 cotas). Custo medio: R$ 320,00. Custo total: R$ 1.600,00.',
+            '5 cotas IVVB11. CNPJ: 02.332.886/0001-04. Corretoras: XP Investimentos (CNPJ: 02.332.886/0001-04, 5 cotas). Custo medio: R$ 320,000000. Custo total: R$ 1.600,000000.',
           brokersSummary: [
             {
               brokerId: 'broker-xp',

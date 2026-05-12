@@ -25,8 +25,9 @@ export function MonthlyTaxSaleLinesTable({
             <th className="px-3 py-2 font-medium">Grupo</th>
             <th className="px-3 py-2 font-medium">Quantidade</th>
             <th className="px-3 py-2 font-medium">Bruto</th>
+            <th className="px-3 py-2 font-medium">Custo medio</th>
+            <th className="px-3 py-2 font-medium">Valor liquido venda</th>
             <th className="px-3 py-2 font-medium">Resultado</th>
-            <th className="px-3 py-2 font-medium">IRRF</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 bg-white">
@@ -37,8 +38,9 @@ export function MonthlyTaxSaleLinesTable({
               <td className="px-3 py-2 text-slate-700">{groupLabel(line.groupCode)}</td>
               <td className="px-3 py-2 text-slate-700">{line.quantity}</td>
               <td className="px-3 py-2 text-slate-700">{formatCurrency(line.grossAmount)}</td>
+              <td className="px-3 py-2 text-slate-700">{formatCurrency(line.costBasis)}</td>
+              <td className="px-3 py-2 text-slate-700">{formatCurrency(line.netSaleValue)}</td>
               <td className="px-3 py-2 text-slate-700">{formatCurrency(line.realizedResult)}</td>
-              <td className="px-3 py-2 text-slate-700">{formatCurrency(line.allocatedIrrf)}</td>
             </tr>
           ))}
         </tbody>

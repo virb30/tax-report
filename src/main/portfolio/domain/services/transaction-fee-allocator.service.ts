@@ -3,6 +3,8 @@ import type { Transaction } from '../entities/transaction.entity';
 import { TransactionFee } from '../entities/transaction-fee.entity';
 import { Money } from '../value-objects/money.vo';
 
+const ALLOCATION_DECIMAL_PLACES = 6;
+
 type TransactionFeeAllocatorOperation = {
   quantity: number;
   unitPrice: Money;
@@ -18,18 +20,16 @@ export class TransactionFeeAllocator {
   allocate(input: TransactionFeeAllocatorInput): Money[] {
     this.validate(input);
 
-    const totalOperationalCosts = input.totalOperationalCosts.roundToCurrency();
+    const totalOperationalCosts = input.totalOperationalCosts.roundToDecimalPlaces(
+      ALLOCATION_DECIMAL_PLACES,
+    );
     const eligibleOperations = input.operations
       .map((operation, index) => ({
         index,
         operation,
         weight: operation.unitPrice.multiplyBy(operation.quantity),
       }))
-      .filter(
-        (item) =>
-          item.operation.type !== TransactionType.InitialBalance &&
-          item.operation.type !== TransactionType.FractionAuction,
-      );
+      .filter((item) => this.isEligibleOperationType(item.operation.type));
 
     if (totalOperationalCosts.isZero() || eligibleOperations.length === 0) {
       return input.operations.map(() => Money.from(0));
@@ -74,7 +74,7 @@ export class TransactionFeeAllocator {
         transaction,
         totalFees: allocations[index] ?? Money.from(0),
       }))
-      .filter(({ transaction }) => !transaction.isInitialBalance())
+      .filter(({ transaction }) => this.isEligibleOperationType(transaction.type))
       .map(({ transaction, totalFees }) =>
         TransactionFee.create({
           transactionId: transaction.id,
@@ -109,7 +109,7 @@ export class TransactionFeeAllocator {
       const weightedShare = input.totalOperationalCosts
         .multiplyBy(operationWeight.getAmount())
         .divideBy(input.totalWeight.getAmount());
-      const baseAllocation = weightedShare.floorToCurrency();
+      const baseAllocation = weightedShare.floorToDecimalPlaces(ALLOCATION_DECIMAL_PLACES);
       const remainder = weightedShare.subtract(baseAllocation);
 
       baseAllocations.push(baseAllocation);
@@ -132,7 +132,9 @@ export class TransactionFeeAllocator {
   }
 
   private allocateByEvenSplit(totalOperationalCosts: Money, operationCount: number): Money[] {
-    const baseAllocation = totalOperationalCosts.divideBy(operationCount).floorToCurrency();
+    const baseAllocation = totalOperationalCosts
+      .divideBy(operationCount)
+      .floorToDecimalPlaces(ALLOCATION_DECIMAL_PLACES);
     const allocations = Array.from({ length: operationCount }, () => baseAllocation);
     const remainders = allocations.map((_, index) => ({
       index,
@@ -147,12 +149,14 @@ export class TransactionFeeAllocator {
     baseAllocations: Money[],
     remainders: Array<{ index: number; remainder: Money }>,
   ): Money[] {
-    const minimumCurrencyUnit = Money.minimumCurrencyUnit();
+    const minimumCurrencyUnit = Money.minimumUnit(ALLOCATION_DECIMAL_PLACES);
     const allocatedTotal = baseAllocations.reduce(
       (accumulator, allocation) => accumulator.add(allocation),
       Money.from(0),
     );
-    let remaining = totalOperationalCosts.subtract(allocatedTotal).roundToCurrency();
+    let remaining = totalOperationalCosts
+      .subtract(allocatedTotal)
+      .roundToDecimalPlaces(ALLOCATION_DECIMAL_PLACES);
 
     for (const item of remainders) {
       if (remaining.isLessThanOrEqualTo(0)) {
@@ -161,7 +165,9 @@ export class TransactionFeeAllocator {
 
       const currentValue = baseAllocations[item.index];
       baseAllocations[item.index] = currentValue.add(minimumCurrencyUnit);
-      remaining = remaining.subtract(minimumCurrencyUnit).roundToCurrency();
+      remaining = remaining
+        .subtract(minimumCurrencyUnit)
+        .roundToDecimalPlaces(ALLOCATION_DECIMAL_PLACES);
     }
 
     return baseAllocations;
@@ -185,5 +191,9 @@ export class TransactionFeeAllocator {
         throw new Error('Operation unit price cannot be negative.');
       }
     }
+  }
+
+  private isEligibleOperationType(type?: TransactionType): boolean {
+    return type === undefined || type === TransactionType.Buy || type === TransactionType.Sell;
   }
 }
