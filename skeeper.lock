@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "sidecar": "git@github.com:virb30/specs.git",
+  "source_branch": "web",
+  "namespaces": [
+    {
+      "name": "tax-report",
+      "sidecar_branch": "tax-report/__branches__/web",
+      "commit": "a897dbd26cf2ac1a30951a30ca8e8bcce4933d7d",
+      "digest": "sha256:783526235366e36872eee2b79c67d667e0a140c666aab5942d4f12997d304c01",
+      "files": 47,
+      "bytes": 221809
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+sidecar: git@github.com:virb30/specs.git
+bootstrap: npm install -g @compozy/skeeper
+namespaces:
+  - name: tax-report
+    patterns:
+      - '**/SPEC.md'
+      - docs/specs/**
+      - .claude/plans/**
+      - '**/*.spec.md'
+      - AGENTS.md
+      - .codex/plans/**
+      - .agents/plans/**
+      - CLAUDE.md
+      - .compozy/tasks/**

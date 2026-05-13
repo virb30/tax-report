@@ -5,3 +5,15 @@ coverage/
 dist/
 *.log
 .compozy/runs/
+
+# >>> skeeper ignored specs >>>
+.skeeper/
+**/SPEC.md
+docs/specs/**
+.claude/plans/**
+**/*.spec.md
+AGENTS.md
+.codex/plans/**
+.agents/plans/**
+CLAUDE.md
+# <<< skeeper ignored specs <<<
