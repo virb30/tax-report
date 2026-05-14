@@ -3,8 +3,16 @@ out/
 .vite/
 coverage/
 dist/
+backend/node_modules/
+backend/coverage/
+backend/dist/
+backend/data/
+frontend/node_modules/
+frontend/coverage/
+frontend/dist/
 *.log
 .compozy/runs/
+.env
 
 # >>> skeeper ignored specs >>>
 .skeeper/

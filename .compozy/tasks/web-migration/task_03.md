@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Add Express Server Core and Backend Runtime
 type: backend
 complexity: high
@@ -30,12 +30,12 @@ Add the backend web runtime around the moved use cases and repositories. This ta
 </requirements>
 
 ## Subtasks
-- [ ] 3.1 Add backend HTTP app creation and route registration primitives.
-- [ ] 3.2 Add backend startup entrypoint and runtime configuration loading.
-- [ ] 3.3 Add health route and request correlation support.
-- [ ] 3.4 Add common HTTP error mapping and JSON response helpers.
-- [ ] 3.5 Add safe backend failure logging that redacts sensitive data.
-- [ ] 3.6 Add tests for app creation, health response, config validation, and error shape.
+- [x] 3.1 Add backend HTTP app creation and route registration primitives.
+- [x] 3.2 Add backend startup entrypoint and runtime configuration loading.
+- [x] 3.3 Add health route and request correlation support.
+- [x] 3.4 Add common HTTP error mapping and JSON response helpers.
+- [x] 3.5 Add safe backend failure logging that redacts sensitive data.
+- [x] 3.6 Add tests for app creation, health response, config validation, and error shape.
 
 ## Implementation Details
 Follow the TechSpec "Core Interfaces", "API Endpoints", "Monitoring and Observability", and "Technical Considerations" sections. Keep route handlers thin and transport-owned; application use cases must remain Express-free.
@@ -70,14 +70,14 @@ Follow the TechSpec "Core Interfaces", "API Endpoints", "Monitoring and Observab
 
 ## Tests
 - Unit tests:
-  - [ ] Runtime config accepts a valid SQLite path and rejects a missing required database path.
-  - [ ] HTTP error mapper converts validation errors to a JSON body with `error.code` and `error.message`.
-  - [ ] HTTP error mapper includes `error.details` only when safe structured details exist.
-  - [ ] Logger redacts uploaded file content, CNPJ values, and tax row details from error metadata.
+  - [x] Runtime config accepts a valid SQLite path and rejects a missing required database path.
+  - [x] HTTP error mapper converts validation errors to a JSON body with `error.code` and `error.message`.
+  - [x] HTTP error mapper includes `error.details` only when safe structured details exist.
+  - [x] Logger redacts uploaded file content, CNPJ values, and tax row details from error metadata.
 - Integration tests:
-  - [ ] `GET /api/health` returns a successful JSON response from the Express app without a network listener.
-  - [ ] Unknown route returns a consistent JSON error body.
-  - [ ] Backend app creation initializes database and module startup handlers once.
+  - [x] `GET /api/health` returns a successful JSON response from the Express app without a network listener.
+  - [x] Unknown route returns a consistent JSON error body.
+  - [x] Backend app creation initializes database and module startup handlers once.
 - Test coverage target: >=80%
 - All tests must pass
 

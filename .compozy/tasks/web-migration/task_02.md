@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Move Backend Code into the Backend Project
 type: backend
 complexity: critical
@@ -31,13 +31,13 @@ Move the existing backend application code from the Electron root layout into th
 </requirements>
 
 ## Subtasks
-- [ ] 2.1 Move app infrastructure, shared backend code, database setup, migrations, and seeds into `backend/src`.
-- [ ] 2.2 Move portfolio, ingestion, and tax-reporting domain/application/infra modules into `backend/src`.
-- [ ] 2.3 Update backend imports, path aliases, test paths, and config references for the new project root.
-- [ ] 2.4 Replace Electron-derived database path resolution with backend-owned SQLite configuration.
-- [ ] 2.5 Remove or isolate Electron dialog and IPC dependencies from backend runtime modules.
-- [ ] 2.6 Run and repair backend unit and integration tests after the move.
-- [ ] 2.7 Keep backend coverage at or above the required threshold.
+- [x] 2.1 Move app infrastructure, shared backend code, database setup, migrations, and seeds into `backend/src`.
+- [x] 2.2 Move portfolio, ingestion, and tax-reporting domain/application/infra modules into `backend/src`.
+- [x] 2.3 Update backend imports, path aliases, test paths, and config references for the new project root.
+- [x] 2.4 Replace Electron-derived database path resolution with backend-owned SQLite configuration.
+- [x] 2.5 Remove or isolate Electron dialog and IPC dependencies from backend runtime modules.
+- [x] 2.6 Run and repair backend unit and integration tests after the move.
+- [x] 2.7 Keep backend coverage at or above the required threshold.
 
 ## Implementation Details
 Follow the TechSpec "Project Structure and Documentation", "Data Models", "Impact Analysis", and "Development Sequencing" sections. This task moves backend behavior into `backend/src`; it does not create the Express API routes, which are handled by later tasks.
@@ -74,14 +74,14 @@ Follow the TechSpec "Project Structure and Documentation", "Data Models", "Impac
 
 ## Tests
 - Unit tests:
-  - [ ] Portfolio use cases such as broker creation, initial balance save/delete, and position recalculation pass from `backend/`.
-  - [ ] Ingestion parsers and import use cases pass from `backend/` after path updates.
-  - [ ] Tax reporting monthly and annual report use cases pass from `backend/` after path updates.
-  - [ ] Database path configuration returns a backend-configured SQLite path without Electron runtime APIs.
+  - [x] Portfolio use cases such as broker creation, initial balance save/delete, and position recalculation pass from `backend/`.
+  - [x] Ingestion parsers and import use cases pass from `backend/` after path updates.
+  - [x] Tax reporting monthly and annual report use cases pass from `backend/` after path updates.
+  - [x] Database path configuration returns a backend-configured SQLite path without Electron runtime APIs.
 - Integration tests:
-  - [ ] Backend container integration initializes shared infrastructure, portfolio, ingestion, and tax-reporting modules from `backend/src`.
-  - [ ] Database migration integration creates the expected SQLite schema using backend-local migrations.
-  - [ ] Event queue startup handlers still recalculate positions and monthly tax artifacts after source relocation.
+  - [x] Backend container integration initializes shared infrastructure, portfolio, ingestion, and tax-reporting modules from `backend/src`.
+  - [x] Database migration integration creates the expected SQLite schema using backend-local migrations.
+  - [x] Event queue startup handlers still recalculate positions and monthly tax artifacts after source relocation.
 - Test coverage target: >=80%
 - All tests must pass
 

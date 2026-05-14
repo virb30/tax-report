@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Create Independent Backend and Frontend Project Shells
 type: infra
 complexity: medium
@@ -28,12 +28,12 @@ Create the independent `backend/` and `frontend/` project directories required b
 </requirements>
 
 ## Subtasks
-- [ ] 1.1 Create empty `backend/` and `frontend/` project directories with local source roots.
-- [ ] 1.2 Add project-local package manifests and scripts for install, build, lint, format, and test.
-- [ ] 1.3 Add project-local TypeScript, Jest, ESLint, and Prettier configuration baselines.
-- [ ] 1.4 Keep the repository root free of workspace coupling between backend and frontend.
-- [ ] 1.5 Add minimal smoke tests proving each project test runner is wired.
-- [ ] 1.6 Update ignore and generated-output patterns needed by the two independent projects.
+- [x] 1.1 Create empty `backend/` and `frontend/` project directories with local source roots.
+- [x] 1.2 Add project-local package manifests and scripts for install, build, lint, format, and test.
+- [x] 1.3 Add project-local TypeScript, Jest, ESLint, and Prettier configuration baselines.
+- [x] 1.4 Keep the repository root free of workspace coupling between backend and frontend.
+- [x] 1.5 Add minimal smoke tests proving each project test runner is wired.
+- [x] 1.6 Update ignore and generated-output patterns needed by the two independent projects.
 
 ## Implementation Details
 Follow the TechSpec "Project Structure and Documentation" and "Development Sequencing" sections. This task creates only the independent project shells; moving existing backend or frontend code belongs to later tasks.
@@ -66,13 +66,13 @@ Follow the TechSpec "Project Structure and Documentation" and "Development Seque
 
 ## Tests
 - Unit tests:
-  - [ ] `backend` smoke test proves the backend Jest configuration discovers and runs TypeScript tests.
-  - [ ] `frontend` smoke test proves the frontend Jest configuration discovers and runs TypeScript or TSX tests.
-  - [ ] Project-local TypeScript configs compile a minimal test fixture without importing across projects.
+  - [x] `backend` smoke test proves the backend Jest configuration discovers and runs TypeScript tests.
+  - [x] `frontend` smoke test proves the frontend Jest configuration discovers and runs TypeScript or TSX tests.
+  - [x] Project-local TypeScript configs compile a minimal test fixture without importing across projects.
 - Integration tests:
-  - [ ] Running backend `npm test` from `backend/` completes without using the root Jest config.
-  - [ ] Running frontend `npm test` from `frontend/` completes without using the root Jest config.
-  - [ ] Running root install or scripts does not rely on npm workspaces for backend/frontend dependency management.
+  - [x] Running backend `npm test` from `backend/` completes without using the root Jest config.
+  - [x] Running frontend `npm test` from `frontend/` completes without using the root Jest config.
+  - [x] Running root install or scripts does not rely on npm workspaces for backend/frontend dependency management.
 - Test coverage target: >=80%
 - All tests must pass
 

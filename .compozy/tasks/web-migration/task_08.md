@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Retire Desktop Distribution Path After Parity Gate
 type: infra
 complexity: critical
@@ -31,12 +31,12 @@ Remove the active Electron desktop distribution path after the web workflows mee
 </requirements>
 
 ## Subtasks
-- [ ] 8.1 Confirm the web parity gate has passing unit, API integration, and browser E2E evidence.
-- [ ] 8.2 Remove Electron Forge, preload, IPC, BrowserWindow, and desktop startup files from active runtime code.
-- [ ] 8.3 Remove desktop package scripts and desktop-only dependencies from active manifests.
-- [ ] 8.4 Remove frontend and backend references to Electron APIs, IPC contracts, and desktop file paths.
-- [ ] 8.5 Update documentation so all product access points route to the web product.
-- [ ] 8.6 Run full backend, frontend, API integration, browser E2E, lint, and format verification.
+- [x] 8.1 Confirm the web parity gate has passing unit, API integration, and browser E2E evidence.
+- [x] 8.2 Remove Electron Forge, preload, IPC, BrowserWindow, and desktop startup files from active runtime code.
+- [x] 8.3 Remove desktop package scripts and desktop-only dependencies from active manifests.
+- [x] 8.4 Remove frontend and backend references to Electron APIs, IPC contracts, and desktop file paths.
+- [x] 8.5 Update documentation so all product access points route to the web product.
+- [x] 8.6 Run full backend, frontend, API integration, browser E2E, lint, and format verification.
 
 ## Implementation Details
 Follow the PRD "Desktop Distribution Shutdown", "Phased Rollout Plan", and TechSpec "Development Sequencing" sections. This task should not happen until the web application has proven the full Phase 1 core workflow parity.

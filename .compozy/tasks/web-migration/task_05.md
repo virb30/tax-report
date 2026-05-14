@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Move Frontend Code and Define API Boundary
 type: frontend
 complexity: high
@@ -30,12 +30,12 @@ Move the React renderer into the independent `frontend/src` project and define t
 </requirements>
 
 ## Subtasks
-- [ ] 5.1 Move renderer source, styles, HTML, and tests into `frontend/src`.
-- [ ] 5.2 Move frontend Vite, TypeScript, Jest, ESLint, Tailwind, PostCSS, and component configuration into `frontend/`.
-- [ ] 5.3 Add frontend-owned `TaxReportApi` interface and request/response types.
-- [ ] 5.4 Add frontend API mock utilities for component and hook tests.
-- [ ] 5.5 Remove frontend compile-time imports from backend and IPC internals.
-- [ ] 5.6 Run and repair frontend tests after source relocation.
+- [x] 5.1 Move renderer source, styles, HTML, and tests into `frontend/src`.
+- [x] 5.2 Move frontend Vite, TypeScript, Jest, ESLint, Tailwind, PostCSS, and component configuration into `frontend/`.
+- [x] 5.3 Add frontend-owned `TaxReportApi` interface and request/response types.
+- [x] 5.4 Add frontend API mock utilities for component and hook tests.
+- [x] 5.5 Remove frontend compile-time imports from backend and IPC internals.
+- [x] 5.6 Run and repair frontend tests after source relocation.
 
 ## Implementation Details
 Follow the TechSpec "Project Structure and Documentation", "Core Interfaces", and "Testing Approach" sections. This task defines the frontend API boundary, but the real fetch implementation and workflow rewiring belong to the next frontend task.
@@ -71,14 +71,14 @@ Follow the TechSpec "Project Structure and Documentation", "Core Interfaces", an
 
 ## Tests
 - Unit tests:
-  - [ ] App navigation test renders moved workflow tabs from `frontend/src`.
-  - [ ] API boundary type tests verify frontend service mocks satisfy `TaxReportApi`.
-  - [ ] Existing page tests for brokers, assets, positions, monthly tax, initial balance, and report pass after relocation.
-  - [ ] Frontend lint rejects imports from backend, preload, and IPC internals.
+  - [x] App navigation test renders moved workflow tabs from `frontend/src`.
+  - [x] API boundary type tests verify frontend service mocks satisfy `TaxReportApi`.
+  - [x] Existing page tests for brokers, assets, positions, monthly tax, initial balance, and report pass after relocation.
+  - [x] Frontend lint rejects imports from backend, preload, and IPC internals.
 - Integration tests:
-  - [ ] Frontend `npm test` runs moved React tests from `frontend/`.
-  - [ ] Frontend build compiles the browser app without root renderer config.
-  - [ ] Frontend tests use API boundary mocks instead of root project setup.
+  - [x] Frontend `npm test` runs moved React tests from `frontend/`.
+  - [x] Frontend build compiles the browser app without root renderer config.
+  - [x] Frontend tests use API boundary mocks instead of root project setup.
 - Test coverage target: >=80%
 - All tests must pass
 

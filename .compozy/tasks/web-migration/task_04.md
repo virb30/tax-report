@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Expose Core Workflow HTTP API Routes
 type: backend
 complexity: critical
@@ -31,13 +31,13 @@ Expose the complete Phase 1 backend API surface for the seven core workflows thr
 </requirements>
 
 ## Subtasks
-- [ ] 4.1 Add broker and asset HTTP routes.
-- [ ] 4.2 Add initial balance and positions HTTP routes.
-- [ ] 4.3 Add monthly tax and annual report HTTP routes.
-- [ ] 4.4 Add transaction import and daily broker tax multipart routes.
-- [ ] 4.5 Add consolidated position multipart preview and import routes.
-- [ ] 4.6 Add API integration tests for validation, response mapping, use case integration, and error shape.
-- [ ] 4.7 Add multipart tests for file type, size, success, validation failure, and cleanup behavior.
+- [x] 4.1 Add broker and asset HTTP routes.
+- [x] 4.2 Add initial balance and positions HTTP routes.
+- [x] 4.3 Add monthly tax and annual report HTTP routes.
+- [x] 4.4 Add transaction import and daily broker tax multipart routes.
+- [x] 4.5 Add consolidated position multipart preview and import routes.
+- [x] 4.6 Add API integration tests for validation, response mapping, use case integration, and error shape.
+- [x] 4.7 Add multipart tests for file type, size, success, validation failure, and cleanup behavior.
 
 ## Implementation Details
 Follow the TechSpec "API Endpoints", "Core Interfaces", "Integration Points", and "Testing Approach" sections. Use the existing IPC contracts only as implementation references where useful; do not make IPC contracts the web API contract.
@@ -75,19 +75,19 @@ Follow the TechSpec "API Endpoints", "Core Interfaces", "Integration Points", an
 
 ## Tests
 - Unit tests:
-  - [ ] Broker route validation accepts valid create/update/toggle payloads and rejects missing IDs.
-  - [ ] Asset route validation rejects update requests without editable fields.
-  - [ ] Initial balance route validation rejects empty allocations and invalid year values.
-  - [ ] Position route validation rejects invalid year, ticker, and average-price fee mode values.
-  - [ ] Multipart validation rejects unsupported file extension and oversized upload inputs.
-  - [ ] Error mapper returns `error.code`, `error.message`, and safe `error.details` for known business errors.
+  - [x] Broker route validation accepts valid create/update/toggle payloads and rejects missing IDs.
+  - [x] Asset route validation rejects update requests without editable fields.
+  - [x] Initial balance route validation rejects empty allocations and invalid year values.
+  - [x] Position route validation rejects invalid year, ticker, and average-price fee mode values.
+  - [x] Multipart validation rejects unsupported file extension and oversized upload inputs.
+  - [x] Error mapper returns `error.code`, `error.message`, and safe `error.details` for known business errors.
 - Integration tests:
-  - [ ] `GET/POST/PATCH /api/brokers` routes call broker use cases and return expected JSON.
-  - [ ] `GET/PATCH/POST /api/assets` routes call asset use cases and return expected JSON.
-  - [ ] `/api/initial-balances` and `/api/positions` routes preserve current initial balance and position outcomes.
-  - [ ] `/api/monthly-tax/*` and `/api/reports/assets` routes preserve current monthly tax and annual report outcomes.
-  - [ ] Transaction preview and confirm multipart routes parse CSV/XLSX uploads and return preview/import results.
-  - [ ] Daily broker tax and consolidated position multipart routes parse CSV/XLSX uploads and return import results.
+  - [x] `GET/POST/PATCH /api/brokers` routes call broker use cases and return expected JSON.
+  - [x] `GET/PATCH/POST /api/assets` routes call asset use cases and return expected JSON.
+  - [x] `/api/initial-balances` and `/api/positions` routes preserve current initial balance and position outcomes.
+  - [x] `/api/monthly-tax/*` and `/api/reports/assets` routes preserve current monthly tax and annual report outcomes.
+  - [x] Transaction preview and confirm multipart routes parse CSV/XLSX uploads and return preview/import results.
+  - [x] Daily broker tax and consolidated position multipart routes parse CSV/XLSX uploads and return import results.
 - Test coverage target: >=80%
 - All tests must pass
 

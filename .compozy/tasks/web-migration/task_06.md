@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Convert Frontend Workflows to HTTP API
 type: frontend
 complexity: critical
@@ -32,13 +32,13 @@ Convert all frontend workflows from `window.electronApi` and local desktop file 
 </requirements>
 
 ## Subtasks
-- [ ] 6.1 Replace `window.electronApi` usage in broker, asset, report, monthly tax, initial balance, and positions workflows.
-- [ ] 6.2 Replace transaction, daily broker tax, and consolidated position imports with browser file inputs and multipart API calls.
-- [ ] 6.3 Implement fetch-based API client methods and response/error parsing for every workflow route.
-- [ ] 6.4 Update React tests to mock `TaxReportApi` instead of `window.electronApi`.
-- [ ] 6.5 Add browser E2E scenarios covering all seven parity workflows.
-- [ ] 6.6 Verify API error messages, loading states, confirmation paths, and recovery states in frontend tests.
-- [ ] 6.7 Remove frontend global `electronApi` type declarations from the active browser app.
+- [x] 6.1 Replace `window.electronApi` usage in broker, asset, report, monthly tax, initial balance, and positions workflows.
+- [x] 6.2 Replace transaction, daily broker tax, and consolidated position imports with browser file inputs and multipart API calls.
+- [x] 6.3 Implement fetch-based API client methods and response/error parsing for every workflow route.
+- [x] 6.4 Update React tests to mock `TaxReportApi` instead of `window.electronApi`.
+- [x] 6.5 Add browser E2E scenarios covering all seven parity workflows.
+- [x] 6.6 Verify API error messages, loading states, confirmation paths, and recovery states in frontend tests.
+- [x] 6.7 Remove frontend global `electronApi` type declarations from the active browser app.
 
 ## Implementation Details
 Follow the TechSpec "Core Interfaces", "Browser-Native Import Experience", "Testing Approach", and "Development Sequencing" sections. Keep frontend request/response types frontend-owned and verify compatibility through API integration tests and browser E2E tests rather than shared backend imports.
@@ -77,18 +77,18 @@ Follow the TechSpec "Core Interfaces", "Browser-Native Import Experience", "Test
 
 ## Tests
 - Unit tests:
-  - [ ] Broker workflow creates, updates, toggles, and lists brokers through mocked `TaxReportApi`.
-  - [ ] Asset workflow lists, updates, and repairs asset type through mocked `TaxReportApi`.
-  - [ ] Initial balance workflow saves, lists, edits, deletes, and refreshes positions through mocked `TaxReportApi`.
-  - [ ] Positions workflow lists, recalculates, deletes, migrates, and imports consolidated positions through mocked `TaxReportApi`.
-  - [ ] Monthly tax workflow lists history, loads detail, follows repair CTAs, and surfaces API failures.
-  - [ ] Annual report workflow generates, groups, repairs, copies, and refreshes report items through mocked `TaxReportApi`.
-  - [ ] Import workflow previews and confirms browser-selected files through mocked multipart API calls.
+  - [x] Broker workflow creates, updates, toggles, and lists brokers through mocked `TaxReportApi`.
+  - [x] Asset workflow lists, updates, and repairs asset type through mocked `TaxReportApi`.
+  - [x] Initial balance workflow saves, lists, edits, deletes, and refreshes positions through mocked `TaxReportApi`.
+  - [x] Positions workflow lists, recalculates, deletes, migrates, and imports consolidated positions through mocked `TaxReportApi`.
+  - [x] Monthly tax workflow lists history, loads detail, follows repair CTAs, and surfaces API failures.
+  - [x] Annual report workflow generates, groups, repairs, copies, and refreshes report items through mocked `TaxReportApi`.
+  - [x] Import workflow previews and confirms browser-selected files through mocked multipart API calls.
 - Integration tests:
-  - [ ] Fetch client sends expected methods, paths, JSON bodies, and multipart form data for every API method.
-  - [ ] Fetch client maps HTTP error JSON into user-facing error messages without leaking sensitive details.
-  - [ ] Browser E2E import flow selects a CSV/XLSX file, previews rows, confirms import, and shows recalculation output.
-  - [ ] Browser E2E covers initial balance, positions, monthly tax, annual report, assets, and brokers end to end.
+  - [x] Fetch client sends expected methods, paths, JSON bodies, and multipart form data for every API method.
+  - [x] Fetch client maps HTTP error JSON into user-facing error messages without leaking sensitive details.
+  - [x] Browser E2E import flow selects a CSV/XLSX file, previews rows, confirms import, and shows recalculation output.
+  - [x] Browser E2E covers initial balance, positions, monthly tax, annual report, assets, and brokers end to end.
 - Test coverage target: >=80%
 - All tests must pass
 

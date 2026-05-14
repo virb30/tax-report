@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Update Web Project Documentation
 type: docs
 complexity: medium
@@ -32,12 +32,12 @@ Update repository and project documentation for the new web product structure. T
 </requirements>
 
 ## Subtasks
-- [ ] 7.1 Update root README for repository orientation and project entry points.
-- [ ] 7.2 Add backend README covering setup, scripts, runtime config, SQLite, logging, and API tests.
-- [ ] 7.3 Add frontend README covering setup, scripts, API configuration, browser imports, and frontend tests.
-- [ ] 7.4 Document Phase 1 privacy, security, data-handling, and SQLite limitations.
-- [ ] 7.5 Document the verification gate for unit, API integration, and browser E2E tests.
-- [ ] 7.6 Remove or clearly mark obsolete desktop setup and packaging instructions.
+- [x] 7.1 Update root README for repository orientation and project entry points.
+- [x] 7.2 Add backend README covering setup, scripts, runtime config, SQLite, logging, and API tests.
+- [x] 7.3 Add frontend README covering setup, scripts, API configuration, browser imports, and frontend tests.
+- [x] 7.4 Document Phase 1 privacy, security, data-handling, and SQLite limitations.
+- [x] 7.5 Document the verification gate for unit, API integration, and browser E2E tests.
+- [x] 7.6 Remove or clearly mark obsolete desktop setup and packaging instructions.
 
 ## Implementation Details
 Follow the PRD "High-Level Technical Constraints", "Phased Rollout Plan", "Risks and Mitigations", and the TechSpec "Project Structure and Documentation" sections. Documentation should describe expected commands and boundaries, not implementation code.
@@ -71,14 +71,14 @@ Follow the PRD "High-Level Technical Constraints", "Phased Rollout Plan", "Risks
 
 ## Tests
 - Unit tests:
-  - [ ] Documentation references existing backend script names from `backend/package.json`.
-  - [ ] Documentation references existing frontend script names from `frontend/package.json`.
-  - [ ] Documentation includes privacy guidance for uploaded CSV/XLSX contents, tax rows, CNPJ values, and financial data.
-  - [ ] Documentation states desktop data migration and offline-first operation are out of scope for Phase 1.
+  - [x] Documentation references existing backend script names from `backend/package.json`.
+  - [x] Documentation references existing frontend script names from `frontend/package.json`.
+  - [x] Documentation includes privacy guidance for uploaded CSV/XLSX contents, tax rows, CNPJ values, and financial data.
+  - [x] Documentation states desktop data migration and offline-first operation are out of scope for Phase 1.
 - Integration tests:
-  - [ ] Backend documented verification command runs successfully from `backend/`.
-  - [ ] Frontend documented verification command runs successfully from `frontend/`.
-  - [ ] Documentation links to PRD, TechSpec, and ADR files resolve from the repository root.
+  - [x] Backend documented verification command runs successfully from `backend/`.
+  - [x] Frontend documented verification command runs successfully from `frontend/`.
+  - [x] Documentation links to PRD, TechSpec, and ADR files resolve from the repository root.
 - Test coverage target: >=80%
 - All tests must pass
 
