@@ -20,6 +20,7 @@ import type { BackendLogger } from './logging/safe-error-logger';
 import { correlationIdMiddleware } from './middleware/correlation-id.middleware';
 import { createErrorMiddleware } from './middleware/error.middleware';
 import { registerApiRoutes } from './routes';
+import cors from 'cors';
 
 export interface BackendModules {
   app: AppModule;
@@ -123,6 +124,7 @@ function registerRoutes(input: {
   const apiRouter = express.Router();
 
   app.use(express.json());
+  app.use(cors());
   app.use(correlationIdMiddleware);
   registerApiRoutes(apiRouter, {
     config,

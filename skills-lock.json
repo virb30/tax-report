@@ -61,6 +61,12 @@
       "sourceType": "github",
       "computedHash": "c6b6e4a3f33c5af810016fb43b30fddbf99327d8554c6755673aa2c88c332963"
     },
+    "qa-report": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "skillPath": "skills/mine/qa-report/SKILL.md",
+      "computedHash": "04b040c534702daffee00fdd01aeaeadf12f8f1d0144ea2f16e43756b26c6cab"
+    },
     "react": {
       "source": "pedronauck/skills",
       "sourceType": "github",
@@ -125,6 +131,12 @@
       "source": "pedronauck/skills",
       "sourceType": "github",
       "computedHash": "0efd9cf8c56aada060d418d009cfe621a7915d0c73a958fe611985bc0c2fa4b8"
+    },
+    "zod": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "skillPath": "skills/curated/zod/SKILL.md",
+      "computedHash": "44f1ae5e377022f537cbad603de0e3329de7afea8567e0e11eb8593e09769441"
     }
   }
 }

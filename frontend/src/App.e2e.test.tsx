@@ -214,6 +214,76 @@ describe('App critical UI flows (E2E)', () => {
     });
   });
 
+  it('requires asset type resolution before confirming an unresolved import preview', async () => {
+    const operationsFile = new File(['date,ticker'], 'ops.csv', { type: 'text/csv' });
+
+    taxReportApi.listBrokers.mockResolvedValue({ items: [] });
+    taxReportApi.listDailyBrokerTaxes.mockResolvedValue({ items: [] });
+    taxReportApi.previewImportTransactions.mockResolvedValue({
+      batches: [],
+      transactionsPreview: [
+        {
+          date: '2025-03-10',
+          ticker: 'PETR4',
+          type: TransactionType.Buy,
+          quantity: 10,
+          unitPrice: 20,
+          fees: 1,
+          brokerId: 'broker-xp',
+          resolvedAssetType: null,
+          resolutionStatus: AssetResolutionStatus.Unresolved,
+          needsReview: true,
+          unsupportedReason: null,
+          sourceAssetType: null,
+        },
+      ],
+      summary: {
+        supportedRows: 1,
+        pendingRows: 1,
+        unsupportedRows: 0,
+      },
+    });
+    taxReportApi.confirmImportTransactions.mockResolvedValue({
+      importedCount: 1,
+      recalculatedTickers: ['PETR4'],
+      skippedUnsupportedRows: 0,
+    });
+
+    (taxReportApi as TaxReportApi).appName = 'tax-report';
+    setTaxReportApiForTesting(taxReportApi);
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Arquivo selecionado')).toBeInTheDocument();
+    });
+
+    await user.upload(screen.getByLabelText('Arquivo selecionado'), operationsFile);
+    await user.click(screen.getByRole('button', { name: 'Conferir arquivo' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Defina o tipo do ativo para confirmar a importação/)).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('button', { name: 'Confirmar importação' })).toBeDisabled();
+
+    await user.selectOptions(screen.getByLabelText('Tipo do ativo para PETR4'), AssetType.Stock);
+
+    expect(screen.getByRole('button', { name: 'Confirmar importação' })).toBeEnabled();
+
+    await user.click(screen.getByRole('button', { name: 'Confirmar importação' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Importação concluída: 1 transações importadas/)).toBeInTheDocument();
+    });
+
+    expect(taxReportApi.confirmImportTransactions).toHaveBeenCalledWith({
+      file: operationsFile,
+      assetTypeOverrides: [{ ticker: 'PETR4', assetType: AssetType.Stock }],
+    });
+  });
+
   it('runs import, manual base and annual report flows through UI', async () => {
     const operationsFile = new File(['date,ticker'], 'ops.csv', { type: 'text/csv' });
 

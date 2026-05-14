@@ -55,12 +55,27 @@ import type { TaxReportApi } from './tax-report-api';
 
 type QueryValue = string | number | boolean | undefined;
 type QueryParams = Record<string, QueryValue>;
+type UnwrappedApiResult<TResponse> = TResponse extends { ok: true; data: infer TData } ? TData : never;
 
 type JsonErrorBody = {
   error?: {
     message?: unknown;
   };
 };
+
+type AssetPayload = ListAssetsResponse['items'][number];
+type BrokerPayload = ListBrokersResponse['items'][number];
+type InitialBalanceDocumentPayload = UnwrappedApiResult<SaveInitialBalanceDocumentResponse>;
+type InitialBalanceDocumentListPayload = UnwrappedApiResult<ListInitialBalanceDocumentsResponse>;
+type PositionListPayload = UnwrappedApiResult<ListPositionsResponse>;
+type DeleteInitialBalancePayload = UnwrappedApiResult<DeleteInitialBalanceDocumentResponse>;
+type RecalculatePositionPayload = UnwrappedApiResult<RecalculatePositionResponse>;
+type MigrateYearPayload = UnwrappedApiResult<MigrateYearResponse>;
+type PreviewConsolidatedPositionPayload = UnwrappedApiResult<PreviewConsolidatedPositionResponse>;
+type ImportConsolidatedPositionPayload = UnwrappedApiResult<ImportConsolidatedPositionResponse>;
+type DeletePositionPayload = UnwrappedApiResult<DeletePositionResponse>;
+type DeleteAllPositionsPayload = UnwrappedApiResult<DeleteAllPositionsResponse>;
+type RepairAssetTypePayload = Extract<RepairAssetTypeResponse, { success: true }>['repair'];
 
 export class HttpTaxReportApi implements TaxReportApi {
   readonly appName = 'tax-report';
@@ -108,25 +123,34 @@ export class HttpTaxReportApi implements TaxReportApi {
   async saveInitialBalanceDocument(
     input: SaveInitialBalanceDocumentRequest,
   ): Promise<SaveInitialBalanceDocumentResponse> {
-    return this.postJson('/initial-balances', input);
+    const document = await this.postJson<InitialBalanceDocumentPayload>('/initial-balances', input);
+    return wrapApiResult(document);
   }
 
   async listInitialBalanceDocuments(
     input: ListInitialBalanceDocumentsRequest,
   ): Promise<ListInitialBalanceDocumentsResponse> {
-    return this.getJson('/initial-balances', { year: input.year });
+    const data = await this.getJson<InitialBalanceDocumentListPayload>('/initial-balances', {
+      year: input.year,
+    });
+    return wrapApiResult(data);
   }
 
   async deleteInitialBalanceDocument(
     input: DeleteInitialBalanceDocumentRequest,
   ): Promise<DeleteInitialBalanceDocumentResponse> {
-    return this.requestJson(`/initial-balances/${input.year}/${input.ticker}`, {
-      method: 'DELETE',
-    });
+    const data = await this.requestJson<DeleteInitialBalancePayload>(
+      `/initial-balances/${input.year}/${input.ticker}`,
+      {
+        method: 'DELETE',
+      },
+    );
+    return wrapApiResult(data);
   }
 
   async listPositions(input: ListPositionsRequest): Promise<ListPositionsResponse> {
-    return this.getJson('/positions', { year: input.baseYear });
+    const data = await this.getJson<PositionListPayload>('/positions', { year: input.baseYear });
+    return wrapApiResult(data);
   }
 
   async generateAssetsReport(
@@ -157,13 +181,21 @@ export class HttpTaxReportApi implements TaxReportApi {
 
   async updateAsset(input: UpdateAssetRequest): Promise<UpdateAssetResponse> {
     const { ticker, ...body } = input;
-    return this.patchJson(`/assets/${ticker}`, body);
+    const asset = await this.patchJson<AssetPayload>(`/assets/${ticker}`, body);
+    return {
+      success: true,
+      asset,
+    };
   }
 
   async repairAssetType(input: RepairAssetTypeRequest): Promise<RepairAssetTypeResponse> {
-    return this.postJson(`/assets/${input.ticker}/repair-type`, {
+    const repair = await this.postJson<RepairAssetTypePayload>(`/assets/${input.ticker}/repair-type`, {
       assetType: input.assetType,
     });
+    return {
+      success: true,
+      repair,
+    };
   }
 
   async listBrokers(input: ListBrokersRequest = {}): Promise<ListBrokersResponse> {
@@ -171,56 +203,84 @@ export class HttpTaxReportApi implements TaxReportApi {
   }
 
   async createBroker(input: CreateBrokerRequest): Promise<CreateBrokerResponse> {
-    return this.postJson('/brokers', input);
+    const broker = await this.postJson<BrokerPayload>('/brokers', input);
+    return {
+      success: true,
+      broker,
+    };
   }
 
   async updateBroker(input: UpdateBrokerRequest): Promise<UpdateBrokerResponse> {
     const { id, ...body } = input;
-    return this.patchJson(`/brokers/${id}`, body);
+    const broker = await this.patchJson<BrokerPayload>(`/brokers/${id}`, body);
+    return {
+      success: true,
+      broker,
+    };
   }
 
   async toggleBrokerActive(input: ToggleBrokerActiveRequest): Promise<ToggleBrokerActiveResponse> {
-    return this.postJson(`/brokers/${input.id}/toggle-active`, {});
+    const broker = await this.postJson<BrokerPayload>(`/brokers/${input.id}/toggle-active`, {});
+    return {
+      success: true,
+      broker,
+    };
   }
 
   async recalculatePosition(
     input: RecalculatePositionRequest,
   ): Promise<RecalculatePositionResponse> {
-    return this.postJson('/positions/recalculate', input);
+    const data = await this.postJson<RecalculatePositionPayload>('/positions/recalculate', input);
+    return wrapApiResult(data);
   }
 
   async migrateYear(input: MigrateYearRequest): Promise<MigrateYearResponse> {
-    return this.postJson('/positions/migrate-year', input);
+    const data = await this.postJson<MigrateYearPayload>('/positions/migrate-year', input);
+    return wrapApiResult(data);
   }
 
   async previewConsolidatedPosition(
     input: FileUploadRequest,
   ): Promise<PreviewConsolidatedPositionResponse> {
-    return this.postMultipart('/positions/consolidated-preview', input.file);
+    const data = await this.postMultipart<PreviewConsolidatedPositionPayload>(
+      '/positions/consolidated-preview',
+      input.file,
+    );
+    return wrapApiResult(data);
   }
 
   async importConsolidatedPosition(
     input: ImportConsolidatedPositionRequest,
   ): Promise<ImportConsolidatedPositionResponse> {
-    return this.postMultipart('/positions/consolidated-import', input.file, {
-      year: String(input.year),
-      assetTypeOverrides: JSON.stringify(input.assetTypeOverrides),
-    });
+    const data = await this.postMultipart<ImportConsolidatedPositionPayload>(
+      '/positions/consolidated-import',
+      input.file,
+      {
+        year: String(input.year),
+        assetTypeOverrides: JSON.stringify(input.assetTypeOverrides),
+      },
+    );
+    return wrapApiResult(data);
   }
 
   async deletePosition(input: DeletePositionRequest): Promise<DeletePositionResponse> {
-    return this.requestJson(
+    const data = await this.requestJson<DeletePositionPayload>(
       this.buildPath('/positions', { year: input.year, ticker: input.ticker }),
       {
         method: 'DELETE',
       },
     );
+    return wrapApiResult(data);
   }
 
   async deleteAllPositions(input: DeleteAllPositionsRequest): Promise<DeleteAllPositionsResponse> {
-    return this.requestJson(this.buildPath('/positions', { year: input.year }), {
-      method: 'DELETE',
-    });
+    const data = await this.requestJson<DeleteAllPositionsPayload>(
+      this.buildPath('/positions', { year: input.year }),
+      {
+        method: 'DELETE',
+      },
+    );
+    return wrapApiResult(data);
   }
 
   private async getJson<T>(path: string, query: QueryParams = {}): Promise<T> {
@@ -319,4 +379,11 @@ function readErrorMessage(body: unknown): string {
 
 function isJsonErrorBody(value: unknown): value is JsonErrorBody {
   return typeof value === 'object' && value !== null && 'error' in value;
+}
+
+function wrapApiResult<T>(data: T) {
+  return {
+    ok: true as const,
+    data,
+  };
 }

@@ -1,0 +1,37 @@
+- main [ref=e4]:
+  - generic [ref=e5]:
+    - heading "Tax Report" [level=1] [ref=e6]
+    - paragraph [ref=e7]: Fluxos do MVP conectados por API HTTP para importacao, base manual e relatorio anual.
+  - navigation [ref=e8]:
+    - button "Importacao e Conferencia" [ref=e9]
+    - button "Saldo Inicial" [ref=e10]
+    - button "Posicoes" [ref=e11]
+    - button "Imposto Mensal" [active] [ref=e12]
+    - button "Relatorio Bens e Direitos" [ref=e13]
+    - button "Ativos" [ref=e14]
+    - button "Corretoras" [ref=e15]
+  - generic [ref=e102]:
+    - generic [ref=e103]:
+      - generic [ref=e104]:
+        - heading "Imposto mensal" [level=2] [ref=e105]
+        - paragraph [ref=e106]: Revise o historico importado por mes e priorize meses bloqueados, desatualizados ou abaixo do minimo de recolhimento.
+      - button "Atualizar" [ref=e107]
+    - generic [ref=e108]:
+      - article [ref=e110]:
+        - generic [ref=e111]:
+          - generic [ref=e112]:
+            - heading "01/2025" [level=3] [ref=e113]
+            - paragraph [ref=e114]: "Resultado: Sem imposto"
+          - generic [ref=e115]: Fechado
+          - button "Ver detalhe de 01/2025" [ref=e116]
+        - generic [ref=e117]:
+          - generic [ref=e118]:
+            - term [ref=e119]: Imposto liquido
+            - definition [ref=e120]: R$ 0.00
+          - generic [ref=e121]:
+            - term [ref=e122]: Carregado adiante
+            - definition [ref=e123]: R$ 0.00
+          - generic [ref=e124]:
+            - term [ref=e125]: Calculado em
+            - definition [ref=e126]: 2026-05-14T02:18:19.509Z
+      - paragraph [ref=e128]: Selecione um mes para inspecionar o detalhe auditavel.

@@ -1,0 +1,91 @@
+- main [ref=e4]:
+  - generic [ref=e5]:
+    - heading "Tax Report" [level=1] [ref=e6]
+    - paragraph [ref=e7]: Fluxos do MVP conectados por API HTTP para importacao, base manual e relatorio anual.
+  - navigation [ref=e8]:
+    - button "Importacao e Conferencia" [ref=e9]
+    - button "Saldo Inicial" [ref=e10]
+    - button "Posicoes" [ref=e11]
+    - button "Imposto Mensal" [ref=e12]
+    - button "Relatorio Bens e Direitos" [ref=e13]
+    - button "Ativos" [ref=e14]
+    - button "Corretoras" [active] [ref=e15]
+  - generic [ref=e246]:
+    - heading "Gerenciar corretoras" [level=2] [ref=e247]
+    - paragraph [ref=e248]: Cadastre e consulte as corretoras de valores para uso em transacoes e relatorios fiscais.
+    - heading "Cadastrar corretora" [level=2] [ref=e249]
+    - generic [ref=e250]:
+      - generic [ref=e251]:
+        - text: Codigo
+        - textbox "Codigo" [ref=e252]:
+          - /placeholder: "Ex: XP"
+      - generic [ref=e253]:
+        - text: Nome
+        - textbox "Nome" [ref=e254]:
+          - /placeholder: "Ex: Minha Corretora"
+      - generic [ref=e255]:
+        - text: CNPJ
+        - textbox "CNPJ" [ref=e256]:
+          - /placeholder: 00.000.000/0001-00
+    - button "Cadastrar corretora" [disabled] [ref=e258]
+    - generic [ref=e259]:
+      - heading "Corretoras cadastradas" [level=3] [ref=e260]
+      - table [ref=e262]:
+        - rowgroup [ref=e263]:
+          - row "Codigo Nome CNPJ Status Acoes" [ref=e264]:
+            - columnheader "Codigo" [ref=e265]
+            - columnheader "Nome" [ref=e266]
+            - columnheader "CNPJ" [ref=e267]
+            - columnheader "Status" [ref=e268]
+            - columnheader "Acoes" [ref=e269]
+        - rowgroup [ref=e270]:
+          - row "CLEAR Clear Corretora 02.332.886/0011-78 Ativa Editar Desativar" [ref=e271]:
+            - cell "CLEAR" [ref=e272]
+            - cell "Clear Corretora" [ref=e273]
+            - cell "02.332.886/0011-78" [ref=e274]
+            - cell "Ativa" [ref=e275]:
+              - generic [ref=e276]: Ativa
+            - cell "Editar Desativar" [ref=e277]:
+              - generic [ref=e278]:
+                - button "Editar" [ref=e279]
+                - button "Desativar" [ref=e280]
+          - row "INTER Inter DTVM 19.180.679/0001-92 Ativa Editar Desativar" [ref=e281]:
+            - cell "INTER" [ref=e282]
+            - cell "Inter DTVM" [ref=e283]
+            - cell "19.180.679/0001-92" [ref=e284]
+            - cell "Ativa" [ref=e285]:
+              - generic [ref=e286]: Ativa
+            - cell "Editar Desativar" [ref=e287]:
+              - generic [ref=e288]:
+                - button "Editar" [ref=e289]
+                - button "Desativar" [ref=e290]
+          - row "NU Nu Invest 62.169.875/0001-79 Ativa Editar Desativar" [ref=e291]:
+            - cell "NU" [ref=e292]
+            - cell "Nu Invest" [ref=e293]
+            - cell "62.169.875/0001-79" [ref=e294]
+            - cell "Ativa" [ref=e295]:
+              - generic [ref=e296]: Ativa
+            - cell "Editar Desativar" [ref=e297]:
+              - generic [ref=e298]:
+                - button "Editar" [ref=e299]
+                - button "Desativar" [ref=e300]
+          - row "RICO Rico Investimentos 13.434.335/0001-60 Ativa Editar Desativar" [ref=e301]:
+            - cell "RICO" [ref=e302]
+            - cell "Rico Investimentos" [ref=e303]
+            - cell "13.434.335/0001-60" [ref=e304]
+            - cell "Ativa" [ref=e305]:
+              - generic [ref=e306]: Ativa
+            - cell "Editar Desativar" [ref=e307]:
+              - generic [ref=e308]:
+                - button "Editar" [ref=e309]
+                - button "Desativar" [ref=e310]
+          - row "XP XP Investimentos 02.332.886/0001-04 Ativa Editar Desativar" [ref=e311]:
+            - cell "XP" [ref=e312]
+            - cell "XP Investimentos" [ref=e313]
+            - cell "02.332.886/0001-04" [ref=e314]
+            - cell "Ativa" [ref=e315]:
+              - generic [ref=e316]: Ativa
+            - cell "Editar Desativar" [ref=e317]:
+              - generic [ref=e318]:
+                - button "Editar" [ref=e319]
+                - button "Desativar" [ref=e320]

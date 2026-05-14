@@ -1,0 +1,113 @@
+- main [ref=e4]:
+  - generic [ref=e5]:
+    - heading "Tax Report" [level=1] [ref=e6]
+    - paragraph [ref=e7]: Fluxos do MVP conectados por API HTTP para importacao, base manual e relatorio anual.
+  - navigation [ref=e8]:
+    - button "Importacao e Conferencia" [ref=e9]
+    - button "Saldo Inicial" [ref=e10]
+    - button "Posicoes" [ref=e11]
+    - button "Imposto Mensal" [ref=e12]
+    - button "Relatorio Bens e Direitos" [ref=e13]
+    - button "Ativos" [ref=e14]
+    - button "Corretoras" [ref=e15]
+  - generic [ref=e129]:
+    - heading "Saldo inicial" [level=2] [ref=e130]
+    - paragraph [ref=e131]: "Informe o saldo inicial de ativos já existentes na carteira (ex.: posições de anos anteriores)."
+    - generic [ref=e132]:
+      - generic [ref=e134]:
+        - heading "Novo documento" [level=3] [ref=e135]
+        - paragraph [ref=e136]: Um documento agrupa todas as corretoras do mesmo ticker no ano selecionado.
+      - generic [ref=e137]:
+        - generic [ref=e138]:
+          - text: Ano de referência (saldo em 01/01)
+          - combobox "Ano de referência (saldo em 01/01)" [ref=e139]:
+            - option "2020"
+            - option "2021"
+            - option "2022"
+            - option "2023"
+            - option "2024"
+            - option "2025" [selected]
+            - option "2026"
+            - option "2027"
+            - option "2028"
+            - option "2029"
+            - option "2030"
+            - option "2031"
+            - option "2032"
+            - option "2033"
+            - option "2034"
+        - generic [ref=e140]:
+          - text: Ticker
+          - textbox "Ticker" [ref=e141]:
+            - /placeholder: "Ex: PETR4"
+            - text: IVVB11
+        - generic [ref=e142]:
+          - text: Tipo de ativo
+          - combobox "Tipo de ativo" [ref=e143]:
+            - option "Ações"
+            - option "FII"
+            - option "ETF" [selected]
+            - option "BDR"
+        - generic [ref=e144]:
+          - text: Nome do emissor
+          - textbox "Nome do emissor" [active] [ref=e145]:
+            - /placeholder: "Ex: Petrobras"
+            - text: IVVB11 ETF
+        - generic [ref=e146]:
+          - text: CNPJ
+          - textbox "CNPJ" [ref=e147]:
+            - /placeholder: "Ex: 33.000.167/0001-01"
+            - text: 02.332.886/0001-04
+        - generic [ref=e148]:
+          - text: Preço médio global (R$)
+          - spinbutton "Preço médio global (R$)" [ref=e149]: "320"
+      - generic [ref=e150]:
+        - generic [ref=e151]:
+          - heading "Alocações por corretora" [level=4] [ref=e152]
+          - button "Adicionar alocação" [ref=e153]
+        - generic [ref=e155]:
+          - generic [ref=e156]:
+            - text: Corretora 1
+            - combobox "Corretora 1" [ref=e157]:
+              - option "Selecione..."
+              - option "Clear Corretora"
+              - option "Inter DTVM"
+              - option "Nu Invest"
+              - option "Rico Investimentos"
+              - option "XP Investimentos" [selected]
+          - generic [ref=e158]:
+            - text: Quantidade
+            - spinbutton "Quantidade" [ref=e159]: "5"
+          - button "Remover" [disabled] [ref=e161]
+      - button "Salvar saldo inicial" [ref=e163]
+    - paragraph [ref=e164]: Cannot read properties of undefined (reading 'message')
+    - generic [ref=e165]:
+      - generic [ref=e167]:
+        - heading "Documentos salvos de saldo inicial" [level=3] [ref=e168]
+        - paragraph [ref=e169]: Cada linha representa um documento por ticker no ano 2025.
+      - table [ref=e171]:
+        - rowgroup [ref=e172]:
+          - row "Ticker Tipo Qtd total PM global Alocações Ações" [ref=e173]:
+            - columnheader "Ticker" [ref=e174]
+            - columnheader "Tipo" [ref=e175]
+            - columnheader "Qtd total" [ref=e176]
+            - columnheader "PM global" [ref=e177]
+            - columnheader "Alocações" [ref=e178]
+            - columnheader "Ações" [ref=e179]
+        - rowgroup [ref=e180]:
+          - row "Nenhum documento de saldo inicial salvo para 2025." [ref=e181]:
+            - cell "Nenhum documento de saldo inicial salvo para 2025." [ref=e182]
+    - generic [ref=e183]:
+      - heading "Posições em 31/12/2025" [level=3] [ref=e184]
+      - paragraph [ref=e185]: Esta tabela mostra a posição consolidada do ano, separada dos documentos editáveis acima.
+      - table [ref=e187]:
+        - rowgroup [ref=e188]:
+          - row "Ticker Tipo Qtd total PM global Custo total" [ref=e189]:
+            - columnheader "Ticker" [ref=e190]
+            - columnheader "Tipo" [ref=e191]
+            - columnheader "Qtd total" [ref=e192]
+            - columnheader "PM global" [ref=e193]
+            - columnheader "Custo total" [ref=e194]
+        - rowgroup [ref=e195]:
+          - row "Nenhuma posição em 31/12/2025." [ref=e196]:
+            - cell "Nenhuma posição em 31/12/2025." [ref=e197]

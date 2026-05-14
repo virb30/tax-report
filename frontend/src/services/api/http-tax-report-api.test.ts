@@ -132,6 +132,164 @@ describe('HttpTaxReportApi', () => {
     );
   });
 
+  it('adapts raw HTTP payloads to the frontend response contracts', async () => {
+    const api = new HttpTaxReportApi('/api');
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          ticker: 'IVVB11',
+          year: 2025,
+          assetType: AssetType.Etf,
+          averagePrice: '300',
+          allocations: [{ brokerId: 'broker-xp', quantity: '3' }],
+          totalQuantity: '3',
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          items: [
+            {
+              ticker: 'IVVB11',
+              year: 2025,
+              assetType: AssetType.Etf,
+              averagePrice: '300',
+              allocations: [{ brokerId: 'broker-xp', quantity: '3' }],
+              totalQuantity: '3',
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          items: [
+            {
+              ticker: 'IVVB11',
+              assetType: AssetType.Etf,
+              totalQuantity: '3',
+              averagePrice: '300',
+              totalCost: '900',
+              brokerBreakdown: [],
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          id: 'broker-xp',
+          name: 'XP Investimentos',
+          cnpj: '02.332.886/0001-04',
+          code: 'XP',
+          active: true,
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          ticker: 'IVVB11',
+          assetType: AssetType.Etf,
+          resolutionSource: 'manual',
+          name: 'iShares Core S&P 500',
+          cnpj: '11.111.111/0001-11',
+          isReportReadyMetadata: true,
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          rows: [],
+          summary: {
+            supportedRows: 1,
+            pendingRows: 0,
+            unsupportedRows: 0,
+          },
+        }),
+      );
+
+    await expect(
+      api.saveInitialBalanceDocument({
+        ticker: 'IVVB11',
+        year: 2025,
+        assetType: AssetType.Etf,
+        averagePrice: '300',
+        allocations: [{ brokerId: 'broker-xp', quantity: '3' }],
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        ok: true,
+        data: expect.objectContaining({
+          ticker: 'IVVB11',
+          totalQuantity: '3',
+        }),
+      }),
+    );
+
+    await expect(api.listInitialBalanceDocuments({ year: 2025 })).resolves.toEqual({
+      ok: true,
+      data: {
+        items: [
+          expect.objectContaining({
+            ticker: 'IVVB11',
+          }),
+        ],
+      },
+    });
+
+    await expect(api.listPositions({ baseYear: 2025 })).resolves.toEqual({
+      ok: true,
+      data: {
+        items: [
+          expect.objectContaining({
+            ticker: 'IVVB11',
+            totalCost: '900',
+          }),
+        ],
+      },
+    });
+
+    await expect(
+      api.createBroker({ name: 'XP Investimentos', cnpj: '02.332.886/0001-04', code: 'XP' }),
+    ).resolves.toEqual({
+      success: true,
+      broker: {
+        id: 'broker-xp',
+        name: 'XP Investimentos',
+        cnpj: '02.332.886/0001-04',
+        code: 'XP',
+        active: true,
+      },
+    });
+
+    await expect(
+      api.updateAsset({
+        ticker: 'IVVB11',
+        assetType: AssetType.Etf,
+        name: 'iShares Core S&P 500',
+        cnpj: '11.111.111/0001-11',
+      }),
+    ).resolves.toEqual({
+      success: true,
+      asset: {
+        ticker: 'IVVB11',
+        assetType: AssetType.Etf,
+        resolutionSource: 'manual',
+        name: 'iShares Core S&P 500',
+        cnpj: '11.111.111/0001-11',
+        isReportReadyMetadata: true,
+      },
+    });
+
+    const file = new File(['ticker,quantity'], 'positions.csv', { type: 'text/csv' });
+    await expect(api.previewConsolidatedPosition({ file })).resolves.toEqual({
+      ok: true,
+      data: {
+        rows: [],
+        summary: {
+          supportedRows: 1,
+          pendingRows: 0,
+          unsupportedRows: 0,
+        },
+      },
+    });
+  });
+
   it('maps HTTP error JSON to user-facing messages', async () => {
     const api = new HttpTaxReportApi('/api');
     fetchMock.mockResolvedValue(

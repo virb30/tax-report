@@ -1,0 +1,65 @@
+- main [ref=e4]:
+  - generic [ref=e5]:
+    - heading "Tax Report" [level=1] [ref=e6]
+    - paragraph [ref=e7]: Fluxos do MVP conectados por API HTTP para importacao, base manual e relatorio anual.
+  - navigation [ref=e8]:
+    - button "Importacao e Conferencia" [ref=e9]
+    - button "Saldo Inicial" [ref=e10]
+    - button "Posicoes" [ref=e11]
+    - button "Imposto Mensal" [ref=e12]
+    - button "Relatorio Bens e Direitos" [ref=e13]
+    - button "Ativos" [ref=e14]
+    - button "Corretoras" [ref=e15]
+  - generic [ref=e199]:
+    - heading "Relatorio anual de bens e direitos" [level=2] [ref=e200]
+    - paragraph [ref=e201]: Gere a posicao de 31/12 e resolva pendencias para atingir o estado de pronto para declaracao.
+    - generic [ref=e202]:
+      - generic [ref=e203]:
+        - text: Ano-base
+        - combobox "Ano-base" [ref=e204]:
+          - option "2025" [selected]
+          - option "2024"
+          - option "2023"
+          - option "2022"
+          - option "2021"
+          - option "2020"
+          - option "2019"
+          - option "2018"
+          - option "2017"
+          - option "2016"
+      - button "Gerar Relatorio" [ref=e205]
+    - paragraph [ref=e245]: Descricao de IVVB11 copiado com sucesso.
+    - generic [ref=e206]:
+      - paragraph [ref=e207]: "Data de referencia: 2025-12-31"
+      - generic [ref=e208]:
+        - generic [ref=e209]:
+          - paragraph [ref=e210]: Prontos
+          - paragraph [ref=e211]: "1"
+        - generic [ref=e212]:
+          - paragraph [ref=e213]: Pendencias
+          - paragraph [ref=e214]: "0"
+        - generic [ref=e215]:
+          - paragraph [ref=e216]: Outros / Fora de Escopo
+          - paragraph [ref=e217]: "0"
+      - generic [ref=e219]:
+        - heading "Prontos para Declaracao" [level=3] [ref=e220]: Prontos para Declaracao
+        - generic [ref=e223]:
+          - generic [ref=e224]:
+            - generic [ref=e225]:
+              - generic [ref=e226]:
+                - heading "IVVB11" [level=4] [ref=e227]
+                - generic [ref=e228]: • ETFs
+                - generic [ref=e229]: Obrigatorio
+                - generic [ref=e230]: Adquirido no ano
+              - paragraph [ref=e231]: Grupo 07 • Codigo 09
+            - generic [ref=e232]:
+              - paragraph [ref=e233]: Valor Atual
+              - paragraph [ref=e234]: R$ 1.600,00
+              - paragraph [ref=e235]: "Anterior: R$ 0,00"
+          - generic [ref=e236]:
+            - heading "Descricao / Pendencias" [level=5] [ref=e237]
+            - paragraph [ref=e239]: "5 cotas IVVB11. CNPJ: 02.332.886/0001-04. Corretoras: XP Investimentos (CNPJ: 02.332.886/0001-04, 5 cotas). Custo medio: R$ 320,000000. Custo total: R$ 1.600,000000."
+          - generic [ref=e240]:
+            - heading "Corretoras" [level=5] [ref=e241]
+            - paragraph [ref=e242]: "XP Investimentos (02.332.886/0001-04): 5"
+          - button "Copiar Descricao" [active] [ref=e244]

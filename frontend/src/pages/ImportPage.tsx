@@ -48,9 +48,7 @@ export function ImportPage(): JSX.Element {
           type="button"
           className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
           onClick={() => void transactionImport.confirmImport()}
-          disabled={
-            transactionImport.isConfirmLoading || transactionImport.previewTransactions.length === 0
-          }
+          disabled={transactionImport.isConfirmLoading || !transactionImport.canConfirmImport}
         >
           {transactionImport.isConfirmLoading ? 'Confirmando...' : 'Confirmar importação'}
         </button>
@@ -68,8 +66,11 @@ export function ImportPage(): JSX.Element {
       ) : null}
 
       <TransactionsPreviewTable
+        assetTypeOverrides={transactionImport.assetTypeOverrides}
         brokers={transactionImport.brokers}
+        pendingReviewTickers={transactionImport.pendingReviewTickers}
         previewTransactions={transactionImport.previewTransactions}
+        onAssetTypeOverrideChange={transactionImport.setAssetTypeOverride}
       />
 
       <DailyBrokerTaxesSection brokers={transactionImport.brokers} />
