@@ -83,7 +83,7 @@ export class HttpTaxReportApi implements TaxReportApi {
   constructor(private readonly baseUrl = '/api') {}
 
   async previewImportTransactions(input: FileUploadRequest): Promise<ImportPreviewResponse> {
-    return this.postMultipart('/import/transactions/preview', input.file);
+    return this.postMultipart('/transactions/import:preview', input.file);
   }
 
   async previewTransactionImport(input: FileUploadRequest): Promise<ImportPreviewResponse> {
@@ -91,7 +91,7 @@ export class HttpTaxReportApi implements TaxReportApi {
   }
 
   async confirmImportTransactions(input: ConfirmImportRequest): Promise<ConfirmImportResponse> {
-    return this.postMultipart('/import/transactions/confirm', input.file, {
+    return this.postMultipart('/transactions/import:confirm', input.file, {
       assetTypeOverrides: JSON.stringify(input.assetTypeOverrides),
     });
   }
@@ -265,7 +265,7 @@ export class HttpTaxReportApi implements TaxReportApi {
 
   async deletePosition(input: DeletePositionRequest): Promise<DeletePositionResponse> {
     const data = await this.requestJson<DeletePositionPayload>(
-      this.buildPath('/positions', { year: input.year, ticker: input.ticker }),
+      this.buildPath(`/positions/${encodeURIComponent(input.ticker)}`, { year: input.year }),
       {
         method: 'DELETE',
       },

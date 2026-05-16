@@ -6,10 +6,10 @@
     {
       "name": "tax-report",
       "sidecar_branch": "tax-report/__branches__/web",
-      "commit": "12a9ddb206339cb21adeafd489b734254ce48936",
-      "digest": "sha256:13a4b3825fa44d5c4ea8bfa067c7d99999138789c096978685502847417b090b",
+      "commit": "3a1c26991b9351ee828ea63501996f69aba4ff05",
+      "digest": "sha256:af710620743ecb88794d30b08b884bac8baeec2fc7a341b1f9795d5c9e02b0eb",
       "files": 56,
-      "bytes": 244516
+      "bytes": 244348
     }
   ]
 }

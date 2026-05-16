@@ -2,7 +2,7 @@ import { mock, mockReset } from 'jest-mock-extended';
 import { DeleteDailyBrokerTaxUseCase } from './delete-daily-broker-tax.use-case';
 import type { DailyBrokerTaxRepository } from '../repositories/daily-broker-tax.repository';
 import type { ReallocateTransactionFeesService } from '../services/reallocate-transaction-fees.service';
-import type { Queue } from '../../../shared/application/events/queue.interface';
+import type { Queue } from '../../../shared/infra/events/queue.interface';
 import { TransactionFeesReallocatedEvent } from '../../../shared/domain/events/transaction-fees-reallocated.event';
 
 describe('DeleteDailyBrokerTaxUseCase', () => {

@@ -10,7 +10,7 @@ import type { AssetRepository } from '../../../portfolio/application/repositorie
 import type { TransactionRepository } from '../../../portfolio/application/repositories/transaction.repository';
 import { mock, mockReset } from 'jest-mock-extended';
 import type { ReallocateTransactionFeesService } from '../services/reallocate-transaction-fees.service';
-import type { Queue } from '../../../shared/application/events/queue.interface';
+import type { Queue } from '../../../shared/infra/events/queue.interface';
 import { TransactionsImportedEvent } from '../../../shared/domain/events/transactions-imported.event';
 
 describe('ImportTransactionsUseCase', () => {

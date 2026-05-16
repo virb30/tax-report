@@ -13,7 +13,7 @@ describe('upload middleware', () => {
     });
 
     const response = await request(backend.app)
-      .post('/api/import/transactions/preview')
+      .post('/api/transactions/import:preview')
       .attach('file', Buffer.from('text'), 'transactions.txt');
 
     expect(response.status).toBe(400);
@@ -29,7 +29,7 @@ describe('upload middleware', () => {
     });
 
     const response = await request(backend.app)
-      .post('/api/import/transactions/preview')
+      .post('/api/transactions/import:preview')
       .attach('file', Buffer.from('too large'), 'transactions.csv');
 
     expect(response.status).toBe(400);
@@ -51,7 +51,7 @@ describe('upload middleware', () => {
     });
 
     const response = await request(backend.app)
-      .post('/api/import/transactions/preview')
+      .post('/api/transactions/import:preview')
       .attach('file', Buffer.from('Data,Ticker\n2025-01-01,ABCD3'), 'transactions.csv');
 
     await new Promise((resolve) => setImmediate(resolve));

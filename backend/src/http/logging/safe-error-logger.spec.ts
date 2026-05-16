@@ -37,8 +37,8 @@ describe('safe-error-logger', () => {
     };
     const request = {
       method: 'POST',
-      path: '/api/import/transactions/preview',
-      originalUrl: '/api/import/transactions/preview',
+      path: '/api/transactions/import:preview',
+      originalUrl: '/api/transactions/import:preview',
     } as Request;
 
     logRequestFailure(logger, {
@@ -59,7 +59,7 @@ describe('safe-error-logger', () => {
         metadata: {
           file: '[REDACTED]',
         },
-        route: '/api/import/transactions/preview',
+        route: '/api/transactions/import:preview',
         status: 400,
       },
       'Backend request failed',

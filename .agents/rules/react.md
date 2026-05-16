@@ -20,5 +20,5 @@ Use esta regra ao alterar codigo em `src/renderer/**`.
 - Evite componentes maiores que 300 linhas; quebre em componentes menores quando necessario.
 - Use `useMemo` e `useCallback` para otimizar computacoes ou handlers custosos.
 - Componentes devem ter testes automatizados cobrindo o comportamento principal.
-- Crie componentes em pastas `PascalCase`; o arquivo principal deve ter o mesmo nome da pasta com extensao `.tsx`; nao use `index.tsx` para componentes.
+- Crie componentes em pastas `kebab-case`; o arquivo principal deve ter o mesmo nome da pasta com extensao `.tsx`; nao use `index.tsx` para componentes.
 - Mantenha o estado o mais proximo possivel de onde ele e utilizado.

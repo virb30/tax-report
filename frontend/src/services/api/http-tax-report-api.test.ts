@@ -75,7 +75,7 @@ describe('HttpTaxReportApi', () => {
       ['/api/positions?year=2025', 'GET', undefined],
       ['/api/positions/recalculate', 'POST', { ticker: 'PETR4', year: 2025 }],
       ['/api/positions/migrate-year', 'POST', { sourceYear: 2024, targetYear: 2025 }],
-      ['/api/positions?year=2025&ticker=PETR4', 'DELETE', undefined],
+      ['/api/positions/PETR4?year=2025', 'DELETE', undefined],
       ['/api/positions?year=2025', 'DELETE', undefined],
       ['/api/daily-broker-taxes', 'GET', undefined],
       [
@@ -111,8 +111,8 @@ describe('HttpTaxReportApi', () => {
     });
 
     expect(fetchMock.mock.calls.map(([url, init]) => [url, init?.method])).toEqual([
-      ['/api/import/transactions/preview', 'POST'],
-      ['/api/import/transactions/confirm', 'POST'],
+      ['/api/transactions/import:preview', 'POST'],
+      ['/api/transactions/import:confirm', 'POST'],
       ['/api/daily-broker-taxes/import', 'POST'],
       ['/api/positions/consolidated-preview', 'POST'],
       ['/api/positions/consolidated-import', 'POST'],

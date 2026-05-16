@@ -25,7 +25,7 @@ import { RepairAssetTypeUseCase } from '../../../portfolio/application/use-cases
 import { CsvXlsxConsolidatedPositionParser } from '../../../ingestion/infra/parsers/csv-xlsx-consolidated-position.parser';
 import { RecalculatePositionUseCase } from '../../../portfolio/application/use-cases/recalculate-position.use-case';
 import { MemoryQueueAdapter } from '../../../shared/infra/events/memory-queue.adapter';
-import { RecalculatePositionHandler } from '../../../portfolio/infra/handlers/recalculate-position.handler';
+import { RecalculatePositionHandler } from '../../../portfolio/transport/queue/handlers/recalculate-position.handler';
 import { SaveInitialBalanceDocumentUseCase } from '../../../portfolio/application/use-cases/save-initial-balance-document.use-case';
 import { Transaction } from '../../../portfolio/domain/entities/transaction.entity';
 import { TransactionFee } from '../../../portfolio/domain/entities/transaction-fee.entity';

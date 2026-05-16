@@ -11,7 +11,7 @@ import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
 import type { AssetRepository } from '../repositories/asset.repository';
 import type { TransactionRepository } from '../repositories/transaction.repository';
 import type { ReprocessTickerYearsService } from '../services/reprocess-ticker-years.service';
-import type { Queue } from '../../../shared/application/events/queue.interface';
+import type { Queue } from '../../../shared/infra/events/queue.interface';
 import { AssetTaxClassificationChangedEvent } from '../../../shared/domain/events/asset-tax-classification-changed.event';
 import { RepairAssetTypeUseCase } from './repair-asset-type.use-case';
 import { Quantity } from '../../domain/value-objects/quantity.vo';

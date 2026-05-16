@@ -4,7 +4,7 @@ import type { ConsolidatedPositionParserPort } from '../interfaces/consolidated-
 import type { AssetRepository } from '../../../portfolio/application/repositories/asset.repository';
 import type { BrokerRepository } from '../../../portfolio/application/repositories/broker.repository';
 import type { TransactionRepository } from '../../../portfolio/application/repositories/transaction.repository';
-import type { Queue } from '../../../shared/application/events/queue.interface';
+import type { Queue } from '../../../shared/infra/events/queue.interface';
 import { Broker } from '../../../portfolio/domain/entities/broker.entity';
 import { Cnpj } from '../../../shared/domain/value-objects/cnpj.vo';
 import { ConsolidatedPositionImportedEvent } from '../../../shared/domain/events/consolidated-position-imported.event';

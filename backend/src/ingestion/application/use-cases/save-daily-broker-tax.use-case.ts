@@ -5,7 +5,7 @@ import type { BrokerRepository } from '../../../portfolio/application/repositori
 import type { DailyBrokerTaxRepository } from '../repositories/daily-broker-tax.repository';
 import type { ReallocateTransactionFeesService } from '../services/reallocate-transaction-fees.service';
 import type { DailyBrokerTaxItemOutput } from './list-daily-broker-taxes.use-case';
-import type { Queue } from '../../../shared/application/events/queue.interface';
+import type { Queue } from '../../../shared/infra/events/queue.interface';
 import { TransactionFeesReallocatedEvent } from '../../../shared/domain/events/transaction-fees-reallocated.event';
 
 export type SaveDailyBrokerTaxInput = {

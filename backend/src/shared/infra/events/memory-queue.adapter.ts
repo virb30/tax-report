@@ -1,5 +1,5 @@
 import type { DomainEvent } from '../../domain/events/domain-event.interface';
-import type { EventHandler, Queue } from '../../application/events/queue.interface';
+import type { EventHandler, Queue } from './queue.interface';
 
 export class MemoryQueueAdapter implements Queue {
   readonly consumers = new Map<string, EventHandler[]>();

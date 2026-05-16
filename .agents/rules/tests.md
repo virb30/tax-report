@@ -12,8 +12,8 @@ Para rodar os testes, utilize o comando `npm test`.
 
 ## Nomenclatura
 
-- Em `src/main/**`, use sempre o sufixo `*.spec.ts`.
-- Em `src/renderer/**`, use sempre sufixos `*.test.ts` ou `*.test.tsx`.
+- Em `backend/src/**`, use sempre o sufixo `*.spec.ts`.
+- Em `frontend/src/**`, use sempre sufixos `*.test.ts` ou `*.test.tsx`.
 - Mantenha arquivos de teste na mesma pasta do arquivo testado.
 
 ## Padroes de teste
@@ -29,6 +29,10 @@ Para rodar os testes, utilize o comando `npm test`.
 - Teste comportamento, nao detalhes de implementacao.
 - Prefira `jest-mock-extended` para criacao de mocks quando fizer sentido.
 - Adicione ou atualize testes focados quando comportamento ou limites entre modulos mudarem.
+- Controllers devem ter testes focados que validem o registro de rotas no construtor e a delegacao para use cases/services.
+- Handlers devem ter testes focados que validem a assinatura de eventos no construtor e a delegacao para use cases/services.
+- Modulos devem ter testes focados que validem a composicao interna e a superficie publicada em `exports`.
+- Durante migracoes arquiteturais, preserve cobertura de integracao retrocompativel e adicione cobertura para o bootstrap via `backend/src/main.ts` sem registry central de rotas.
 
 ## Exemplo rapido
 

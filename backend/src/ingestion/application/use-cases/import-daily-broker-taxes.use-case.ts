@@ -4,7 +4,7 @@ import { DailyBrokerTax } from '../../domain/entities/daily-broker-tax.entity';
 import type { DailyBrokerTaxesParser } from '../interfaces/daily-broker-taxes.parser.interface';
 import type { DailyBrokerTaxRepository } from '../repositories/daily-broker-tax.repository';
 import type { ReallocateTransactionFeesService } from '../services/reallocate-transaction-fees.service';
-import type { Queue } from '../../../shared/application/events/queue.interface';
+import type { Queue } from '../../../shared/infra/events/queue.interface';
 import { TransactionFeesReallocatedEvent } from '../../../shared/domain/events/transaction-fees-reallocated.event';
 
 type ParsedTax = Awaited<ReturnType<DailyBrokerTaxesParser['parse']>>['taxes'][number];

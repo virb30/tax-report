@@ -1,36 +1,34 @@
 import express, { type Express } from 'express';
 import type { Knex } from 'knex';
-import { createSharedInfrastructure } from '../app/infra/container';
-import { createAndInitializeDatabase } from '../app/infra/database/database';
-import { createIngestionModule } from '../ingestion/infra/container';
-import { createPortfolioModule } from '../portfolio/infra/container';
-import { createTaxReportingModule } from '../tax-reporting/infra/container';
-import type {
-  AppModule,
-  BackendModule,
-  IngestionModule,
-  PortfolioModule,
-  SharedInfrastructure,
-  TaxReportingModule,
-} from '../app/infra/container';
-import { createAppModule } from '../app/infra/container';
 import type { BackendRuntimeConfig } from '../app/infra/runtime/backend-runtime-config';
+import { createAndInitializeDatabase } from '../app/infra/database/database';
+import { IngestionModule } from '../ingestion/ingestion.module';
+import { PortfolioModule } from '../portfolio/portfolio.module';
+import {
+  createSharedInfrastructure,
+  type SharedInfrastructure,
+} from '../shared/application/shared-infrastructure';
+import { ExpressAdapter } from '../shared/infra/http/express-adapter.http';
+import type { Http } from '../shared/infra/http/http.interface';
+import { TaxReportingModule } from '../tax-reporting/tax-reporting.module';
 import { HttpError } from './errors/http-error';
 import type { BackendLogger } from './logging/safe-error-logger';
-import { correlationIdMiddleware } from './middleware/correlation-id.middleware';
 import { createErrorMiddleware } from './middleware/error.middleware';
-import { registerApiRoutes } from './routes';
-import cors from 'cors';
 
 export interface BackendModules {
-  app: AppModule;
   portfolio: PortfolioModule;
   ingestion: IngestionModule;
   taxReporting: TaxReportingModule;
 }
 
+export interface HttpApp {
+  app: Express;
+  http: Http;
+}
+
 export interface BackendApp {
   app: Express;
+  http: Http;
   database: Knex;
   modules: BackendModules;
   config: BackendRuntimeConfig;
@@ -39,16 +37,17 @@ export interface BackendApp {
 export interface BackendAppDependencies {
   initializeDatabase(config: BackendRuntimeConfig): Promise<Knex>;
   createSharedInfrastructure(database: Knex): SharedInfrastructure;
-  createAppModule(): AppModule;
-  createPortfolioModule(shared: SharedInfrastructure): PortfolioModule;
+  createPortfolioModule(input: { shared: SharedInfrastructure; http: Http }): PortfolioModule;
   createIngestionModule(input: {
     shared: SharedInfrastructure;
+    http: Http;
     portfolio: PortfolioModule['exports'];
   }): IngestionModule;
   createTaxReportingModule(input: {
     shared: SharedInfrastructure;
+    http: Http;
     portfolio: PortfolioModule['exports'];
-    ingestion: IngestionModule['repositories'];
+    ingestion: IngestionModule['exports'];
   }): TaxReportingModule;
   logger: BackendLogger;
 }
@@ -73,96 +72,91 @@ function createDependencies(overrides: Partial<BackendAppDependencies>): Backend
   return {
     initializeDatabase: initializeRuntimeDatabase,
     createSharedInfrastructure,
-    createAppModule,
-    createPortfolioModule,
-    createIngestionModule,
-    createTaxReportingModule,
+    createPortfolioModule: (input) => new PortfolioModule(input),
+    createIngestionModule: (input) => new IngestionModule(input),
+    createTaxReportingModule: (input) => new TaxReportingModule(input),
     logger: consoleLogger,
     ...overrides,
   };
 }
 
-function initializeStartupHandlers(modules: readonly BackendModule[]): void {
-  for (const module of modules) {
-    module.startup?.initialize();
-  }
-}
-
 function composeModules(input: {
   database: Knex;
   dependencies: BackendAppDependencies;
+  http: Http;
 }): BackendModules {
-  const { database, dependencies } = input;
+  const { database, dependencies, http } = input;
   const shared = dependencies.createSharedInfrastructure(database);
-  const appModule = dependencies.createAppModule();
-  const portfolioModule = dependencies.createPortfolioModule(shared);
+  const portfolioModule = dependencies.createPortfolioModule({
+    shared,
+    http,
+  });
   const ingestionModule = dependencies.createIngestionModule({
     shared,
+    http,
     portfolio: portfolioModule.exports,
   });
   const taxReportingModule = dependencies.createTaxReportingModule({
     shared,
+    http,
     portfolio: portfolioModule.exports,
-    ingestion: ingestionModule.repositories,
+    ingestion: ingestionModule.exports,
   });
 
   return {
-    app: appModule,
     portfolio: portfolioModule,
     ingestion: ingestionModule,
     taxReporting: taxReportingModule,
   };
 }
 
-function registerRoutes(input: {
-  app: Express;
-  config: BackendRuntimeConfig;
-  logger: BackendLogger;
-  modules: BackendModules;
-}): void {
-  const { app, config, logger, modules } = input;
-  const apiRouter = express.Router();
-
-  app.use(express.json());
-  app.use(cors());
-  app.use(correlationIdMiddleware);
-  registerApiRoutes(apiRouter, {
-    config,
-    useCases: {
-      portfolio: modules.portfolio.useCases,
-      ingestion: modules.ingestion.useCases,
-      taxReporting: modules.taxReporting.useCases,
-    },
+export function registerCoreRoutes(input: { app: Express; logger: BackendLogger }): void {
+  const { app, logger } = input;
+  app.get('/api/health', (_request, response) => {
+    response.status(200).json({
+      status: 'ok',
+    });
   });
-  app.use('/api', apiRouter);
   app.use((request, _response, next) => {
     next(new HttpError(404, 'NOT_FOUND', `Route not found: ${request.method} ${request.path}`));
   });
   app.use(createErrorMiddleware(logger));
 }
 
-export async function createBackendApp(input: CreateBackendAppInput): Promise<BackendApp> {
-  const dependencies = createDependencies(input.dependencies ?? {});
-  const database = await dependencies.initializeDatabase(input.config);
-  const modules = composeModules({ database, dependencies });
-
-  initializeStartupHandlers([
-    modules.app,
-    modules.portfolio,
-    modules.ingestion,
-    modules.taxReporting,
-  ]);
-
-  const app = express();
-  registerRoutes({
+export function createHttpApp(input: { config: BackendRuntimeConfig; app?: Express }): HttpApp {
+  const app = input.app ?? express();
+  const http = new ExpressAdapter({
     app,
     config: input.config,
-    logger: dependencies.logger,
-    modules,
   });
 
   return {
     app,
+    http,
+  };
+}
+
+export async function createBackendApp(input: CreateBackendAppInput): Promise<BackendApp> {
+  const dependencies = createDependencies(input.dependencies ?? {});
+  const database = await dependencies.initializeDatabase(input.config);
+  const { app, http } = createHttpApp({
+    config: input.config,
+  });
+
+  const modules = composeModules({
+    database,
+    dependencies,
+    http,
+  });
+
+  registerCoreRoutes({
+    app,
+    logger: dependencies.logger,
+  });
+
+  return {
+    app,
+    http,
     database,
     modules,
     config: input.config,

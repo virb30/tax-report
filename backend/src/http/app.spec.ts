@@ -1,16 +1,12 @@
 import type { Knex } from 'knex';
 import request from 'supertest';
-import type {
-  AppModule,
-  BackendModule,
-  IngestionModule,
-  PortfolioModule,
-  SharedInfrastructure,
-  TaxReportingModule,
-} from '../app/infra/container';
 import type { BackendRuntimeConfig } from '../app/infra/runtime/backend-runtime-config';
-import { MemoryQueueAdapter } from '../shared/infra/events/memory-queue.adapter';
-import { TransactionFeeAllocator } from '../portfolio/domain/services/transaction-fee-allocator.service';
+import type { PortfolioModule } from '../portfolio/portfolio.module';
+import {
+  createSharedInfrastructure,
+  type SharedInfrastructure,
+} from '../shared/application/shared-infrastructure';
+import type { TaxReportingModule } from '../tax-reporting/tax-reporting.module';
 import type { BackendAppDependencies } from './app';
 import { createBackendApp } from './app';
 
@@ -29,58 +25,34 @@ function createConfig(): BackendRuntimeConfig {
 }
 
 interface TestDependencies extends BackendAppDependencies {
-  startupMocks: jest.Mock[];
-}
-
-function createModule(startupMocks: jest.Mock[]): BackendModule {
-  const initialize = jest.fn();
-  startupMocks.push(initialize);
-
-  return {
-    startup: {
-      initialize,
-    },
-  };
+  createdModules: unknown[];
 }
 
 function createDependencies(): TestDependencies {
   const database = jest.fn() as unknown as Knex;
-  const startupMocks: jest.Mock[] = [];
-  const shared: SharedInfrastructure = {
-    database,
-    queue: new MemoryQueueAdapter(),
-    transactionFeeAllocator: new TransactionFeeAllocator(),
-  };
-  const appModule: AppModule = createModule(startupMocks);
+  const createdModules: unknown[] = [];
+  const shared: SharedInfrastructure = createSharedInfrastructure(database);
   const portfolioModule = {
-    ...createModule(startupMocks),
     exports: {},
-    useCases: {},
   } as unknown as PortfolioModule;
   const ingestionModule = {
-    ...createModule(startupMocks),
-    repositories: {},
-    parsers: {},
-    services: {},
-    useCases: {},
-  } as unknown as IngestionModule;
+    exports: {},
+  };
   const taxReportingModule = {
-    ...createModule(startupMocks),
-    repositories: {},
-    useCases: {},
+    exports: {},
   } as unknown as TaxReportingModule;
+  createdModules.push(portfolioModule, ingestionModule, taxReportingModule);
 
   return {
     initializeDatabase: jest.fn().mockResolvedValue(database),
     createSharedInfrastructure: jest.fn().mockReturnValue(shared),
-    createAppModule: jest.fn().mockReturnValue(appModule),
     createPortfolioModule: jest.fn().mockReturnValue(portfolioModule),
     createIngestionModule: jest.fn().mockReturnValue(ingestionModule),
     createTaxReportingModule: jest.fn().mockReturnValue(taxReportingModule),
     logger: {
       error: jest.fn(),
     },
-    startupMocks,
+    createdModules,
   };
 }
 
@@ -121,7 +93,7 @@ describe('createBackendApp', () => {
     });
   });
 
-  it('initializes database and module startup handlers once during app creation', async () => {
+  it('initializes the database and composes each context module once during app creation', async () => {
     const config = createConfig();
     const dependencies = createDependencies();
 
@@ -136,9 +108,6 @@ describe('createBackendApp', () => {
     expect(dependencies.createPortfolioModule).toHaveBeenCalledTimes(1);
     expect(dependencies.createIngestionModule).toHaveBeenCalledTimes(1);
     expect(dependencies.createTaxReportingModule).toHaveBeenCalledTimes(1);
-    expect(dependencies.startupMocks).toHaveLength(4);
-    for (const startupMock of dependencies.startupMocks) {
-      expect(startupMock).toHaveBeenCalledTimes(1);
-    }
+    expect(dependencies.createdModules).toHaveLength(3);
   });
 });

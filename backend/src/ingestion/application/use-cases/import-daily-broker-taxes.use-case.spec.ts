@@ -3,7 +3,7 @@ import { ImportDailyBrokerTaxesUseCase } from './import-daily-broker-taxes.use-c
 import type { DailyBrokerTaxesParser } from '../interfaces/daily-broker-taxes.parser.interface';
 import type { DailyBrokerTaxRepository } from '../repositories/daily-broker-tax.repository';
 import type { ReallocateTransactionFeesService } from '../services/reallocate-transaction-fees.service';
-import type { Queue } from '../../../shared/application/events/queue.interface';
+import type { Queue } from '../../../shared/infra/events/queue.interface';
 import { TransactionFeesReallocatedEvent } from '../../../shared/domain/events/transaction-fees-reallocated.event';
 
 describe('ImportDailyBrokerTaxesUseCase', () => {

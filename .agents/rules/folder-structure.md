@@ -1,27 +1,36 @@
 ---
 trigger: model_decision
-description: Regras de estrutura de pastas para main, renderer e shared
+description: Regras de estrutura de pastas para backend e frontend
 ---
 
 # Folder Structure Rules
 
-Use esta regra ao criar, mover ou revisar arquivos e pastas em `src/**`.
+Use esta regra ao criar, mover ou revisar arquivos e pastas em `backend/src/**` e `frontend/src/**`.
 
 ## Root Folders
 
-- `src/main`: codigo backend.
-- `src/renderer`: codigo frontend.
-- `src/shared`: codigo compartilhado entre backend, preload e frontend.
-- `src/main/main.ts`: ponto de entrada da aplicacao. Deve orquestrar a inicializacao do backend, a criacao da janela Electron e a inicializacao do frontend.
+- `backend/src`: codigo backend.
+- `frontend/src`: codigo frontend.
+- `backend/src/main.ts`: ponto de entrada do backend. Deve orquestrar apenas a infraestrutura global e a instanciacao dos modulos de contexto.
 
-## Main Process
+## Backend
 
-Em `src/main`, o primeiro nivel deve ser o bounded context em que estamos trabalhando.
-Dentro de cada contexto, separe as camadas necessarias:
+Em `backend/src`, `main.ts` e o composition root global.
+No primeiro nivel, mantenha `shared/` para infraestrutura global compartilhada e um diretorio por bounded context.
+Dentro de cada contexto, use um modulo local e separe as camadas necessarias:
 
 ```text
-src/main/
+backend/src/
+  main.ts
+  shared/
+    infra/
+      http/
+        http.interface.ts
+        express-adapter.http.ts
+        middleware/
+        errors/
   [bounded-context]/
+    [bounded-context].module.ts
     domain/
       entities/
       value-objects/
@@ -29,19 +38,20 @@ src/main/
       repositories/
     application/
       use-cases/
-          [use-case].use-case.ts
-          [use-case].use-case.spec.ts
       services/
+      repositories/
     infra/
       database/
         migrations/
         seeds/
       repositories/
         [name].[type].repository.ts
-      container/
-      queue/
     transport/
-      handlers/
+      http/
+        controllers/
+        validation/
+      queue/
+        handlers/
 ```
 
 ### Domain
@@ -49,14 +59,14 @@ src/main/
 - `domain/entities`: entidades do dominio.
 - `domain/value-objects`: value objects do dominio.
 - `domain/services`: servicos de dominio.
-- `domain/repositories`: interfaces dos repositorios.
+- `domain/repositories`: interfaces dos repositorios quando o contexto adotar esse limite.
 
 ### Application
 
 - `application/use-cases`: use cases do contexto.
-- `application/use-cases/[use-case]`: pasta de um use case especifico, nomeada pela intencao do usuario.
-- `application/use-cases/[use-case]/[use-case].ts`: implementacao do use case. Todo use-case deve definir e exportar seus tipos de input e output.
+- `application/use-cases/[use-case].use-case.ts`: implementacao do use case. Todo use case deve definir e exportar seus tipos de input e output no mesmo arquivo.
 - `application/services`: servicos de aplicacao.
+- `application/repositories`: portas/repositories consumidos pela aplicacao quando o contexto adotar esse limite.
 
 ### Infra
 
@@ -65,24 +75,33 @@ src/main/
 - `infra/database/seeds`: arquivos de seed.
 - `infra/repositories`: implementacoes concretas dos repositorios.
 - `infra/repositories/[name].[type].repository.ts`: implementacao por tipo de repositorio, por exemplo `assets.database.repository.ts` ou `assets.memory.repository.ts`.
-- `infra/container`: container de injecao de dependencias.
-- `infra/queue`: portas e adaptadores para filas.
+- Nao crie `infra/container` como padrao. A composicao deve acontecer em `backend/src/main.ts` e em `[bounded-context].module.ts`.
 
 ### Transport
 
-- `transport/handlers`: handlers de IPC e eventos. Esta camada equivale a controllers em contexto web.
+- `transport/http/controllers`: controllers HTTP do contexto. Cada controller registra suas rotas no construtor.
+- `transport/http/validation`: schemas, parsers e validacoes superficiais das entradas HTTP.
+- `transport/queue/handlers`: handlers de fila/eventos do contexto. Cada handler registra suas assinaturas no construtor.
 
-## Shared Main Code
+### Modules
 
-Classes compartilhadas entre multiplos bounded contexts devem ficar em `src/main/shared`.
-Use o mesmo padrao estrutural de um contexto especifico, incluindo apenas as camadas necessarias.
+- `[bounded-context].module.ts`: composition root local do contexto.
+- O modulo recebe dependencias globais e `exports` de outros modulos quando necessario.
+- O modulo instancia internamente repositories, services, use cases, controllers e handlers locais.
+- O modulo deve expor apenas uma propriedade `exports` com a menor superficie necessaria para outros contextos.
 
-## Renderer Process
+## Shared Backend Code
 
-Em `src/renderer`, mantenha arquivos React separados por tipo de componente:
+- Classes compartilhadas entre multiplos bounded contexts devem ficar em `backend/src/shared`.
+- `shared/infra/http/**` concentra `Http`, `ExpressAdapter`, middlewares globais, tratamento de erros e helpers de bootstrap HTTP.
+- Evite mover logica especifica de um contexto para `shared` sem reutilizacao real.
+
+## Frontend
+
+Em `frontend/src`, mantenha arquivos React separados por tipo de componente:
 
 ```text
-src/renderer/
+frontend/src/
   pages/
     [page-name]/
       [PageName].tsx
@@ -116,5 +135,4 @@ src/renderer/
 
 ## Shared Contracts
 
-Em `src/shared`, mantenha arquivos compartilhados entre `main` e `renderer`.
-Esta pasta deve conter todos os contratos usados pelo `preload.ts` para viabilizar a comunicacao entre renderer e main.
+- Contratos compartilhados entre backend e frontend devem ficar em um local explicito e estavel, evitando importar detalhes de infraestrutura entre processos.

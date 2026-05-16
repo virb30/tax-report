@@ -19,7 +19,7 @@ import type {
   ReallocatedTransactionFeePosition,
   ReallocateTransactionFeesService,
 } from '../services/reallocate-transaction-fees.service';
-import type { Queue } from '../../../shared/application/events/queue.interface';
+import type { Queue } from '../../../shared/infra/events/queue.interface';
 import { TransactionsImportedEvent } from '../../../shared/domain/events/transactions-imported.event';
 
 type ParsedTransactionImportFile = Awaited<ReturnType<ImportTransactionsParser['parse']>>;

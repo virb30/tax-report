@@ -1,26 +1,16 @@
 import type { Knex } from 'knex';
-import type {
-  BackendModule,
-  IngestionModule,
-  PortfolioModule,
-  SharedInfrastructure,
-  TaxReportingModule,
-} from '../../app/infra/container';
 import type { BackendRuntimeConfig } from '../../app/infra/runtime/backend-runtime-config';
-import { MemoryQueueAdapter } from '../../shared/infra/events/memory-queue.adapter';
-import { TransactionFeeAllocator } from '../../portfolio/domain/services/transaction-fee-allocator.service';
+import { IngestionModule as IngestionContextModule } from '../../ingestion/ingestion.module';
+import { PortfolioModule as PortfolioContextModule } from '../../portfolio/portfolio.module';
+import { TaxReportingModule as TaxReportingContextModule } from '../../tax-reporting/tax-reporting.module';
+import {
+  createSharedInfrastructure,
+  type SharedInfrastructure,
+} from '../../shared/application/shared-infrastructure';
 import type { BackendAppDependencies } from '../app';
 
 type ExecuteMock = jest.Mock<Promise<unknown>, [unknown?]>;
 type NoInputExecuteMock = jest.Mock<Promise<unknown>, []>;
-
-function createModule(): BackendModule {
-  return {
-    startup: {
-      initialize: jest.fn(),
-    },
-  };
-}
 
 function createExecuteMock(): ExecuteMock {
   return jest.fn<Promise<unknown>, [unknown?]>();
@@ -48,11 +38,7 @@ export function createRuntimeConfig(
 
 export function createMockBackendDependencies() {
   const database = jest.fn() as unknown as Knex;
-  const shared: SharedInfrastructure = {
-    database,
-    queue: new MemoryQueueAdapter(),
-    transactionFeeAllocator: new TransactionFeeAllocator(),
-  };
+  const shared: SharedInfrastructure = createSharedInfrastructure(database);
   const portfolioUseCases = {
     createBrokerUseCase: { execute: createExecuteMock() },
     listAssetsUseCase: { execute: createExecuteMock() },
@@ -67,14 +53,8 @@ export function createMockBackendDependencies() {
     listPositionsUseCase: { execute: createExecuteMock() },
     recalculatePositionUseCase: { execute: createExecuteMock() },
     migrateYearUseCase: { execute: createExecuteMock() },
-    importConsolidatedPositionUseCase: {
-      execute: createExecuteMock(),
-      preview: createExecuteMock(),
-    },
-    deletePositionUseCase: {
-      execute: createExecuteMock(),
-      executeAll: createExecuteMock(),
-    },
+    deletePositionUseCase: { execute: createExecuteMock() },
+    deleteAllPositionsUseCase: { execute: createExecuteMock() },
   };
   const ingestionUseCases = {
     importTransactionsUseCase: { execute: createExecuteMock() },
@@ -83,7 +63,10 @@ export function createMockBackendDependencies() {
     saveDailyBrokerTaxUseCase: { execute: createExecuteMock() },
     importDailyBrokerTaxesUseCase: { execute: createExecuteMock() },
     deleteDailyBrokerTaxUseCase: { execute: createExecuteMock() },
-    importConsolidatedPositionUseCase: { execute: createExecuteMock() },
+    importConsolidatedPositionUseCase: {
+      execute: createExecuteMock(),
+      preview: createExecuteMock(),
+    },
   };
   const taxReportingUseCases = {
     generateAssetsReportUseCase: { execute: createExecuteMock() },
@@ -91,30 +74,46 @@ export function createMockBackendDependencies() {
     getMonthlyTaxDetailUseCase: { execute: createExecuteMock() },
     recalculateMonthlyTaxHistoryUseCase: { execute: createExecuteMock() },
   };
-  const portfolioModule = {
-    ...createModule(),
-    exports: {},
-    useCases: portfolioUseCases,
-  } as unknown as PortfolioModule;
-  const ingestionModule = {
-    ...createModule(),
-    repositories: {},
-    parsers: {},
-    services: {},
-    useCases: ingestionUseCases,
-  } as unknown as IngestionModule;
-  const taxReportingModule = {
-    ...createModule(),
-    repositories: {},
-    useCases: taxReportingUseCases,
-  } as unknown as TaxReportingModule;
   const dependencies: BackendAppDependencies = {
     initializeDatabase: jest.fn().mockResolvedValue(database),
     createSharedInfrastructure: jest.fn().mockReturnValue(shared),
-    createAppModule: jest.fn().mockReturnValue(createModule()),
-    createPortfolioModule: jest.fn().mockReturnValue(portfolioModule),
-    createIngestionModule: jest.fn().mockReturnValue(ingestionModule),
-    createTaxReportingModule: jest.fn().mockReturnValue(taxReportingModule),
+    createPortfolioModule: jest
+      .fn()
+      .mockImplementation(
+        (input: Parameters<BackendAppDependencies['createPortfolioModule']>[0]) => {
+          return new PortfolioContextModule({
+            ...input,
+            overrides: {
+              // Test helpers intentionally inject jest mocks into the module internals.
+              useCases: portfolioUseCases as never,
+            },
+          });
+        },
+      ),
+    createIngestionModule: jest
+      .fn()
+      .mockImplementation(
+        (input: Parameters<BackendAppDependencies['createIngestionModule']>[0]) => {
+          return new IngestionContextModule({
+            ...input,
+            overrides: {
+              useCases: ingestionUseCases as never,
+            },
+          });
+        },
+      ),
+    createTaxReportingModule: jest
+      .fn()
+      .mockImplementation(
+        (input: Parameters<BackendAppDependencies['createTaxReportingModule']>[0]) => {
+          return new TaxReportingContextModule({
+            ...input,
+            overrides: {
+              useCases: taxReportingUseCases as never,
+            },
+          });
+        },
+      ),
     logger: {
       error: jest.fn(),
     },

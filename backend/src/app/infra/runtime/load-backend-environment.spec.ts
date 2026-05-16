@@ -39,7 +39,10 @@ describe('loadBackendEnvironment', () => {
 
   it('keeps explicit process environment variables over .env defaults', () => {
     const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'tax-report-env-priority-'));
-    fs.writeFileSync(path.join(tempDirectory, '.env'), 'PORT=4010\nDATABASE_PATH=./data/dev.sqlite\n');
+    fs.writeFileSync(
+      path.join(tempDirectory, '.env'),
+      'PORT=4010\nDATABASE_PATH=./data/dev.sqlite\n',
+    );
     process.env.PORT = '9999';
 
     loadBackendEnvironment(tempDirectory);

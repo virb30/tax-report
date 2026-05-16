@@ -98,6 +98,7 @@ describe('core workflow HTTP routes', () => {
     });
     useCases.portfolio.listPositionsUseCase.execute.mockResolvedValue({ items: [] });
     useCases.portfolio.deletePositionUseCase.execute.mockResolvedValue({ deleted: true });
+    useCases.portfolio.deleteAllPositionsUseCase.execute.mockResolvedValue({ deletedCount: 1 });
     useCases.portfolio.recalculatePositionUseCase.execute.mockResolvedValue({
       totalQuantity: '1',
       averagePrice: '10',
@@ -131,10 +132,14 @@ describe('core workflow HTTP routes', () => {
       body: { items: [] },
     });
     await expect(
-      request(app).delete('/api/positions?year=2025&ticker=ABCD3'),
+      request(app).delete('/api/positions/ABCD3?year=2025'),
     ).resolves.toMatchObject({
       status: 200,
       body: { deleted: true },
+    });
+    await expect(request(app).delete('/api/positions?year=2025')).resolves.toMatchObject({
+      status: 200,
+      body: { deletedCount: 1 },
     });
     await expect(
       request(app).post('/api/positions/recalculate').send({
@@ -194,19 +199,19 @@ describe('core workflow HTTP routes', () => {
     useCases.ingestion.importDailyBrokerTaxesUseCase.execute.mockResolvedValue({
       importedCount: 1,
     });
-    useCases.portfolio.importConsolidatedPositionUseCase.preview.mockResolvedValue({ rows: [] });
-    useCases.portfolio.importConsolidatedPositionUseCase.execute.mockResolvedValue({
+    useCases.ingestion.importConsolidatedPositionUseCase.preview.mockResolvedValue({ rows: [] });
+    useCases.ingestion.importConsolidatedPositionUseCase.execute.mockResolvedValue({
       importedCount: 1,
     });
 
     await expect(
       request(app)
-        .post('/api/import/transactions/preview')
+        .post('/api/transactions/import:preview')
         .attach('file', Buffer.from('date,ticker\n2025-01-01,ABCD3'), 'transactions.csv'),
     ).resolves.toMatchObject({ status: 200, body: { summary: {} } });
     await expect(
       request(app)
-        .post('/api/import/transactions/confirm')
+        .post('/api/transactions/import:confirm')
         .field('assetTypeOverrides', JSON.stringify([{ ticker: 'ABCD3', assetType: 'stock' }]))
         .attach('file', Buffer.from('date,ticker\n2025-01-01,ABCD3'), 'transactions.csv'),
     ).resolves.toMatchObject({ status: 200, body: { importedCount: 1 } });
@@ -233,7 +238,7 @@ describe('core workflow HTTP routes', () => {
         assetTypeOverrides: [{ ticker: 'ABCD3', assetType: 'stock' }],
       }),
     );
-    expect(useCases.portfolio.importConsolidatedPositionUseCase.execute).toHaveBeenCalledWith(
+    expect(useCases.ingestion.importConsolidatedPositionUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({
         year: 2025,
       }),
@@ -245,7 +250,7 @@ describe('core workflow HTTP routes', () => {
 
     await expect(
       request(app)
-        .post('/api/import/transactions/confirm')
+        .post('/api/transactions/import:confirm')
         .field('assetTypeOverrides', '{invalid json')
         .attach('file', Buffer.from('date,ticker\n2025-01-01,ABCD3'), 'transactions.csv'),
     ).resolves.toMatchObject({

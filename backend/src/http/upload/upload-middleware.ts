@@ -40,14 +40,14 @@ function createStorage(): multer.StorageEngine {
   });
 }
 
-function createMulterMiddleware(config: BackendRuntimeConfig): RequestHandler {
+function createMulterMiddleware(config: BackendRuntimeConfig, fieldName: string): RequestHandler {
   return multer({
     storage: createStorage(),
     limits: {
       fileSize: config.uploads.maxFileSizeBytes,
       files: config.uploads.maxFiles,
     },
-  }).single('file');
+  }).single(fieldName);
 }
 
 function createCleanupMiddleware(): RequestHandler {
@@ -117,8 +117,8 @@ function mapMulterError(error: unknown): unknown {
   return error;
 }
 
-export function uploadFile(config: BackendRuntimeConfig): RequestHandler[] {
-  const multerMiddleware = createMulterMiddleware(config);
+export function uploadFile(config: BackendRuntimeConfig, fieldName = 'file'): RequestHandler[] {
+  const multerMiddleware = createMulterMiddleware(config, fieldName);
   const cleanupMiddleware = createCleanupMiddleware();
 
   return [

@@ -6,7 +6,7 @@ import type { ReallocateTransactionFeesService } from '../services/reallocate-tr
 import { Broker } from '../../../portfolio/domain/entities/broker.entity';
 import { Cnpj } from '../../../shared/domain/value-objects/cnpj.vo';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
-import type { Queue } from '../../../shared/application/events/queue.interface';
+import type { Queue } from '../../../shared/infra/events/queue.interface';
 import { TransactionFeesReallocatedEvent } from '../../../shared/domain/events/transaction-fees-reallocated.event';
 
 describe('SaveDailyBrokerTaxUseCase', () => {

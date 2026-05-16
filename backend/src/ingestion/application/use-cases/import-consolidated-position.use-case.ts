@@ -14,7 +14,7 @@ import type { BrokerRepository } from '../../../portfolio/application/repositori
 import type { TransactionRepository } from '../../../portfolio/application/repositories/transaction.repository';
 import { Transaction } from '../../../portfolio/domain/entities/transaction.entity';
 import { Uuid } from '../../../shared/domain/value-objects/uuid.vo';
-import type { Queue } from '../../../shared/application/events/queue.interface';
+import type { Queue } from '../../../shared/infra/events/queue.interface';
 import { ConsolidatedPositionImportedEvent } from '../../../shared/domain/events/consolidated-position-imported.event';
 import { assertSupportedYear } from '../../../shared/utils/year';
 import type { ConsolidatedPositionRow } from '../interfaces/consolidated-position-parser.port';
